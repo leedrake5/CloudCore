@@ -286,15 +286,6 @@ downloadButton('downloadPlot3c', "3"),
 downloadButton('downloadPlot3d', "4"),
 downloadButton('downloadPlot3e', "5"),
 
-tags$hr(),
-
-selectInput("xaxistype", label="X Axis", c("Depth", "Age"), selected="Depth"),
-
-radioButtons("lengthunit", label=NULL, c("mm", "cm", "m", "inches", "feet"), selected="mm"),
-numericInput("startmm", label = "Start Point (mm)", value=0),
-radioButtons("timetype", label=NULL, c("AD", "BC", "BC/AD", "BP"), selected="BP"),
-
-
 
 tags$hr(),
 
@@ -321,7 +312,18 @@ tags$hr(),
 sliderInput("smoothing", label = "Smoothed Mean Average", value=1, min=1, max=50),
 
 sliderInput("linesize", label = "Line Size", value=1, min=1, max=15),
-sliderInput("pointsize", label = "Point Size", value=5, min=1, max=15)
+sliderInput("pointsize", label = "Point Size", value=5, min=1, max=15),
+
+
+tags$hr(),
+
+selectInput("xaxistype", label="X Axis", c("Depth", "Age"), selected="Depth"),
+
+radioButtons("lengthunit", label=NULL, c("mm", "cm", "m", "inches", "feet"), selected="mm"),
+numericInput("startmm", label = "Start Point (mm)", value=0),
+radioButtons("timetype", label=NULL, c("AD", "BC", "BC/AD", "BP"), selected="BP"),
+
+checkboxInput("constrainage", label="Constrain Chronology", TRUE)
 
 
 

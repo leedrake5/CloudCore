@@ -817,15 +817,38 @@ xrfPCAReactive <- reactive({
   })
   
   
+  ageData <- reactive({
+      
+      c14ages <- values[["DF2"]]
+      
+      c14min <- min(c14ages$Depth)
+      c14max <- max(c14ages$Depth)
+    
+      
+      spectra.line.table.age.unconstrained <- agePredict()
+      
+      spectra.line.table.age.constrained <- subset(spectra.line.table.age.unconstrained, spectra.line.table.age.unconstrained$Depth > c14min)
+      spectra.line.table.age.constrained <- subset(spectra.line.table.age.constrained, spectra.line.table.age.constrained$Depth < c14max)
+      
+      spectra.line.table.age <- if(input$constrainage==TRUE) {
+          spectra.line.table.age.constrained
+      } else if(input$constrainage==FALSE) {
+          spectra.line.table.age.constrained
+      }
+      
+      spectra.line.table.age
+
+
+  })
+  
+  
   
   
   plotInput3a <- reactive({
       
-    
-      
       spectra.line.table.depth <- dataProcessed()
-      
-      spectra.line.table.age <- agePredict()
+      spectra.line.table.age <- ageData()
+    
       
       spectra.line.table.age$Age <- spectra.line.table.age$Age * -1
       
