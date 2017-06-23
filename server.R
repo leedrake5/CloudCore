@@ -498,7 +498,7 @@ xrfPCAReactive <- reactive({
       DF4 <- subset(DF3, !DF3$Sigma==0)
       DF5 <- as.data.frame(DF4)
       
-      age.math <- Bchronology(ages=as.numeric(as.vector(DF5[,2])), ageSds=as.numeric(as.vector(DF5[,3])), positions=as.numeric(as.vector(DF5[,1])), positionThickness=rep(0.5, length(DF5$Sigma)), calCurves=DF5[,4], burn=2000, predictPositions=as.numeric(as.vector(spectra.line.table$Depth)))
+      age.math <- Bchronology(ages=as.numeric(as.vector(DF5[,2])), ageSds=as.numeric(as.vector(DF5[,3])), positions=as.numeric(as.vector(DF5[,1])), positionThickness=rep(0.5, length(DF5$Sigma)), calCurves=DF5[,4], burn=2000, predictPositions=as.numeric(as.vector(spectra.line.table$Depth)), jitterPositions=TRUE)
       
       age.math
 
@@ -542,7 +542,6 @@ xrfPCAReactive <- reactive({
       age.frame <- data.frame(age.results$Depth, age.results$Age, age.results$Sd, age.results$MinSd2, age.results$MinSd1, age.results$MaxSd1, age.results$MaxSd2)
       colnames(age.frame) <- c("Depth", "Age", "Sd", "MinSd2", "MinSd1", "MaxSd1", "MaxSd2")
       
-      age.frame <- DT::datatable(age.frame)
       age.frame
       
   })
@@ -556,9 +555,9 @@ xrfPCAReactive <- reactive({
       age.plot
   })
   
-  output$allagemodel <- DT::renderDataTable({
+  output$allagemodel <- renderTable({
       
-    print(ageTable())
+      ageTable()
       
       
   })
@@ -575,11 +574,11 @@ xrfPCAReactive <- reactive({
   
   
   
-  output$downloadData <- downloadHandler(
-  filename = function() { paste(input$dataset, '.csv', sep=',') },
+  output$ageresults <- downloadHandler(
+  filename = function() { paste(input$projectname, "_AgeTable", '.csv', sep=',') },
   content = function(file
   ) {
-      write.csv(tableInput(), file)
+      write.csv(ageTable(), file)
   }
   )
   
@@ -817,9 +816,12 @@ xrfPCAReactive <- reactive({
   })
   
   
+  
   ageData <- reactive({
       
       c14ages <- values[["DF2"]]
+      c14ages <- subset(c14ages, !c14ages$Sigma==0)
+      c14ages <- as.data.frame(c14ages)
       
       c14min <- min(c14ages$Depth)
       c14max <- max(c14ages$Depth)
@@ -827,15 +829,49 @@ xrfPCAReactive <- reactive({
       
       spectra.line.table.age.unconstrained <- agePredict()
       
+      
+      
+      lateholocene <- subset(spectra.line.table.age.unconstrained$Age, spectra.line.table.age.unconstrained$Age <= 5000 & spectra.line.table.age.unconstrained$Age > -1000)
+      
+      altithermal <- subset(spectra.line.table.age.unconstrained$Age, spectra.line.table.age.unconstrained$Age <= 9000 & spectra.line.table.age.unconstrained$Age > 5000)
+      
+      holocenetransition <- subset(spectra.line.table.age.unconstrained$Age, spectra.line.table.age.unconstrained$Age <= 11700 & spectra.line.table.age.unconstrained$Age > 9000)
+      
+      youngerdryas <- subset(spectra.line.table.age.unconstrained$Age, spectra.line.table.age.unconstrained$Age <= 12900 & spectra.line.table.age.unconstrained$Age > 11700)
+      
+      bollingalerod <- subset(spectra.line.table.age.unconstrained$Age, spectra.line.table.age.unconstrained$Age <= 14700 & spectra.line.table.age.unconstrained$Age > 12900)
+      
+      deglaciation <- subset(spectra.line.table.age.unconstrained$Age, spectra.line.table.age.unconstrained$Age <= 19000 & spectra.line.table.age.unconstrained$Age > 14700)
+      
+      lastglacialmax <- subset(spectra.line.table.age.unconstrained$Age, spectra.line.table.age.unconstrained$Age <= 25000 & spectra.line.table.age.unconstrained$Age > 19000)
+      
+      glacial <- subset(spectra.line.table.age.unconstrained$Age, spectra.line.table.age.unconstrained$Age <= 120000 & spectra.line.table.age.unconstrained$Age > 25000)
+      
+      climateperiods <- c(
+      rep("1. Late Holocene", length(lateholocene)),
+      rep("2. Altithermal", length(altithermal)),
+      rep("3. Holocene Transition", length(holocenetransition)),
+      rep("4. Younger Dryas", length(youngerdryas)),
+      rep("5. Bølling-Allerød", length(bollingalerod)),
+      rep("6. Deglaciation", length(deglaciation)),
+      rep("7. Last Glacial Maximum", length(lastglacialmax)),
+      rep("8. Glacial", length(glacial))
+      )
+      
+      spectra.line.table.age.unconstrained$Climate <- climateperiods
+      
       spectra.line.table.age.constrained <- subset(spectra.line.table.age.unconstrained, spectra.line.table.age.unconstrained$Depth > c14min)
       spectra.line.table.age.constrained <- subset(spectra.line.table.age.constrained, spectra.line.table.age.constrained$Depth < c14max)
       
       spectra.line.table.age <- if(input$constrainage==TRUE) {
           spectra.line.table.age.constrained
       } else if(input$constrainage==FALSE) {
-          spectra.line.table.age.constrained
+          spectra.line.table.age.unconstrained
       }
       
+      spectra.line.table.age$Age <- spectra.line.table.age$Age * -1
+
+
       spectra.line.table.age
 
 
@@ -846,17 +882,8 @@ xrfPCAReactive <- reactive({
   
   plotInput3a <- reactive({
       
-      spectra.line.table.depth <- dataProcessed()
-      spectra.line.table.age <- ageData()
-    
+      spectra.line.table <- ageData()
       
-      spectra.line.table.age$Age <- spectra.line.table.age$Age * -1
-      
-      spectra.line.table <- if (input$xaxistype == "Depth") {
-          spectra.line.table.depth
-      } else if (input$xaxistype == "Age") {
-          spectra.line.table.age
-      }
       
       x.axis <- if (input$xaxistype=="Depth") {
           paste("Depth (", input$lengthunit, ")", sep="", collapse="")
@@ -880,8 +907,8 @@ xrfPCAReactive <- reactive({
       #spectra.timeseries.table <- data.frame(interval, spectra.line.table[c(input$elementtrend)]/spectra.line.table.norm[c(input$elementnorm)], spectra.line.table$Cluster, spectra.line.table$Qualitative, spectra.line.table$Depth)
       #colnames(spectra.timeseries.table) <- c("Interval", "Selected", "Cluster", "Qualitative", "Depth")
       
-      spectra.timeseries.table <- data.frame(spectra.line.table[c(input$xaxistype)], spectra.line.table[c(input$elementtrend)]/spectra.line.table.norm[c(input$elementnorm)], spectra.line.table$Cluster, spectra.line.table$Qualitative, spectra.line.table$Depth)
-      colnames(spectra.timeseries.table) <- c("Interval", "Selected", "Cluster", "Qualitative", "Depth")
+      spectra.timeseries.table <- data.frame(spectra.line.table[c(input$xaxistype)], spectra.line.table[c(input$elementtrend)]/spectra.line.table.norm[c(input$elementnorm)], spectra.line.table$Cluster, spectra.line.table$Qualitative, spectra.line.table$Depth, spectra.line.table$Climate)
+      colnames(spectra.timeseries.table) <- c("Interval", "Selected", "Cluster", "Qualitative", "Depth", "Climate")
       
       
       trendy <-  as.vector((if(input$elementnorm=="None") {
@@ -969,6 +996,18 @@ xrfPCAReactive <- reactive({
       theme(legend.title=element_text(size=15)) +
       theme(legend.text=element_text(size=15)) +
       scale_x_continuous(paste(x.axis), label=comma)
+      
+      climate.time.series.line <- qplot(Interval, SMA(Selected, input$smoothing), xlab = input$xaxistype, ylab = trendy, geom="line", data = spectra.timeseries.table, colour = as.factor(Climate)) +
+      scale_colour_discrete("Climatic Period") +
+      theme_light() +
+      theme(axis.text.x = element_text(size=15)) +
+      theme(axis.text.y = element_text(size=15)) +
+      theme(axis.title.x = element_text(size=15)) +
+      theme(axis.title.y = element_text(size=15, angle=90)) +
+      theme(plot.title=element_text(size=20)) +
+      theme(legend.title=element_text(size=15)) +
+      theme(legend.text=element_text(size=15)) +
+      scale_x_continuous(paste(x.axis), label=comma)
 
 
       qualitative.time.series.line <- qplot(Interval, SMA(Selected, input$smoothing), xlab = input$xaxistype, ylab = trendy, geom="line", data = spectra.timeseries.table, colour = as.factor(Qualitative)) +
@@ -1020,6 +1059,8 @@ xrfPCAReactive <- reactive({
           ramp.time.series
       } else if (input$timecolour == "Cluster") {
           cluster.time.series
+      } else if (input$timecolour == "Climate") {
+          climate.time.series.line
       } else if (input$timecolour == "QualitativePoint") {
           qualitative.time.series.point
       } else if (input$timecolour == "QualitativeLine") {
@@ -1070,30 +1111,7 @@ xrfPCAReactive <- reactive({
   
   
   plotInput3b <- reactive({
-      
-      spectra.line.table.depth <- dataProcessed()
-      
-      spectra.line.table.age <- agePredict()
-      
-      spectra.line.table.age$Age <- spectra.line.table.age$Age * -1
-      
-      spectra.line.table <- if (input$xaxistype == "Depth") {
-          spectra.line.table.depth
-      } else if (input$xaxistype == "Age") {
-          spectra.line.table.age
-      }
-      
-      x.axis <- if (input$xaxistype=="Depth") {
-          paste("Depth (", input$lengthunit, ")", sep="", collapse="")
-      } else if (input$xaxistype=="Age" && input$timetype=="BP"){
-          paste("cal year BP")
-      } else if (input$xaxistype=="Age" && input$timetype=="BC") {
-          paste("cal year BC")
-      } else if (input$axistype=="Age" && input$timetype=="AD") {
-          paste("cal year AD")
-      } else if (input$axistype=="Age" && input$timetype=="BC/AD") {
-          paste("cal year BC/AD")
-      }
+      spectra.line.table <- ageData()
       
       
       spectra.line.table.norm <- data.frame(spectra.line.table, null)
@@ -1105,8 +1123,8 @@ xrfPCAReactive <- reactive({
       #spectra.timeseries.table <- data.frame(interval, spectra.line.table[c(input$elementtrend)]/spectra.line.table.norm[c(input$elementnorm)], spectra.line.table$Cluster, spectra.line.table$Qualitative, spectra.line.table$Depth)
       #colnames(spectra.timeseries.table) <- c("Interval", "Selected", "Cluster", "Qualitative", "Depth")
       
-      spectra.timeseries.table <- data.frame(spectra.line.table[c(input$xaxistype)], spectra.line.table[c(input$elementtrend)]/spectra.line.table.norm[c(input$elementnorm)], spectra.line.table$Cluster, spectra.line.table$Qualitative, spectra.line.table$Depth)
-      colnames(spectra.timeseries.table) <- c("Interval", "Selected", "Cluster", "Qualitative", "Depth")
+      spectra.timeseries.table <- data.frame(spectra.line.table[c(input$xaxistype)], spectra.line.table[c(input$elementtrend)]/spectra.line.table.norm[c(input$elementnorm)], spectra.line.table$Cluster, spectra.line.table$Qualitative, spectra.line.table$Depth, spectra.line.table$Climate)
+      colnames(spectra.timeseries.table) <- c("Interval", "Selected", "Cluster", "Qualitative", "Depth", "Climate")
       
       
       trendy <-  as.vector((if(input$elementnorm=="None") {
@@ -1195,6 +1213,18 @@ xrfPCAReactive <- reactive({
       theme(legend.text=element_text(size=15)) +
       scale_x_continuous(paste(x.axis), label=comma)
       
+      climate.time.series.line <- qplot(Interval, SMA(Selected, input$smoothing), xlab = input$xaxistype, ylab = trendy, geom="line", data = spectra.timeseries.table, colour = as.factor(Climate)) +
+      scale_colour_discrete("Climatic Period") +
+      theme_light() +
+      theme(axis.text.x = element_text(size=15)) +
+      theme(axis.text.y = element_text(size=15)) +
+      theme(axis.title.x = element_text(size=15)) +
+      theme(axis.title.y = element_text(size=15, angle=90)) +
+      theme(plot.title=element_text(size=20)) +
+      theme(legend.title=element_text(size=15)) +
+      theme(legend.text=element_text(size=15)) +
+      scale_x_continuous(paste(x.axis), label=comma)
+      
       
       qualitative.time.series.line <- qplot(Interval, SMA(Selected, input$smoothing), xlab = input$xaxistype, ylab = trendy, geom="line", data = spectra.timeseries.table, colour = as.factor(Qualitative)) +
       scale_colour_discrete("Qualitative") +
@@ -1236,7 +1266,6 @@ xrfPCAReactive <- reactive({
       scale_x_continuous(paste(x.axis), label=comma)
       
       
-      
       if (input$timecolour == "Black") {
           black.time.series
       } else if (input$timecolour == "Smooth") {
@@ -1245,6 +1274,8 @@ xrfPCAReactive <- reactive({
           ramp.time.series
       } else if (input$timecolour == "Cluster") {
           cluster.time.series
+      } else if (input$timecolour == "Climate") {
+          climate.time.series.line
       } else if (input$timecolour == "QualitativePoint") {
           qualitative.time.series.point
       } else if (input$timecolour == "QualitativeLine") {
@@ -1254,6 +1285,7 @@ xrfPCAReactive <- reactive({
       } else if (input$timecolour == "Area") {
           area.time.series
       }
+      
       
       
   })
@@ -1284,17 +1316,7 @@ xrfPCAReactive <- reactive({
   
   plotInput3c <- reactive({
       
-      spectra.line.table.depth <- dataProcessed()
-      
-      spectra.line.table.age <- agePredict()
-      
-      spectra.line.table.age$Age <- spectra.line.table.age$Age * -1
-      
-      spectra.line.table <- if (input$xaxistype == "Depth") {
-          spectra.line.table.depth
-      } else if (input$xaxistype == "Age") {
-          spectra.line.table.age
-      }
+      spectra.line.table <- ageData()
       
       x.axis <- if (input$xaxistype=="Depth") {
           paste("Depth (", input$lengthunit, ")", sep="", collapse="")
@@ -1308,7 +1330,6 @@ xrfPCAReactive <- reactive({
           paste("cal year BC/AD")
       }
       
-      
       spectra.line.table.norm <- data.frame(spectra.line.table, null)
       colnames(spectra.line.table.norm) <- c(names(spectra.line.table), "None")
       spectra.line.table.norm
@@ -1318,8 +1339,8 @@ xrfPCAReactive <- reactive({
       #spectra.timeseries.table <- data.frame(interval, spectra.line.table[c(input$elementtrend)]/spectra.line.table.norm[c(input$elementnorm)], spectra.line.table$Cluster, spectra.line.table$Qualitative, spectra.line.table$Depth)
       #colnames(spectra.timeseries.table) <- c("Interval", "Selected", "Cluster", "Qualitative", "Depth")
       
-      spectra.timeseries.table <- data.frame(spectra.line.table[c(input$xaxistype)], spectra.line.table[c(input$elementtrend)]/spectra.line.table.norm[c(input$elementnorm)], spectra.line.table$Cluster, spectra.line.table$Qualitative, spectra.line.table$Depth)
-      colnames(spectra.timeseries.table) <- c("Interval", "Selected", "Cluster", "Qualitative", "Depth")
+      spectra.timeseries.table <- data.frame(spectra.line.table[c(input$xaxistype)], spectra.line.table[c(input$elementtrend)]/spectra.line.table.norm[c(input$elementnorm)], spectra.line.table$Cluster, spectra.line.table$Qualitative, spectra.line.table$Depth, spectra.line.table$Climate)
+      colnames(spectra.timeseries.table) <- c("Interval", "Selected", "Cluster", "Qualitative", "Depth", "Climate")
       
       
       trendy <-  as.vector((if(input$elementnorm=="None") {
@@ -1408,6 +1429,18 @@ xrfPCAReactive <- reactive({
       theme(legend.text=element_text(size=15)) +
       scale_x_continuous(paste(x.axis), label=comma)
       
+      climate.time.series.line <- qplot(Interval, SMA(Selected, input$smoothing), xlab = input$xaxistype, ylab = trendy, geom="line", data = spectra.timeseries.table, colour = as.factor(Climate)) +
+      scale_colour_discrete("Climatic Period") +
+      theme_light() +
+      theme(axis.text.x = element_text(size=15)) +
+      theme(axis.text.y = element_text(size=15)) +
+      theme(axis.title.x = element_text(size=15)) +
+      theme(axis.title.y = element_text(size=15, angle=90)) +
+      theme(plot.title=element_text(size=20)) +
+      theme(legend.title=element_text(size=15)) +
+      theme(legend.text=element_text(size=15)) +
+      scale_x_continuous(paste(x.axis), label=comma)
+      
       
       qualitative.time.series.line <- qplot(Interval, SMA(Selected, input$smoothing), xlab = input$xaxistype, ylab = trendy, geom="line", data = spectra.timeseries.table, colour = as.factor(Qualitative)) +
       scale_colour_discrete("Qualitative") +
@@ -1449,7 +1482,6 @@ xrfPCAReactive <- reactive({
       scale_x_continuous(paste(x.axis), label=comma)
       
       
-      
       if (input$timecolour == "Black") {
           black.time.series
       } else if (input$timecolour == "Smooth") {
@@ -1458,6 +1490,8 @@ xrfPCAReactive <- reactive({
           ramp.time.series
       } else if (input$timecolour == "Cluster") {
           cluster.time.series
+      } else if (input$timecolour == "Climate") {
+          climate.time.series.line
       } else if (input$timecolour == "QualitativePoint") {
           qualitative.time.series.point
       } else if (input$timecolour == "QualitativeLine") {
@@ -1467,6 +1501,7 @@ xrfPCAReactive <- reactive({
       } else if (input$timecolour == "Area") {
           area.time.series
       }
+      
       
       
       
@@ -1495,18 +1530,7 @@ xrfPCAReactive <- reactive({
   
   plotInput3d <- reactive({
       
-      
-      spectra.line.table.depth <- dataProcessed()
-      
-      spectra.line.table.age <- agePredict()
-      
-      spectra.line.table.age$Age <- spectra.line.table.age$Age * -1
-      
-      spectra.line.table <- if (input$xaxistype == "Depth") {
-          spectra.line.table.depth
-      } else if (input$xaxistype == "Age") {
-          spectra.line.table.age
-      }
+      spectra.line.table <- ageData()
       
       x.axis <- if (input$xaxistype=="Depth") {
           paste("Depth (", input$lengthunit, ")", sep="", collapse="")
@@ -1530,8 +1554,8 @@ xrfPCAReactive <- reactive({
       #spectra.timeseries.table <- data.frame(interval, spectra.line.table[c(input$elementtrend)]/spectra.line.table.norm[c(input$elementnorm)], spectra.line.table$Cluster, spectra.line.table$Qualitative, spectra.line.table$Depth)
       #colnames(spectra.timeseries.table) <- c("Interval", "Selected", "Cluster", "Qualitative", "Depth")
       
-      spectra.timeseries.table <- data.frame(spectra.line.table[c(input$xaxistype)], spectra.line.table[c(input$elementtrend)]/spectra.line.table.norm[c(input$elementnorm)], spectra.line.table$Cluster, spectra.line.table$Qualitative, spectra.line.table$Depth)
-      colnames(spectra.timeseries.table) <- c("Interval", "Selected", "Cluster", "Qualitative", "Depth")
+      spectra.timeseries.table <- data.frame(spectra.line.table[c(input$xaxistype)], spectra.line.table[c(input$elementtrend)]/spectra.line.table.norm[c(input$elementnorm)], spectra.line.table$Cluster, spectra.line.table$Qualitative, spectra.line.table$Depth, spectra.line.table$Climate)
+      colnames(spectra.timeseries.table) <- c("Interval", "Selected", "Cluster", "Qualitative", "Depth", "Climate")
       
       
       trendy <-  as.vector((if(input$elementnorm=="None") {
@@ -1620,6 +1644,18 @@ xrfPCAReactive <- reactive({
       theme(legend.text=element_text(size=15)) +
       scale_x_continuous(paste(x.axis), label=comma)
       
+      climate.time.series.line <- qplot(Interval, SMA(Selected, input$smoothing), xlab = input$xaxistype, ylab = trendy, geom="line", data = spectra.timeseries.table, colour = as.factor(Climate)) +
+      scale_colour_discrete("Climatic Period") +
+      theme_light() +
+      theme(axis.text.x = element_text(size=15)) +
+      theme(axis.text.y = element_text(size=15)) +
+      theme(axis.title.x = element_text(size=15)) +
+      theme(axis.title.y = element_text(size=15, angle=90)) +
+      theme(plot.title=element_text(size=20)) +
+      theme(legend.title=element_text(size=15)) +
+      theme(legend.text=element_text(size=15)) +
+      scale_x_continuous(paste(x.axis), label=comma)
+      
       
       qualitative.time.series.line <- qplot(Interval, SMA(Selected, input$smoothing), xlab = input$xaxistype, ylab = trendy, geom="line", data = spectra.timeseries.table, colour = as.factor(Qualitative)) +
       scale_colour_discrete("Qualitative") +
@@ -1661,7 +1697,6 @@ xrfPCAReactive <- reactive({
       scale_x_continuous(paste(x.axis), label=comma)
       
       
-      
       if (input$timecolour == "Black") {
           black.time.series
       } else if (input$timecolour == "Smooth") {
@@ -1670,6 +1705,8 @@ xrfPCAReactive <- reactive({
           ramp.time.series
       } else if (input$timecolour == "Cluster") {
           cluster.time.series
+      } else if (input$timecolour == "Climate") {
+          climate.time.series.line
       } else if (input$timecolour == "QualitativePoint") {
           qualitative.time.series.point
       } else if (input$timecolour == "QualitativeLine") {
@@ -1679,6 +1716,7 @@ xrfPCAReactive <- reactive({
       } else if (input$timecolour == "Area") {
           area.time.series
       }
+      
       
       
       
@@ -1712,17 +1750,8 @@ xrfPCAReactive <- reactive({
   
   plotInput3e <- reactive({
       
-      spectra.line.table.depth <- dataProcessed()
+      spectra.line.table <- ageData()
       
-      spectra.line.table.age <- agePredict()
-      
-      spectra.line.table.age$Age <- spectra.line.table.age$Age * -1
-      
-      spectra.line.table <- if (input$xaxistype == "Depth") {
-          spectra.line.table.depth
-      } else if (input$xaxistype == "Age") {
-          spectra.line.table.age
-      }
       
       x.axis <- if (input$xaxistype=="Depth") {
           paste("Depth (", input$lengthunit, ")", sep="", collapse="")
@@ -1746,8 +1775,8 @@ xrfPCAReactive <- reactive({
       #spectra.timeseries.table <- data.frame(interval, spectra.line.table[c(input$elementtrend)]/spectra.line.table.norm[c(input$elementnorm)], spectra.line.table$Cluster, spectra.line.table$Qualitative, spectra.line.table$Depth)
       #colnames(spectra.timeseries.table) <- c("Interval", "Selected", "Cluster", "Qualitative", "Depth")
       
-      spectra.timeseries.table <- data.frame(spectra.line.table[c(input$xaxistype)], spectra.line.table[c(input$elementtrend)]/spectra.line.table.norm[c(input$elementnorm)], spectra.line.table$Cluster, spectra.line.table$Qualitative, spectra.line.table$Depth)
-      colnames(spectra.timeseries.table) <- c("Interval", "Selected", "Cluster", "Qualitative", "Depth")
+      spectra.timeseries.table <- data.frame(spectra.line.table[c(input$xaxistype)], spectra.line.table[c(input$elementtrend)]/spectra.line.table.norm[c(input$elementnorm)], spectra.line.table$Cluster, spectra.line.table$Qualitative, spectra.line.table$Depth, spectra.line.table$Climate)
+      colnames(spectra.timeseries.table) <- c("Interval", "Selected", "Cluster", "Qualitative", "Depth", "Climate")
       
       
       trendy <-  as.vector((if(input$elementnorm=="None") {
@@ -1836,6 +1865,18 @@ xrfPCAReactive <- reactive({
       theme(legend.text=element_text(size=15)) +
       scale_x_continuous(paste(x.axis), label=comma)
       
+      climate.time.series.line <- qplot(Interval, SMA(Selected, input$smoothing), xlab = input$xaxistype, ylab = trendy, geom="line", data = spectra.timeseries.table, colour = as.factor(Climate)) +
+      scale_colour_discrete("Climatic Period") +
+      theme_light() +
+      theme(axis.text.x = element_text(size=15)) +
+      theme(axis.text.y = element_text(size=15)) +
+      theme(axis.title.x = element_text(size=15)) +
+      theme(axis.title.y = element_text(size=15, angle=90)) +
+      theme(plot.title=element_text(size=20)) +
+      theme(legend.title=element_text(size=15)) +
+      theme(legend.text=element_text(size=15)) +
+      scale_x_continuous(paste(x.axis), label=comma)
+      
       
       qualitative.time.series.line <- qplot(Interval, SMA(Selected, input$smoothing), xlab = input$xaxistype, ylab = trendy, geom="line", data = spectra.timeseries.table, colour = as.factor(Qualitative)) +
       scale_colour_discrete("Qualitative") +
@@ -1877,7 +1918,6 @@ xrfPCAReactive <- reactive({
       scale_x_continuous(paste(x.axis), label=comma)
       
       
-      
       if (input$timecolour == "Black") {
           black.time.series
       } else if (input$timecolour == "Smooth") {
@@ -1886,6 +1926,8 @@ xrfPCAReactive <- reactive({
           ramp.time.series
       } else if (input$timecolour == "Cluster") {
           cluster.time.series
+      } else if (input$timecolour == "Climate") {
+          climate.time.series.line
       } else if (input$timecolour == "QualitativePoint") {
           qualitative.time.series.point
       } else if (input$timecolour == "QualitativeLine") {

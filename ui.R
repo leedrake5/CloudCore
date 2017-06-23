@@ -193,7 +193,8 @@ sidebarLayout(
 sidebarPanel(
 
 actionButton('hotableprocess2', "Enter Dates"),
-actionButton('hotableprocess3', "Run Age Model")
+actionButton('hotableprocess3', "Run Age Model"),
+downloadButton('ageresults', "Age Results Table")
 
 
 
@@ -202,8 +203,8 @@ actionButton('hotableprocess3', "Run Age Model")
 mainPanel(
 tabsetPanel(
 tabPanel('Age Input', rHandsontableOutput('hotage')),
-tabPanel('Age Curve', plotOutput('agemodcurve')),
-tabPanel('Age Table', DT::dataTableOutput('allagemodel'))
+tabPanel('Age Curve', plotOutput('agemodcurve'), height = 700, width= 1200),
+tabPanel('Age Table', 'allagemodel')
 ))
 
 
@@ -248,7 +249,7 @@ mainPanel(
 tabsetPanel(
 id = 'dataset',
 tabPanel('Selected XRF Lines', plotOutput('xrfpcaplot',
-dblclick = "plot1_dblclick", height = 500, width= 700,
+dblclick = "plot1_dblclick", height = 700, width= 1200,
 brush = brushOpts(
 id = "plot1_brush",
 resetOnNew = TRUE
@@ -299,6 +300,7 @@ c(
 "Smooth" = "Smooth",
 "Ramp" = "Selected",
 "Cluster" = "Cluster",
+"Climate" = "Climate",
 "Qualitative Point" = "QualitativePoint",
 "Qualitative Line" = "QualitativeLine",
 "Quantitative" = "Quantitative",
@@ -336,35 +338,35 @@ mainPanel(
 tabsetPanel(
 id = 'dataset',
 tabPanel('Time Series 1', plotOutput('timeseriesplot1',
-dblclick = "plot1_dblclick", height = 500, width= 700,
+dblclick = "plot1_dblclick", height = 700, width= 1200,
 brush = brushOpts(
 id = "plot1_brush",
 resetOnNew = TRUE
 ))),
 
 tabPanel('Time Series 2', plotOutput('timeseriesplot2',
-dblclick = "plot1_dblclick", height = 500, width= 700,
+dblclick = "plot1_dblclick", height = 700, width= 1200,
 brush = brushOpts(
 id = "plot1_brush",
 resetOnNew = TRUE
 ))),
 
 tabPanel('Time Series 3', plotOutput('timeseriesplot3',
-dblclick = "plot1_dblclick", height = 500, width= 700,
+dblclick = "plot1_dblclick", height = 700, width= 1200,
 brush = brushOpts(
 id = "plot1_brush",
 resetOnNew = TRUE
 ))),
 
 tabPanel('Time Series 4', plotOutput('timeseriesplot4',
-dblclick = "plot1_dblclick", height = 500, width= 700,
+dblclick = "plot1_dblclick", height = 700, width= 1200,
 brush = brushOpts(
 id = "plot1_brush",
 resetOnNew = TRUE
 ))),
 
 tabPanel('Time Series 5', plotOutput('timeseriesplot5',
-dblclick = "plot1_dblclick", height = 500, width= 700,
+dblclick = "plot1_dblclick", height = 700, width= 1200,
 brush = brushOpts(
 id = "plot1_brush",
 resetOnNew = TRUE
@@ -418,7 +420,7 @@ downloadButton('downloadPlot5', "Plot")
 
 mainPanel(
 tabPanel('Ternary Plot', plotOutput('ternaryplot',
-dblclick = "plot1_dblclick", height = 500, width= 700,
+dblclick = "plot1_dblclick", height = 700, width= 1200,
 brush = brushOpts(
 id = "plot1_brush",
 resetOnNew = TRUE
@@ -476,7 +478,7 @@ downloadButton('downloadPlot4', "Plot")
 
 mainPanel(
 tabPanel('Element Ratios', plotOutput('elementratiotimeseries',
-dblclick = "plot1_dblclick", height = 500, width= 700,
+dblclick = "plot1_dblclick", height = 700, width= 1200,
 brush = brushOpts(
 id = "plot1_brush",
 resetOnNew = TRUE
