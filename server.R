@@ -279,7 +279,7 @@ shinyServer(function(input, output, session) {
             
             filename = function() { paste(paste(c(input$projectname, "-", plotname), collapse=''), '.tiff', sep='') },
             content = function(file) {
-                ggsave(file,plotInput(), device="tiff", dpi=300, width=10, height=7)
+                ggsave(file,plotInput(), device="tiff", dpi=300, width=12, height=7)
             }
             )
             
@@ -741,7 +741,7 @@ xrfPCAReactive <- reactive({
   output$downloadPlot2 <- downloadHandler(
   filename = function() { paste(paste(c(input$projectname, "_", "PCAPlot"), collapse=''), '.tiff',  sep='') },
   content = function(file) {
-      ggsave(file,plotInput2(), device="tiff", dpi=300, width=10, height=7)
+      ggsave(file,plotInput2(), device="tiff", dpi=300, width=12, height=7)
   }
   )
   
@@ -1104,7 +1104,7 @@ xrfPCAReactive <- reactive({
   
   filename = function() { paste(trendPlot(), '.tiff', sep='') },
   content = function(file) {
-      ggsave(file,plotInput3a(), device="tiff", dpi=300, width=10, height=7)
+      ggsave(file,plotInput3a(), device="tiff", dpi=300, width=12, height=7)
   }
   )
   
@@ -1112,6 +1112,18 @@ xrfPCAReactive <- reactive({
   
   plotInput3b <- reactive({
       spectra.line.table <- ageData()
+      
+      x.axis <- if (input$xaxistype=="Depth") {
+          paste("Depth (", input$lengthunit, ")", sep="", collapse="")
+      } else if (input$xaxistype=="Age" && input$timetype=="BP"){
+          paste("cal year BP")
+      } else if (input$xaxistype=="Age" && input$timetype=="BC") {
+          paste("cal year BC")
+      } else if (input$axistype=="Age" && input$timetype=="AD") {
+          paste("cal year AD")
+      } else if (input$axistype=="Age" && input$timetype=="BC/AD") {
+          paste("cal year BC/AD")
+      }
       
       
       spectra.line.table.norm <- data.frame(spectra.line.table, null)
@@ -1308,7 +1320,7 @@ xrfPCAReactive <- reactive({
   
   filename = function() { paste(trendPlot(), '.tiff', sep='') },
   content = function(file) {
-      ggsave(file,plotInput3b(), device="tiff", dpi=300, width=10, height=7)
+      ggsave(file,plotInput3b(), device="tiff", dpi=300, width=12, height=7)
   }
   )
   
@@ -1523,7 +1535,7 @@ xrfPCAReactive <- reactive({
   
   filename = function() { paste(trendPlot(), '.tiff', sep='') },
   content = function(file) {
-      ggsave(file,plotInput3c(), device="tiff", dpi=300, width=10, height=7)
+      ggsave(file,plotInput3c(), device="tiff", dpi=300, width=12, height=7)
   }
   )
   
@@ -1740,7 +1752,7 @@ xrfPCAReactive <- reactive({
   
   filename = function() { paste(trendPlot(), '.tiff', sep='') },
   content = function(file) {
-      ggsave(file,plotInput3d(), device="tiff", dpi=300, width=10, height=7)
+      ggsave(file,plotInput3d(), device="tiff", dpi=300, width=12, height=7)
   }
   )
   
@@ -1964,7 +1976,7 @@ xrfPCAReactive <- reactive({
   
   filename = function() { paste(trendPlot(), '.tiff', sep='') },
   content = function(file) {
-      ggsave(file,plotInput3e(), device="tiff", dpi=300, width=10, height=7)
+      ggsave(file,plotInput3e(), device="tiff", dpi=300, width=12, height=7)
   }
   )
   
@@ -2142,7 +2154,7 @@ xrfPCAReactive <- reactive({
   
   filename = function() { paste(ratioTerm(), '.tiff', sep='') },
   content = function(file) {
-      ggsave(file,plotInput4(), device="tiff", dpi=300, width=10, height=7)
+      ggsave(file,plotInput4(), device="tiff", dpi=300, width=12, height=7)
   }
   )
   
@@ -2460,7 +2472,7 @@ xrfPCAReactive <- reactive({
   
   filename = function() { paste(axisTerm(), '.tiff', sep='') },
   content = function(file) {
-      ggsave(file,plotInput5(), device="tiff", dpi=300, width=10, height=7)
+      ggsave(file,plotInput5(), device="tiff", dpi=300, width=12, height=7)
   }
   )
   
