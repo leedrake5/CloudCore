@@ -1,9 +1,7 @@
 library(DT)
 library(dplyr)
-library(shinyIncubator)
 library(shinythemes)
 library(shiny)
-library(shinysky)
 library(rhandsontable)
 
 
