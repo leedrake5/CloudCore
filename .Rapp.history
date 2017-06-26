@@ -1,111 +1,3 @@
-)
-age.subset
-age.subset <- subset(age.frame, !age.frame$Sigma==0)
-age.subset
-fe <- c(5, 6, 7, 8)#
-depth <-(1, 5, 10, 14)#
-#
-data.stuff <- data.frame(fe, depth)#
-colnames(data.stuff) <- c("Fe", "Depth")
-fe <- c(5, 6, 7, 8)#
-depth <-c(1, 5, 10, 14)#
-#
-data.stuff <- data.frame(fe, depth)#
-colnames(data.stuff) <- c("Fe", "Depth")
-data.stuff
-age.math <- Bchronology(ages=as.numeric(as.vector(age.frame[,2])), ageSds=as.numeric(as.vector(age.frame[,3])), positions=as.numeric(as.vector(age.frame[,1])), positionThickness=rep(0.5, length(age.model$Sigma)), calCurves=DF5[,4], burn=2000, predictPositions=as.numeric(as.vector(data.stuff$Depth)))
-age.math <- Bchronology(ages=as.numeric(as.vector(age.frame[,2])), ageSds=as.numeric(as.vector(age.frame[,3])), positions=as.numeric(as.vector(age.frame[,1])), positionThickness=rep(0.5, length(age.frame$Sigma)), calCurves=DF5[,4], burn=2000, predictPositions=as.numeric(as.vector(data.stuff$Depth)))
-age.math <- Bchronology(ages=as.numeric(as.vector(age.frame[,2])), ageSds=as.numeric(as.vector(age.frame[,3])), positions=as.numeric(as.vector(age.frame[,1])), positionThickness=rep(0.5, length(age.frame$Sigma)), calCurves=age.frame[,4], burn=2000, predictPositions=as.numeric(as.vector(data.stuff$Depth)))
-age.frame
-as.numeric(as.vector(age.frame[,2]))
-age.math <- Bchronology(ages=as.numeric(as.vector(age.subset[,2])), ageSds=as.numeric(as.vector(age.subset[,3])), positions=as.numeric(as.vector(age.subset[,1])), positionThickness=rep(0.5, length(age.subset $Sigma)), calCurves= age.subset[,4], burn=2000, predictPositions=as.numeric(as.vector(data.stuff$Depth)))
-age.results <- predict(age.math, newPositions= data.stuff$Depth, newPositionThicknesses=rep(0.0, length(data.stuff$Depth)))
-quartz()
-plot(age.math)
-head(age.results)
-age.results
-str(age.results)
-str(age.math)
-age.results <- predict.BchronologyRun(age.math, newPositions= data.stuff$Depth, newPositionThicknesses=rep(0.0, length(data.stuff$Depth)))
-library(Bchron)
-age.results <- predict.BchronologyRun(age.math, newPositions= data.stuff$Depth, newPositionThicknesses=rep(0.0, length(data.stuff$Depth)))
-age.results <- predict(age.math, newPositions= data.stuff$Depth, newPositionThicknesses=rep(0.0, length(data.stuff$Depth)))
-head(age.results)
-plot(age.results)
-x <- c(500, 1000, 2000, 3000)#
-y <- c(50, 100, 100, 100)#
-z <- c("intcal13","intcal13","intcal13","intcal13" )#
-d <- c(2, 8, 0, 0)#
-#
-fe <- c(5, 6, 7, 8)#
-depth <-c(1, 10, 15, 30)#
-#
-data.stuff <- data.frame(fe, depth)#
-colnames(data.stuff) <- c("Fe", "Depth")#
-#
-age.frame <- data.frame(d, x, y, z)#
-colnames(age.frame) <- c("Depth", "14C Age", "Sigma", "CalCurve")#
-#
-age.subset <- subset(age.frame, !age.frame$Sigma==0)#
-#
-      age.math <- Bchronology(ages=as.numeric(as.vector(age.subset[,2])), ageSds=as.numeric(as.vector(age.subset[,3])), positions=as.numeric(as.vector(age.subset[,1])), positionThickness=rep(0.5, length(age.subset $Sigma)), calCurves= age.subset[,4], burn=2000, predictPositions=as.numeric(as.vector(data.stuff$Depth)))#
-            age.results <- predict(age.math, newPositions= data.stuff$Depth, newPositionThicknesses=rep(0.0, length(data.stuff$Depth)))
-age.subset
-x <- c(500, 1000, 2000, 3000)#
-y <- c(50, 100, 100, 100)#
-z <- c("intcal13","intcal13","intcal13","intcal13" )#
-d <- c(2, 8, 0, 0)#
-#
-fe <- c(5, 6, 7, 8)#
-depth <-c(1, 10, 15, 30)#
-#
-data.stuff <- data.frame(fe, depth)#
-colnames(data.stuff) <- c("Fe", "Depth")#
-#
-age.frame <- data.frame(d, x, y, z)#
-colnames(age.frame) <- c("Depth", "14C Age", "Sigma", "CalCurve")#
-#
-age.subset <- subset(age.frame, !age.frame$Sigma==0)
-age.subset
-age.frame
-x
-age.frame <- data.frame(d, x, y, z)
-x <- c(500, 1000, 2000, 3000)#
-y <- c(50, 100, 100, 100)#
-z <- c("intcal13","intcal13","intcal13","intcal13" )#
-d <- c(2, 8, 20, 40)#
-#
-fe <- c(5, 6, 7, 8)#
-depth <-c(1, 10, 15, 30)#
-#
-data.stuff <- data.frame(fe, depth)#
-colnames(data.stuff) <- c("Fe", "Depth")#
-#
-age.frame <- data.frame(d, x, y, z)#
-colnames(age.frame) <- c("Depth", "14C Age", "Sigma", "CalCurve")#
-#
-age.subset <- subset(age.frame, !age.frame$Sigma==0)#
-#
-      age.math <- Bchronology(ages=as.numeric(as.vector(age.subset[,2])), ageSds=as.numeric(as.vector(age.subset[,3])), positions=as.numeric(as.vector(age.subset[,1])), positionThickness=rep(0.5, length(age.subset $Sigma)), calCurves= age.subset[,4], burn=2000, predictPositions=as.numeric(as.vector(data.stuff$Depth)))#
-            age.results <- predict(age.math, newPositions= data.stuff$Depth, newPositionThicknesses=rep(0.0, length(data.stuff$Depth)))
-quartz()
-plot(age.math)
-?plot
-head(age.results)
-summary(age.results)
-fe <- c(5, 6, 7, 8,5, 6, 7, 8,5, 6, 7, 8,5, 6, 7, 8)
-length(few)
-length(fe)
-depth <-seq(1, 30, 2)
-length(depth)
-fe <- c(5, 6, 7, 8,5, 6, 7, 8,5, 6, 7, 8,5, 6, 7)#
-depth <-seq(1, 30, 2)#
-#
-data.stuff <- data.frame(fe, depth)#
-colnames(data.stuff) <- c("Fe", "Depth")
-age.results <- predict(age.math, newPositions= data.stuff$Depth, newPositionThicknesses=rep(0.0, length(data.stuff$Depth)))
-head(age.results)
-median(age.results)
 age.vector <- apply(age.results, 1, median)
 age.vector
 age.vector <- apply(age.results, 2, median)
@@ -372,7 +264,155 @@ runApp("~/GitHub/Cezanne")
 runApp("~/GitHub/Cezanne")
 ?pmax
 runApp("~/GitHub/Cezanne")
+runApp("~/GitHub/CloudCal")
 library(shiny)
+runApp("~/GitHub/CloudCal")
+runApp("~/GitHub/CloudCore")
+runApp("~/GitHub/CloudCore")
+runApp("~/GitHub/CloudCore")
+runApp("~/GitHub/CloudCore")
+test <- read.csv(file="~/Dropbox/Documents/University of Utah/ageresults.csv")
+head(test)
+bollingalerods <- subset(test $Depth, mydata$X50.<14700)
+bollingalerods <- subset(test$Depth, test$X50.<14700)
+bollingalerods <- subset(bollingalerods, bollingalerods>12900)
+head(bollingalerods)
+bollingalerods
+bollingalerods <- subset(test$Depth, test$X50.<14700)
+head(bollingalerods)
+bollingalerods <- subset(test$X50., test$X50.<14700 && test$X50. < 12900)
+bollingalerods
+bollingalerods <- subset(test$X50., test$X50.<14700 & test$X50. < 12900)
+bollingalerods
+bollingalerods <- subset(test$X50., test$X50.<14700 & test$X50. > 12900)
+bollingalerods
+bollingalerods <- subset(test$X50., test$X50. < 14700 & test$X50. > 12900)
+bollingalerods
+runApp("~/GitHub/CloudCore")
+runApp("~/GitHub/CloudCore")
+runApp("~/GitHub/CloudCore")
+runApp("~/GitHub/CloudCore")
+bollingalerods <- subset(test$X50., test$X50.<=14700 & test$X50. >= 12900)
+bollingalerods
+bollingalerods
+runApp("~/GitHub/CloudCore")
+runApp("~/GitHub/CloudCore")
+test <- read.csv(file="~/Desktop/Analysis of RSP15B YF 2/Sheet2-Table 1.csv")
+head(test)
+test <- read.csv(file="~/Desktop/Analysis of RSP15B YF 2/Sheet1-Table 1.csv")
+head(test)
+runApp("~/GitHub/CloudCore")
+test <- read.csv(file="~/Desktop/agetable.csv")
+head(test)
+spectra.line.table.age.unconstrained <- test
+head(spectra.line.table.age.unconstrained)
+lateholocene <- subset(spectra.line.table.age.unconstrained$Age, spectra.line.table.age.unconstrained$Age <= 5000 & spectra.line.table.age.unconstrained$Age >= -1000)#
+      altithermal <- subset(spectra.line.table.age.unconstrained$Age, spectra.line.table.age.unconstrained$Age <= 9000 & spectra.line.table.age.unconstrained$Age >= 5001)#
+      holocenetransition <- subset(spectra.line.table.age.unconstrained$Age, spectra.line.table.age.unconstrained$Age <= 11700 & spectra.line.table.age.unconstrained$Age >= 9001)#
+      youngerdryas <- subset(spectra.line.table.age.unconstrained$Age, spectra.line.table.age.unconstrained$Age <= 12900 & spectra.line.table.age.unconstrained$Age >= 11701)#
+      bollingalerod <- subset(spectra.line.table.age.unconstrained$Age, spectra.line.table.age.unconstrained$Age <= 14700 & spectra.line.table.age.unconstrained$Age >= 12901)#
+      deglaciation <- subset(spectra.line.table.age.unconstrained$Age, spectra.line.table.age.unconstrained$Age <= 19000 & spectra.line.table.age.unconstrained$Age >= 14701)#
+      lastglacialmax <- subset(spectra.line.table.age.unconstrained$Age, spectra.line.table.age.unconstrained$Age <= 25000, spectra.line.table.age.unconstrained$Age >= 19001)#
+      glacial <- subset(spectra.line.table.age.unconstrained$Age, spectra.line.table.age.unconstrained$Age <= 120000, spectra.line.table.age.unconstrained$Age >= 25001)
+glacial
+lateholocene <- subset(spectra.line.table.age.unconstrained$Age, spectra.line.table.age.unconstrained$Age <= 5000 & spectra.line.table.age.unconstrained$Age >= -1000)#
+      altithermal <- subset(spectra.line.table.age.unconstrained$Age, spectra.line.table.age.unconstrained$Age <= 9000 & spectra.line.table.age.unconstrained$Age >= 5001)#
+      holocenetransition <- subset(spectra.line.table.age.unconstrained$Age, spectra.line.table.age.unconstrained$Age <= 11700 & spectra.line.table.age.unconstrained$Age >= 9001)#
+      youngerdryas <- subset(spectra.line.table.age.unconstrained$Age, spectra.line.table.age.unconstrained$Age <= 12900 & spectra.line.table.age.unconstrained$Age >= 11701)#
+      bollingalerod <- subset(spectra.line.table.age.unconstrained$Age, spectra.line.table.age.unconstrained$Age <= 14700 & spectra.line.table.age.unconstrained$Age >= 12901)#
+      deglaciation <- subset(spectra.line.table.age.unconstrained$Age, spectra.line.table.age.unconstrained$Age <= 19000 & spectra.line.table.age.unconstrained$Age >= 14701)#
+      lastglacialmax <- subset(spectra.line.table.age.unconstrained$Age, spectra.line.table.age.unconstrained$Age <= 25000, spectra.line.table.age.unconstrained$Age >= 19001)#
+      glacial <- subset(spectra.line.table.age.unconstrained$Age, spectra.line.table.age.unconstrained$Age <= 120000, spectra.line.table.age.unconstrained$Age >= 25001)
+lateholocene <- subset(spectra.line.table.age.unconstrained$Age, spectra.line.table.age.unconstrained$Age <= 5000 & spectra.line.table.age.unconstrained$Age >= -1000)#
+      altithermal <- subset(spectra.line.table.age.unconstrained$Age, spectra.line.table.age.unconstrained$Age <= 9000 & spectra.line.table.age.unconstrained$Age >= 5001)#
+      holocenetransition <- subset(spectra.line.table.age.unconstrained$Age, spectra.line.table.age.unconstrained$Age <= 11700 & spectra.line.table.age.unconstrained$Age >= 9001)#
+      youngerdryas <- subset(spectra.line.table.age.unconstrained$Age, spectra.line.table.age.unconstrained$Age <= 12900 & spectra.line.table.age.unconstrained$Age >= 11701)#
+      bollingalerod <- subset(spectra.line.table.age.unconstrained$Age, spectra.line.table.age.unconstrained$Age <= 14700 & spectra.line.table.age.unconstrained$Age >= 12901)#
+      deglaciation <- subset(spectra.line.table.age.unconstrained$Age, spectra.line.table.age.unconstrained$Age <= 19000 & spectra.line.table.age.unconstrained$Age >= 14701)#
+      lastglacialmax <- subset(spectra.line.table.age.unconstrained$Age, spectra.line.table.age.unconstrained$Age <= 25000 & spectra.line.table.age.unconstrained$Age >= 19001)#
+      glacial <- subset(spectra.line.table.age.unconstrained$Age & spectra.line.table.age.unconstrained$Age <= 120000, spectra.line.table.age.unconstrained$Age >= 25001)
+head(glacial)
+length(glacial)
+length(laclimateperiods <- c(#
+      rep("1. Late Holocene", length(lateholocene)),#
+      rep("2. Altithermal", length(altithermal)),#
+      rep("3. Holocene Transition", length(holocenetransition)),#
+      rep("4. Younger Dryas", length(youngerdryas)),#
+      rep("5. Bølling-Allerød", length(bollingalerod)),#
+      rep("6. Deglaciation", length(deglaciation)),#
+      rep("7. Last Glacial Maximum", length(lastglacialmax)),#
+      rep("8. Glacial", length(glacial))#
+      )#
+)
+climateperiods <- c(#
+      rep("1. Late Holocene", length(lateholocene)),#
+      rep("2. Altithermal", length(altithermal)),#
+      rep("3. Holocene Transition", length(holocenetransition)),#
+      rep("4. Younger Dryas", length(youngerdryas)),#
+      rep("5. Bølling-Allerød", length(bollingalerod)),#
+      rep("6. Deglaciation", length(deglaciation)),#
+      rep("7. Last Glacial Maximum", length(lastglacialmax)),#
+      rep("8. Glacial", length(glacial))#
+      )
+length(climateperiods)
+length(spectra.line.table.age.unconstrained$Age)
+min(spectra.line.table.age.unconstrained$Age)
+max(spectra.line.table.age.unconstrained$Age)
+head(altithermal)
+head(lateholocene)
+tail(glacial)
+lateholocene <- subset(spectra.line.table.age.unconstrained$Age, spectra.line.table.age.unconstrained$Age <= 5000 & spectra.line.table.age.unconstrained$Age >= -1000)#
+      altithermal <- subset(spectra.line.table.age.unconstrained$Age, spectra.line.table.age.unconstrained$Age <= 9000 & spectra.line.table.age.unconstrained$Age >= 5001)#
+      holocenetransition <- subset(spectra.line.table.age.unconstrained$Age, spectra.line.table.age.unconstrained$Age <= 11700 & spectra.line.table.age.unconstrained$Age >= 9001)#
+      youngerdryas <- subset(spectra.line.table.age.unconstrained$Age, spectra.line.table.age.unconstrained$Age <= 12900 & spectra.line.table.age.unconstrained$Age >= 11701)#
+      bollingalerod <- subset(spectra.line.table.age.unconstrained$Age, spectra.line.table.age.unconstrained$Age <= 14700 & spectra.line.table.age.unconstrained$Age >= 12901)#
+      deglaciation <- subset(spectra.line.table.age.unconstrained$Age, spectra.line.table.age.unconstrained$Age <= 19000 & spectra.line.table.age.unconstrained$Age >= 14701)#
+      lastglacialmax <- subset(spectra.line.table.age.unconstrained$Age, spectra.line.table.age.unconstrained$Age <= 25000 & spectra.line.table.age.unconstrained$Age >= 19001)#
+      glacial <- subset(spectra.line.table.age.unconstrained$Age, spectra.line.table.age.unconstrained$Age <= 120000 & spectra.line.table.age.unconstrained$Age >= 25001)#
+      climateperiods <- c(#
+      rep("1. Late Holocene", length(lateholocene)),#
+      rep("2. Altithermal", length(altithermal)),#
+      rep("3. Holocene Transition", length(holocenetransition)),#
+      rep("4. Younger Dryas", length(youngerdryas)),#
+      rep("5. Bølling-Allerød", length(bollingalerod)),#
+      rep("6. Deglaciation", length(deglaciation)),#
+      rep("7. Last Glacial Maximum", length(lastglacialmax)),#
+      rep("8. Glacial", length(glacial))#
+      )
+length(climateperiods)
+tail(glacial)
+tail(spectra.line.table.age.unconstrained$Age)
+test <- c(lateholocene, altithermal, holocenetransition, youngerdryas, bollingalerod, deglaciation, lastglacialmax, glacial)
+setdiff(test, spectra.line.table.age.unconstrained$Age)
+length(test)
+length(spectra.line.table.age.unconstrained$Age)
+another <- data.frame(spectra.line.table.age.unconstrained$Age, test)
+spectra.line.table.age.unconstrained$Age[!(spectra.line.table.age.unconstrained$Age %in% test)
+)
+spectra.line.table.age.unconstrained$Age[!(spectra.line.table.age.unconstrained$Age %in% test)]
+lateholocene <- subset(spectra.line.table.age.unconstrained$Age, spectra.line.table.age.unconstrained$Age <= 5000 & spectra.line.table.age.unconstrained$Age > -1000)#
+      altithermal <- subset(spectra.line.table.age.unconstrained$Age, spectra.line.table.age.unconstrained$Age <= 9000 & spectra.line.table.age.unconstrained$Age > 5000)#
+      holocenetransition <- subset(spectra.line.table.age.unconstrained$Age, spectra.line.table.age.unconstrained$Age <= 11700 & spectra.line.table.age.unconstrained$Age > 9000)#
+      youngerdryas <- subset(spectra.line.table.age.unconstrained$Age, spectra.line.table.age.unconstrained$Age <= 12900 & spectra.line.table.age.unconstrained$Age > 11700)#
+      bollingalerod <- subset(spectra.line.table.age.unconstrained$Age, spectra.line.table.age.unconstrained$Age <= 14700 & spectra.line.table.age.unconstrained$Age > 12900)#
+      deglaciation <- subset(spectra.line.table.age.unconstrained$Age, spectra.line.table.age.unconstrained$Age <= 19000 & spectra.line.table.age.unconstrained$Age > 14700)#
+      lastglacialmax <- subset(spectra.line.table.age.unconstrained$Age, spectra.line.table.age.unconstrained$Age <= 25000 & spectra.line.table.age.unconstrained$Age > 19000)#
+      glacial <- subset(spectra.line.table.age.unconstrained$Age, spectra.line.table.age.unconstrained$Age <= 120000 & spectra.line.table.age.unconstrained$Age > 25000)
+climateperiods <- c(#
+      rep("1. Late Holocene", length(lateholocene)),#
+      rep("2. Altithermal", length(altithermal)),#
+      rep("3. Holocene Transition", length(holocenetransition)),#
+      rep("4. Younger Dryas", length(youngerdryas)),#
+      rep("5. Bølling-Allerød", length(bollingalerod)),#
+      rep("6. Deglaciation", length(deglaciation)),#
+      rep("7. Last Glacial Maximum", length(lastglacialmax)),#
+      rep("8. Glacial", length(glacial))#
+      )
+length(climateperiods)
+runApp("~/GitHub/CloudCore")
+runApp("~/GitHub/CloudCore")
+runApp("~/GitHub/CloudCore")
+runApp("~/GitHub/CloudCore")
 runApp("~/GitHub/CloudCore")
 runApp("~/GitHub/CloudCore")
 runApp("~/GitHub/CloudCore")

@@ -471,8 +471,8 @@ xrfPCAReactive <- reactive({
       
       quality.table <- values[["DF"]]
       
-      colour.table <- data.frame(xrf.k$Cluster, quality.table)
-      colnames(colour.table) <- c("Cluster", names(quality.table))
+      colour.table <- data.frame(xrf.k, quality.table)
+      colnames(colour.table) <- c(names(xrf.k), names(quality.table))
       
       
       
@@ -483,6 +483,8 @@ xrfPCAReactive <- reactive({
       spectra.line.table$Cluster <- xrf.k$Cluster
       spectra.line.table$Qualitative <- quality.table$Qualitative
       spectra.line.table$Depth <- as.numeric(as.vector(quality.table$Depth))
+      spectra.line.table$PC1 <- xrf.k$PC1
+      spectra.line.table$PC2 <- xrf.k$PC2
       spectra.line.table
   })
   
@@ -491,14 +493,13 @@ xrfPCAReactive <- reactive({
       
     
       
-      spectra.line.table <- dataProcessed()
 
       
       DF3 <- values[["DF2"]]
       DF4 <- subset(DF3, !DF3$Sigma==0)
       DF5 <- as.data.frame(DF4)
       
-      age.math <- Bchronology(ages=as.numeric(as.vector(DF5[,2])), ageSds=as.numeric(as.vector(DF5[,3])), positions=as.numeric(as.vector(DF5[,1])), positionThickness=rep(0.5, length(DF5$Sigma)), calCurves=DF5[,4], burn=2000, predictPositions=as.numeric(as.vector(spectra.line.table$Depth)), jitterPositions=TRUE)
+      age.math <- Bchronology(ages=as.numeric(as.vector(DF5[,2])), ageSds=as.numeric(as.vector(DF5[,3])), positions=as.numeric(as.vector(DF5[,1])), positionThickness=rep(0.5, length(DF5$Sigma)), calCurves=DF5[,4], burn=2000, jitterPositions=TRUE)
       
       age.math
 
@@ -584,30 +585,85 @@ xrfPCAReactive <- reactive({
   
   
   
+  
+  ageData <- reactive({
+      
+      c14ages <- values[["DF2"]]
+      c14ages <- subset(c14ages, !c14ages$Sigma==0)
+      c14ages <- as.data.frame(c14ages)
+      
+      c14min <- min(c14ages$Depth)
+      c14max <- max(c14ages$Depth)
+      
+      
+      spectra.line.table.age.unconstrained <- agePredict()
+      
+      
+      
+      lateholocene <- subset(spectra.line.table.age.unconstrained$Age, spectra.line.table.age.unconstrained$Age <= 5000 & spectra.line.table.age.unconstrained$Age > -1000)
+      
+      altithermal <- subset(spectra.line.table.age.unconstrained$Age, spectra.line.table.age.unconstrained$Age <= 9000 & spectra.line.table.age.unconstrained$Age > 5000)
+      
+      holocenetransition <- subset(spectra.line.table.age.unconstrained$Age, spectra.line.table.age.unconstrained$Age <= 11700 & spectra.line.table.age.unconstrained$Age > 9000)
+      
+      youngerdryas <- subset(spectra.line.table.age.unconstrained$Age, spectra.line.table.age.unconstrained$Age <= 12900 & spectra.line.table.age.unconstrained$Age > 11700)
+      
+      bollingalerod <- subset(spectra.line.table.age.unconstrained$Age, spectra.line.table.age.unconstrained$Age <= 14700 & spectra.line.table.age.unconstrained$Age > 12900)
+      
+      deglaciation <- subset(spectra.line.table.age.unconstrained$Age, spectra.line.table.age.unconstrained$Age <= 19000 & spectra.line.table.age.unconstrained$Age > 14700)
+      
+      lastglacialmax <- subset(spectra.line.table.age.unconstrained$Age, spectra.line.table.age.unconstrained$Age <= 25000 & spectra.line.table.age.unconstrained$Age > 19000)
+      
+      glacial <- subset(spectra.line.table.age.unconstrained$Age, spectra.line.table.age.unconstrained$Age <= 120000 & spectra.line.table.age.unconstrained$Age > 25000)
+      
+      climateperiods <- c(
+      rep("1. Late Holocene", length(lateholocene)),
+      rep("2. Altithermal", length(altithermal)),
+      rep("3. Holocene Transition", length(holocenetransition)),
+      rep("4. Younger Dryas", length(youngerdryas)),
+      rep("5. Bølling-Allerød", length(bollingalerod)),
+      rep("6. Deglaciation", length(deglaciation)),
+      rep("7. Last Glacial Maximum", length(lastglacialmax)),
+      rep("8. Glacial", length(glacial))
+      )
+      
+      spectra.line.table.age.unconstrained$Climate <- climateperiods
+      
+      spectra.line.table.age.constrained <- subset(spectra.line.table.age.unconstrained, spectra.line.table.age.unconstrained$Depth > c14min)
+      spectra.line.table.age.constrained <- subset(spectra.line.table.age.constrained, spectra.line.table.age.constrained$Depth < c14max)
+      
+      spectra.line.table.age <- if(input$constrainage==TRUE) {
+          spectra.line.table.age.constrained
+      } else if(input$constrainage==FALSE) {
+          spectra.line.table.age.unconstrained
+      }
+      
+      spectra.line.table.age$Age <- spectra.line.table.age$Age * -1
+      
+      
+      spectra.line.table.age
+      
+      
+  })
+  
+  
+
+  
+  
+  
   #####PCA Analysis
   
   plotInput2 <- reactive({
       
-      xrf.pca.results <- xrfKReactive()
       
-      xrf.k <- xrfKReactive()
-      
-      quality.table <- values[["DF"]]
-      
-      colour.table <- data.frame(xrf.k$Cluster, quality.table)
-      colnames(colour.table) <- c("Cluster", names(quality.table))
+      spectra.line.table <- ageData()
       
       
       
       
-      unique.spec <- seq(1, length(colour.table$Spectrum), 1)
+      unique.spec <- seq(1, length(spectra.line.table$Spectrum), 1)
       null <- rep(1, length(unique.spec))
       
-      spectra.line.table$Cluster <- xrf.k$Cluster
-      spectra.line.table$PC1 <- xrf.k$PC1
-      spectra.line.table$PC2 <- xrf.k$PC2
-      spectra.line.table$Qualitative <- quality.table$Qualitative
-      spectra.line.table$Depth <- quality.table$Depth
       
       basic <- ggplot(data= spectra.line.table) +
       geom_point(aes(PC1, PC2), size = input$spotsize) +
@@ -658,6 +714,41 @@ xrfPCAReactive <- reactive({
       guides(linetype=FALSE) +
       scale_shape_manual("Cluster", values=1:nlevels(as.factor(spectra.line.table$Cluster))) +
       scale_colour_discrete("Cluster")
+      
+      clim.regular <- ggplot(data= spectra.line.table) +
+      geom_point(aes(PC1, PC2, colour=as.factor(Climate), shape=as.factor(Climate)), size = input$spotsize+1) +
+      geom_point(aes(PC1, PC2), colour="grey30", size=input$spotsize-2) +
+      scale_x_continuous("Principle Component 1") +
+      scale_y_continuous("Principle Component 2") +
+      theme_light() +
+      theme(axis.text.x = element_text(size=15)) +
+      theme(axis.text.y = element_text(size=15)) +
+      theme(axis.title.x = element_text(size=15)) +
+      theme(axis.title.y = element_text(size=15, angle=90)) +
+      theme(plot.title=element_text(size=20)) +
+      theme(legend.title=element_text(size=15)) +
+      theme(legend.text=element_text(size=15)) +
+      scale_shape_manual("Climatic Period", values=1:nlevels(as.factor(spectra.line.table$Climate))) +
+      scale_colour_discrete("Climatic Period")
+      
+      
+      clim.ellipse <- ggplot(data= spectra.line.table)+
+      geom_point(aes(PC1, PC2, colour=as.factor(Climate), shape=as.factor(Climate)), size = input$spotsize+1) +
+      geom_point(aes(PC1, PC2), colour="grey30", size=input$spotsize-2) +
+      scale_x_continuous("Principle Component 1") +
+      scale_y_continuous("Principle Component 2") +
+      theme_light() +
+      stat_ellipse(aes(PC1, PC2, colour=as.factor(Climate), linetype=as.factor(Climate))) +
+      theme(axis.text.x = element_text(size=15)) +
+      theme(axis.text.y = element_text(size=15)) +
+      theme(axis.title.x = element_text(size=15)) +
+      theme(axis.title.y = element_text(size=15, angle=90)) +
+      theme(plot.title=element_text(size=20)) +
+      theme(legend.title=element_text(size=15)) +
+      theme(legend.text=element_text(size=15)) +
+      guides(linetype=FALSE) +
+      scale_shape_manual("Climatic Period", values=1:nlevels(as.factor(spectra.line.table$Climate))) +
+      scale_colour_discrete("Climatic Period")
       
       
       qual.regular <- ggplot(data= spectra.line.table) +
@@ -717,6 +808,10 @@ xrfPCAReactive <- reactive({
           ellipse
       } else if (input$elipseplot1 == FALSE && input$pcacolour == "Cluster") {
           regular
+      } else if (input$elipseplot1 == TRUE && input$pcacolour == "Climate") {
+          clim.ellipse
+      } else if (input$elipseplot1 == FALSE && input$pcacolour == "Climate") {
+          clim.regular
       } else if (input$elipseplot1 == TRUE && input$pcacolour == "Qualitative") {
           qual.ellipse
       } else if (input$elipseplot1 == FALSE && input$pcacolour == "Qualitative") {
@@ -797,12 +892,12 @@ xrfPCAReactive <- reactive({
   
   outApp <- reactive({
       
-      xrf.k <- xrfKReactive()
+      xrf.k <- ageData()
       
       quality.table <- values[["DF"]]
       
-      colour.table <- data.frame(xrf.k$Cluster, quality.table)
-      colnames(colour.table) <- c("Cluster", names(quality.table))
+      colour.table <- data.frame(xrf.k$Cluster, xrf.k$Climate, quality.table)
+      colnames(colour.table) <- c("Cluster", "Climate", names(quality.table))
       
       names(colour.table)
       
@@ -813,68 +908,6 @@ xrfPCAReactive <- reactive({
   
   output$inApp <- renderUI({
       selectInput(inputId = "app", label = h4("Application"), choices =  outApp())
-  })
-  
-  
-  
-  ageData <- reactive({
-      
-      c14ages <- values[["DF2"]]
-      c14ages <- subset(c14ages, !c14ages$Sigma==0)
-      c14ages <- as.data.frame(c14ages)
-      
-      c14min <- min(c14ages$Depth)
-      c14max <- max(c14ages$Depth)
-    
-      
-      spectra.line.table.age.unconstrained <- agePredict()
-      
-      
-      
-      lateholocene <- subset(spectra.line.table.age.unconstrained$Age, spectra.line.table.age.unconstrained$Age <= 5000 & spectra.line.table.age.unconstrained$Age > -1000)
-      
-      altithermal <- subset(spectra.line.table.age.unconstrained$Age, spectra.line.table.age.unconstrained$Age <= 9000 & spectra.line.table.age.unconstrained$Age > 5000)
-      
-      holocenetransition <- subset(spectra.line.table.age.unconstrained$Age, spectra.line.table.age.unconstrained$Age <= 11700 & spectra.line.table.age.unconstrained$Age > 9000)
-      
-      youngerdryas <- subset(spectra.line.table.age.unconstrained$Age, spectra.line.table.age.unconstrained$Age <= 12900 & spectra.line.table.age.unconstrained$Age > 11700)
-      
-      bollingalerod <- subset(spectra.line.table.age.unconstrained$Age, spectra.line.table.age.unconstrained$Age <= 14700 & spectra.line.table.age.unconstrained$Age > 12900)
-      
-      deglaciation <- subset(spectra.line.table.age.unconstrained$Age, spectra.line.table.age.unconstrained$Age <= 19000 & spectra.line.table.age.unconstrained$Age > 14700)
-      
-      lastglacialmax <- subset(spectra.line.table.age.unconstrained$Age, spectra.line.table.age.unconstrained$Age <= 25000 & spectra.line.table.age.unconstrained$Age > 19000)
-      
-      glacial <- subset(spectra.line.table.age.unconstrained$Age, spectra.line.table.age.unconstrained$Age <= 120000 & spectra.line.table.age.unconstrained$Age > 25000)
-      
-      climateperiods <- c(
-      rep("1. Late Holocene", length(lateholocene)),
-      rep("2. Altithermal", length(altithermal)),
-      rep("3. Holocene Transition", length(holocenetransition)),
-      rep("4. Younger Dryas", length(youngerdryas)),
-      rep("5. Bølling-Allerød", length(bollingalerod)),
-      rep("6. Deglaciation", length(deglaciation)),
-      rep("7. Last Glacial Maximum", length(lastglacialmax)),
-      rep("8. Glacial", length(glacial))
-      )
-      
-      spectra.line.table.age.unconstrained$Climate <- climateperiods
-      
-      spectra.line.table.age.constrained <- subset(spectra.line.table.age.unconstrained, spectra.line.table.age.unconstrained$Depth > c14min)
-      spectra.line.table.age.constrained <- subset(spectra.line.table.age.constrained, spectra.line.table.age.constrained$Depth < c14max)
-      
-      spectra.line.table.age <- if(input$constrainage==TRUE) {
-          spectra.line.table.age.constrained
-      } else if(input$constrainage==FALSE) {
-          spectra.line.table.age.unconstrained
-      }
-      
-      spectra.line.table.age$Age <- spectra.line.table.age$Age * -1
-
-
-      spectra.line.table.age
-
-
   })
   
   
@@ -1984,23 +2017,11 @@ xrfPCAReactive <- reactive({
   plotInput4 <- reactive({
       
       
-      xrf.k <- xrfKReactive()
+      spectra.line.table <- ageData()
       
-      quality.table <- values[["DF"]]
-      
-      colour.table <- data.frame(xrf.k$Cluster, quality.table)
-      colnames(colour.table) <- c("Cluster", names(quality.table))
-      
-      
-      
-      
-      unique.spec <- seq(1, length(colour.table$Spectrum), 1)
+      unique.spec <- seq(1, length(spectra.line.table$Spectrum), 1)
       null <- rep(1, length(unique.spec))
-      
-      spectra.line.table$Cluster <- xrf.k$Cluster
-      spectra.line.table$Qualitative <- quality.table$Qualitative
-      spectra.line.table$Depth <- quality.table$Depth
-      
+     
       
       first.ratio <-spectra.line.table[input$elementratioa]
       second.ratio <- spectra.line.table[input$elementratiob]
@@ -2013,8 +2034,8 @@ xrfPCAReactive <- reactive({
       fourth.ratio.norm <- fourth.ratio/sum(fourth.ratio)
       
       
-      ratio.frame <- data.frame(first.ratio, second.ratio, third.ratio, fourth.ratio, spectra.line.table$Cluster, spectra.line.table$Qualitative, spectra.line.table$Depth)
-      colnames(ratio.frame) <- gsub("[.]", "", c(substr(input$elementratioa, 1, 2), substr(input$elementratiob, 1, 2), substr(input$elementratioc, 1, 2), substr(input$elementratiod, 1, 2), "Cluster", "Qualitative", "Depth"))
+      ratio.frame <- data.frame(first.ratio, second.ratio, third.ratio, fourth.ratio, spectra.line.table$Cluster, spectra.line.table$Qualitative, spectra.line.table$Depth, spectra.line.table$Climate)
+      colnames(ratio.frame) <- gsub("[.]", "", c(substr(input$elementratioa, 1, 2), substr(input$elementratiob, 1, 2), substr(input$elementratioc, 1, 2), substr(input$elementratiod, 1, 2), "Cluster", "Qualitative", "Depth", "Climate"))
       
       
       ratio.names.x <- c(names(ratio.frame[1]), "/", names(ratio.frame[2]))
@@ -2065,6 +2086,37 @@ xrfPCAReactive <- reactive({
       theme(plot.title=element_text(size=20)) +
       theme(legend.title=element_text(size=15)) +
       theme(legend.text=element_text(size=15))
+      
+      
+      climate.ratio.plot <- qplot(ratio.frame[,1]/ratio.frame[,2], ratio.frame[,3]/ratio.frame[,4], xlab = ratio.names.x, ylab = ratio.names.y ) +
+      geom_point(aes(colour=as.factor(ratio.frame$Climate), shape=as.factor(ratio.frame$Climate)), size=input$spotsize2+1) +
+      geom_point(colour="grey30", size=input$spotsize2-2) +
+      scale_shape_manual("Climatic Period", values=1:nlevels(ratio.frame$Climate)) +
+      scale_colour_discrete("Climatic Period") +
+      theme_light() +
+      theme(axis.text.x = element_text(size=15)) +
+      theme(axis.text.y = element_text(size=15)) +
+      theme(axis.title.x = element_text(size=15)) +
+      theme(axis.title.y = element_text(size=15, angle=90)) +
+      theme(plot.title=element_text(size=20)) +
+      theme(legend.title=element_text(size=15)) +
+      theme(legend.text=element_text(size=15))
+      
+      climate.ratio.ellipse.plot <- qplot(ratio.frame[,1]/ratio.frame[,2], ratio.frame[,3]/ratio.frame[,4], xlab = ratio.names.x, ylab = ratio.names.y ) +
+      stat_ellipse(aes(ratio.frame[,1]/ratio.frame[,2], ratio.frame[,3]/ratio.frame[,4], colour=as.factor(ratio.frame$Climate))) +
+      geom_point(aes(colour=as.factor(ratio.frame$Climate), shape=as.factor(ratio.frame$Climate)), size=input$spotsize2+1) +
+      geom_point(colour="grey30", size=input$spotsize2-2) +
+      scale_shape_manual("Climatic Period", values=1:nlevels(ratio.frame$Climate)) +
+      scale_colour_discrete("Climatic Period") +
+      theme_light() +
+      theme(axis.text.x = element_text(size=15)) +
+      theme(axis.text.y = element_text(size=15)) +
+      theme(axis.title.x = element_text(size=15)) +
+      theme(axis.title.y = element_text(size=15, angle=90)) +
+      theme(plot.title=element_text(size=20)) +
+      theme(legend.title=element_text(size=15)) +
+      theme(legend.text=element_text(size=15))
+
       
       qualitative.ratio.plot <- qplot(ratio.frame[,1]/ratio.frame[,2], ratio.frame[,3]/ratio.frame[,4], xlab = ratio.names.x, ylab = ratio.names.y ) +
       geom_point(aes(colour=as.factor(ratio.frame$Qualitative), shape=as.factor(ratio.frame$Qualitative)), size=input$spotsize2+1) +
@@ -2123,6 +2175,10 @@ xrfPCAReactive <- reactive({
           cluster.ratio.plot
       } else if (input$ratiocolour == "Cluster" && input$elipseplot2==TRUE) {
           cluster.ratio.ellipse.plot
+      } else if (input$ratiocolour == "Climate" && input$elipseplot2==FALSE) {
+          climate.ratio.plot
+      } else if (input$ratiocolour == "Climate" && input$elipseplot2==TRUE ) {
+          climate.ratio.ellipse.plot
       } else if (input$ratiocolour == "Qualitative" && input$elipseplot2==FALSE) {
           qualitative.ratio.plot
       } else if (input$ratiocolour == "Qualitative" && input$elipseplot2==TRUE ) {
@@ -2166,23 +2222,12 @@ xrfPCAReactive <- reactive({
   plotInput5 <- reactive({
       
       
-      xrf.k <- xrfKReactive()
-      
-      quality.table <- values[["DF"]]
-      
-      colour.table <- data.frame(xrf.k$Cluster, quality.table)
-      colnames(colour.table) <- c("Cluster", names(quality.table))
+      spectra.line.table <- ageData()
+
       
       
-      
-      
-      unique.spec <- seq(1, length(colour.table$Spectrum), 1)
+      unique.spec <- seq(1, length(spectra.line.table$Spectrum), 1)
       null <- rep(1, length(unique.spec))
-      
-      spectra.line.table$Cluster <- xrf.k$Cluster
-      spectra.line.table$Qualitative <- quality.table$Qualitative
-      spectra.line.table$Depth <- quality.table$Depth
-      
       
       first.axis <- spectra.line.table[input$axisa]
       second.axis <- spectra.line.table[input$axisb]
@@ -2192,11 +2237,11 @@ xrfPCAReactive <- reactive({
       second.axis.norm <- second.axis/sum(second.axis)
       third.axis.norm <- third.axis/sum(third.axis)
       
-      axis.frame <- data.frame(first.axis, second.axis, third.axis, spectra.line.table$Cluster, spectra.line.table$Qualitative, spectra.line.table$Depth)
-      colnames(axis.frame) <- gsub("[.]", "", c(substr(input$axisa, 1, 2), substr(input$axisb, 1, 2), substr(input$axisc, 1, 2), "Cluster", "Qualitative", "Depth"))
+      axis.frame <- data.frame(first.axis, second.axis, third.axis, spectra.line.table$Cluster, spectra.line.table$Qualitative, spectra.line.table$Depth, spectra.line.table$Climate)
+      colnames(axis.frame) <- gsub("[.]", "", c(substr(input$axisa, 1, 2), substr(input$axisb, 1, 2), substr(input$axisc, 1, 2), "Cluster", "Qualitative", "Depth", "Climate"))
       
-      axis.frame.norm <- data.frame(first.axis.norm, second.axis.norm, third.axis.norm, spectra.line.table$Cluster, spectra.line.table$Qualitative, spectra.line.table$Depth)
-      colnames(axis.frame.norm) <- gsub("[.]", "", c(substr(input$axisa, 1, 2), substr(input$axisb, 1, 2), substr(input$axisc, 1, 2), "Cluster", "Qualitative", "Depth"))
+      axis.frame.norm <- data.frame(first.axis.norm, second.axis.norm, third.axis.norm, spectra.line.table$Cluster, spectra.line.table$Qualitative, spectra.line.table$Depth, spectra.line.table$Climate)
+      colnames(axis.frame.norm) <- gsub("[.]", "", c(substr(input$axisa, 1, 2), substr(input$axisb, 1, 2), substr(input$axisc, 1, 2), "Cluster", "Qualitative", "Depth", "Climate"))
       
       ternaryplot1 <- ggtern(data=axis.frame, aes_string(x = colnames(axis.frame)[1], y = colnames(axis.frame)[2], z = colnames(axis.frame)[3])) +
       geom_point(size=input$ternpointsize) +
@@ -2249,6 +2294,36 @@ xrfPCAReactive <- reactive({
       theme(plot.title=element_text(size=20)) +
       theme(legend.title=element_text(size=15)) +
       theme(legend.text=element_text(size=15))
+      
+      ternaryplotclimate <- ggtern(data=axis.frame, aes_string(x = colnames(axis.frame)[1], y = colnames(axis.frame)[2], z = colnames(axis.frame)[3])) +
+      geom_point(aes(colour = as.factor(Climate), shape=as.factor(Climate)), size=input$ternpointsize+1) +
+      geom_point(colour="grey30", size=input$ternpointsize-2) +
+      scale_shape_manual("Climatic Period", values=1:nlevels(axis.frame$Climte)) +
+      scale_colour_discrete("Climatic Period") +
+      theme_light() +
+      theme(axis.text.x = element_text(size=15)) +
+      theme(axis.text.y = element_text(size=15)) +
+      theme(axis.title.x = element_text(size=15)) +
+      theme(axis.title.y = element_text(size=15, angle=90)) +
+      theme(plot.title=element_text(size=20)) +
+      theme(legend.title=element_text(size=15)) +
+      theme(legend.text=element_text(size=15))
+      
+      ternaryplotclimateellipse <- ggtern(data=axis.frame, aes_string(x = colnames(axis.frame)[1], y = colnames(axis.frame)[2], z = colnames(axis.frame)[3])) +
+      geom_density_tern() +
+      geom_point(aes(colour = as.factor(Climate), shape=as.factor(Climate)), size=input$ternpointsize+1) +
+      geom_point(colour="grey30", size=input$ternpointsize-2) +
+      scale_shape_manual("Climatic Period", values=1:nlevels(axis.frame$Climate)) +
+      scale_colour_discrete("Climatic Period") +
+      theme_light() +
+      theme(axis.text.x = element_text(size=15)) +
+      theme(axis.text.y = element_text(size=15)) +
+      theme(axis.title.x = element_text(size=15)) +
+      theme(axis.title.y = element_text(size=15, angle=90)) +
+      theme(plot.title=element_text(size=20)) +
+      theme(legend.title=element_text(size=15)) +
+      theme(legend.text=element_text(size=15))
+      
       
       ternaryplotqualitative <- ggtern(data=axis.frame, aes_string(x = colnames(axis.frame)[1], y = colnames(axis.frame)[2], z = colnames(axis.frame)[3])) +
       geom_point(aes(colour = as.factor(Qualitative), shape=as.factor(Qualitative)), size=input$ternpointsize+1) +
@@ -2361,6 +2436,35 @@ xrfPCAReactive <- reactive({
       theme(legend.title=element_text(size=15)) +
       theme(legend.text=element_text(size=15))
       
+      ternaryplotclimate.norm <- ggtern(data=axis.frame.norm, aes_string(x = colnames(axis.frame.norm)[1], y = colnames(axis.frame.norm)[2], z = colnames(axis.frame.norm)[3])) +
+      geom_point(aes(colour = as.factor(Climate), shape=as.factor(Climate)), size=input$ternpointsize+1) +
+      geom_point(colour="grey30", size=input$ternpointsize-2) +
+      scale_shape_manual("Climatic Period", values=1:nlevels(axis.frame$Climate)) +
+      scale_colour_discrete("Climatic Period") +
+      theme_light() +
+      theme(axis.text.x = element_text(size=15)) +
+      theme(axis.text.y = element_text(size=15)) +
+      theme(axis.title.x = element_text(size=15)) +
+      theme(axis.title.y = element_text(size=15, angle=90)) +
+      theme(plot.title=element_text(size=20)) +
+      theme(legend.title=element_text(size=15)) +
+      theme(legend.text=element_text(size=15))
+      
+      ternaryplotclimateellipse.norm <- ggtern(data=axis.frame.norm, aes_string(x = colnames(axis.frame.norm)[1], y = colnames(axis.frame.norm)[2], z = colnames(axis.frame.norm)[3])) +
+      geom_density_tern() +
+      geom_point(aes(colour = as.factor(Climate), shape=as.factor(Climate)), size=input$ternpointsize+1) +
+      geom_point(colour="grey30", size=input$ternpointsize-2) +
+      scale_shape_manual("Climatic Period", values=1:nlevels(axis.frame$Climate)) +
+      scale_colour_discrete("Climatic Period") +
+      theme_light() +
+      theme(axis.text.x = element_text(size=15)) +
+      theme(axis.text.y = element_text(size=15)) +
+      theme(axis.title.x = element_text(size=15)) +
+      theme(axis.title.y = element_text(size=15, angle=90)) +
+      theme(plot.title=element_text(size=20)) +
+      theme(legend.title=element_text(size=15)) +
+      theme(legend.text=element_text(size=15))
+      
       ternaryplotqualitative.norm <- ggtern(data=axis.frame.norm, aes_string(x = colnames(axis.frame.norm)[1], y = colnames(axis.frame.norm)[2], z = colnames(axis.frame.norm)[3])) +
       geom_point(aes(colour = as.factor(Qualitative), shape=as.factor(Qualitative)), size=input$ternpointsize+1) +
       geom_point(colour="grey30", size=input$ternpointsize-2) +
@@ -2429,6 +2533,10 @@ xrfPCAReactive <- reactive({
           ternaryplotqualitative
       } else if (input$ternarycolour == "Qualitative" && input$terndensityplot==TRUE && input$ternnormplot==FALSE) {
           ternaryplotqualitativeellipse
+      } else if (input$ternarycolour == "Climate" && input$terndensityplot==FALSE && input$ternnormplot==FALSE) {
+          ternaryplotclimate
+      } else if (input$ternarycolour == "Climate" && input$terndensityplot==TRUE && input$ternnormplot==FALSE) {
+          ternaryplotclimateellipse
       } else if (input$ternarycolour == "Depth" && input$terndensityplot==FALSE && input$ternnormplot==FALSE) {
           ternaryplotDepth
       } else if (input$ternarycolour == "Depth" && input$terndensityplot==TRUE && input$ternnormplot==FALSE) {
@@ -2441,6 +2549,10 @@ xrfPCAReactive <- reactive({
           ternaryplotcluster.norm
       } else if (input$ternarycolour == "Cluster" && input$terndensityplot==TRUE && input$ternnormplot==TRUE) {
           ternaryplotclusterellipse.norm
+      } else if (input$ternarycolour == "Climate" && input$terndensityplot==FALSE && input$ternnormplot==TRUE) {
+          ternaryplotclimate.norm
+      } else if (input$ternarycolour == "Climate" && input$terndensityplot==TRUE && input$ternnormplot==TRUE) {
+          ternaryplotclimateellipse.norm
       } else if (input$ternarycolour == "Qualitative" && input$terndensityplot==FALSE && input$ternnormplot==TRUE) {
           ternaryplotqualitative.norm
       } else if (input$ternarycolour == "Qualitative" && input$terndensityplot==TRUE && input$ternnormplot==TRUE) {

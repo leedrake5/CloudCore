@@ -227,6 +227,7 @@ numericInput("knum", label = "K-Means", value=3),
 selectInput("pcacolour", "Colour", choices=c(
 "Black"="black",
 "Cluster"="Cluster",
+"Climate"="Climate",
 "Qualitative"="Qualitative",
 "Quantitative"="Quantitative"),
 selected="Cluster"),
@@ -393,6 +394,7 @@ sidebarPanel(
 selectInput("ternarycolour", "Colour", choices=c(
 "Black"="black",
 "Cluster"="Cluster",
+"Climate"="Climate",
 "Qualitative" = "Qualitative",
 "Quantitative" = "Quantitative"),
 selected="Cluster"),
@@ -445,6 +447,7 @@ selectInput(
 c(
 "Black" = "Black",
 "Cluster" = "Cluster",
+"Climate"="Climate",
 "Qualitative" = "Qualitative",
 "Quantitative" = "Quantitative"
 ), selected="Cluster"),
