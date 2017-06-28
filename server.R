@@ -427,10 +427,10 @@ xrfPCAReactive <- reactive({
   
   hotableInputAge <- reactive({
       
-      empty.depth <- rep(0, 20)
-      empty.age <- rep(0, 20)
-      empty.sigma <- rep(0, 20)
-      empty.curve <- rep("intcal13", 20)
+      empty.depth <- rep(0, 50)
+      empty.age <- rep(0, 50)
+      empty.sigma <- rep(0, 50)
+      empty.curve <- rep("intcal13", 50)
       
       empty.table <- data.frame(empty.depth, empty.age, empty.sigma, empty.curve)
       colnames(empty.table) <- c("Depth", "14C Age", "Sigma", "CalCurve")
@@ -2296,7 +2296,7 @@ xrfPCAReactive <- reactive({
       ternaryplotclimate <- ggtern(data=axis.frame, aes_string(x = colnames(axis.frame)[1], y = colnames(axis.frame)[2], z = colnames(axis.frame)[3])) +
       geom_point(aes(colour = as.factor(Climate), shape=as.factor(Climate)), size=input$ternpointsize+1) +
       geom_point(colour="grey30", size=input$ternpointsize-2) +
-      scale_shape_manual("Climatic Period", values=1:nlevels(axis.frame$Climte)) +
+      scale_shape_manual("Climatic Period", values=1:nlevels(axis.frame$Climate)) +
       scale_colour_discrete("Climatic Period") +
       theme_light() +
       theme(axis.text.x = element_text(size=15)) +

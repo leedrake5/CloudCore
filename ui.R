@@ -202,7 +202,7 @@ mainPanel(
 tabsetPanel(
 tabPanel('Age Input', rHandsontableOutput('hotage')),
 tabPanel('Age Curve', plotOutput('agemodcurve'), height = 700, width= 1200),
-tabPanel('Age Table', 'allagemodel')
+tabPanel('Age Table', tableOutput('allagemodel'))
 ))
 
 
