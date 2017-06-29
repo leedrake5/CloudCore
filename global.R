@@ -42,6 +42,27 @@ read_csv_filename_y <- function(filename){
     return(return.cps)
 }
 
+
+
+read_csv_net <- function(filepath) {
+    
+    ret <- read.csv(file=filepath, sep=",", header=TRUE)
+    element <- ret$Element
+    line <- ret$Line
+    net <- ret$Net
+    background <- ret$Backgr.
+    
+    
+    parsed.file <- data.frame(element, line, net, background)
+    colnames(parsed.file) <- c( "Element", "Line", "Net", "Background")
+    
+    parsed.file
+    
+    
+    
+}
+
+
 file.0 <- function(file) {
     if (length(file) > 0)
     {

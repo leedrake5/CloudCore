@@ -614,7 +614,7 @@ id = "plot1_brush",
 resetOnNew = TRUE
 ))),
 
-tabPanel('Time Series 5', plotOutput('timeseriesploteq5',
+tabPanel('Time Series 5', plotOutput('timeserieseqplot5',
 dblclick = "plot1_dblclick", height = 700, width= 1200,
 brush = brushOpts(
 id = "plot1_brush",
