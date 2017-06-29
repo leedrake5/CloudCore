@@ -192,7 +192,11 @@ sidebarPanel(
 
 actionButton('hotableprocess2', "Enter Dates"),
 actionButton('hotableprocess3', "Run Age Model"),
-downloadButton('ageresults', "Age Results Table")
+downloadButton('ageresults', "Age Results Table"),
+
+tags$hr(),
+checkboxInput("constrainage", label="Constrain Chronology", TRUE)
+
 
 
 
@@ -322,9 +326,8 @@ selectInput("xaxistype", label="X Axis", c("Depth", "Age"), selected="Depth"),
 
 radioButtons("lengthunit", label=NULL, c("mm", "cm", "m", "inches", "feet"), selected="mm"),
 numericInput("startmm", label = "Start Point (mm)", value=0),
-radioButtons("timetype", label=NULL, c("AD", "BC", "BC/AD", "BP"), selected="BP"),
+radioButtons("timetype", label=NULL, c("AD", "BC", "BC/AD", "BP"), selected="BP")
 
-checkboxInput("constrainage", label="Constrain Chronology", TRUE)
 
 
 
@@ -490,7 +493,141 @@ resetOnNew = TRUE
 ))
 
 
-)
+),
+
+
+tabPanel("Timeseries Equations",
+div(class="outer",
+
+
+fluidRow(
+sidebarLayout(
+
+sidebarPanel(
+
+p("Create Plot"),
+actionButton('timeserieseq1', "1"),
+actionButton('timeserieseq2', "2"),
+actionButton('timeserieseq3', "3"),
+actionButton('timeserieseq4', "4"),
+actionButton('timeserieseq5', "5"),
+
+tags$hr(),
+
+downloadButton('downloadPlot6a', "1"),
+downloadButton('downloadPlot6b', "2"),
+downloadButton('downloadPlot6c', "3"),
+downloadButton('downloadPlot6d', "4"),
+downloadButton('downloadPlot6e', "5"),
+
+
+tags$hr(),
+
+selectInput("elementnum1", "Numerator 1", names(spectra.line.table), selected="Fe.K.alpha"),
+selectInput("transform1", label=NULL, c("None", "+", "-", "*", "/"), selected="None"),
+selectInput("elementnum2", "Numerator 2", names(spectra.line.table.norm), selected="None"),
+selectInput("transform2", label=NULL, c("None", "+", "-", "*", "/"), selected="None"),
+selectInput("elementnum3", "Numerator 3", names(spectra.line.table.norm), selected="None"),
+
+selectInput("elementden1", "Denominator 1", names(spectra.line.table.norm), selected="None"),
+selectInput("transform3", label=NULL, c("None", "+", "-", "*", "/"), selected="None"),
+selectInput("elementden2", "Denominator 2", names(spectra.line.table.norm), selected="None"),
+selectInput("transform4", label=NULL, c("None", "+", "-", "*", "/"), selected="None"),
+selectInput("elementden3", "Denominator 3", names(spectra.line.table.norm), selected="None"),
+
+tags$hr(),
+
+textInput("yaxistype", label="Y Axis Label", value="Index"),
+
+tags$hr(),
+
+
+selectInput(
+"timecoloureq", "Time Series Type",
+c(
+"Black" = "Black",
+"Smooth" = "Smooth",
+"Ramp" = "Selected",
+"Cluster" = "Cluster",
+"Climate" = "Climate",
+"Qualitative Point" = "QualitativePoint",
+"Qualitative Line" = "QualitativeLine",
+"Quantitative" = "Quantitative",
+"Area" = "Area")
+),
+
+
+tags$hr(),
+
+
+sliderInput("smoothingeq", label = "Smoothed Mean Average", value=1, min=1, max=50),
+
+sliderInput("linesizeeq", label = "Line Size", value=1, min=1, max=15),
+sliderInput("pointsizeeq", label = "Point Size", value=5, min=1, max=15),
+
+
+tags$hr(),
+
+selectInput("xaxistypeeq", label="X Axis", c("Depth", "Age"), selected="Depth"),
+
+radioButtons("lengthuniteq", label=NULL, c("mm", "cm", "m", "inches", "feet"), selected="mm"),
+numericInput("startmmeq", label = "Start Point (mm)", value=0),
+radioButtons("timetypeeq", label=NULL, c("AD", "BC", "BC/AD", "BP"), selected="BP"),
+
+checkboxInput("transformnorm", label="Normalize", FALSE)
+
+
+
+
+
+
+),
+
+mainPanel(
+tabsetPanel(
+id = 'dataset',
+tabPanel('Time Series 1', plotOutput('timeserieseqplot1',
+dblclick = "plot1_dblclick", height = 700, width= 1200,
+brush = brushOpts(
+id = "plot1_brush",
+resetOnNew = TRUE
+))),
+
+tabPanel('Time Series 2', plotOutput('timeserieseqplot2',
+dblclick = "plot1_dblclick", height = 700, width= 1200,
+brush = brushOpts(
+id = "plot1_brush",
+resetOnNew = TRUE
+))),
+
+tabPanel('Time Series 3', plotOutput('timeserieseqplot3',
+dblclick = "plot1_dblclick", height = 700, width= 1200,
+brush = brushOpts(
+id = "plot1_brush",
+resetOnNew = TRUE
+))),
+
+tabPanel('Time Series 4', plotOutput('timeserieseqplot4',
+dblclick = "plot1_dblclick", height = 700, width= 1200,
+brush = brushOpts(
+id = "plot1_brush",
+resetOnNew = TRUE
+))),
+
+tabPanel('Time Series 5', plotOutput('timeseriesploteq5',
+dblclick = "plot1_dblclick", height = 700, width= 1200,
+brush = brushOpts(
+id = "plot1_brush",
+resetOnNew = TRUE
+)))
+
+
+
+))
+
+))
+
+))
 
 
 ))

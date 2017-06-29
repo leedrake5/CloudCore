@@ -2587,7 +2587,2263 @@ xrfPCAReactive <- reactive({
   )
   
   
+  dataTransform <- reactive({
+      
+      spectra.line.table <- ageData()
+      
+      
+      
+      data.transformation.selection <- if(input$transform1=="None" && input$elementnum2=="None" && input$elementden1=="None") {
+          spectra.line.table[input$elementnum1]
+          ########Two Numerators
+      } else if(input$transform1=="+" && input$elementnum2!="None" && input$elementden1=="None"){
+          spectra.line.table[input$elementnum1] + spectra.line.table[input$elementnum2]
+      } else if(input$transform1=="-" && input$elementnum2!="None" && input$elementden1=="None"){
+          spectra.line.table[input$elementnum1] - spectra.line.table[input$elementnum2]
+      } else if(input$transform1=="*" && input$elementnum2!="None" && input$elementden1=="None"){
+          spectra.line.table[input$elementnum1] * spectra.line.table[input$elementnum2]
+      } else if(input$transform1=="/" && input$elementnum2!="None" && input$elementden1=="None"){
+          spectra.line.table[input$elementnum1] / spectra.line.table[input$elementnum2]
+          ######Addition Third Numerator
+      } else if(input$transform1=="+" && input$elementnum2!="None" && input$transform2=="+" && input$elementnum3!="None" && input$elementden1=="None"){
+          spectra.line.table[input$elementnum1] + spectra.line.table[input$elementnum2] + spectra.line.table[input$elementnum3]
+      } else if(input$transform1=="-" && input$elementnum2!="None" && input$transform2=="+" && input$elementnum3!="None" && input$elementden1=="None"){
+          spectra.line.table[input$elementnum1] - spectra.line.table[input$elementnum2] + spectra.line.table[input$elementnum3]
+      } else if(input$transform1=="*" && input$elementnum2!="None" && input$transform2=="+" && input$elementnum3!="None" && input$elementden1=="None"){
+          spectra.line.table[input$elementnum1] * spectra.line.table[input$elementnum2] + spectra.line.table[input$elementnum3]
+      } else if(input$transform1=="/" && input$elementnum2!="None" && input$transform2=="+" && input$elementnum3!="None" && input$elementden1=="None"){
+          spectra.line.table[input$elementnum1] / spectra.line.table[input$elementnum2] + spectra.line.table[input$elementnum3]
+          ######Subtraction Third Numerator
+      } else if(input$transform1=="+" && input$elementnum2!="None" && input$transform2=="-" && input$elementnum3!="None" && input$elementden1=="None"){
+          spectra.line.table[input$elementnum1] + spectra.line.table[input$elementnum2] - spectra.line.table[input$elementnum3]
+      } else if(input$transform1=="-" && input$elementnum2!="None" && input$transform2=="-" && input$elementnum3!="None" && input$elementden1=="None"){
+          spectra.line.table[input$elementnum1] - spectra.line.table[input$elementnum2] - spectra.line.table[input$elementnum3]
+      } else if(input$transform1=="*" && input$elementnum2!="None" && input$transform2=="-" && input$elementnum3!="None" && input$elementden1=="None"){
+          spectra.line.table[input$elementnum1] * spectra.line.table[input$elementnum2] - spectra.line.table[input$elementnum3]
+      } else if(input$transform1=="/" && input$elementnum2!="None" && input$transform2=="-" && input$elementnum3!="None" && input$elementden1=="None"){
+          spectra.line.table[input$elementnum1] / spectra.line.table[input$elementnum2] - spectra.line.table[input$elementnum3]
+          ######Multiplication Third Numerator
+      } else if(input$transform1=="+" && input$elementnum2!="None" && input$transform2=="*" && input$elementnum3!="None" && input$elementden1=="None"){
+          spectra.line.table[input$elementnum1] + spectra.line.table[input$elementnum2] * spectra.line.table[input$elementnum3]
+      } else if(input$transform1=="-" && input$elementnum2!="None" && input$transform2=="*" && input$elementnum3!="None" && input$elementden1=="None"){
+          spectra.line.table[input$elementnum1] - spectra.line.table[input$elementnum2] * spectra.line.table[input$elementnum3]
+      } else if(input$transform1=="*" && input$elementnum2!="None" && input$transform2=="*" && input$elementnum3!="None" && input$elementden1=="None"){
+          spectra.line.table[input$elementnum1] * spectra.line.table[input$elementnum2] * spectra.line.table[input$elementnum3]
+      } else if(input$transform1=="/" && input$elementnum2!="None" && input$transform2=="*" && input$elementnum3!="None" && input$elementden1=="None"){
+          spectra.line.table[input$elementnum1] / spectra.line.table[input$elementnum2] * spectra.line.table[input$elementnum3]
+          ######Division Third Numerator
+      } else if(input$transform1=="+" && input$elementnum2!="None" && input$transform2=="/" && input$elementnum3!="None" && input$elementden1=="None"){
+          spectra.line.table[input$elementnum1] + spectra.line.table[input$elementnum2] / spectra.line.table[input$elementnum3]
+      } else if(input$transform1=="-" && input$elementnum2!="None" && input$transform2=="/" && input$elementnum3!="None" && input$elementden1=="None"){
+          spectra.line.table[input$elementnum1] - spectra.line.table[input$elementnum2] / spectra.line.table[input$elementnum3]
+      } else if(input$transform1=="*" && input$elementnum2!="None" && input$transform2=="/" && input$elementnum3!="None" && input$elementden1=="None"){
+          spectra.line.table[input$elementnum1] * spectra.line.table[input$elementnum2] / spectra.line.table[input$elementnum3]
+      } else if(input$transform1=="/" && input$elementnum2!="None" && input$transform2=="/" && input$elementnum3!="None" && input$elementden1=="None"){
+          spectra.line.table[input$elementnum1] / spectra.line.table[input$elementnum2] / spectra.line.table[input$elementnum3]
+          ##########################
+          #####One Denominator######
+          ##########################
+      } else if (input$transform1=="None" && input$elementden1!="None" && input$transform3=="None" ){
+          spectra.line.table[input$elementnum1]/spectra.line.table[input$elementden1]
+      } else if(input$transform1=="+" && input$elementnum2!="None" && input$elementden1!="None" && input$elementden2=="None"){
+          (spectra.line.table[input$elementnum1] + spectra.line.table[input$elementnum2])/spectra.line.table[input$elementden1]
+      } else if(input$transform1=="-" && input$elementnum2!="None" && input$elementden1!="None" && input$elementden2=="None"){
+          (spectra.line.table[input$elementnum1] - spectra.line.table[input$elementnum2])/spectra.line.table[input$elementden1]
+      } else if(input$transform1=="*" && input$elementnum2!="None" && input$elementden1!="None" && input$elementden2=="None"){
+          (spectra.line.table[input$elementnum1] * spectra.line.table[input$elementnum2])/spectra.line.table[input$elementden1]
+      } else if(input$transform1=="/" && input$elementnum2!="None" && input$elementden1!="None" && input$elementden2=="None"){
+          (spectra.line.table[input$elementnum1] / spectra.line.table[input$elementnum2])/spectra.line.table[input$elementden1]
+          ######Addition Third Variable
+      } else if(input$transform1=="+" && input$elementnum2!="None" && input$transform2=="+" && input$elementnum3!="None" && input$elementden1!="None" && input$elementden2=="None"){
+          (spectra.line.table[input$elementnum1] + spectra.line.table[input$elementnum2] + spectra.line.table[input$elementnum3])/spectra.line.table[input$elementden1]
+      } else if(input$transform1=="-" && input$elementnum2!="None" && input$transform2=="+" && input$elementnum3!="None" && input$elementden1!="None" && input$elementden2=="None"){
+          (spectra.line.table[input$elementnum1] - spectra.line.table[input$elementnum2] + spectra.line.table[input$elementnum3])/spectra.line.table[input$elementden1]
+      } else if(input$transform1=="*" && input$elementnum2!="None" && input$transform2=="+" && input$elementnum3!="None" && input$elementden1!="None" && input$elementden2=="None"){
+          (spectra.line.table[input$elementnum1] * spectra.line.table[input$elementnum2] + spectra.line.table[input$elementnum3])/spectra.line.table[input$elementden1]
+      } else if(input$transform1=="/" && input$elementnum2!="None" && input$transform2=="+" && input$elementnum3!="None" && input$elementden1!="None" && input$elementden2=="None"){
+          (spectra.line.table[input$elementnum1] / spectra.line.table[input$elementnum2] + spectra.line.table[input$elementnum3])/spectra.line.table[input$elementden1]
+          ######Subtraction Third Variable
+      } else if(input$transform1=="+" && input$elementnum2!="None" && input$transform2=="-" && input$elementnum3!="None" && input$elementden1!="None" && input$elementden2=="None"){
+          (spectra.line.table[input$elementnum1] + spectra.line.table[input$elementnum2] - spectra.line.table[input$elementnum3])/spectra.line.table[input$elementden1]
+      } else if(input$transform1=="-" && input$elementnum2!="None" && input$transform2=="-" && input$elementnum3!="None" && input$elementden1!="None" && input$elementden2=="None"){
+          (spectra.line.table[input$elementnum1] - spectra.line.table[input$elementnum2] - spectra.line.table[input$elementnum3])/spectra.line.table[input$elementden1]
+      } else if(input$transform1=="*" && input$elementnum2!="None" && input$transform2=="-" && input$elementnum3!="None" && input$elementden1!="None" && input$elementden2=="None"){
+          (spectra.line.table[input$elementnum1] * spectra.line.table[input$elementnum2] - spectra.line.table[input$elementnum3])/spectra.line.table[input$elementden1]
+      } else if(input$transform1=="/" && input$elementnum2!="None" && input$transform2=="-" && input$elementnum3!="None" && input$elementden1!="None" && input$elementden2=="None"){
+          (spectra.line.table[input$elementnum1] / spectra.line.table[input$elementnum2] - spectra.line.table[input$elementnum3])/spectra.line.table[input$elementden1]
+          ######Multiplication Third Variable
+      } else if(input$transform1=="+" && input$elementnum2!="None" && input$transform2=="*" && input$elementnum3!="None" && input$elementden1!="None" && input$elementden2=="None"){
+          (spectra.line.table[input$elementnum1] + spectra.line.table[input$elementnum2] * spectra.line.table[input$elementnum3])/spectra.line.table[input$elementden1]
+      } else if(input$transform1=="-" && input$elementnum2!="None" && input$transform2=="*" && input$elementnum3!="None" && input$elementden1!="None" && input$elementden2=="None"){
+          (spectra.line.table[input$elementnum1] - spectra.line.table[input$elementnum2] * spectra.line.table[input$elementnum3])/spectra.line.table[input$elementden1]
+      } else if(input$transform1=="*" && input$elementnum2!="None" && input$transform2=="*" && input$elementnum3!="None" && input$elementden1!="None" && input$elementden2=="None"){
+          (spectra.line.table[input$elementnum1] * spectra.line.table[input$elementnum2] * spectra.line.table[input$elementnum3])/spectra.line.table[input$elementden1]
+      } else if(input$transform1=="/" && input$elementnum2!="None" && input$transform2=="*" && input$elementnum3!="None" && input$elementden1!="None" && input$elementden2=="None"){
+          (spectra.line.table[input$elementnum1] / spectra.line.table[input$elementnum2] * spectra.line.table[input$elementnum3])/spectra.line.table[input$elementden1]
+          ######Division Third Variable
+      } else if(input$transform1=="+" && input$elementnum2!="None" && input$transform2=="/" && input$elementnum3!="None" && input$elementden1!="None" && input$elementden2=="None"){
+          (spectra.line.table[input$elementnum1] + spectra.line.table[input$elementnum2] / spectra.line.table[input$elementnum3])/spectra.line.table[input$elementden1]
+      } else if(input$transform1=="-" && input$elementnum2!="None" && input$transform2=="/" && input$elementnum3!="None" && input$elementden1!="None" && input$elementden2=="None"){
+          (spectra.line.table[input$elementnum1] - spectra.line.table[input$elementnum2] / spectra.line.table[input$elementnum3])/spectra.line.table[input$elementden1]
+      } else if(input$transform1=="*" && input$elementnum2!="None" && input$transform2=="/" && input$elementnum3!="None" && input$elementden1!="None" && input$elementden2=="None"){
+          (spectra.line.table[input$elementnum1] * spectra.line.table[input$elementnum2] / spectra.line.table[input$elementnum3])/spectra.line.table[input$elementden1]
+      } else if(input$transform1=="/" && input$elementnum2!="None" && input$transform2=="/" && input$elementnum3!="None" && input$elementden1!="None" && input$elementden2=="None"){
+          (spectra.line.table[input$elementnum1] / spectra.line.table[input$elementnum2] / spectra.line.table[input$elementnum3])/spectra.line.table[input$elementden1]
+          ####################################
+          #####Addition Two Denominators######
+          ####################################
+      } else if (input$transform1=="None" && input$elementden1!="None" && input$transform3=="+" && input$elementden2!="None"){
+          spectra.line.table[input$elementnum1]/(spectra.line.table[input$elementden1] + spectra.line.table[input$elementden2])
+      } else if(input$transform1=="+" && input$elementnum2!="None" && input$elementden1!="None" && input$transform3=="+" && input$elementden2!="None" && input$elementden3=="None"){
+          (spectra.line.table[input$elementnum1] + spectra.line.table[input$elementnum2])/(spectra.line.table[input$elementden1] + spectra.line.table[input$elementden2])
+      } else if(input$transform1=="-" && input$elementnum2!="None" && input$elementden1!="None" && input$transform3=="+" && input$elementden2!="None" && input$elementden3=="None"){
+          (spectra.line.table[input$elementnum1] - spectra.line.table[input$elementnum2])/(spectra.line.table[input$elementden1] + spectra.line.table[input$elementden2])
+      } else if(input$transform1=="*" && input$elementnum2!="None" && input$elementden1!="None" && input$transform3=="+" && input$elementden2!="None" && input$elementden3=="None"){
+          (spectra.line.table[input$elementnum1] * spectra.line.table[input$elementnum2])/(spectra.line.table[input$elementden1] + spectra.line.table[input$elementden2])
+      } else if(input$transform1=="/" && input$elementnum2!="None" && input$elementden1!="None" && input$transform3=="+" && input$elementden2!="None" && input$elementden3=="None"){
+          (spectra.line.table[input$elementnum1] / spectra.line.table[input$elementnum2])/(spectra.line.table[input$elementden1] + spectra.line.table[input$elementden2])
+          ######Addition Third Variable
+      } else if(input$transform1=="+" && input$elementnum2!="None" && input$transform2=="+" && input$elementnum3!="None" && input$elementden1!="None" && input$transform3=="+" && input$elementden2!="None" && input$elementden3=="None"){
+          (spectra.line.table[input$elementnum1] + spectra.line.table[input$elementnum2] + spectra.line.table[input$elementnum3])/(spectra.line.table[input$elementden1] + spectra.line.table[input$elementden2])
+      } else if(input$transform1=="-" && input$elementnum2!="None" && input$transform2=="+" && input$elementnum3!="None" && input$elementden1!="None" && input$transform3=="+" && input$elementden2!="None" && input$elementden3=="None"){
+          (spectra.line.table[input$elementnum1] - spectra.line.table[input$elementnum2] + spectra.line.table[input$elementnum3])/(spectra.line.table[input$elementden1] + spectra.line.table[input$elementden2])
+      } else if(input$transform1=="*" && input$elementnum2!="None" && input$transform2=="+" && input$elementnum3!="None" && input$elementden1!="None" && input$transform3=="+" && input$elementden2!="None" && input$elementden3=="None"){
+          (spectra.line.table[input$elementnum1] * spectra.line.table[input$elementnum2] + spectra.line.table[input$elementnum3])/(spectra.line.table[input$elementden1] + spectra.line.table[input$elementden2])
+      } else if(input$transform1=="/" && input$elementnum2!="None" && input$transform2=="+" && input$elementnum3!="None" && input$elementden1!="None" && input$transform3=="+" && input$elementden2!="None" && input$elementden3=="None"){
+          (spectra.line.table[input$elementnum1] / spectra.line.table[input$elementnum2] + spectra.line.table[input$elementnum3])/(spectra.line.table[input$elementden1] + spectra.line.table[input$elementden2])
+          ######Subtraction Third Variable
+      } else if (input$transform1=="None" && input$elementden1!="None" && input$transform3=="-" && input$elementden2!="None"){
+          spectra.line.table[input$elementnum1]/(spectra.line.table[input$elementden1] - spectra.line.table[input$elementden2])
+      } else if(input$transform1=="+" && input$elementnum2!="None" && input$transform2=="-" && input$elementnum3!="None" && input$elementden1!="None" && input$transform3=="+" && input$elementden2!="None" && input$elementden3=="None"){
+          (spectra.line.table[input$elementnum1] + spectra.line.table[input$elementnum2] - spectra.line.table[input$elementnum3])/(spectra.line.table[input$elementden1] + spectra.line.table[input$elementden2])
+      } else if(input$transform1=="-" && input$elementnum2!="None" && input$transform2=="-" && input$elementnum3!="None" && input$elementden1!="None" && input$transform3=="+" && input$elementden2!="None" && input$elementden3=="None"){
+          (spectra.line.table[input$elementnum1] - spectra.line.table[input$elementnum2] - spectra.line.table[input$elementnum3])/(spectra.line.table[input$elementden1] + spectra.line.table[input$elementden2])
+      } else if(input$transform1=="*" && input$elementnum2!="None" && input$transform2=="-" && input$elementnum3!="None" && input$elementden1!="None" && input$transform3=="+" && input$elementden2!="None" && input$elementden3=="None"){
+          (spectra.line.table[input$elementnum1] * spectra.line.table[input$elementnum2] - spectra.line.table[input$elementnum3])/(spectra.line.table[input$elementden1] + spectra.line.table[input$elementden2])
+      } else if(input$transform1=="/" && input$elementnum2!="None" && input$transform2=="-" && input$elementnum3!="None" && input$elementden1!="None" && input$transform3=="+" && input$elementden2!="None" && input$elementden3=="None"){
+          (spectra.line.table[input$elementnum1] / spectra.line.table[input$elementnum2] - spectra.line.table[input$elementnum3])/(spectra.line.table[input$elementden1] + spectra.line.table[input$elementden2])
+          ######Multiplication Third Variable
+      } else if (input$transform1=="None" && input$elementden1!="None" && input$transform3=="*" && input$elementden2!="None"){
+          spectra.line.table[input$elementnum1]/(spectra.line.table[input$elementden1] * spectra.line.table[input$elementden2])
+      } else if(input$transform1=="+" && input$elementnum2!="None" && input$transform2=="*" && input$elementnum3!="None" && input$elementden1!="None" && input$transform3=="+" && input$elementden2!="None" && input$elementden3=="None"){
+          (spectra.line.table[input$elementnum1] + spectra.line.table[input$elementnum2] * spectra.line.table[input$elementnum3])/(spectra.line.table[input$elementden1] + spectra.line.table[input$elementden2])
+      } else if(input$transform1=="-" && input$elementnum2!="None" && input$transform2=="*" && input$elementnum3!="None" && input$elementden1!="None" && input$transform3=="+" && input$elementden2!="None" && input$elementden3=="None"){
+          (spectra.line.table[input$elementnum1] - spectra.line.table[input$elementnum2] * spectra.line.table[input$elementnum3])/(spectra.line.table[input$elementden1] + spectra.line.table[input$elementden2])
+      } else if(input$transform1=="*" && input$elementnum2!="None" && input$transform2=="*" && input$elementnum3!="None" && input$elementden1!="None" && input$transform3=="+" && input$elementden2!="None" && input$elementden3=="None"){
+          (spectra.line.table[input$elementnum1] * spectra.line.table[input$elementnum2] * spectra.line.table[input$elementnum3])/(spectra.line.table[input$elementden1] + spectra.line.table[input$elementden2])
+      } else if(input$transform1=="/" && input$elementnum2!="None" && input$transform2=="*" && input$elementnum3!="None" && input$elementden1!="None" && input$transform3=="+" && input$elementden2!="None" && input$elementden3=="None"){
+          (spectra.line.table[input$elementnum1] / spectra.line.table[input$elementnum2] * spectra.line.table[input$elementnum3])/(spectra.line.table[input$elementden1] + spectra.line.table[input$elementden2])
+          ######Division Third Variable
+      } else if(input$transform1=="+" && input$elementnum2!="None" && input$transform2=="/" && input$elementnum3!="None" && input$elementden1!="None" && input$transform3=="+" && input$elementden2!="None" && input$elementden3=="None"){
+          (spectra.line.table[input$elementnum1] + spectra.line.table[input$elementnum2] / spectra.line.table[input$elementnum3])/(spectra.line.table[input$elementden1] + spectra.line.table[input$elementden2])
+      } else if(input$transform1=="-" && input$elementnum2!="None" && input$transform2=="/" && input$elementnum3!="None" && input$elementden1!="None" && input$transform3=="+" && input$elementden2!="None" && input$elementden3=="None"){
+          (spectra.line.table[input$elementnum1] - spectra.line.table[input$elementnum2] / spectra.line.table[input$elementnum3])/(spectra.line.table[input$elementden1] + spectra.line.table[input$elementden2])
+      } else if(input$transform1=="*" && input$elementnum2!="None" && input$transform2=="/" && input$elementnum3!="None" && input$elementden1!="None" && input$transform3=="+" && input$elementden2!="None" && input$elementden3=="None"){
+          (spectra.line.table[input$elementnum1] * spectra.line.table[input$elementnum2] / spectra.line.table[input$elementnum3])/(spectra.line.table[input$elementden1] + spectra.line.table[input$elementden2])
+      } else if(input$transform1=="/" && input$elementnum2!="None" && input$transform2=="/" && input$elementnum3!="None" && input$elementden1!="None" && input$transform3=="+" && input$elementden2!="None" && input$elementden3=="None"){
+          (spectra.line.table[input$elementnum1] / spectra.line.table[input$elementnum2] / spectra.line.table[input$elementnum3])/(spectra.line.table[input$elementden1] + spectra.line.table[input$elementden2])
+          ####################################
+          #####Subtraction Two Denominators######
+          ####################################
+      } else if (input$transform1=="None" && input$elementden1!="None" && input$transform3=="-" && input$elementden2!="None"){
+          spectra.line.table[input$elementnum1]/(spectra.line.table[input$elementden1] - spectra.line.table[input$elementden2])
+      } else if(input$transform1=="+" && input$elementnum2!="None" && input$elementden1!="None" && input$transform3=="-" && input$elementden2!="None" && input$elementden3=="None"){
+          (spectra.line.table[input$elementnum1] + spectra.line.table[input$elementnum2])/(spectra.line.table[input$elementden1] - spectra.line.table[input$elementden2])
+      } else if(input$transform1=="-" && input$elementnum2!="None" && input$elementden1!="None" && input$transform3=="-" && input$elementden2!="None" && input$elementden3=="None"){
+          (spectra.line.table[input$elementnum1] - spectra.line.table[input$elementnum2])/(spectra.line.table[input$elementden1] - spectra.line.table[input$elementden2])
+      } else if(input$transform1=="*" && input$elementnum2!="None" && input$elementden1!="None" && input$transform3=="-" && input$elementden2!="None" && input$elementden3=="None"){
+          (spectra.line.table[input$elementnum1] * spectra.line.table[input$elementnum2])/(spectra.line.table[input$elementden1] - spectra.line.table[input$elementden2])
+      } else if(input$transform1=="/" && input$elementnum2!="None" && input$elementden1!="None" && input$transform3=="-" && input$elementden2!="None" && input$elementden3=="None"){
+          (spectra.line.table[input$elementnum1] / spectra.line.table[input$elementnum2])/(spectra.line.table[input$elementden1] - spectra.line.table[input$elementden2])
+          ######Addition Third Variable
+      } else if(input$transform1=="+" && input$elementnum2!="None" && input$transform2=="+" && input$elementnum3!="None" && input$elementden1!="None" && input$transform3=="-" && input$elementden2!="None" && input$elementden3=="None"){
+          (spectra.line.table[input$elementnum1] + spectra.line.table[input$elementnum2] + spectra.line.table[input$elementnum3])/(spectra.line.table[input$elementden1] - spectra.line.table[input$elementden2])
+      } else if(input$transform1=="-" && input$elementnum2!="None" && input$transform2=="+" && input$elementnum3!="None" && input$elementden1!="None" && input$transform3=="-" && input$elementden2!="None" && input$elementden3=="None"){
+          (spectra.line.table[input$elementnum1] - spectra.line.table[input$elementnum2] + spectra.line.table[input$elementnum3])/(spectra.line.table[input$elementden1] - spectra.line.table[input$elementden2])
+      } else if(input$transform1=="*" && input$elementnum2!="None" && input$transform2=="+" && input$elementnum3!="None" && input$elementden1!="None" && input$transform3=="-" && input$elementden2!="None" && input$elementden3=="None"){
+          (spectra.line.table[input$elementnum1] * spectra.line.table[input$elementnum2] + spectra.line.table[input$elementnum3])/(spectra.line.table[input$elementden1] - spectra.line.table[input$elementden2])
+      } else if(input$transform1=="/" && input$elementnum2!="None" && input$transform2=="+" && input$elementnum3!="None" && input$elementden1!="None" && input$transform3=="-" && input$elementden2!="None" && input$elementden3=="None"){
+          (spectra.line.table[input$elementnum1] / spectra.line.table[input$elementnum2] + spectra.line.table[input$elementnum3])/(spectra.line.table[input$elementden1] - spectra.line.table[input$elementden2])
+          ######Subtraction Third Variable
+      } else if(input$transform1=="+" && input$elementnum2!="None" && input$transform2=="-" && input$elementnum3!="None" && input$elementden1!="None" && input$transform3=="-" && input$elementden2!="None" && input$elementden3=="None"){
+          (spectra.line.table[input$elementnum1] + spectra.line.table[input$elementnum2] - spectra.line.table[input$elementnum3])/(spectra.line.table[input$elementden1] - spectra.line.table[input$elementden2])
+      } else if(input$transform1=="-" && input$elementnum2!="None" && input$transform2=="-" && input$elementnum3!="None" && input$elementden1!="None" && input$transform3=="-" && input$elementden2!="None" && input$elementden3=="None"){
+          (spectra.line.table[input$elementnum1] - spectra.line.table[input$elementnum2] - spectra.line.table[input$elementnum3])/(spectra.line.table[input$elementden1] - spectra.line.table[input$elementden2])
+      } else if(input$transform1=="*" && input$elementnum2!="None" && input$transform2=="-" && input$elementnum3!="None" && input$elementden1!="None" && input$transform3=="-" && input$elementden2!="None" && input$elementden3=="None"){
+          (spectra.line.table[input$elementnum1] * spectra.line.table[input$elementnum2] - spectra.line.table[input$elementnum3])/(spectra.line.table[input$elementden1] - spectra.line.table[input$elementden2])
+      } else if(input$transform1=="/" && input$elementnum2!="None" && input$transform2=="-" && input$elementnum3!="None" && input$elementden1!="None" && input$transform3=="-" && input$elementden2!="None" && input$elementden3=="None"){
+          (spectra.line.table[input$elementnum1] / spectra.line.table[input$elementnum2] - spectra.line.table[input$elementnum3])/(spectra.line.table[input$elementden1] - spectra.line.table[input$elementden2])
+          ######Multiplication Third Variable
+      } else if(input$transform1=="+" && input$elementnum2!="None" && input$transform2=="*" && input$elementnum3!="None" && input$elementden1!="None" && input$transform3=="-" && input$elementden2!="None" && input$elementden3=="None"){
+          (spectra.line.table[input$elementnum1] + spectra.line.table[input$elementnum2] * spectra.line.table[input$elementnum3])/(spectra.line.table[input$elementden1] - spectra.line.table[input$elementden2])
+      } else if(input$transform1=="-" && input$elementnum2!="None" && input$transform2=="*" && input$elementnum3!="None" && input$elementden1!="None" && input$transform3=="-" && input$elementden2!="None" && input$elementden3=="None"){
+          (spectra.line.table[input$elementnum1] - spectra.line.table[input$elementnum2] * spectra.line.table[input$elementnum3])/(spectra.line.table[input$elementden1] - spectra.line.table[input$elementden2])
+      } else if(input$transform1=="*" && input$elementnum2!="None" && input$transform2=="*" && input$elementnum3!="None" && input$elementden1!="None" && input$transform3=="-" && input$elementden2!="None" && input$elementden3=="None"){
+          (spectra.line.table[input$elementnum1] * spectra.line.table[input$elementnum2] * spectra.line.table[input$elementnum3])/(spectra.line.table[input$elementden1] - spectra.line.table[input$elementden2])
+      } else if(input$transform1=="/" && input$elementnum2!="None" && input$transform2=="*" && input$elementnum3!="None" && input$elementden1!="None" && input$transform3=="-" && input$elementden2!="None" && input$elementden3=="None"){
+          (spectra.line.table[input$elementnum1] / spectra.line.table[input$elementnum2] * spectra.line.table[input$elementnum3])/(spectra.line.table[input$elementden1] - spectra.line.table[input$elementden2])
+          ######Division Third Variable
+      } else if(input$transform1=="+" && input$elementnum2!="None" && input$transform2=="/" && input$elementnum3!="None" && input$elementden1!="None" && input$transform3=="-" && input$elementden2!="None" && input$elementden3=="None"){
+          (spectra.line.table[input$elementnum1] + spectra.line.table[input$elementnum2] / spectra.line.table[input$elementnum3])/(spectra.line.table[input$elementden1] - spectra.line.table[input$elementden2])
+      } else if(input$transform1=="-" && input$elementnum2!="None" && input$transform2=="/" && input$elementnum3!="None" && input$elementden1!="None" && input$transform3=="-" && input$elementden2!="None" && input$elementden3=="None"){
+          (spectra.line.table[input$elementnum1] - spectra.line.table[input$elementnum2] / spectra.line.table[input$elementnum3])/(spectra.line.table[input$elementden1] - spectra.line.table[input$elementden2])
+      } else if(input$transform1=="*" && input$elementnum2!="None" && input$transform2=="/" && input$elementnum3!="None" && input$elementden1!="None" && input$transform3=="-" && input$elementden2!="None" && input$elementden3=="None"){
+          (spectra.line.table[input$elementnum1] * spectra.line.table[input$elementnum2] / spectra.line.table[input$elementnum3])/(spectra.line.table[input$elementden1] - spectra.line.table[input$elementden2])
+      } else if(input$transform1=="/" && input$elementnum2!="None" && input$transform2=="/" && input$elementnum3!="None" && input$elementden1!="None" && input$transform3=="-" && input$elementden2!="None" && input$elementden3=="None"){
+          (spectra.line.table[input$elementnum1] / spectra.line.table[input$elementnum2] / spectra.line.table[input$elementnum3])/(spectra.line.table[input$elementden1] - spectra.line.table[input$elementden2])
+          ####################################
+          #####Multiplication Two Denominators######
+          ####################################
+      } else if (input$transform1=="None" && input$elementden1!="None" && input$transform3=="*" && input$elementden2!="None"){
+          spectra.line.table[input$elementnum1]/(spectra.line.table[input$elementden1] * spectra.line.table[input$elementden2])
+      } else if(input$transform1=="+" && input$elementnum2!="None" && input$elementden1!="None" && input$transform3=="*" && input$elementden2!="None" && input$elementden3=="None"){
+          (spectra.line.table[input$elementnum1] + spectra.line.table[input$elementnum2])/(spectra.line.table[input$elementden1] * spectra.line.table[input$elementden2])
+      } else if(input$transform1=="-" && input$elementnum2!="None" && input$elementden1!="None" && input$transform3=="*" && input$elementden2!="None" && input$elementden3=="None"){
+          (spectra.line.table[input$elementnum1] - spectra.line.table[input$elementnum2])/(spectra.line.table[input$elementden1] * spectra.line.table[input$elementden2])
+      } else if(input$transform1=="*" && input$elementnum2!="None" && input$elementden1!="None" && input$transform3=="*" && input$elementden2!="None" && input$elementden3=="None"){
+          (spectra.line.table[input$elementnum1] * spectra.line.table[input$elementnum2])/(spectra.line.table[input$elementden1] * spectra.line.table[input$elementden2])
+      } else if(input$transform1=="/" && input$elementnum2!="None" && input$elementden1!="None" && input$transform3=="*" && input$elementden2!="None" && input$elementden3=="None"){
+          (spectra.line.table[input$elementnum1] / spectra.line.table[input$elementnum2])/(spectra.line.table[input$elementden1] * spectra.line.table[input$elementden2])
+          ######Addition Third Variable
+      } else if(input$transform1=="+" && input$elementnum2!="None" && input$transform2=="+" && input$elementnum3!="None" && input$elementden1!="None" && input$transform3=="*" && input$elementden2!="None" && input$elementden3=="None"){
+          (spectra.line.table[input$elementnum1] + spectra.line.table[input$elementnum2] + spectra.line.table[input$elementnum3])/(spectra.line.table[input$elementden1] * spectra.line.table[input$elementden2])
+      } else if(input$transform1=="-" && input$elementnum2!="None" && input$transform2=="+" && input$elementnum3!="None" && input$elementden1!="None" && input$transform3=="*" && input$elementden2!="None" && input$elementden3=="None"){
+          (spectra.line.table[input$elementnum1] - spectra.line.table[input$elementnum2] + spectra.line.table[input$elementnum3])/(spectra.line.table[input$elementden1] * spectra.line.table[input$elementden2])
+      } else if(input$transform1=="*" && input$elementnum2!="None" && input$transform2=="+" && input$elementnum3!="None" && input$elementden1!="None" && input$transform3=="*" && input$elementden2!="None" && input$elementden3=="None"){
+          (spectra.line.table[input$elementnum1] * spectra.line.table[input$elementnum2] + spectra.line.table[input$elementnum3])/(spectra.line.table[input$elementden1] * spectra.line.table[input$elementden2])
+      } else if(input$transform1=="/" && input$elementnum2!="None" && input$transform2=="+" && input$elementnum3!="None" && input$elementden1!="None" && input$transform3=="*" && input$elementden2!="None" && input$elementden3=="None"){
+          (spectra.line.table[input$elementnum1] / spectra.line.table[input$elementnum2] + spectra.line.table[input$elementnum3])/(spectra.line.table[input$elementden1] * spectra.line.table[input$elementden2])
+          ######Subtraction Third Variable
+      } else if(input$transform1=="+" && input$elementnum2!="None" && input$transform2=="-" && input$elementnum3!="None" && input$elementden1!="None" && input$transform3=="*" && input$elementden2!="None" && input$elementden3=="None"){
+          (spectra.line.table[input$elementnum1] + spectra.line.table[input$elementnum2] - spectra.line.table[input$elementnum3])/(spectra.line.table[input$elementden1] * spectra.line.table[input$elementden2])
+      } else if(input$transform1=="-" && input$elementnum2!="None" && input$transform2=="-" && input$elementnum3!="None" && input$elementden1!="None" && input$transform3=="*" && input$elementden2!="None" && input$elementden3=="None"){
+          (spectra.line.table[input$elementnum1] - spectra.line.table[input$elementnum2] - spectra.line.table[input$elementnum3])/(spectra.line.table[input$elementden1] * spectra.line.table[input$elementden2])
+      } else if(input$transform1=="*" && input$elementnum2!="None" && input$transform2=="-" && input$elementnum3!="None" && input$elementden1!="None" && input$transform3=="*" && input$elementden2!="None" && input$elementden3=="None"){
+          (spectra.line.table[input$elementnum1] * spectra.line.table[input$elementnum2] - spectra.line.table[input$elementnum3])/(spectra.line.table[input$elementden1] * spectra.line.table[input$elementden2])
+      } else if(input$transform1=="/" && input$elementnum2!="None" && input$transform2=="-" && input$elementnum3!="None" && input$elementden1!="None" && input$transform3=="*" && input$elementden2!="None" && input$elementden3=="None"){
+          (spectra.line.table[input$elementnum1] / spectra.line.table[input$elementnum2] - spectra.line.table[input$elementnum3])/(spectra.line.table[input$elementden1] * spectra.line.table[input$elementden2])
+          ######Multiplication Third Variable
+      } else if(input$transform1=="+" && input$elementnum2!="None" && input$transform2=="*" && input$elementnum3!="None" && input$elementden1!="None" && input$transform3=="*" && input$elementden2!="None" && input$elementden3=="None"){
+          (spectra.line.table[input$elementnum1] + spectra.line.table[input$elementnum2] * spectra.line.table[input$elementnum3])/(spectra.line.table[input$elementden1] * spectra.line.table[input$elementden2])
+      } else if(input$transform1=="-" && input$elementnum2!="None" && input$transform2=="*" && input$elementnum3!="None" && input$elementden1!="None" && input$transform3=="*" && input$elementden2!="None" && input$elementden3=="None"){
+          (spectra.line.table[input$elementnum1] - spectra.line.table[input$elementnum2] * spectra.line.table[input$elementnum3])/(spectra.line.table[input$elementden1] * spectra.line.table[input$elementden2])
+      } else if(input$transform1=="*" && input$elementnum2!="None" && input$transform2=="*" && input$elementnum3!="None" && input$elementden1!="None" && input$transform3=="*" && input$elementden2!="None" && input$elementden3=="None"){
+          (spectra.line.table[input$elementnum1] * spectra.line.table[input$elementnum2] * spectra.line.table[input$elementnum3])/(spectra.line.table[input$elementden1] * spectra.line.table[input$elementden2])
+      } else if(input$transform1=="/" && input$elementnum2!="None" && input$transform2=="*" && input$elementnum3!="None" && input$elementden1!="None" && input$transform3=="*" && input$elementden2!="None" && input$elementden3=="None"){
+          (spectra.line.table[input$elementnum1] / spectra.line.table[input$elementnum2] * spectra.line.table[input$elementnum3])/(spectra.line.table[input$elementden1] * spectra.line.table[input$elementden2])
+          ######Division Third Variable
+      } else if(input$transform1=="+" && input$elementnum2!="None" && input$transform2=="/" && input$elementnum3!="None" && input$elementden1!="None" && input$transform3=="*" && input$elementden2!="None" && input$elementden3=="None"){
+          (spectra.line.table[input$elementnum1] + spectra.line.table[input$elementnum2] / spectra.line.table[input$elementnum3])/(spectra.line.table[input$elementden1] * spectra.line.table[input$elementden2])
+      } else if(input$transform1=="-" && input$elementnum2!="None" && input$transform2=="/" && input$elementnum3!="None" && input$elementden1!="None" && input$transform3=="*" && input$elementden2!="None" && input$elementden3=="None"){
+          (spectra.line.table[input$elementnum1] - spectra.line.table[input$elementnum2] / spectra.line.table[input$elementnum3])/(spectra.line.table[input$elementden1] * spectra.line.table[input$elementden2])
+      } else if(input$transform1=="*" && input$elementnum2!="None" && input$transform2=="/" && input$elementnum3!="None" && input$elementden1!="None" && input$transform3=="*" && input$elementden2!="None" && input$elementden3=="None"){
+          (spectra.line.table[input$elementnum1] * spectra.line.table[input$elementnum2] / spectra.line.table[input$elementnum3])/(spectra.line.table[input$elementden1] * spectra.line.table[input$elementden2])
+      } else if(input$transform1=="/" && input$elementnum2!="None" && input$transform2=="/" && input$elementnum3!="None" && input$elementden1!="None" && input$transform3=="*" && input$elementden2!="None" && input$elementden3=="None"){
+          (spectra.line.table[input$elementnum1] / spectra.line.table[input$elementnum2] / spectra.line.table[input$elementnum3])/(spectra.line.table[input$elementden1] * spectra.line.table[input$elementden2])
+          ####################################
+          #####Division Two Denominators######
+          ####################################
+      } else if (input$transform1=="None" && input$elementden1!="None" && input$transform3=="/" && input$elementden2!="None"){
+          spectra.line.table[input$elementnum1]/(spectra.line.table[input$elementden1] / spectra.line.table[input$elementden2])
+      } else if(input$transform1=="+" && input$elementnum2!="None" && input$elementden1!="None" && input$transform3=="/" && input$elementden2!="None" && input$elementden3=="None"){
+          (spectra.line.table[input$elementnum1] + spectra.line.table[input$elementnum2])/(spectra.line.table[input$elementden1] / spectra.line.table[input$elementden2])
+      } else if(input$transform1=="-" && input$elementnum2!="None" && input$elementden1!="None" && input$transform3=="/" && input$elementden2!="None" && input$elementden3=="None"){
+          (spectra.line.table[input$elementnum1] - spectra.line.table[input$elementnum2])/(spectra.line.table[input$elementden1] / spectra.line.table[input$elementden2])
+      } else if(input$transform1=="*" && input$elementnum2!="None" && input$elementden1!="None" && input$transform3=="/" && input$elementden2!="None" && input$elementden3=="None"){
+          (spectra.line.table[input$elementnum1] * spectra.line.table[input$elementnum2])/(spectra.line.table[input$elementden1] / spectra.line.table[input$elementden2])
+      } else if(input$transform1=="/" && input$elementnum2!="None" && input$elementden1!="None" && input$transform3=="/" && input$elementden2!="None" && input$elementden3=="None"){
+          (spectra.line.table[input$elementnum1] / spectra.line.table[input$elementnum2])/(spectra.line.table[input$elementden1] / spectra.line.table[input$elementden2])
+          ######Addition Third Variable
+      } else if(input$transform1=="+" && input$elementnum2!="None" && input$transform2=="+" && input$elementnum3!="None" && input$elementden1!="None" && input$transform3=="/" && input$elementden2!="None" && input$elementden3=="None"){
+          (spectra.line.table[input$elementnum1] + spectra.line.table[input$elementnum2] + spectra.line.table[input$elementnum3])/(spectra.line.table[input$elementden1] / spectra.line.table[input$elementden2])
+      } else if(input$transform1=="-" && input$elementnum2!="None" && input$transform2=="+" && input$elementnum3!="None" && input$elementden1!="None" && input$transform3=="/" && input$elementden2!="None" && input$elementden3=="None"){
+          (spectra.line.table[input$elementnum1] - spectra.line.table[input$elementnum2] + spectra.line.table[input$elementnum3])/(spectra.line.table[input$elementden1] / spectra.line.table[input$elementden2])
+      } else if(input$transform1=="*" && input$elementnum2!="None" && input$transform2=="+" && input$elementnum3!="None" && input$elementden1!="None" && input$transform3=="/" && input$elementden2!="None" && input$elementden3=="None"){
+          (spectra.line.table[input$elementnum1] * spectra.line.table[input$elementnum2] + spectra.line.table[input$elementnum3])/(spectra.line.table[input$elementden1] / spectra.line.table[input$elementden2])
+      } else if(input$transform1=="/" && input$elementnum2!="None" && input$transform2=="+" && input$elementnum3!="None" && input$elementden1!="None" && input$transform3=="/" && input$elementden2!="None" && input$elementden3=="None"){
+          (spectra.line.table[input$elementnum1] / spectra.line.table[input$elementnum2] + spectra.line.table[input$elementnum3])/(spectra.line.table[input$elementden1] / spectra.line.table[input$elementden2])
+          ######Subtraction Third Variable
+      } else if(input$transform1=="+" && input$elementnum2!="None" && input$transform2=="-" && input$elementnum3!="None" && input$elementden1!="None" && input$transform3=="/" && input$elementden2!="None" && input$elementden3=="None"){
+          (spectra.line.table[input$elementnum1] + spectra.line.table[input$elementnum2] - spectra.line.table[input$elementnum3])/(spectra.line.table[input$elementden1] / spectra.line.table[input$elementden2])
+      } else if(input$transform1=="-" && input$elementnum2!="None" && input$transform2=="-" && input$elementnum3!="None" && input$elementden1!="None" && input$transform3=="/" && input$elementden2!="None" && input$elementden3=="None"){
+          (spectra.line.table[input$elementnum1] - spectra.line.table[input$elementnum2] - spectra.line.table[input$elementnum3])/(spectra.line.table[input$elementden1] / spectra.line.table[input$elementden2])
+      } else if(input$transform1=="*" && input$elementnum2!="None" && input$transform2=="-" && input$elementnum3!="None" && input$elementden1!="None" && input$transform3=="/" && input$elementden2!="None" && input$elementden3=="None"){
+          (spectra.line.table[input$elementnum1] * spectra.line.table[input$elementnum2] - spectra.line.table[input$elementnum3])/(spectra.line.table[input$elementden1] / spectra.line.table[input$elementden2])
+      } else if(input$transform1=="/" && input$elementnum2!="None" && input$transform2=="-" && input$elementnum3!="None" && input$elementden1!="None" && input$transform3=="/" && input$elementden2!="None" && input$elementden3=="None"){
+          (spectra.line.table[input$elementnum1] / spectra.line.table[input$elementnum2] - spectra.line.table[input$elementnum3])/(spectra.line.table[input$elementden1] / spectra.line.table[input$elementden2])
+          ######Multiplication Third Variable
+      } else if(input$transform1=="+" && input$elementnum2!="None" && input$transform2=="*" && input$elementnum3!="None" && input$elementden1!="None" && input$transform3=="/" && input$elementden2!="None" && input$elementden3=="None"){
+          (spectra.line.table[input$elementnum1] + spectra.line.table[input$elementnum2] * spectra.line.table[input$elementnum3])/(spectra.line.table[input$elementden1] / spectra.line.table[input$elementden2])
+      } else if(input$transform1=="-" && input$elementnum2!="None" && input$transform2=="*" && input$elementnum3!="None" && input$elementden1!="None" && input$transform3=="/" && input$elementden2!="None" && input$elementden3=="None"){
+          (spectra.line.table[input$elementnum1] - spectra.line.table[input$elementnum2] * spectra.line.table[input$elementnum3])/(spectra.line.table[input$elementden1] / spectra.line.table[input$elementden2])
+      } else if(input$transform1=="*" && input$elementnum2!="None" && input$transform2=="*" && input$elementnum3!="None" && input$elementden1!="None" && input$transform3=="/" && input$elementden2!="None" && input$elementden3=="None"){
+          (spectra.line.table[input$elementnum1] * spectra.line.table[input$elementnum2] * spectra.line.table[input$elementnum3])/(spectra.line.table[input$elementden1] / spectra.line.table[input$elementden2])
+      } else if(input$transform1=="/" && input$elementnum2!="None" && input$transform2=="*" && input$elementnum3!="None" && input$elementden1!="None" && input$transform3=="/" && input$elementden2!="None" && input$elementden3=="None"){
+          (spectra.line.table[input$elementnum1] / spectra.line.table[input$elementnum2] * spectra.line.table[input$elementnum3])/(spectra.line.table[input$elementden1] / spectra.line.table[input$elementden2])
+          ######Division Third Variable
+      } else if(input$transform1=="+" && input$elementnum2!="None" && input$transform2=="/" && input$elementnum3!="None" && input$elementden1!="None" && input$transform3=="/" && input$elementden2!="None" && input$elementden3=="None"){
+          (spectra.line.table[input$elementnum1] + spectra.line.table[input$elementnum2] / spectra.line.table[input$elementnum3])/(spectra.line.table[input$elementden1] / spectra.line.table[input$elementden2])
+      } else if(input$transform1=="-" && input$elementnum2!="None" && input$transform2=="/" && input$elementnum3!="None" && input$elementden1!="None" && input$transform3=="/" && input$elementden2!="None" && input$elementden3=="None"){
+          (spectra.line.table[input$elementnum1] - spectra.line.table[input$elementnum2] / spectra.line.table[input$elementnum3])/(spectra.line.table[input$elementden1] / spectra.line.table[input$elementden2])
+      } else if(input$transform1=="*" && input$elementnum2!="None" && input$transform2=="/" && input$elementnum3!="None" && input$elementden1!="None" && input$transform3=="/" && input$elementden2!="None" && input$elementden3=="None"){
+          (spectra.line.table[input$elementnum1] * spectra.line.table[input$elementnum2] / spectra.line.table[input$elementnum3])/(spectra.line.table[input$elementden1] / spectra.line.table[input$elementden2])
+      } else if(input$transform1=="/" && input$elementnum2!="None" && input$transform2=="/" && input$elementnum3!="None" && input$elementden1!="None" && input$transform3=="/" && input$elementden2!="None" && input$elementden3=="None"){
+          (spectra.line.table[input$elementnum1] / spectra.line.table[input$elementnum2] / spectra.line.table[input$elementnum3])/(spectra.line.table[input$elementden1] / spectra.line.table[input$elementden2])
+          #######################################
+          #######################################
+          ########################################Phyt01ith!
+          ####Addition Third Denominator#########
+          #######################################
+          #######################################
+          ####################################
+          #####Addition Two Denominators######
+          ####################################
+      } else if (input$transform1=="None" && input$elementden1!="None" && input$transform3=="+" && input$elementden2!="None" && input$transform4=="+" && input$elementden3!="None"){
+          spectra.line.table[input$elementnum1]/(spectra.line.table[input$elementden1] + spectra.line.table[input$elementden2] + spectra.line.table[input$elementden3])
+      } else if(input$transform1=="+" && input$elementnum2!="None" && input$elementden1!="None" && input$transform3=="+" && input$elementden2!="None" && input$transform4=="+" && input$elementden3!="None"){
+          (spectra.line.table[input$elementnum1] + spectra.line.table[input$elementden2] + spectra.line.table[input$elementden3])/(spectra.line.table[input$elementden1] + spectra.line.table[input$elementden2] + spectra.line.table[input$elementden3])
+      } else if(input$transform1=="-" && input$elementnum2!="None" && input$elementden1!="None" && input$transform3=="+" && input$elementden2!="None" && input$transform4=="+" && input$elementden3!="None"){
+          (spectra.line.table[input$elementnum1] - spectra.line.table[input$elementden2] + spectra.line.table[input$elementden3])/(spectra.line.table[input$elementden1] + spectra.line.table[input$elementden2] + spectra.line.table[input$elementden3])
+      } else if(input$transform1=="*" && input$elementnum2!="None" && input$elementden1!="None" && input$transform3=="+" && input$elementden2!="None" && input$transform4=="+" && input$elementden3!="None"){
+          (spectra.line.table[input$elementnum1] * spectra.line.table[input$elementden2] + spectra.line.table[input$elementden3])/(spectra.line.table[input$elementden1] + spectra.line.table[input$elementden2] + spectra.line.table[input$elementden3])
+      } else if(input$transform1=="/" && input$elementnum2!="None" && input$elementden1!="None" && input$transform3=="+" && input$elementden2!="None" && input$transform4=="+" && input$elementden3!="None"){
+          (spectra.line.table[input$elementnum1] / spectra.line.table[input$elementden2] + spectra.line.table[input$elementden3])/(spectra.line.table[input$elementden1] + spectra.line.table[input$elementden2] + spectra.line.table[input$elementden3])
+          ######Addition Third Variable
+      } else if(input$transform1=="+" && input$elementnum2!="None" && input$transform2=="+" && input$elementnum3!="None" && input$elementden1!="None" && input$transform3=="+" && input$elementden2!="None" && input$transform4=="+" && input$elementden3!="None"){
+          (spectra.line.table[input$elementnum1] + spectra.line.table[input$elementnum2] + spectra.line.table[input$elementnum3])/(spectra.line.table[input$elementden1] + spectra.line.table[input$elementden2] + spectra.line.table[input$elementden3])
+      } else if(input$transform1=="-" && input$elementnum2!="None" && input$transform2=="+" && input$elementnum3!="None" && input$elementden1!="None" && input$transform3=="+" && input$elementden2!="None" && input$transform4=="+" && input$elementden3!="None"){
+          (spectra.line.table[input$elementnum1] - spectra.line.table[input$elementnum2] + spectra.line.table[input$elementnum3])/(spectra.line.table[input$elementden1] + spectra.line.table[input$elementden2] + spectra.line.table[input$elementden3])
+      } else if(input$transform1=="*" && input$elementnum2!="None" && input$transform2=="+" && input$elementnum3!="None" && input$elementden1!="None" && input$transform3=="+" && input$elementden2!="None" && input$transform4=="+" && input$elementden3!="None"){
+          (spectra.line.table[input$elementnum1] * spectra.line.table[input$elementnum2] + spectra.line.table[input$elementnum3])/(spectra.line.table[input$elementden1] + spectra.line.table[input$elementden2] + spectra.line.table[input$elementden3])
+      } else if(input$transform1=="/" && input$elementnum2!="None" && input$transform2=="+" && input$elementnum3!="None" && input$elementden1!="None" && input$transform3=="+" && input$elementden2!="None" && input$transform4=="+" && input$elementden3!="None"){
+          (spectra.line.table[input$elementnum1] / spectra.line.table[input$elementnum2] + spectra.line.table[input$elementnum3])/(spectra.line.table[input$elementden1] + spectra.line.table[input$elementden2] + spectra.line.table[input$elementden3])
+          ######Subtraction Third Variable
+      } else if(input$transform1=="+" && input$elementnum2!="None" && input$transform2=="-" && input$elementnum3!="None" && input$elementden1!="None" && input$transform3=="+" && input$elementden2!="None" && input$transform4=="+" && input$elementden3!="None"){
+          (spectra.line.table[input$elementnum1] + spectra.line.table[input$elementnum2] - spectra.line.table[input$elementnum3])/(spectra.line.table[input$elementden1] + spectra.line.table[input$elementden2] + spectra.line.table[input$elementden3])
+      } else if(input$transform1=="-" && input$elementnum2!="None" && input$transform2=="-" && input$elementnum3!="None" && input$elementden1!="None" && input$transform3=="+" && input$elementden2!="None" && input$transform4=="+" && input$elementden3!="None"){
+          (spectra.line.table[input$elementnum1] - spectra.line.table[input$elementnum2] - spectra.line.table[input$elementnum3])/(spectra.line.table[input$elementden1] + spectra.line.table[input$elementden2] + spectra.line.table[input$elementden3])
+      } else if(input$transform1=="*" && input$elementnum2!="None" && input$transform2=="-" && input$elementnum3!="None" && input$elementden1!="None" && input$transform3=="+" && input$elementden2!="None" && input$transform4=="+" && input$elementden3!="None"){
+          (spectra.line.table[input$elementnum1] * spectra.line.table[input$elementnum2] - spectra.line.table[input$elementnum3])/(spectra.line.table[input$elementden1] + spectra.line.table[input$elementden2] + spectra.line.table[input$elementden3])
+      } else if(input$transform1=="/" && input$elementnum2!="None" && input$transform2=="-" && input$elementnum3!="None" && input$elementden1!="None" && input$transform3=="+" && input$elementden2!="None" && input$transform4=="+" && input$elementden3!="None"){
+          (spectra.line.table[input$elementnum1] / spectra.line.table[input$elementnum2] - spectra.line.table[input$elementnum3])/(spectra.line.table[input$elementden1] + spectra.line.table[input$elementden2] + spectra.line.table[input$elementden3])
+          ######Multiplication Third Variable
+      } else if(input$transform1=="+" && input$elementnum2!="None" && input$transform2=="*" && input$elementnum3!="None" && input$elementden1!="None" && input$transform3=="+" && input$elementden2!="None" && input$transform4=="+" && input$elementden3!="None"){
+          (spectra.line.table[input$elementnum1] + spectra.line.table[input$elementnum2] * spectra.line.table[input$elementnum3])/(spectra.line.table[input$elementden1] + spectra.line.table[input$elementden2] + spectra.line.table[input$elementden3])
+      } else if(input$transform1=="-" && input$elementnum2!="None" && input$transform2=="*" && input$elementnum3!="None" && input$elementden1!="None" && input$transform3=="+" && input$elementden2!="None" && input$transform4=="+" && input$elementden3!="None"){
+          (spectra.line.table[input$elementnum1] - spectra.line.table[input$elementnum2] * spectra.line.table[input$elementnum3])/(spectra.line.table[input$elementden1] + spectra.line.table[input$elementden2] + spectra.line.table[input$elementden3])
+      } else if(input$transform1=="*" && input$elementnum2!="None" && input$transform2=="*" && input$elementnum3!="None" && input$elementden1!="None" && input$transform3=="+" && input$elementden2!="None" && input$transform4=="+" && input$elementden3!="None"){
+          (spectra.line.table[input$elementnum1] * spectra.line.table[input$elementnum2] * spectra.line.table[input$elementnum3])/(spectra.line.table[input$elementden1] + spectra.line.table[input$elementden2] + spectra.line.table[input$elementden3])
+      } else if(input$transform1=="/" && input$elementnum2!="None" && input$transform2=="*" && input$elementnum3!="None" && input$elementden1!="None" && input$transform3=="+" && input$elementden2!="None" && input$transform4=="+" && input$elementden3!="None"){
+          (spectra.line.table[input$elementnum1] / spectra.line.table[input$elementnum2] * spectra.line.table[input$elementnum3])/(spectra.line.table[input$elementden1] + spectra.line.table[input$elementden2] + spectra.line.table[input$elementden3])
+          ######Division Third Variable
+      } else if(input$transform1=="+" && input$elementnum2!="None" && input$transform2=="/" && input$elementnum3!="None" && input$elementden1!="None" && input$transform3=="+" && input$elementden2!="None" && input$transform4=="+" && input$elementden3!="None"){
+          (spectra.line.table[input$elementnum1] + spectra.line.table[input$elementnum2] / spectra.line.table[input$elementnum3])/(spectra.line.table[input$elementden1] + spectra.line.table[input$elementden2] + spectra.line.table[input$elementden3])
+      } else if(input$transform1=="-" && input$elementnum2!="None" && input$transform2=="/" && input$elementnum3!="None" && input$elementden1!="None" && input$transform3=="+" && input$elementden2!="None" && input$transform4=="+" && input$elementden3!="None"){
+          (spectra.line.table[input$elementnum1] - spectra.line.table[input$elementnum2] / spectra.line.table[input$elementnum3])/(spectra.line.table[input$elementden1] + spectra.line.table[input$elementden2] + spectra.line.table[input$elementden3])
+      } else if(input$transform1=="*" && input$elementnum2!="None" && input$transform2=="/" && input$elementnum3!="None" && input$elementden1!="None" && input$transform3=="+" && input$elementden2!="None" && input$transform4=="+" && input$elementden3!="None"){
+          (spectra.line.table[input$elementnum1] * spectra.line.table[input$elementnum2] / spectra.line.table[input$elementnum3])/(spectra.line.table[input$elementden1] + spectra.line.table[input$elementden2] + spectra.line.table[input$elementden3])
+      } else if(input$transform1=="/" && input$elementnum2!="None" && input$transform2=="/" && input$elementnum3!="None" && input$elementden1!="None" && input$transform3=="+" && input$elementden2!="None" && input$transform4=="+" && input$elementden3!="None"){
+          (spectra.line.table[input$elementnum1] / spectra.line.table[input$elementnum2] / spectra.line.table[input$elementnum3])/(spectra.line.table[input$elementden1] + spectra.line.table[input$elementden2] + spectra.line.table[input$elementden3])
+          ####################################
+          #####Subtraction Two Denominators######
+          ####################################
+      } else if (input$transform1=="None" && input$elementden1!="None" && input$transform3=="-" && input$elementden2!="None" && input$transform4=="+" && input$elementden3!="None"){
+          spectra.line.table[input$elementnum1]/(spectra.line.table[input$elementden1] - spectra.line.table[input$elementden2] + spectra.line.table[input$elementden3])
+      } else if(input$transform1=="+" && input$elementnum2!="None" && input$elementden1!="None" && input$transform3=="-" && input$elementden2!="None" && input$transform4=="+" && input$elementden3!="None"){
+          (spectra.line.table[input$elementnum1] + spectra.line.table[input$elementden2] + spectra.line.table[input$elementden3])/(spectra.line.table[input$elementden1] - spectra.line.table[input$elementden2] + spectra.line.table[input$elementden3])
+      } else if(input$transform1=="-" && input$elementnum2!="None" && input$elementden1!="None" && input$transform3=="-" && input$elementden2!="None" && input$transform4=="+" && input$elementden3!="None"){
+          (spectra.line.table[input$elementnum1] - spectra.line.table[input$elementden2] + spectra.line.table[input$elementden3])/(spectra.line.table[input$elementden1] - spectra.line.table[input$elementden2] + spectra.line.table[input$elementden3])
+      } else if(input$transform1=="*" && input$elementnum2!="None" && input$elementden1!="None" && input$transform3=="-" && input$elementden2!="None" && input$transform4=="+" && input$elementden3!="None"){
+          (spectra.line.table[input$elementnum1] * spectra.line.table[input$elementden2] + spectra.line.table[input$elementden3])/(spectra.line.table[input$elementden1] - spectra.line.table[input$elementden2] + spectra.line.table[input$elementden3])
+      } else if(input$transform1=="/" && input$elementnum2!="None" && input$elementden1!="None" && input$transform3=="-" && input$elementden2!="None" && input$transform4=="+" && input$elementden3!="None"){
+          (spectra.line.table[input$elementnum1] / spectra.line.table[input$elementden2] + spectra.line.table[input$elementden3])/(spectra.line.table[input$elementden1] - spectra.line.table[input$elementden2] + spectra.line.table[input$elementden3])
+          ######Addition Third Variable
+      } else if(input$transform1=="+" && input$elementnum2!="None" && input$transform2=="+" && input$elementnum3!="None" && input$elementden1!="None" && input$transform3=="-" && input$elementden2!="None" && input$transform4=="+" && input$elementden3!="None"){
+          (spectra.line.table[input$elementnum1] + spectra.line.table[input$elementnum2] + spectra.line.table[input$elementnum3])/(spectra.line.table[input$elementden1] - spectra.line.table[input$elementden2] + spectra.line.table[input$elementden3])
+      } else if(input$transform1=="-" && input$elementnum2!="None" && input$transform2=="+" && input$elementnum3!="None" && input$elementden1!="None" && input$transform3=="-" && input$elementden2!="None" && input$transform4=="+" && input$elementden3!="None"){
+          (spectra.line.table[input$elementnum1] - spectra.line.table[input$elementnum2] + spectra.line.table[input$elementnum3])/(spectra.line.table[input$elementden1] - spectra.line.table[input$elementden2] + spectra.line.table[input$elementden3])
+      } else if(input$transform1=="*" && input$elementnum2!="None" && input$transform2=="+" && input$elementnum3!="None" && input$elementden1!="None" && input$transform3=="-" && input$elementden2!="None" && input$transform4=="+" && input$elementden3!="None"){
+          (spectra.line.table[input$elementnum1] * spectra.line.table[input$elementnum2] + spectra.line.table[input$elementnum3])/(spectra.line.table[input$elementden1] - spectra.line.table[input$elementden2] + spectra.line.table[input$elementden3])
+      } else if(input$transform1=="/" && input$elementnum2!="None" && input$transform2=="+" && input$elementnum3!="None" && input$elementden1!="None" && input$transform3=="-" && input$elementden2!="None" && input$transform4=="+" && input$elementden3!="None"){
+          (spectra.line.table[input$elementnum1] / spectra.line.table[input$elementnum2] + spectra.line.table[input$elementnum3])/(spectra.line.table[input$elementden1] - spectra.line.table[input$elementden2] + spectra.line.table[input$elementden3])
+          ######Subtraction Third Variable
+      } else if(input$transform1=="+" && input$elementnum2!="None" && input$transform2=="-" && input$elementnum3!="None" && input$elementden1!="None" && input$transform3=="-" && input$elementden2!="None" && input$transform4=="+" && input$elementden3!="None"){
+          (spectra.line.table[input$elementnum1] + spectra.line.table[input$elementnum2] - spectra.line.table[input$elementnum3])/(spectra.line.table[input$elementden1] - spectra.line.table[input$elementden2] + spectra.line.table[input$elementden3])
+      } else if(input$transform1=="-" && input$elementnum2!="None" && input$transform2=="-" && input$elementnum3!="None" && input$elementden1!="None" && input$transform3=="-" && input$elementden2!="None" && input$transform4=="+" && input$elementden3!="None"){
+          (spectra.line.table[input$elementnum1] - spectra.line.table[input$elementnum2] - spectra.line.table[input$elementnum3])/(spectra.line.table[input$elementden1] - spectra.line.table[input$elementden2] + spectra.line.table[input$elementden3])
+      } else if(input$transform1=="*" && input$elementnum2!="None" && input$transform2=="-" && input$elementnum3!="None" && input$elementden1!="None" && input$transform3=="-" && input$elementden2!="None" && input$transform4=="+" && input$elementden3!="None"){
+          (spectra.line.table[input$elementnum1] * spectra.line.table[input$elementnum2] - spectra.line.table[input$elementnum3])/(spectra.line.table[input$elementden1] - spectra.line.table[input$elementden2] + spectra.line.table[input$elementden3])
+      } else if(input$transform1=="/" && input$elementnum2!="None" && input$transform2=="-" && input$elementnum3!="None" && input$elementden1!="None" && input$transform3=="-" && input$elementden2!="None" && input$transform4=="+" && input$elementden3!="None"){
+          (spectra.line.table[input$elementnum1] / spectra.line.table[input$elementnum2] - spectra.line.table[input$elementnum3])/(spectra.line.table[input$elementden1] - spectra.line.table[input$elementden2] + spectra.line.table[input$elementden3])
+          ######Multiplication Third Variable
+      } else if(input$transform1=="+" && input$elementnum2!="None" && input$transform2=="*" && input$elementnum3!="None" && input$elementden1!="None" && input$transform3=="-" && input$elementden2!="None" && input$transform4=="+" && input$elementden3!="None"){
+          (spectra.line.table[input$elementnum1] + spectra.line.table[input$elementnum2] * spectra.line.table[input$elementnum3])/(spectra.line.table[input$elementden1] - spectra.line.table[input$elementden2] + spectra.line.table[input$elementden3])
+      } else if(input$transform1=="-" && input$elementnum2!="None" && input$transform2=="*" && input$elementnum3!="None" && input$elementden1!="None" && input$transform3=="-" && input$elementden2!="None" && input$transform4=="+" && input$elementden3!="None"){
+          (spectra.line.table[input$elementnum1] - spectra.line.table[input$elementnum2] * spectra.line.table[input$elementnum3])/(spectra.line.table[input$elementden1] - spectra.line.table[input$elementden2] + spectra.line.table[input$elementden3])
+      } else if(input$transform1=="*" && input$elementnum2!="None" && input$transform2=="*" && input$elementnum3!="None" && input$elementden1!="None" && input$transform3=="-" && input$elementden2!="None" && input$transform4=="+" && input$elementden3!="None"){
+          (spectra.line.table[input$elementnum1] * spectra.line.table[input$elementnum2] * spectra.line.table[input$elementnum3])/(spectra.line.table[input$elementden1] - spectra.line.table[input$elementden2] + spectra.line.table[input$elementden3])
+      } else if(input$transform1=="/" && input$elementnum2!="None" && input$transform2=="*" && input$elementnum3!="None" && input$elementden1!="None" && input$transform3=="-" && input$elementden2!="None" && input$transform4=="+" && input$elementden3!="None"){
+          (spectra.line.table[input$elementnum1] / spectra.line.table[input$elementnum2] * spectra.line.table[input$elementnum3])/(spectra.line.table[input$elementden1] - spectra.line.table[input$elementden2] + spectra.line.table[input$elementden3])
+          ######Division Third Variable
+      } else if(input$transform1=="+" && input$elementnum2!="None" && input$transform2=="/" && input$elementnum3!="None" && input$elementden1!="None" && input$transform3=="-" && input$elementden2!="None" && input$transform4=="+" && input$elementden3!="None"){
+          (spectra.line.table[input$elementnum1] + spectra.line.table[input$elementnum2] / spectra.line.table[input$elementnum3])/(spectra.line.table[input$elementden1] - spectra.line.table[input$elementden2] + spectra.line.table[input$elementden3])
+      } else if(input$transform1=="-" && input$elementnum2!="None" && input$transform2=="/" && input$elementnum3!="None" && input$elementden1!="None" && input$transform3=="-" && input$elementden2!="None" && input$transform4=="+" && input$elementden3!="None"){
+          (spectra.line.table[input$elementnum1] - spectra.line.table[input$elementnum2] / spectra.line.table[input$elementnum3])/(spectra.line.table[input$elementden1] - spectra.line.table[input$elementden2] + spectra.line.table[input$elementden3])
+      } else if(input$transform1=="*" && input$elementnum2!="None" && input$transform2=="/" && input$elementnum3!="None" && input$elementden1!="None" && input$transform3=="-" && input$elementden2!="None" && input$transform4=="+" && input$elementden3!="None"){
+          (spectra.line.table[input$elementnum1] * spectra.line.table[input$elementnum2] / spectra.line.table[input$elementnum3])/(spectra.line.table[input$elementden1] - spectra.line.table[input$elementden2] + spectra.line.table[input$elementden3])
+      } else if(input$transform1=="/" && input$elementnum2!="None" && input$transform2=="/" && input$elementnum3!="None" && input$elementden1!="None" && input$transform3=="-" && input$elementden2!="None" && input$transform4=="+" && input$elementden3!="None"){
+          (spectra.line.table[input$elementnum1] / spectra.line.table[input$elementnum2] / spectra.line.table[input$elementnum3])/(spectra.line.table[input$elementden1] - spectra.line.table[input$elementden2] + spectra.line.table[input$elementden3])
+          ####################################
+          #####Multiplication Two Denominators######
+          ####################################
+      } else if (input$transform1=="None" && input$elementden1!="None" && input$transform3=="*" && input$elementden2!="None" && input$transform4=="+" && input$elementden3!="None"){
+          spectra.line.table[input$elementnum1]/(spectra.line.table[input$elementden1] * spectra.line.table[input$elementden2] + spectra.line.table[input$elementden3])
+      } else if(input$transform1=="+" && input$elementnum2!="None" && input$elementden1!="None" && input$transform3=="*" && input$elementden2!="None" && input$transform4=="+" && input$elementden3!="None"){
+          (spectra.line.table[input$elementnum1] + spectra.line.table[input$elementden2] + spectra.line.table[input$elementden3])/(spectra.line.table[input$elementden1] * spectra.line.table[input$elementden2] + spectra.line.table[input$elementden3])
+      } else if(input$transform1=="-" && input$elementnum2!="None" && input$elementden1!="None" && input$transform3=="*" && input$elementden2!="None" && input$transform4=="+" && input$elementden3!="None"){
+          (spectra.line.table[input$elementnum1] - spectra.line.table[input$elementden2] + spectra.line.table[input$elementden3])/(spectra.line.table[input$elementden1] * spectra.line.table[input$elementden2] + spectra.line.table[input$elementden3])
+      } else if(input$transform1=="*" && input$elementnum2!="None" && input$elementden1!="None" && input$transform3=="*" && input$elementden2!="None" && input$transform4=="+" && input$elementden3!="None"){
+          (spectra.line.table[input$elementnum1] * spectra.line.table[input$elementden2] + spectra.line.table[input$elementden3])/(spectra.line.table[input$elementden1] * spectra.line.table[input$elementden2] + spectra.line.table[input$elementden3])
+      } else if(input$transform1=="/" && input$elementnum2!="None" && input$elementden1!="None" && input$transform3=="*" && input$elementden2!="None" && input$transform4=="+" && input$elementden3!="None"){
+          (spectra.line.table[input$elementnum1] / spectra.line.table[input$elementden2] + spectra.line.table[input$elementden3])/(spectra.line.table[input$elementden1] * spectra.line.table[input$elementden2] + spectra.line.table[input$elementden3])
+          ######Addition Third Variable
+      } else if(input$transform1=="+" && input$elementnum2!="None" && input$transform2=="+" && input$elementnum3!="None" && input$elementden1!="None" && input$transform3=="*" && input$elementden2!="None" && input$transform4=="+" && input$elementden3!="None"){
+          (spectra.line.table[input$elementnum1] + spectra.line.table[input$elementnum2] + spectra.line.table[input$elementnum3])/(spectra.line.table[input$elementden1] * spectra.line.table[input$elementden2] + spectra.line.table[input$elementden3])
+      } else if(input$transform1=="-" && input$elementnum2!="None" && input$transform2=="+" && input$elementnum3!="None" && input$elementden1!="None" && input$transform3=="*" && input$elementden2!="None" && input$transform4=="+" && input$elementden3!="None"){
+          (spectra.line.table[input$elementnum1] - spectra.line.table[input$elementnum2] + spectra.line.table[input$elementnum3])/(spectra.line.table[input$elementden1] * spectra.line.table[input$elementden2] + spectra.line.table[input$elementden3])
+      } else if(input$transform1=="*" && input$elementnum2!="None" && input$transform2=="+" && input$elementnum3!="None" && input$elementden1!="None" && input$transform3=="*" && input$elementden2!="None" && input$transform4=="+" && input$elementden3!="None"){
+          (spectra.line.table[input$elementnum1] * spectra.line.table[input$elementnum2] + spectra.line.table[input$elementnum3])/(spectra.line.table[input$elementden1] * spectra.line.table[input$elementden2] + spectra.line.table[input$elementden3])
+      } else if(input$transform1=="/" && input$elementnum2!="None" && input$transform2=="+" && input$elementnum3!="None" && input$elementden1!="None" && input$transform3=="*" && input$elementden2!="None" && input$transform4=="+" && input$elementden3!="None"){
+          (spectra.line.table[input$elementnum1] / spectra.line.table[input$elementnum2] + spectra.line.table[input$elementnum3])/(spectra.line.table[input$elementden1] * spectra.line.table[input$elementden2] + spectra.line.table[input$elementden3])
+          ######Subtraction Third Variable
+      } else if(input$transform1=="+" && input$elementnum2!="None" && input$transform2=="-" && input$elementnum3!="None" && input$elementden1!="None" && input$transform3=="*" && input$elementden2!="None" && input$transform4=="+" && input$elementden3!="None"){
+          (spectra.line.table[input$elementnum1] + spectra.line.table[input$elementnum2] - spectra.line.table[input$elementnum3])/(spectra.line.table[input$elementden1] * spectra.line.table[input$elementden2] + spectra.line.table[input$elementden3])
+      } else if(input$transform1=="-" && input$elementnum2!="None" && input$transform2=="-" && input$elementnum3!="None" && input$elementden1!="None" && input$transform3=="*" && input$elementden2!="None" && input$transform4=="+" && input$elementden3!="None"){
+          (spectra.line.table[input$elementnum1] - spectra.line.table[input$elementnum2] - spectra.line.table[input$elementnum3])/(spectra.line.table[input$elementden1] * spectra.line.table[input$elementden2] + spectra.line.table[input$elementden3])
+      } else if(input$transform1=="*" && input$elementnum2!="None" && input$transform2=="-" && input$elementnum3!="None" && input$elementden1!="None" && input$transform3=="*" && input$elementden2!="None" && input$transform4=="+" && input$elementden3!="None"){
+          (spectra.line.table[input$elementnum1] * spectra.line.table[input$elementnum2] - spectra.line.table[input$elementnum3])/(spectra.line.table[input$elementden1] * spectra.line.table[input$elementden2] + spectra.line.table[input$elementden3])
+      } else if(input$transform1=="/" && input$elementnum2!="None" && input$transform2=="-" && input$elementnum3!="None" && input$elementden1!="None" && input$transform3=="*" && input$elementden2!="None" && input$transform4=="+" && input$elementden3!="None"){
+          (spectra.line.table[input$elementnum1] / spectra.line.table[input$elementnum2] - spectra.line.table[input$elementnum3])/(spectra.line.table[input$elementden1] * spectra.line.table[input$elementden2] + spectra.line.table[input$elementden3])
+          ######Multiplication Third Variable
+      } else if(input$transform1=="+" && input$elementnum2!="None" && input$transform2=="*" && input$elementnum3!="None" && input$elementden1!="None" && input$transform3=="*" && input$elementden2!="None" && input$transform4=="+" && input$elementden3!="None"){
+          (spectra.line.table[input$elementnum1] + spectra.line.table[input$elementnum2] * spectra.line.table[input$elementnum3])/(spectra.line.table[input$elementden1] * spectra.line.table[input$elementden2] + spectra.line.table[input$elementden3])
+      } else if(input$transform1=="-" && input$elementnum2!="None" && input$transform2=="*" && input$elementnum3!="None" && input$elementden1!="None" && input$transform3=="*" && input$elementden2!="None" && input$transform4=="+" && input$elementden3!="None"){
+          (spectra.line.table[input$elementnum1] - spectra.line.table[input$elementnum2] * spectra.line.table[input$elementnum3])/(spectra.line.table[input$elementden1] * spectra.line.table[input$elementden2] + spectra.line.table[input$elementden3])
+      } else if(input$transform1=="*" && input$elementnum2!="None" && input$transform2=="*" && input$elementnum3!="None" && input$elementden1!="None" && input$transform3=="*" && input$elementden2!="None" && input$transform4=="+" && input$elementden3!="None"){
+          (spectra.line.table[input$elementnum1] * spectra.line.table[input$elementnum2] * spectra.line.table[input$elementnum3])/(spectra.line.table[input$elementden1] * spectra.line.table[input$elementden2] + spectra.line.table[input$elementden3])
+      } else if(input$transform1=="/" && input$elementnum2!="None" && input$transform2=="*" && input$elementnum3!="None" && input$elementden1!="None" && input$transform3=="*" && input$elementden2!="None" && input$transform4=="+" && input$elementden3!="None"){
+          (spectra.line.table[input$elementnum1] / spectra.line.table[input$elementnum2] * spectra.line.table[input$elementnum3])/(spectra.line.table[input$elementden1] * spectra.line.table[input$elementden2] + spectra.line.table[input$elementden3])
+          ######Division Third Variable
+      } else if(input$transform1=="+" && input$elementnum2!="None" && input$transform2=="/" && input$elementnum3!="None" && input$elementden1!="None" && input$transform3=="*" && input$elementden2!="None" && input$transform4=="+" && input$elementden3!="None"){
+          (spectra.line.table[input$elementnum1] + spectra.line.table[input$elementnum2] / spectra.line.table[input$elementnum3])/(spectra.line.table[input$elementden1] * spectra.line.table[input$elementden2] + spectra.line.table[input$elementden3])
+      } else if(input$transform1=="-" && input$elementnum2!="None" && input$transform2=="/" && input$elementnum3!="None" && input$elementden1!="None" && input$transform3=="*" && input$elementden2!="None" && input$transform4=="+" && input$elementden3!="None"){
+          (spectra.line.table[input$elementnum1] - spectra.line.table[input$elementnum2] / spectra.line.table[input$elementnum3])/(spectra.line.table[input$elementden1] * spectra.line.table[input$elementden2] + spectra.line.table[input$elementden3])
+      } else if(input$transform1=="*" && input$elementnum2!="None" && input$transform2=="/" && input$elementnum3!="None" && input$elementden1!="None" && input$transform3=="*" && input$elementden2!="None" && input$transform4=="+" && input$elementden3!="None"){
+          (spectra.line.table[input$elementnum1] * spectra.line.table[input$elementnum2] / spectra.line.table[input$elementnum3])/(spectra.line.table[input$elementden1] * spectra.line.table[input$elementden2] + spectra.line.table[input$elementden3])
+      } else if(input$transform1=="/" && input$elementnum2!="None" && input$transform2=="/" && input$elementnum3!="None" && input$elementden1!="None" && input$transform3=="*" && input$elementden2!="None" && input$transform4=="+" && input$elementden3!="None"){
+          (spectra.line.table[input$elementnum1] / spectra.line.table[input$elementnum2] / spectra.line.table[input$elementnum3])/(spectra.line.table[input$elementden1] * spectra.line.table[input$elementden2] + spectra.line.table[input$elementden3])
+          ####################################
+          #####Division Two Denominators######
+          ####################################
+      } else if (input$transform1=="None" && input$elementden1!="None" && input$transform3=="/" && input$elementden2!="None" && input$transform4=="+" && input$elementden3!="None"){
+          spectra.line.table[input$elementnum1]/(spectra.line.table[input$elementden1] / spectra.line.table[input$elementden2] + spectra.line.table[input$elementden3])
+      } else if(input$transform1=="+" && input$elementnum2!="None" && input$elementden1!="None" && input$transform3=="/" && input$elementden2!="None" && input$transform4=="+" && input$elementden3!="None"){
+          (spectra.line.table[input$elementnum1] + spectra.line.table[input$elementden2] + spectra.line.table[input$elementden3])/(spectra.line.table[input$elementden1] / spectra.line.table[input$elementden2] + spectra.line.table[input$elementden3])
+      } else if(input$transform1=="-" && input$elementnum2!="None" && input$elementden1!="None" && input$transform3=="/" && input$elementden2!="None" && input$transform4=="+" && input$elementden3!="None"){
+          (spectra.line.table[input$elementnum1] - spectra.line.table[input$elementden2] + spectra.line.table[input$elementden3])/(spectra.line.table[input$elementden1] / spectra.line.table[input$elementden2] + spectra.line.table[input$elementden3])
+      } else if(input$transform1=="*" && input$elementnum2!="None" && input$elementden1!="None" && input$transform3=="/" && input$elementden2!="None" && input$transform4=="+" && input$elementden3!="None"){
+          (spectra.line.table[input$elementnum1] * spectra.line.table[input$elementden2] + spectra.line.table[input$elementden3])/(spectra.line.table[input$elementden1] / spectra.line.table[input$elementden2] + spectra.line.table[input$elementden3])
+      } else if(input$transform1=="/" && input$elementnum2!="None" && input$elementden1!="None" && input$transform3=="/" && input$elementden2!="None" && input$transform4=="+" && input$elementden3!="None"){
+          (spectra.line.table[input$elementnum1] / spectra.line.table[input$elementden2] + spectra.line.table[input$elementden3])/(spectra.line.table[input$elementden1] / spectra.line.table[input$elementden2] + spectra.line.table[input$elementden3])
+          ######Addition Third Variable
+      } else if(input$transform1=="+" && input$elementnum2!="None" && input$transform2=="+" && input$elementnum3!="None" && input$elementden1!="None" && input$transform3=="/" && input$elementden2!="None" && input$transform4=="+" && input$elementden3!="None"){
+          (spectra.line.table[input$elementnum1] + spectra.line.table[input$elementnum2] + spectra.line.table[input$elementnum3])/(spectra.line.table[input$elementden1] / spectra.line.table[input$elementden2] + spectra.line.table[input$elementden3])
+      } else if(input$transform1=="-" && input$elementnum2!="None" && input$transform2=="+" && input$elementnum3!="None" && input$elementden1!="None" && input$transform3=="/" && input$elementden2!="None" && input$transform4=="+" && input$elementden3!="None"){
+          (spectra.line.table[input$elementnum1] - spectra.line.table[input$elementnum2] + spectra.line.table[input$elementnum3])/(spectra.line.table[input$elementden1] / spectra.line.table[input$elementden2] + spectra.line.table[input$elementden3])
+      } else if(input$transform1=="*" && input$elementnum2!="None" && input$transform2=="+" && input$elementnum3!="None" && input$elementden1!="None" && input$transform3=="/" && input$elementden2!="None" && input$transform4=="+" && input$elementden3!="None"){
+          (spectra.line.table[input$elementnum1] * spectra.line.table[input$elementnum2] + spectra.line.table[input$elementnum3])/(spectra.line.table[input$elementden1] / spectra.line.table[input$elementden2] + spectra.line.table[input$elementden3])
+      } else if(input$transform1=="/" && input$elementnum2!="None" && input$transform2=="+" && input$elementnum3!="None" && input$elementden1!="None" && input$transform3=="/" && input$elementden2!="None" && input$transform4=="+" && input$elementden3!="None"){
+          (spectra.line.table[input$elementnum1] / spectra.line.table[input$elementnum2] + spectra.line.table[input$elementnum3])/(spectra.line.table[input$elementden1] / spectra.line.table[input$elementden2] + spectra.line.table[input$elementden3])
+          ######Subtraction Third Variable
+      } else if(input$transform1=="+" && input$elementnum2!="None" && input$transform2=="-" && input$elementnum3!="None" && input$elementden1!="None" && input$transform3=="/" && input$elementden2!="None" && input$transform4=="+" && input$elementden3!="None"){
+          (spectra.line.table[input$elementnum1] + spectra.line.table[input$elementnum2] - spectra.line.table[input$elementnum3])/(spectra.line.table[input$elementden1] / spectra.line.table[input$elementden2] + spectra.line.table[input$elementden3])
+      } else if(input$transform1=="-" && input$elementnum2!="None" && input$transform2=="-" && input$elementnum3!="None" && input$elementden1!="None" && input$transform3=="/" && input$elementden2!="None" && input$transform4=="+" && input$elementden3!="None"){
+          (spectra.line.table[input$elementnum1] - spectra.line.table[input$elementnum2] - spectra.line.table[input$elementnum3])/(spectra.line.table[input$elementden1] / spectra.line.table[input$elementden2] + spectra.line.table[input$elementden3])
+      } else if(input$transform1=="*" && input$elementnum2!="None" && input$transform2=="-" && input$elementnum3!="None" && input$elementden1!="None" && input$transform3=="/" && input$elementden2!="None" && input$transform4=="+" && input$elementden3!="None"){
+          (spectra.line.table[input$elementnum1] * spectra.line.table[input$elementnum2] - spectra.line.table[input$elementnum3])/(spectra.line.table[input$elementden1] / spectra.line.table[input$elementden2] + spectra.line.table[input$elementden3])
+      } else if(input$transform1=="/" && input$elementnum2!="None" && input$transform2=="-" && input$elementnum3!="None" && input$elementden1!="None" && input$transform3=="/" && input$elementden2!="None" && input$transform4=="+" && input$elementden3!="None"){
+          (spectra.line.table[input$elementnum1] / spectra.line.table[input$elementnum2] - spectra.line.table[input$elementnum3])/(spectra.line.table[input$elementden1] / spectra.line.table[input$elementden2] + spectra.line.table[input$elementden3])
+          ######Multiplication Third Variable
+      } else if(input$transform1=="+" && input$elementnum2!="None" && input$transform2=="*" && input$elementnum3!="None" && input$elementden1!="None" && input$transform3=="/" && input$elementden2!="None" && input$transform4=="+" && input$elementden3!="None"){
+          (spectra.line.table[input$elementnum1] + spectra.line.table[input$elementnum2] * spectra.line.table[input$elementnum3])/(spectra.line.table[input$elementden1] / spectra.line.table[input$elementden2] + spectra.line.table[input$elementden3])
+      } else if(input$transform1=="-" && input$elementnum2!="None" && input$transform2=="*" && input$elementnum3!="None" && input$elementden1!="None" && input$transform3=="/" && input$elementden2!="None" && input$transform4=="+" && input$elementden3!="None"){
+          (spectra.line.table[input$elementnum1] - spectra.line.table[input$elementnum2] * spectra.line.table[input$elementnum3])/(spectra.line.table[input$elementden1] / spectra.line.table[input$elementden2] + spectra.line.table[input$elementden3])
+      } else if(input$transform1=="*" && input$elementnum2!="None" && input$transform2=="*" && input$elementnum3!="None" && input$elementden1!="None" && input$transform3=="/" && input$elementden2!="None" && input$transform4=="+" && input$elementden3!="None"){
+          (spectra.line.table[input$elementnum1] * spectra.line.table[input$elementnum2] * spectra.line.table[input$elementnum3])/(spectra.line.table[input$elementden1] / spectra.line.table[input$elementden2] + spectra.line.table[input$elementden3])
+      } else if(input$transform1=="/" && input$elementnum2!="None" && input$transform2=="*" && input$elementnum3!="None" && input$elementden1!="None" && input$transform3=="/" && input$elementden2!="None" && input$transform4=="+" && input$elementden3!="None"){
+          (spectra.line.table[input$elementnum1] / spectra.line.table[input$elementnum2] * spectra.line.table[input$elementnum3])/(spectra.line.table[input$elementden1] / spectra.line.table[input$elementden2] + spectra.line.table[input$elementden3])
+          ######Division Third Variable
+      } else if(input$transform1=="+" && input$elementnum2!="None" && input$transform2=="/" && input$elementnum3!="None" && input$elementden1!="None" && input$transform3=="/" && input$elementden2!="None" && input$transform4=="+" && input$elementden3!="None"){
+          (spectra.line.table[input$elementnum1] + spectra.line.table[input$elementnum2] / spectra.line.table[input$elementnum3])/(spectra.line.table[input$elementden1] / spectra.line.table[input$elementden2] + spectra.line.table[input$elementden3])
+      } else if(input$transform1=="-" && input$elementnum2!="None" && input$transform2=="/" && input$elementnum3!="None" && input$elementden1!="None" && input$transform3=="/" && input$elementden2!="None" && input$transform4=="+" && input$elementden3!="None"){
+          (spectra.line.table[input$elementnum1] - spectra.line.table[input$elementnum2] / spectra.line.table[input$elementnum3])/(spectra.line.table[input$elementden1] / spectra.line.table[input$elementden2] + spectra.line.table[input$elementden3])
+      } else if(input$transform1=="*" && input$elementnum2!="None" && input$transform2=="/" && input$elementnum3!="None" && input$elementden1!="None" && input$transform3=="/" && input$elementden2!="None" && input$transform4=="+" && input$elementden3!="None"){
+          (spectra.line.table[input$elementnum1] * spectra.line.table[input$elementnum2] / spectra.line.table[input$elementnum3])/(spectra.line.table[input$elementden1] / spectra.line.table[input$elementden2] + spectra.line.table[input$elementden3])
+      } else if(input$transform1=="/" && input$elementnum2!="None" && input$transform2=="/" && input$elementnum3!="None" && input$elementden1!="None" && input$transform3=="/" && input$elementden2!="None" && input$transform4=="+" && input$elementden3!="None"){
+          (spectra.line.table[input$elementnum1] / spectra.line.table[input$elementnum2] / spectra.line.table[input$elementnum3])/(spectra.line.table[input$elementden1] / spectra.line.table[input$elementden2] + spectra.line.table[input$elementden3])
+          #######################################
+          #######################################
+          ########################################Phyt01ith!
+          ####Subtraction Third Denominator#########
+          #######################################
+          #######################################
+          ####################################
+          #####Addition Two Denominators######
+          ####################################
+      } else if (input$transform1=="None" && input$elementden1!="None" && input$transform3=="+" && input$elementden2!="None" && input$transform4=="-" && input$elementden3!="None"){
+          spectra.line.table[input$elementnum1]/(spectra.line.table[input$elementden1] + spectra.line.table[input$elementden2] - spectra.line.table[input$elementden3])
+      } else if(input$transform1=="+" && input$elementnum2!="None" && input$elementden1!="None" && input$transform3=="+" && input$elementden2!="None" && input$transform4=="-" && input$elementden3!="None"){
+          (spectra.line.table[input$elementnum1] + spectra.line.table[input$elementden2] - spectra.line.table[input$elementden3])/(spectra.line.table[input$elementden1] + spectra.line.table[input$elementden2] - spectra.line.table[input$elementden3])
+      } else if(input$transform1=="-" && input$elementnum2!="None" && input$elementden1!="None" && input$transform3=="+" && input$elementden2!="None" && input$transform4=="-" && input$elementden3!="None"){
+          (spectra.line.table[input$elementnum1] - spectra.line.table[input$elementden2] - spectra.line.table[input$elementden3])/(spectra.line.table[input$elementden1] + spectra.line.table[input$elementden2] - spectra.line.table[input$elementden3])
+      } else if(input$transform1=="*" && input$elementnum2!="None" && input$elementden1!="None" && input$transform3=="+" && input$elementden2!="None" && input$transform4=="-" && input$elementden3!="None"){
+          (spectra.line.table[input$elementnum1] * spectra.line.table[input$elementden2] - spectra.line.table[input$elementden3])/(spectra.line.table[input$elementden1] + spectra.line.table[input$elementden2] - spectra.line.table[input$elementden3])
+      } else if(input$transform1=="/" && input$elementnum2!="None" && input$elementden1!="None" && input$transform3=="+" && input$elementden2!="None" && input$transform4=="-" && input$elementden3!="None"){
+          (spectra.line.table[input$elementnum1] / spectra.line.table[input$elementden2] - spectra.line.table[input$elementden3])/(spectra.line.table[input$elementden1] + spectra.line.table[input$elementden2] - spectra.line.table[input$elementden3])
+          ######Addition Third Variable
+      } else if(input$transform1=="+" && input$elementnum2!="None" && input$transform2=="+" && input$elementnum3!="None" && input$elementden1!="None" && input$transform3=="+" && input$elementden2!="None" && input$transform4=="-" && input$elementden3!="None"){
+          (spectra.line.table[input$elementnum1] + spectra.line.table[input$elementnum2] + spectra.line.table[input$elementnum3])/(spectra.line.table[input$elementden1] + spectra.line.table[input$elementden2] - spectra.line.table[input$elementden3])
+      } else if(input$transform1=="-" && input$elementnum2!="None" && input$transform2=="+" && input$elementnum3!="None" && input$elementden1!="None" && input$transform3=="+" && input$elementden2!="None" && input$transform4=="-" && input$elementden3!="None"){
+          (spectra.line.table[input$elementnum1] - spectra.line.table[input$elementnum2] + spectra.line.table[input$elementnum3])/(spectra.line.table[input$elementden1] + spectra.line.table[input$elementden2] - spectra.line.table[input$elementden3])
+      } else if(input$transform1=="*" && input$elementnum2!="None" && input$transform2=="+" && input$elementnum3!="None" && input$elementden1!="None" && input$transform3=="+" && input$elementden2!="None" && input$transform4=="-" && input$elementden3!="None"){
+          (spectra.line.table[input$elementnum1] * spectra.line.table[input$elementnum2] + spectra.line.table[input$elementnum3])/(spectra.line.table[input$elementden1] + spectra.line.table[input$elementden2] - spectra.line.table[input$elementden3])
+      } else if(input$transform1=="/" && input$elementnum2!="None" && input$transform2=="+" && input$elementnum3!="None" && input$elementden1!="None" && input$transform3=="+" && input$elementden2!="None" && input$transform4=="-" && input$elementden3!="None"){
+          (spectra.line.table[input$elementnum1] / spectra.line.table[input$elementnum2] + spectra.line.table[input$elementnum3])/(spectra.line.table[input$elementden1] + spectra.line.table[input$elementden2] - spectra.line.table[input$elementden3])
+          ######Subtraction Third Variable
+      } else if(input$transform1=="+" && input$elementnum2!="None" && input$transform2=="-" && input$elementnum3!="None" && input$elementden1!="None" && input$transform3=="+" && input$elementden2!="None" && input$transform4=="-" && input$elementden3!="None"){
+          (spectra.line.table[input$elementnum1] + spectra.line.table[input$elementnum2] - spectra.line.table[input$elementnum3])/(spectra.line.table[input$elementden1] + spectra.line.table[input$elementden2] - spectra.line.table[input$elementden3])
+      } else if(input$transform1=="-" && input$elementnum2!="None" && input$transform2=="-" && input$elementnum3!="None" && input$elementden1!="None" && input$transform3=="+" && input$elementden2!="None" && input$transform4=="-" && input$elementden3!="None"){
+          (spectra.line.table[input$elementnum1] - spectra.line.table[input$elementnum2] - spectra.line.table[input$elementnum3])/(spectra.line.table[input$elementden1] + spectra.line.table[input$elementden2] - spectra.line.table[input$elementden3])
+      } else if(input$transform1=="*" && input$elementnum2!="None" && input$transform2=="-" && input$elementnum3!="None" && input$elementden1!="None" && input$transform3=="+" && input$elementden2!="None" && input$transform4=="-" && input$elementden3!="None"){
+          (spectra.line.table[input$elementnum1] * spectra.line.table[input$elementnum2] - spectra.line.table[input$elementnum3])/(spectra.line.table[input$elementden1] + spectra.line.table[input$elementden2] - spectra.line.table[input$elementden3])
+      } else if(input$transform1=="/" && input$elementnum2!="None" && input$transform2=="-" && input$elementnum3!="None" && input$elementden1!="None" && input$transform3=="+" && input$elementden2!="None" && input$transform4=="-" && input$elementden3!="None"){
+          (spectra.line.table[input$elementnum1] / spectra.line.table[input$elementnum2] - spectra.line.table[input$elementnum3])/(spectra.line.table[input$elementden1] + spectra.line.table[input$elementden2] - spectra.line.table[input$elementden3])
+          ######Multiplication Third Variable
+      } else if(input$transform1=="+" && input$elementnum2!="None" && input$transform2=="*" && input$elementnum3!="None" && input$elementden1!="None" && input$transform3=="+" && input$elementden2!="None" && input$transform4=="-" && input$elementden3!="None"){
+          (spectra.line.table[input$elementnum1] + spectra.line.table[input$elementnum2] * spectra.line.table[input$elementnum3])/(spectra.line.table[input$elementden1] + spectra.line.table[input$elementden2] - spectra.line.table[input$elementden3])
+      } else if(input$transform1=="-" && input$elementnum2!="None" && input$transform2=="*" && input$elementnum3!="None" && input$elementden1!="None" && input$transform3=="+" && input$elementden2!="None" && input$transform4=="-" && input$elementden3!="None"){
+          (spectra.line.table[input$elementnum1] - spectra.line.table[input$elementnum2] * spectra.line.table[input$elementnum3])/(spectra.line.table[input$elementden1] + spectra.line.table[input$elementden2] - spectra.line.table[input$elementden3])
+      } else if(input$transform1=="*" && input$elementnum2!="None" && input$transform2=="*" && input$elementnum3!="None" && input$elementden1!="None" && input$transform3=="+" && input$elementden2!="None" && input$transform4=="-" && input$elementden3!="None"){
+          (spectra.line.table[input$elementnum1] * spectra.line.table[input$elementnum2] * spectra.line.table[input$elementnum3])/(spectra.line.table[input$elementden1] + spectra.line.table[input$elementden2] - spectra.line.table[input$elementden3])
+      } else if(input$transform1=="/" && input$elementnum2!="None" && input$transform2=="*" && input$elementnum3!="None" && input$elementden1!="None" && input$transform3=="+" && input$elementden2!="None" && input$transform4=="-" && input$elementden3!="None"){
+          (spectra.line.table[input$elementnum1] / spectra.line.table[input$elementnum2] * spectra.line.table[input$elementnum3])/(spectra.line.table[input$elementden1] + spectra.line.table[input$elementden2] - spectra.line.table[input$elementden3])
+          ######Division Third Variable
+      } else if(input$transform1=="+" && input$elementnum2!="None" && input$transform2=="/" && input$elementnum3!="None" && input$elementden1!="None" && input$transform3=="+" && input$elementden2!="None" && input$transform4=="-" && input$elementden3!="None"){
+          (spectra.line.table[input$elementnum1] + spectra.line.table[input$elementnum2] / spectra.line.table[input$elementnum3])/(spectra.line.table[input$elementden1] + spectra.line.table[input$elementden2] - spectra.line.table[input$elementden3])
+      } else if(input$transform1=="-" && input$elementnum2!="None" && input$transform2=="/" && input$elementnum3!="None" && input$elementden1!="None" && input$transform3=="+" && input$elementden2!="None" && input$transform4=="-" && input$elementden3!="None"){
+          (spectra.line.table[input$elementnum1] - spectra.line.table[input$elementnum2] / spectra.line.table[input$elementnum3])/(spectra.line.table[input$elementden1] + spectra.line.table[input$elementden2] - spectra.line.table[input$elementden3])
+      } else if(input$transform1=="*" && input$elementnum2!="None" && input$transform2=="/" && input$elementnum3!="None" && input$elementden1!="None" && input$transform3=="+" && input$elementden2!="None" && input$transform4=="-" && input$elementden3!="None"){
+          (spectra.line.table[input$elementnum1] * spectra.line.table[input$elementnum2] / spectra.line.table[input$elementnum3])/(spectra.line.table[input$elementden1] + spectra.line.table[input$elementden2] - spectra.line.table[input$elementden3])
+      } else if(input$transform1=="/" && input$elementnum2!="None" && input$transform2=="/" && input$elementnum3!="None" && input$elementden1!="None" && input$transform3=="+" && input$elementden2!="None" && input$transform4=="-" && input$elementden3!="None"){
+          (spectra.line.table[input$elementnum1] / spectra.line.table[input$elementnum2] / spectra.line.table[input$elementnum3])/(spectra.line.table[input$elementden1] + spectra.line.table[input$elementden2] - spectra.line.table[input$elementden3])
+          ####################################
+          #####Subtraction Two Denominators######
+          ####################################
+      } else if (input$transform1=="None" && input$elementden1!="None" && input$transform3=="-" && input$elementden2!="None" && input$transform4=="-" && input$elementden3!="None"){
+          spectra.line.table[input$elementnum1]/(spectra.line.table[input$elementden1] - spectra.line.table[input$elementden2] - spectra.line.table[input$elementden3])
+      } else if(input$transform1=="+" && input$elementnum2!="None" && input$elementden1!="None" && input$transform3=="-" && input$elementden2!="None" && input$transform4=="-" && input$elementden3!="None"){
+          (spectra.line.table[input$elementnum1] + spectra.line.table[input$elementden2] - spectra.line.table[input$elementden3])/(spectra.line.table[input$elementden1] - spectra.line.table[input$elementden2] - spectra.line.table[input$elementden3])
+      } else if(input$transform1=="-" && input$elementnum2!="None" && input$elementden1!="None" && input$transform3=="-" && input$elementden2!="None" && input$transform4=="-" && input$elementden3!="None"){
+          (spectra.line.table[input$elementnum1] - spectra.line.table[input$elementden2] - spectra.line.table[input$elementden3])/(spectra.line.table[input$elementden1] - spectra.line.table[input$elementden2] - spectra.line.table[input$elementden3])
+      } else if(input$transform1=="*" && input$elementnum2!="None" && input$elementden1!="None" && input$transform3=="-" && input$elementden2!="None" && input$transform4=="-" && input$elementden3!="None"){
+          (spectra.line.table[input$elementnum1] * spectra.line.table[input$elementden2] - spectra.line.table[input$elementden3])/(spectra.line.table[input$elementden1] - spectra.line.table[input$elementden2] - spectra.line.table[input$elementden3])
+      } else if(input$transform1=="/" && input$elementnum2!="None" && input$elementden1!="None" && input$transform3=="-" && input$elementden2!="None" && input$transform4=="-" && input$elementden3!="None"){
+          (spectra.line.table[input$elementnum1] / spectra.line.table[input$elementden2] - spectra.line.table[input$elementden3])/(spectra.line.table[input$elementden1] - spectra.line.table[input$elementden2] - spectra.line.table[input$elementden3])
+          ######Addition Third Variable
+      } else if(input$transform1=="+" && input$elementnum2!="None" && input$transform2=="+" && input$elementnum3!="None" && input$elementden1!="None" && input$transform3=="-" && input$elementden2!="None" && input$transform4=="-" && input$elementden3!="None"){
+          (spectra.line.table[input$elementnum1] + spectra.line.table[input$elementnum2] + spectra.line.table[input$elementnum3])/(spectra.line.table[input$elementden1] - spectra.line.table[input$elementden2] - spectra.line.table[input$elementden3])
+      } else if(input$transform1=="-" && input$elementnum2!="None" && input$transform2=="+" && input$elementnum3!="None" && input$elementden1!="None" && input$transform3=="-" && input$elementden2!="None" && input$transform4=="-" && input$elementden3!="None"){
+          (spectra.line.table[input$elementnum1] - spectra.line.table[input$elementnum2] + spectra.line.table[input$elementnum3])/(spectra.line.table[input$elementden1] - spectra.line.table[input$elementden2] - spectra.line.table[input$elementden3])
+      } else if(input$transform1=="*" && input$elementnum2!="None" && input$transform2=="+" && input$elementnum3!="None" && input$elementden1!="None" && input$transform3=="-" && input$elementden2!="None" && input$transform4=="-" && input$elementden3!="None"){
+          (spectra.line.table[input$elementnum1] * spectra.line.table[input$elementnum2] + spectra.line.table[input$elementnum3])/(spectra.line.table[input$elementden1] - spectra.line.table[input$elementden2] - spectra.line.table[input$elementden3])
+      } else if(input$transform1=="/" && input$elementnum2!="None" && input$transform2=="+" && input$elementnum3!="None" && input$elementden1!="None" && input$transform3=="-" && input$elementden2!="None" && input$transform4=="-" && input$elementden3!="None"){
+          (spectra.line.table[input$elementnum1] / spectra.line.table[input$elementnum2] + spectra.line.table[input$elementnum3])/(spectra.line.table[input$elementden1] - spectra.line.table[input$elementden2] - spectra.line.table[input$elementden3])
+          ######Subtraction Third Variable
+      } else if(input$transform1=="+" && input$elementnum2!="None" && input$transform2=="-" && input$elementnum3!="None" && input$elementden1!="None" && input$transform3=="-" && input$elementden2!="None" && input$transform4=="-" && input$elementden3!="None"){
+          (spectra.line.table[input$elementnum1] + spectra.line.table[input$elementnum2] - spectra.line.table[input$elementnum3])/(spectra.line.table[input$elementden1] - spectra.line.table[input$elementden2] - spectra.line.table[input$elementden3])
+      } else if(input$transform1=="-" && input$elementnum2!="None" && input$transform2=="-" && input$elementnum3!="None" && input$elementden1!="None" && input$transform3=="-" && input$elementden2!="None" && input$transform4=="-" && input$elementden3!="None"){
+          (spectra.line.table[input$elementnum1] - spectra.line.table[input$elementnum2] - spectra.line.table[input$elementnum3])/(spectra.line.table[input$elementden1] - spectra.line.table[input$elementden2] - spectra.line.table[input$elementden3])
+      } else if(input$transform1=="*" && input$elementnum2!="None" && input$transform2=="-" && input$elementnum3!="None" && input$elementden1!="None" && input$transform3=="-" && input$elementden2!="None" && input$transform4=="-" && input$elementden3!="None"){
+          (spectra.line.table[input$elementnum1] * spectra.line.table[input$elementnum2] - spectra.line.table[input$elementnum3])/(spectra.line.table[input$elementden1] - spectra.line.table[input$elementden2] - spectra.line.table[input$elementden3])
+      } else if(input$transform1=="/" && input$elementnum2!="None" && input$transform2=="-" && input$elementnum3!="None" && input$elementden1!="None" && input$transform3=="-" && input$elementden2!="None" && input$transform4=="-" && input$elementden3!="None"){
+          (spectra.line.table[input$elementnum1] / spectra.line.table[input$elementnum2] - spectra.line.table[input$elementnum3])/(spectra.line.table[input$elementden1] - spectra.line.table[input$elementden2] - spectra.line.table[input$elementden3])
+          ######Multiplication Third Variable
+      } else if(input$transform1=="+" && input$elementnum2!="None" && input$transform2=="*" && input$elementnum3!="None" && input$elementden1!="None" && input$transform3=="-" && input$elementden2!="None" && input$transform4=="-" && input$elementden3!="None"){
+          (spectra.line.table[input$elementnum1] + spectra.line.table[input$elementnum2] * spectra.line.table[input$elementnum3])/(spectra.line.table[input$elementden1] - spectra.line.table[input$elementden2] - spectra.line.table[input$elementden3])
+      } else if(input$transform1=="-" && input$elementnum2!="None" && input$transform2=="*" && input$elementnum3!="None" && input$elementden1!="None" && input$transform3=="-" && input$elementden2!="None" && input$transform4=="-" && input$elementden3!="None"){
+          (spectra.line.table[input$elementnum1] - spectra.line.table[input$elementnum2] * spectra.line.table[input$elementnum3])/(spectra.line.table[input$elementden1] - spectra.line.table[input$elementden2] - spectra.line.table[input$elementden3])
+      } else if(input$transform1=="*" && input$elementnum2!="None" && input$transform2=="*" && input$elementnum3!="None" && input$elementden1!="None" && input$transform3=="-" && input$elementden2!="None" && input$transform4=="-" && input$elementden3!="None"){
+          (spectra.line.table[input$elementnum1] * spectra.line.table[input$elementnum2] * spectra.line.table[input$elementnum3])/(spectra.line.table[input$elementden1] - spectra.line.table[input$elementden2] - spectra.line.table[input$elementden3])
+      } else if(input$transform1=="/" && input$elementnum2!="None" && input$transform2=="*" && input$elementnum3!="None" && input$elementden1!="None" && input$transform3=="-" && input$elementden2!="None" && input$transform4=="-" && input$elementden3!="None"){
+          (spectra.line.table[input$elementnum1] / spectra.line.table[input$elementnum2] * spectra.line.table[input$elementnum3])/(spectra.line.table[input$elementden1] - spectra.line.table[input$elementden2] - spectra.line.table[input$elementden3])
+          ######Division Third Variable
+      } else if(input$transform1=="+" && input$elementnum2!="None" && input$transform2=="/" && input$elementnum3!="None" && input$elementden1!="None" && input$transform3=="-" && input$elementden2!="None" && input$transform4=="-" && input$elementden3!="None"){
+          (spectra.line.table[input$elementnum1] + spectra.line.table[input$elementnum2] / spectra.line.table[input$elementnum3])/(spectra.line.table[input$elementden1] - spectra.line.table[input$elementden2] - spectra.line.table[input$elementden3])
+      } else if(input$transform1=="-" && input$elementnum2!="None" && input$transform2=="/" && input$elementnum3!="None" && input$elementden1!="None" && input$transform3=="-" && input$elementden2!="None" && input$transform4=="-" && input$elementden3!="None"){
+          (spectra.line.table[input$elementnum1] - spectra.line.table[input$elementnum2] / spectra.line.table[input$elementnum3])/(spectra.line.table[input$elementden1] - spectra.line.table[input$elementden2] - spectra.line.table[input$elementden3])
+      } else if(input$transform1=="*" && input$elementnum2!="None" && input$transform2=="/" && input$elementnum3!="None" && input$elementden1!="None" && input$transform3=="-" && input$elementden2!="None" && input$transform4=="-" && input$elementden3!="None"){
+          (spectra.line.table[input$elementnum1] * spectra.line.table[input$elementnum2] / spectra.line.table[input$elementnum3])/(spectra.line.table[input$elementden1] - spectra.line.table[input$elementden2] - spectra.line.table[input$elementden3])
+      } else if(input$transform1=="/" && input$elementnum2!="None" && input$transform2=="/" && input$elementnum3!="None" && input$elementden1!="None" && input$transform3=="-" && input$elementden2!="None" && input$transform4=="-" && input$elementden3!="None"){
+          (spectra.line.table[input$elementnum1] / spectra.line.table[input$elementnum2] / spectra.line.table[input$elementnum3])/(spectra.line.table[input$elementden1] - spectra.line.table[input$elementden2] - spectra.line.table[input$elementden3])
+          ####################################
+          #####Multiplication Two Denominators######
+          ####################################
+      } else if (input$transform1=="None" && input$elementden1!="None" && input$transform3=="*" && input$elementden2!="None" && input$transform4=="-" && input$elementden3!="None"){
+          spectra.line.table[input$elementnum1]/(spectra.line.table[input$elementden1] * spectra.line.table[input$elementden2] - spectra.line.table[input$elementden3])
+      } else if(input$transform1=="+" && input$elementnum2!="None" && input$elementden1!="None" && input$transform3=="*" && input$elementden2!="None" && input$transform4=="-" && input$elementden3!="None"){
+          (spectra.line.table[input$elementnum1] + spectra.line.table[input$elementden2] - spectra.line.table[input$elementden3])/(spectra.line.table[input$elementden1] * spectra.line.table[input$elementden2] - spectra.line.table[input$elementden3])
+      } else if(input$transform1=="-" && input$elementnum2!="None" && input$elementden1!="None" && input$transform3=="*" && input$elementden2!="None" && input$transform4=="-" && input$elementden3!="None"){
+          (spectra.line.table[input$elementnum1] - spectra.line.table[input$elementden2] - spectra.line.table[input$elementden3])/(spectra.line.table[input$elementden1] * spectra.line.table[input$elementden2] - spectra.line.table[input$elementden3])
+      } else if(input$transform1=="*" && input$elementnum2!="None" && input$elementden1!="None" && input$transform3=="*" && input$elementden2!="None" && input$transform4=="-" && input$elementden3!="None"){
+          (spectra.line.table[input$elementnum1] * spectra.line.table[input$elementden2] - spectra.line.table[input$elementden3])/(spectra.line.table[input$elementden1] * spectra.line.table[input$elementden2] - spectra.line.table[input$elementden3])
+      } else if(input$transform1=="/" && input$elementnum2!="None" && input$elementden1!="None" && input$transform3=="*" && input$elementden2!="None" && input$transform4=="-" && input$elementden3!="None"){
+          (spectra.line.table[input$elementnum1] / spectra.line.table[input$elementden2] - spectra.line.table[input$elementden3])/(spectra.line.table[input$elementden1] * spectra.line.table[input$elementden2] - spectra.line.table[input$elementden3])
+          ######Addition Third Variable
+      } else if(input$transform1=="+" && input$elementnum2!="None" && input$transform2=="+" && input$elementnum3!="None" && input$elementden1!="None" && input$transform3=="*" && input$elementden2!="None" && input$transform4=="-" && input$elementden3!="None"){
+          (spectra.line.table[input$elementnum1] + spectra.line.table[input$elementnum2] + spectra.line.table[input$elementnum3])/(spectra.line.table[input$elementden1] * spectra.line.table[input$elementden2] - spectra.line.table[input$elementden3])
+      } else if(input$transform1=="-" && input$elementnum2!="None" && input$transform2=="+" && input$elementnum3!="None" && input$elementden1!="None" && input$transform3=="*" && input$elementden2!="None" && input$transform4=="-" && input$elementden3!="None"){
+          (spectra.line.table[input$elementnum1] - spectra.line.table[input$elementnum2] + spectra.line.table[input$elementnum3])/(spectra.line.table[input$elementden1] * spectra.line.table[input$elementden2] - spectra.line.table[input$elementden3])
+      } else if(input$transform1=="*" && input$elementnum2!="None" && input$transform2=="+" && input$elementnum3!="None" && input$elementden1!="None" && input$transform3=="*" && input$elementden2!="None" && input$transform4=="-" && input$elementden3!="None"){
+          (spectra.line.table[input$elementnum1] * spectra.line.table[input$elementnum2] + spectra.line.table[input$elementnum3])/(spectra.line.table[input$elementden1] * spectra.line.table[input$elementden2] - spectra.line.table[input$elementden3])
+      } else if(input$transform1=="/" && input$elementnum2!="None" && input$transform2=="+" && input$elementnum3!="None" && input$elementden1!="None" && input$transform3=="*" && input$elementden2!="None" && input$transform4=="-" && input$elementden3!="None"){
+          (spectra.line.table[input$elementnum1] / spectra.line.table[input$elementnum2] + spectra.line.table[input$elementnum3])/(spectra.line.table[input$elementden1] * spectra.line.table[input$elementden2] - spectra.line.table[input$elementden3])
+          ######Subtraction Third Variable
+      } else if(input$transform1=="+" && input$elementnum2!="None" && input$transform2=="-" && input$elementnum3!="None" && input$elementden1!="None" && input$transform3=="*" && input$elementden2!="None" && input$transform4=="-" && input$elementden3!="None"){
+          (spectra.line.table[input$elementnum1] + spectra.line.table[input$elementnum2] - spectra.line.table[input$elementnum3])/(spectra.line.table[input$elementden1] * spectra.line.table[input$elementden2] - spectra.line.table[input$elementden3])
+      } else if(input$transform1=="-" && input$elementnum2!="None" && input$transform2=="-" && input$elementnum3!="None" && input$elementden1!="None" && input$transform3=="*" && input$elementden2!="None" && input$transform4=="-" && input$elementden3!="None"){
+          (spectra.line.table[input$elementnum1] - spectra.line.table[input$elementnum2] - spectra.line.table[input$elementnum3])/(spectra.line.table[input$elementden1] * spectra.line.table[input$elementden2] - spectra.line.table[input$elementden3])
+      } else if(input$transform1=="*" && input$elementnum2!="None" && input$transform2=="-" && input$elementnum3!="None" && input$elementden1!="None" && input$transform3=="*" && input$elementden2!="None" && input$transform4=="-" && input$elementden3!="None"){
+          (spectra.line.table[input$elementnum1] * spectra.line.table[input$elementnum2] - spectra.line.table[input$elementnum3])/(spectra.line.table[input$elementden1] * spectra.line.table[input$elementden2] - spectra.line.table[input$elementden3])
+      } else if(input$transform1=="/" && input$elementnum2!="None" && input$transform2=="-" && input$elementnum3!="None" && input$elementden1!="None" && input$transform3=="*" && input$elementden2!="None" && input$transform4=="-" && input$elementden3!="None"){
+          (spectra.line.table[input$elementnum1] / spectra.line.table[input$elementnum2] - spectra.line.table[input$elementnum3])/(spectra.line.table[input$elementden1] * spectra.line.table[input$elementden2] - spectra.line.table[input$elementden3])
+          ######Multiplication Third Variable
+      } else if(input$transform1=="+" && input$elementnum2!="None" && input$transform2=="*" && input$elementnum3!="None" && input$elementden1!="None" && input$transform3=="*" && input$elementden2!="None" && input$transform4=="-" && input$elementden3!="None"){
+          (spectra.line.table[input$elementnum1] + spectra.line.table[input$elementnum2] * spectra.line.table[input$elementnum3])/(spectra.line.table[input$elementden1] * spectra.line.table[input$elementden2] - spectra.line.table[input$elementden3])
+      } else if(input$transform1=="-" && input$elementnum2!="None" && input$transform2=="*" && input$elementnum3!="None" && input$elementden1!="None" && input$transform3=="*" && input$elementden2!="None" && input$transform4=="-" && input$elementden3!="None"){
+          (spectra.line.table[input$elementnum1] - spectra.line.table[input$elementnum2] * spectra.line.table[input$elementnum3])/(spectra.line.table[input$elementden1] * spectra.line.table[input$elementden2] - spectra.line.table[input$elementden3])
+      } else if(input$transform1=="*" && input$elementnum2!="None" && input$transform2=="*" && input$elementnum3!="None" && input$elementden1!="None" && input$transform3=="*" && input$elementden2!="None" && input$transform4=="-" && input$elementden3!="None"){
+          (spectra.line.table[input$elementnum1] * spectra.line.table[input$elementnum2] * spectra.line.table[input$elementnum3])/(spectra.line.table[input$elementden1] * spectra.line.table[input$elementden2] - spectra.line.table[input$elementden3])
+      } else if(input$transform1=="/" && input$elementnum2!="None" && input$transform2=="*" && input$elementnum3!="None" && input$elementden1!="None" && input$transform3=="*" && input$elementden2!="None" && input$transform4=="-" && input$elementden3!="None"){
+          (spectra.line.table[input$elementnum1] / spectra.line.table[input$elementnum2] * spectra.line.table[input$elementnum3])/(spectra.line.table[input$elementden1] * spectra.line.table[input$elementden2] - spectra.line.table[input$elementden3])
+          ######Division Third Variable
+      } else if(input$transform1=="+" && input$elementnum2!="None" && input$transform2=="/" && input$elementnum3!="None" && input$elementden1!="None" && input$transform3=="*" && input$elementden2!="None" && input$transform4=="-" && input$elementden3!="None"){
+          (spectra.line.table[input$elementnum1] + spectra.line.table[input$elementnum2] / spectra.line.table[input$elementnum3])/(spectra.line.table[input$elementden1] * spectra.line.table[input$elementden2] - spectra.line.table[input$elementden3])
+      } else if(input$transform1=="-" && input$elementnum2!="None" && input$transform2=="/" && input$elementnum3!="None" && input$elementden1!="None" && input$transform3=="*" && input$elementden2!="None" && input$transform4=="-" && input$elementden3!="None"){
+          (spectra.line.table[input$elementnum1] - spectra.line.table[input$elementnum2] / spectra.line.table[input$elementnum3])/(spectra.line.table[input$elementden1] * spectra.line.table[input$elementden2] - spectra.line.table[input$elementden3])
+      } else if(input$transform1=="*" && input$elementnum2!="None" && input$transform2=="/" && input$elementnum3!="None" && input$elementden1!="None" && input$transform3=="*" && input$elementden2!="None" && input$transform4=="-" && input$elementden3!="None"){
+          (spectra.line.table[input$elementnum1] * spectra.line.table[input$elementnum2] / spectra.line.table[input$elementnum3])/(spectra.line.table[input$elementden1] * spectra.line.table[input$elementden2] - spectra.line.table[input$elementden3])
+      } else if(input$transform1=="/" && input$elementnum2!="None" && input$transform2=="/" && input$elementnum3!="None" && input$elementden1!="None" && input$transform3=="*" && input$elementden2!="None" && input$transform4=="-" && input$elementden3!="None"){
+          (spectra.line.table[input$elementnum1] / spectra.line.table[input$elementnum2] / spectra.line.table[input$elementnum3])/(spectra.line.table[input$elementden1] * spectra.line.table[input$elementden2] - spectra.line.table[input$elementden3])
+          ####################################
+          #####Division Two Denominators######
+          ####################################
+      } else if (input$transform1=="None" && input$elementden1!="None" && input$transform3=="/" && input$elementden2!="None" && input$transform4=="-" && input$elementden3!="None"){
+          spectra.line.table[input$elementnum1]/(spectra.line.table[input$elementden1] / spectra.line.table[input$elementden2] - spectra.line.table[input$elementden3])
+      } else if(input$transform1=="+" && input$elementnum2!="None" && input$elementden1!="None" && input$transform3=="/" && input$elementden2!="None" && input$transform4=="-" && input$elementden3!="None"){
+          (spectra.line.table[input$elementnum1] + spectra.line.table[input$elementden2] - spectra.line.table[input$elementden3])/(spectra.line.table[input$elementden1] / spectra.line.table[input$elementden2] - spectra.line.table[input$elementden3])
+      } else if(input$transform1=="-" && input$elementnum2!="None" && input$elementden1!="None" && input$transform3=="/" && input$elementden2!="None" && input$transform4=="-" && input$elementden3!="None"){
+          (spectra.line.table[input$elementnum1] - spectra.line.table[input$elementden2] - spectra.line.table[input$elementden3])/(spectra.line.table[input$elementden1] / spectra.line.table[input$elementden2] - spectra.line.table[input$elementden3])
+      } else if(input$transform1=="*" && input$elementnum2!="None" && input$elementden1!="None" && input$transform3=="/" && input$elementden2!="None" && input$transform4=="-" && input$elementden3!="None"){
+          (spectra.line.table[input$elementnum1] * spectra.line.table[input$elementden2] - spectra.line.table[input$elementden3])/(spectra.line.table[input$elementden1] / spectra.line.table[input$elementden2] - spectra.line.table[input$elementden3])
+      } else if(input$transform1=="/" && input$elementnum2!="None" && input$elementden1!="None" && input$transform3=="/" && input$elementden2!="None" && input$transform4=="-" && input$elementden3!="None"){
+          (spectra.line.table[input$elementnum1] / spectra.line.table[input$elementden2] - spectra.line.table[input$elementden3])/(spectra.line.table[input$elementden1] / spectra.line.table[input$elementden2] - spectra.line.table[input$elementden3])
+          ######Addition Third Variable
+      } else if(input$transform1=="+" && input$elementnum2!="None" && input$transform2=="+" && input$elementnum3!="None" && input$elementden1!="None" && input$transform3=="/" && input$elementden2!="None" && input$transform4=="-" && input$elementden3!="None"){
+          (spectra.line.table[input$elementnum1] + spectra.line.table[input$elementnum2] + spectra.line.table[input$elementnum3])/(spectra.line.table[input$elementden1] / spectra.line.table[input$elementden2] - spectra.line.table[input$elementden3])
+      } else if(input$transform1=="-" && input$elementnum2!="None" && input$transform2=="+" && input$elementnum3!="None" && input$elementden1!="None" && input$transform3=="/" && input$elementden2!="None" && input$transform4=="-" && input$elementden3!="None"){
+          (spectra.line.table[input$elementnum1] - spectra.line.table[input$elementnum2] + spectra.line.table[input$elementnum3])/(spectra.line.table[input$elementden1] / spectra.line.table[input$elementden2] - spectra.line.table[input$elementden3])
+      } else if(input$transform1=="*" && input$elementnum2!="None" && input$transform2=="+" && input$elementnum3!="None" && input$elementden1!="None" && input$transform3=="/" && input$elementden2!="None" && input$transform4=="-" && input$elementden3!="None"){
+          (spectra.line.table[input$elementnum1] * spectra.line.table[input$elementnum2] + spectra.line.table[input$elementnum3])/(spectra.line.table[input$elementden1] / spectra.line.table[input$elementden2] - spectra.line.table[input$elementden3])
+      } else if(input$transform1=="/" && input$elementnum2!="None" && input$transform2=="+" && input$elementnum3!="None" && input$elementden1!="None" && input$transform3=="/" && input$elementden2!="None" && input$transform4=="-" && input$elementden3!="None"){
+          (spectra.line.table[input$elementnum1] / spectra.line.table[input$elementnum2] + spectra.line.table[input$elementnum3])/(spectra.line.table[input$elementden1] / spectra.line.table[input$elementden2] - spectra.line.table[input$elementden3])
+          ######Subtraction Third Variable
+      } else if(input$transform1=="+" && input$elementnum2!="None" && input$transform2=="-" && input$elementnum3!="None" && input$elementden1!="None" && input$transform3=="/" && input$elementden2!="None" && input$transform4=="-" && input$elementden3!="None"){
+          (spectra.line.table[input$elementnum1] + spectra.line.table[input$elementnum2] - spectra.line.table[input$elementnum3])/(spectra.line.table[input$elementden1] / spectra.line.table[input$elementden2] - spectra.line.table[input$elementden3])
+      } else if(input$transform1=="-" && input$elementnum2!="None" && input$transform2=="-" && input$elementnum3!="None" && input$elementden1!="None" && input$transform3=="/" && input$elementden2!="None" && input$transform4=="-" && input$elementden3!="None"){
+          (spectra.line.table[input$elementnum1] - spectra.line.table[input$elementnum2] - spectra.line.table[input$elementnum3])/(spectra.line.table[input$elementden1] / spectra.line.table[input$elementden2] - spectra.line.table[input$elementden3])
+      } else if(input$transform1=="*" && input$elementnum2!="None" && input$transform2=="-" && input$elementnum3!="None" && input$elementden1!="None" && input$transform3=="/" && input$elementden2!="None" && input$transform4=="-" && input$elementden3!="None"){
+          (spectra.line.table[input$elementnum1] * spectra.line.table[input$elementnum2] - spectra.line.table[input$elementnum3])/(spectra.line.table[input$elementden1] / spectra.line.table[input$elementden2] - spectra.line.table[input$elementden3])
+      } else if(input$transform1=="/" && input$elementnum2!="None" && input$transform2=="-" && input$elementnum3!="None" && input$elementden1!="None" && input$transform3=="/" && input$elementden2!="None" && input$transform4=="-" && input$elementden3!="None"){
+          (spectra.line.table[input$elementnum1] / spectra.line.table[input$elementnum2] - spectra.line.table[input$elementnum3])/(spectra.line.table[input$elementden1] / spectra.line.table[input$elementden2] - spectra.line.table[input$elementden3])
+          ######Multiplication Third Variable
+      } else if(input$transform1=="+" && input$elementnum2!="None" && input$transform2=="*" && input$elementnum3!="None" && input$elementden1!="None" && input$transform3=="/" && input$elementden2!="None" && input$transform4=="-" && input$elementden3!="None"){
+          (spectra.line.table[input$elementnum1] + spectra.line.table[input$elementnum2] * spectra.line.table[input$elementnum3])/(spectra.line.table[input$elementden1] / spectra.line.table[input$elementden2] - spectra.line.table[input$elementden3])
+      } else if(input$transform1=="-" && input$elementnum2!="None" && input$transform2=="*" && input$elementnum3!="None" && input$elementden1!="None" && input$transform3=="/" && input$elementden2!="None" && input$transform4=="-" && input$elementden3!="None"){
+          (spectra.line.table[input$elementnum1] - spectra.line.table[input$elementnum2] * spectra.line.table[input$elementnum3])/(spectra.line.table[input$elementden1] / spectra.line.table[input$elementden2] - spectra.line.table[input$elementden3])
+      } else if(input$transform1=="*" && input$elementnum2!="None" && input$transform2=="*" && input$elementnum3!="None" && input$elementden1!="None" && input$transform3=="/" && input$elementden2!="None" && input$transform4=="-" && input$elementden3!="None"){
+          (spectra.line.table[input$elementnum1] * spectra.line.table[input$elementnum2] * spectra.line.table[input$elementnum3])/(spectra.line.table[input$elementden1] / spectra.line.table[input$elementden2] - spectra.line.table[input$elementden3])
+      } else if(input$transform1=="/" && input$elementnum2!="None" && input$transform2=="*" && input$elementnum3!="None" && input$elementden1!="None" && input$transform3=="/" && input$elementden2!="None" && input$transform4=="-" && input$elementden3!="None"){
+          (spectra.line.table[input$elementnum1] / spectra.line.table[input$elementnum2] * spectra.line.table[input$elementnum3])/(spectra.line.table[input$elementden1] / spectra.line.table[input$elementden2] - spectra.line.table[input$elementden3])
+          ######Division Third Variable
+      } else if(input$transform1=="+" && input$elementnum2!="None" && input$transform2=="/" && input$elementnum3!="None" && input$elementden1!="None" && input$transform3=="/" && input$elementden2!="None" && input$transform4=="-" && input$elementden3!="None"){
+          (spectra.line.table[input$elementnum1] + spectra.line.table[input$elementnum2] / spectra.line.table[input$elementnum3])/(spectra.line.table[input$elementden1] / spectra.line.table[input$elementden2] - spectra.line.table[input$elementden3])
+      } else if(input$transform1=="-" && input$elementnum2!="None" && input$transform2=="/" && input$elementnum3!="None" && input$elementden1!="None" && input$transform3=="/" && input$elementden2!="None" && input$transform4=="-" && input$elementden3!="None"){
+          (spectra.line.table[input$elementnum1] - spectra.line.table[input$elementnum2] / spectra.line.table[input$elementnum3])/(spectra.line.table[input$elementden1] / spectra.line.table[input$elementden2] - spectra.line.table[input$elementden3])
+      } else if(input$transform1=="*" && input$elementnum2!="None" && input$transform2=="/" && input$elementnum3!="None" && input$elementden1!="None" && input$transform3=="/" && input$elementden2!="None" && input$transform4=="-" && input$elementden3!="None"){
+          (spectra.line.table[input$elementnum1] * spectra.line.table[input$elementnum2] / spectra.line.table[input$elementnum3])/(spectra.line.table[input$elementden1] / spectra.line.table[input$elementden2] - spectra.line.table[input$elementden3])
+      } else if(input$transform1=="/" && input$elementnum2!="None" && input$transform2=="/" && input$elementnum3!="None" && input$elementden1!="None" && input$transform3=="/" && input$elementden2!="None" && input$transform4=="-" && input$elementden3!="None"){
+          (spectra.line.table[input$elementnum1] / spectra.line.table[input$elementnum2] / spectra.line.table[input$elementnum3])/(spectra.line.table[input$elementden1] / spectra.line.table[input$elementden2] - spectra.line.table[input$elementden3])
+          #######################################
+          #######################################
+          ########################################Phyt01ith!
+          ####Multiple Third Denominator#########
+          #######################################
+          #######################################
+          ####################################
+          #####Addition Two Denominators######
+          ####################################
+      } else if (input$transform1=="None" && input$elementden1!="None" && input$transform3=="+" && input$elementden2!="None" && input$transform4=="*" && input$elementden3!="None"){
+          spectra.line.table[input$elementnum1]/(spectra.line.table[input$elementden1] + spectra.line.table[input$elementden2] * spectra.line.table[input$elementden3])
+      } else if(input$transform1=="+" && input$elementnum2!="None" && input$elementden1!="None" && input$transform3=="+" && input$elementden2!="None" && input$transform4=="*" && input$elementden3!="None"){
+          (spectra.line.table[input$elementnum1] + spectra.line.table[input$elementden2] * spectra.line.table[input$elementden3])/(spectra.line.table[input$elementden1] + spectra.line.table[input$elementden2] * spectra.line.table[input$elementden3])
+      } else if(input$transform1=="-" && input$elementnum2!="None" && input$elementden1!="None" && input$transform3=="+" && input$elementden2!="None" && input$transform4=="*" && input$elementden3!="None"){
+          (spectra.line.table[input$elementnum1] - spectra.line.table[input$elementden2] * spectra.line.table[input$elementden3])/(spectra.line.table[input$elementden1] + spectra.line.table[input$elementden2] * spectra.line.table[input$elementden3])
+      } else if(input$transform1=="*" && input$elementnum2!="None" && input$elementden1!="None" && input$transform3=="+" && input$elementden2!="None" && input$transform4=="*" && input$elementden3!="None"){
+          (spectra.line.table[input$elementnum1] * spectra.line.table[input$elementden2] * spectra.line.table[input$elementden3])/(spectra.line.table[input$elementden1] + spectra.line.table[input$elementden2] * spectra.line.table[input$elementden3])
+      } else if(input$transform1=="/" && input$elementnum2!="None" && input$elementden1!="None" && input$transform3=="+" && input$elementden2!="None" && input$transform4=="*" && input$elementden3!="None"){
+          (spectra.line.table[input$elementnum1] / spectra.line.table[input$elementden2] * spectra.line.table[input$elementden3])/(spectra.line.table[input$elementden1] + spectra.line.table[input$elementden2] * spectra.line.table[input$elementden3])
+          ######Addition Third Variable
+      } else if(input$transform1=="+" && input$elementnum2!="None" && input$transform2=="+" && input$elementnum3!="None" && input$elementden1!="None" && input$transform3=="+" && input$elementden2!="None" && input$transform4=="*" && input$elementden3!="None"){
+          (spectra.line.table[input$elementnum1] + spectra.line.table[input$elementnum2] + spectra.line.table[input$elementnum3])/(spectra.line.table[input$elementden1] + spectra.line.table[input$elementden2] * spectra.line.table[input$elementden3])
+      } else if(input$transform1=="-" && input$elementnum2!="None" && input$transform2=="+" && input$elementnum3!="None" && input$elementden1!="None" && input$transform3=="+" && input$elementden2!="None" && input$transform4=="*" && input$elementden3!="None"){
+          (spectra.line.table[input$elementnum1] - spectra.line.table[input$elementnum2] + spectra.line.table[input$elementnum3])/(spectra.line.table[input$elementden1] + spectra.line.table[input$elementden2] * spectra.line.table[input$elementden3])
+      } else if(input$transform1=="*" && input$elementnum2!="None" && input$transform2=="+" && input$elementnum3!="None" && input$elementden1!="None" && input$transform3=="+" && input$elementden2!="None" && input$transform4=="*" && input$elementden3!="None"){
+          (spectra.line.table[input$elementnum1] * spectra.line.table[input$elementnum2] + spectra.line.table[input$elementnum3])/(spectra.line.table[input$elementden1] + spectra.line.table[input$elementden2] * spectra.line.table[input$elementden3])
+      } else if(input$transform1=="/" && input$elementnum2!="None" && input$transform2=="+" && input$elementnum3!="None" && input$elementden1!="None" && input$transform3=="+" && input$elementden2!="None" && input$transform4=="*" && input$elementden3!="None"){
+          (spectra.line.table[input$elementnum1] / spectra.line.table[input$elementnum2] + spectra.line.table[input$elementnum3])/(spectra.line.table[input$elementden1] + spectra.line.table[input$elementden2] * spectra.line.table[input$elementden3])
+          ######Subtraction Third Variable
+      } else if(input$transform1=="+" && input$elementnum2!="None" && input$transform2=="-" && input$elementnum3!="None" && input$elementden1!="None" && input$transform3=="+" && input$elementden2!="None" && input$transform4=="*" && input$elementden3!="None"){
+          (spectra.line.table[input$elementnum1] + spectra.line.table[input$elementnum2] - spectra.line.table[input$elementnum3])/(spectra.line.table[input$elementden1] + spectra.line.table[input$elementden2] * spectra.line.table[input$elementden3])
+      } else if(input$transform1=="-" && input$elementnum2!="None" && input$transform2=="-" && input$elementnum3!="None" && input$elementden1!="None" && input$transform3=="+" && input$elementden2!="None" && input$transform4=="*" && input$elementden3!="None"){
+          (spectra.line.table[input$elementnum1] - spectra.line.table[input$elementnum2] - spectra.line.table[input$elementnum3])/(spectra.line.table[input$elementden1] + spectra.line.table[input$elementden2] * spectra.line.table[input$elementden3])
+      } else if(input$transform1=="*" && input$elementnum2!="None" && input$transform2=="-" && input$elementnum3!="None" && input$elementden1!="None" && input$transform3=="+" && input$elementden2!="None" && input$transform4=="*" && input$elementden3!="None"){
+          (spectra.line.table[input$elementnum1] * spectra.line.table[input$elementnum2] - spectra.line.table[input$elementnum3])/(spectra.line.table[input$elementden1] + spectra.line.table[input$elementden2] * spectra.line.table[input$elementden3])
+      } else if(input$transform1=="/" && input$elementnum2!="None" && input$transform2=="-" && input$elementnum3!="None" && input$elementden1!="None" && input$transform3=="+" && input$elementden2!="None" && input$transform4=="*" && input$elementden3!="None"){
+          (spectra.line.table[input$elementnum1] / spectra.line.table[input$elementnum2] - spectra.line.table[input$elementnum3])/(spectra.line.table[input$elementden1] + spectra.line.table[input$elementden2] * spectra.line.table[input$elementden3])
+          ######Multiplication Third Variable
+      } else if(input$transform1=="+" && input$elementnum2!="None" && input$transform2=="*" && input$elementnum3!="None" && input$elementden1!="None" && input$transform3=="+" && input$elementden2!="None" && input$transform4=="*" && input$elementden3!="None"){
+          (spectra.line.table[input$elementnum1] + spectra.line.table[input$elementnum2] * spectra.line.table[input$elementnum3])/(spectra.line.table[input$elementden1] + spectra.line.table[input$elementden2] * spectra.line.table[input$elementden3])
+      } else if(input$transform1=="-" && input$elementnum2!="None" && input$transform2=="*" && input$elementnum3!="None" && input$elementden1!="None" && input$transform3=="+" && input$elementden2!="None" && input$transform4=="*" && input$elementden3!="None"){
+          (spectra.line.table[input$elementnum1] - spectra.line.table[input$elementnum2] * spectra.line.table[input$elementnum3])/(spectra.line.table[input$elementden1] + spectra.line.table[input$elementden2] * spectra.line.table[input$elementden3])
+      } else if(input$transform1=="*" && input$elementnum2!="None" && input$transform2=="*" && input$elementnum3!="None" && input$elementden1!="None" && input$transform3=="+" && input$elementden2!="None" && input$transform4=="*" && input$elementden3!="None"){
+          (spectra.line.table[input$elementnum1] * spectra.line.table[input$elementnum2] * spectra.line.table[input$elementnum3])/(spectra.line.table[input$elementden1] + spectra.line.table[input$elementden2] * spectra.line.table[input$elementden3])
+      } else if(input$transform1=="/" && input$elementnum2!="None" && input$transform2=="*" && input$elementnum3!="None" && input$elementden1!="None" && input$transform3=="+" && input$elementden2!="None" && input$transform4=="*" && input$elementden3!="None"){
+          (spectra.line.table[input$elementnum1] / spectra.line.table[input$elementnum2] * spectra.line.table[input$elementnum3])/(spectra.line.table[input$elementden1] + spectra.line.table[input$elementden2] * spectra.line.table[input$elementden3])
+          ######Division Third Variable
+      } else if(input$transform1=="+" && input$elementnum2!="None" && input$transform2=="/" && input$elementnum3!="None" && input$elementden1!="None" && input$transform3=="+" && input$elementden2!="None" && input$transform4=="*" && input$elementden3!="None"){
+          (spectra.line.table[input$elementnum1] + spectra.line.table[input$elementnum2] / spectra.line.table[input$elementnum3])/(spectra.line.table[input$elementden1] + spectra.line.table[input$elementden2] * spectra.line.table[input$elementden3])
+      } else if(input$transform1=="-" && input$elementnum2!="None" && input$transform2=="/" && input$elementnum3!="None" && input$elementden1!="None" && input$transform3=="+" && input$elementden2!="None" && input$transform4=="*" && input$elementden3!="None"){
+          (spectra.line.table[input$elementnum1] - spectra.line.table[input$elementnum2] / spectra.line.table[input$elementnum3])/(spectra.line.table[input$elementden1] + spectra.line.table[input$elementden2] * spectra.line.table[input$elementden3])
+      } else if(input$transform1=="*" && input$elementnum2!="None" && input$transform2=="/" && input$elementnum3!="None" && input$elementden1!="None" && input$transform3=="+" && input$elementden2!="None" && input$transform4=="*" && input$elementden3!="None"){
+          (spectra.line.table[input$elementnum1] * spectra.line.table[input$elementnum2] / spectra.line.table[input$elementnum3])/(spectra.line.table[input$elementden1] + spectra.line.table[input$elementden2] * spectra.line.table[input$elementden3])
+      } else if(input$transform1=="/" && input$elementnum2!="None" && input$transform2=="/" && input$elementnum3!="None" && input$elementden1!="None" && input$transform3=="+" && input$elementden2!="None" && input$transform4=="*" && input$elementden3!="None"){
+          (spectra.line.table[input$elementnum1] / spectra.line.table[input$elementnum2] / spectra.line.table[input$elementnum3])/(spectra.line.table[input$elementden1] + spectra.line.table[input$elementden2] * spectra.line.table[input$elementden3])
+          ####################################
+          #####Subtraction Two Denominators######
+          ####################################
+      } else if (input$transform1=="None" && input$elementden1!="None" && input$transform3=="-" && input$elementden2!="None" && input$transform4=="*" && input$elementden3!="None"){
+          spectra.line.table[input$elementnum1]/(spectra.line.table[input$elementden1] - spectra.line.table[input$elementden2] * spectra.line.table[input$elementden3])
+      } else if(input$transform1=="+" && input$elementnum2!="None" && input$elementden1!="None" && input$transform3=="-" && input$elementden2!="None" && input$transform4=="*" && input$elementden3!="None"){
+          (spectra.line.table[input$elementnum1] + spectra.line.table[input$elementden2] * spectra.line.table[input$elementden3])/(spectra.line.table[input$elementden1] - spectra.line.table[input$elementden2] * spectra.line.table[input$elementden3])
+      } else if(input$transform1=="-" && input$elementnum2!="None" && input$elementden1!="None" && input$transform3=="-" && input$elementden2!="None" && input$transform4=="*" && input$elementden3!="None"){
+          (spectra.line.table[input$elementnum1] - spectra.line.table[input$elementden2] * spectra.line.table[input$elementden3])/(spectra.line.table[input$elementden1] - spectra.line.table[input$elementden2] * spectra.line.table[input$elementden3])
+      } else if(input$transform1=="*" && input$elementnum2!="None" && input$elementden1!="None" && input$transform3=="-" && input$elementden2!="None" && input$transform4=="*" && input$elementden3!="None"){
+          (spectra.line.table[input$elementnum1] * spectra.line.table[input$elementden2] * spectra.line.table[input$elementden3])/(spectra.line.table[input$elementden1] - spectra.line.table[input$elementden2] * spectra.line.table[input$elementden3])
+      } else if(input$transform1=="/" && input$elementnum2!="None" && input$elementden1!="None" && input$transform3=="-" && input$elementden2!="None" && input$transform4=="*" && input$elementden3!="None"){
+          (spectra.line.table[input$elementnum1] / spectra.line.table[input$elementden2] * spectra.line.table[input$elementden3])/(spectra.line.table[input$elementden1] - spectra.line.table[input$elementden2] * spectra.line.table[input$elementden3])
+          ######Addition Third Variable
+      } else if(input$transform1=="+" && input$elementnum2!="None" && input$transform2=="+" && input$elementnum3!="None" && input$elementden1!="None" && input$transform3=="-" && input$elementden2!="None" && input$transform4=="*" && input$elementden3!="None"){
+          (spectra.line.table[input$elementnum1] + spectra.line.table[input$elementnum2] + spectra.line.table[input$elementnum3])/(spectra.line.table[input$elementden1] - spectra.line.table[input$elementden2] * spectra.line.table[input$elementden3])
+      } else if(input$transform1=="-" && input$elementnum2!="None" && input$transform2=="+" && input$elementnum3!="None" && input$elementden1!="None" && input$transform3=="-" && input$elementden2!="None" && input$transform4=="*" && input$elementden3!="None"){
+          (spectra.line.table[input$elementnum1] - spectra.line.table[input$elementnum2] + spectra.line.table[input$elementnum3])/(spectra.line.table[input$elementden1] - spectra.line.table[input$elementden2] * spectra.line.table[input$elementden3])
+      } else if(input$transform1=="*" && input$elementnum2!="None" && input$transform2=="+" && input$elementnum3!="None" && input$elementden1!="None" && input$transform3=="-" && input$elementden2!="None" && input$transform4=="*" && input$elementden3!="None"){
+          (spectra.line.table[input$elementnum1] * spectra.line.table[input$elementnum2] + spectra.line.table[input$elementnum3])/(spectra.line.table[input$elementden1] - spectra.line.table[input$elementden2] * spectra.line.table[input$elementden3])
+      } else if(input$transform1=="/" && input$elementnum2!="None" && input$transform2=="+" && input$elementnum3!="None" && input$elementden1!="None" && input$transform3=="-" && input$elementden2!="None" && input$transform4=="*" && input$elementden3!="None"){
+          (spectra.line.table[input$elementnum1] / spectra.line.table[input$elementnum2] + spectra.line.table[input$elementnum3])/(spectra.line.table[input$elementden1] - spectra.line.table[input$elementden2] * spectra.line.table[input$elementden3])
+          ######Subtraction Third Variable
+      } else if(input$transform1=="+" && input$elementnum2!="None" && input$transform2=="-" && input$elementnum3!="None" && input$elementden1!="None" && input$transform3=="-" && input$elementden2!="None" && input$transform4=="*" && input$elementden3!="None"){
+          (spectra.line.table[input$elementnum1] + spectra.line.table[input$elementnum2] - spectra.line.table[input$elementnum3])/(spectra.line.table[input$elementden1] - spectra.line.table[input$elementden2] * spectra.line.table[input$elementden3])
+      } else if(input$transform1=="-" && input$elementnum2!="None" && input$transform2=="-" && input$elementnum3!="None" && input$elementden1!="None" && input$transform3=="-" && input$elementden2!="None" && input$transform4=="*" && input$elementden3!="None"){
+          (spectra.line.table[input$elementnum1] - spectra.line.table[input$elementnum2] - spectra.line.table[input$elementnum3])/(spectra.line.table[input$elementden1] - spectra.line.table[input$elementden2] * spectra.line.table[input$elementden3])
+      } else if(input$transform1=="*" && input$elementnum2!="None" && input$transform2=="-" && input$elementnum3!="None" && input$elementden1!="None" && input$transform3=="-" && input$elementden2!="None" && input$transform4=="*" && input$elementden3!="None"){
+          (spectra.line.table[input$elementnum1] * spectra.line.table[input$elementnum2] - spectra.line.table[input$elementnum3])/(spectra.line.table[input$elementden1] - spectra.line.table[input$elementden2] * spectra.line.table[input$elementden3])
+      } else if(input$transform1=="/" && input$elementnum2!="None" && input$transform2=="-" && input$elementnum3!="None" && input$elementden1!="None" && input$transform3=="-" && input$elementden2!="None" && input$transform4=="*" && input$elementden3!="None"){
+          (spectra.line.table[input$elementnum1] / spectra.line.table[input$elementnum2] - spectra.line.table[input$elementnum3])/(spectra.line.table[input$elementden1] - spectra.line.table[input$elementden2] * spectra.line.table[input$elementden3])
+          ######Multiplication Third Variable
+      } else if(input$transform1=="+" && input$elementnum2!="None" && input$transform2=="*" && input$elementnum3!="None" && input$elementden1!="None" && input$transform3=="-" && input$elementden2!="None" && input$transform4=="*" && input$elementden3!="None"){
+          (spectra.line.table[input$elementnum1] + spectra.line.table[input$elementnum2] * spectra.line.table[input$elementnum3])/(spectra.line.table[input$elementden1] - spectra.line.table[input$elementden2] * spectra.line.table[input$elementden3])
+      } else if(input$transform1=="-" && input$elementnum2!="None" && input$transform2=="*" && input$elementnum3!="None" && input$elementden1!="None" && input$transform3=="-" && input$elementden2!="None" && input$transform4=="*" && input$elementden3!="None"){
+          (spectra.line.table[input$elementnum1] - spectra.line.table[input$elementnum2] * spectra.line.table[input$elementnum3])/(spectra.line.table[input$elementden1] - spectra.line.table[input$elementden2] * spectra.line.table[input$elementden3])
+      } else if(input$transform1=="*" && input$elementnum2!="None" && input$transform2=="*" && input$elementnum3!="None" && input$elementden1!="None" && input$transform3=="-" && input$elementden2!="None" && input$transform4=="*" && input$elementden3!="None"){
+          (spectra.line.table[input$elementnum1] * spectra.line.table[input$elementnum2] * spectra.line.table[input$elementnum3])/(spectra.line.table[input$elementden1] - spectra.line.table[input$elementden2] * spectra.line.table[input$elementden3])
+      } else if(input$transform1=="/" && input$elementnum2!="None" && input$transform2=="*" && input$elementnum3!="None" && input$elementden1!="None" && input$transform3=="-" && input$elementden2!="None" && input$transform4=="*" && input$elementden3!="None"){
+          (spectra.line.table[input$elementnum1] / spectra.line.table[input$elementnum2] * spectra.line.table[input$elementnum3])/(spectra.line.table[input$elementden1] - spectra.line.table[input$elementden2] * spectra.line.table[input$elementden3])
+          ######Division Third Variable
+      } else if(input$transform1=="+" && input$elementnum2!="None" && input$transform2=="/" && input$elementnum3!="None" && input$elementden1!="None" && input$transform3=="-" && input$elementden2!="None" && input$transform4=="*" && input$elementden3!="None"){
+          (spectra.line.table[input$elementnum1] + spectra.line.table[input$elementnum2] / spectra.line.table[input$elementnum3])/(spectra.line.table[input$elementden1] - spectra.line.table[input$elementden2] * spectra.line.table[input$elementden3])
+      } else if(input$transform1=="-" && input$elementnum2!="None" && input$transform2=="/" && input$elementnum3!="None" && input$elementden1!="None" && input$transform3=="-" && input$elementden2!="None" && input$transform4=="*" && input$elementden3!="None"){
+          (spectra.line.table[input$elementnum1] - spectra.line.table[input$elementnum2] / spectra.line.table[input$elementnum3])/(spectra.line.table[input$elementden1] - spectra.line.table[input$elementden2] * spectra.line.table[input$elementden3])
+      } else if(input$transform1=="*" && input$elementnum2!="None" && input$transform2=="/" && input$elementnum3!="None" && input$elementden1!="None" && input$transform3=="-" && input$elementden2!="None" && input$transform4=="*" && input$elementden3!="None"){
+          (spectra.line.table[input$elementnum1] * spectra.line.table[input$elementnum2] / spectra.line.table[input$elementnum3])/(spectra.line.table[input$elementden1] - spectra.line.table[input$elementden2] * spectra.line.table[input$elementden3])
+      } else if(input$transform1=="/" && input$elementnum2!="None" && input$transform2=="/" && input$elementnum3!="None" && input$elementden1!="None" && input$transform3=="-" && input$elementden2!="None" && input$transform4=="*" && input$elementden3!="None"){
+          (spectra.line.table[input$elementnum1] / spectra.line.table[input$elementnum2] / spectra.line.table[input$elementnum3])/(spectra.line.table[input$elementden1] - spectra.line.table[input$elementden2] * spectra.line.table[input$elementden3])
+          ####################################
+          #####Multiplication Two Denominators######
+          ####################################
+      } else if (input$transform1=="None" && input$elementden1!="None" && input$transform3=="*" && input$elementden2!="None" && input$transform4=="*" && input$elementden3!="None"){
+          spectra.line.table[input$elementnum1]/(spectra.line.table[input$elementden1] * spectra.line.table[input$elementden2] * spectra.line.table[input$elementden3])
+      } else if(input$transform1=="+" && input$elementnum2!="None" && input$elementden1!="None" && input$transform3=="*" && input$elementden2!="None" && input$transform4=="*" && input$elementden3!="None"){
+          (spectra.line.table[input$elementnum1] + spectra.line.table[input$elementden2] * spectra.line.table[input$elementden3])/(spectra.line.table[input$elementden1] * spectra.line.table[input$elementden2] * spectra.line.table[input$elementden3])
+      } else if(input$transform1=="-" && input$elementnum2!="None" && input$elementden1!="None" && input$transform3=="*" && input$elementden2!="None" && input$transform4=="*" && input$elementden3!="None"){
+          (spectra.line.table[input$elementnum1] - spectra.line.table[input$elementden2] * spectra.line.table[input$elementden3])/(spectra.line.table[input$elementden1] * spectra.line.table[input$elementden2] * spectra.line.table[input$elementden3])
+      } else if(input$transform1=="*" && input$elementnum2!="None" && input$elementden1!="None" && input$transform3=="*" && input$elementden2!="None" && input$transform4=="*" && input$elementden3!="None"){
+          (spectra.line.table[input$elementnum1] * spectra.line.table[input$elementden2] * spectra.line.table[input$elementden3])/(spectra.line.table[input$elementden1] * spectra.line.table[input$elementden2] * spectra.line.table[input$elementden3])
+      } else if(input$transform1=="/" && input$elementnum2!="None" && input$elementden1!="None" && input$transform3=="*" && input$elementden2!="None" && input$transform4=="*" && input$elementden3!="None"){
+          (spectra.line.table[input$elementnum1] / spectra.line.table[input$elementden2] * spectra.line.table[input$elementden3])/(spectra.line.table[input$elementden1] * spectra.line.table[input$elementden2] * spectra.line.table[input$elementden3])
+          ######Addition Third Variable
+      } else if(input$transform1=="+" && input$elementnum2!="None" && input$transform2=="+" && input$elementnum3!="None" && input$elementden1!="None" && input$transform3=="*" && input$elementden2!="None" && input$transform4=="*" && input$elementden3!="None"){
+          (spectra.line.table[input$elementnum1] + spectra.line.table[input$elementnum2] + spectra.line.table[input$elementnum3])/(spectra.line.table[input$elementden1] * spectra.line.table[input$elementden2] * spectra.line.table[input$elementden3])
+      } else if(input$transform1=="-" && input$elementnum2!="None" && input$transform2=="+" && input$elementnum3!="None" && input$elementden1!="None" && input$transform3=="*" && input$elementden2!="None" && input$transform4=="*" && input$elementden3!="None"){
+          (spectra.line.table[input$elementnum1] - spectra.line.table[input$elementnum2] + spectra.line.table[input$elementnum3])/(spectra.line.table[input$elementden1] * spectra.line.table[input$elementden2] * spectra.line.table[input$elementden3])
+      } else if(input$transform1=="*" && input$elementnum2!="None" && input$transform2=="+" && input$elementnum3!="None" && input$elementden1!="None" && input$transform3=="*" && input$elementden2!="None" && input$transform4=="*" && input$elementden3!="None"){
+          (spectra.line.table[input$elementnum1] * spectra.line.table[input$elementnum2] + spectra.line.table[input$elementnum3])/(spectra.line.table[input$elementden1] * spectra.line.table[input$elementden2] * spectra.line.table[input$elementden3])
+      } else if(input$transform1=="/" && input$elementnum2!="None" && input$transform2=="+" && input$elementnum3!="None" && input$elementden1!="None" && input$transform3=="*" && input$elementden2!="None" && input$transform4=="*" && input$elementden3!="None"){
+          (spectra.line.table[input$elementnum1] / spectra.line.table[input$elementnum2] + spectra.line.table[input$elementnum3])/(spectra.line.table[input$elementden1] * spectra.line.table[input$elementden2] * spectra.line.table[input$elementden3])
+          ######Subtraction Third Variable
+      } else if(input$transform1=="+" && input$elementnum2!="None" && input$transform2=="-" && input$elementnum3!="None" && input$elementden1!="None" && input$transform3=="*" && input$elementden2!="None" && input$transform4=="*" && input$elementden3!="None"){
+          (spectra.line.table[input$elementnum1] + spectra.line.table[input$elementnum2] - spectra.line.table[input$elementnum3])/(spectra.line.table[input$elementden1] * spectra.line.table[input$elementden2] * spectra.line.table[input$elementden3])
+      } else if(input$transform1=="-" && input$elementnum2!="None" && input$transform2=="-" && input$elementnum3!="None" && input$elementden1!="None" && input$transform3=="*" && input$elementden2!="None" && input$transform4=="*" && input$elementden3!="None"){
+          (spectra.line.table[input$elementnum1] - spectra.line.table[input$elementnum2] - spectra.line.table[input$elementnum3])/(spectra.line.table[input$elementden1] * spectra.line.table[input$elementden2] * spectra.line.table[input$elementden3])
+      } else if(input$transform1=="*" && input$elementnum2!="None" && input$transform2=="-" && input$elementnum3!="None" && input$elementden1!="None" && input$transform3=="*" && input$elementden2!="None" && input$transform4=="*" && input$elementden3!="None"){
+          (spectra.line.table[input$elementnum1] * spectra.line.table[input$elementnum2] - spectra.line.table[input$elementnum3])/(spectra.line.table[input$elementden1] * spectra.line.table[input$elementden2] * spectra.line.table[input$elementden3])
+      } else if(input$transform1=="/" && input$elementnum2!="None" && input$transform2=="-" && input$elementnum3!="None" && input$elementden1!="None" && input$transform3=="*" && input$elementden2!="None" && input$transform4=="*" && input$elementden3!="None"){
+          (spectra.line.table[input$elementnum1] / spectra.line.table[input$elementnum2] - spectra.line.table[input$elementnum3])/(spectra.line.table[input$elementden1] * spectra.line.table[input$elementden2] * spectra.line.table[input$elementden3])
+          ######Multiplication Third Variable
+      } else if(input$transform1=="+" && input$elementnum2!="None" && input$transform2=="*" && input$elementnum3!="None" && input$elementden1!="None" && input$transform3=="*" && input$elementden2!="None" && input$transform4=="*" && input$elementden3!="None"){
+          (spectra.line.table[input$elementnum1] + spectra.line.table[input$elementnum2] * spectra.line.table[input$elementnum3])/(spectra.line.table[input$elementden1] * spectra.line.table[input$elementden2] * spectra.line.table[input$elementden3])
+      } else if(input$transform1=="-" && input$elementnum2!="None" && input$transform2=="*" && input$elementnum3!="None" && input$elementden1!="None" && input$transform3=="*" && input$elementden2!="None" && input$transform4=="*" && input$elementden3!="None"){
+          (spectra.line.table[input$elementnum1] - spectra.line.table[input$elementnum2] * spectra.line.table[input$elementnum3])/(spectra.line.table[input$elementden1] * spectra.line.table[input$elementden2] * spectra.line.table[input$elementden3])
+      } else if(input$transform1=="*" && input$elementnum2!="None" && input$transform2=="*" && input$elementnum3!="None" && input$elementden1!="None" && input$transform3=="*" && input$elementden2!="None" && input$transform4=="*" && input$elementden3!="None"){
+          (spectra.line.table[input$elementnum1] * spectra.line.table[input$elementnum2] * spectra.line.table[input$elementnum3])/(spectra.line.table[input$elementden1] * spectra.line.table[input$elementden2] * spectra.line.table[input$elementden3])
+      } else if(input$transform1=="/" && input$elementnum2!="None" && input$transform2=="*" && input$elementnum3!="None" && input$elementden1!="None" && input$transform3=="*" && input$elementden2!="None" && input$transform4=="*" && input$elementden3!="None"){
+          (spectra.line.table[input$elementnum1] / spectra.line.table[input$elementnum2] * spectra.line.table[input$elementnum3])/(spectra.line.table[input$elementden1] * spectra.line.table[input$elementden2] * spectra.line.table[input$elementden3])
+          ######Division Third Variable
+      } else if(input$transform1=="+" && input$elementnum2!="None" && input$transform2=="/" && input$elementnum3!="None" && input$elementden1!="None" && input$transform3=="*" && input$elementden2!="None" && input$transform4=="*" && input$elementden3!="None"){
+          (spectra.line.table[input$elementnum1] + spectra.line.table[input$elementnum2] / spectra.line.table[input$elementnum3])/(spectra.line.table[input$elementden1] * spectra.line.table[input$elementden2] * spectra.line.table[input$elementden3])
+      } else if(input$transform1=="-" && input$elementnum2!="None" && input$transform2=="/" && input$elementnum3!="None" && input$elementden1!="None" && input$transform3=="*" && input$elementden2!="None" && input$transform4=="*" && input$elementden3!="None"){
+          (spectra.line.table[input$elementnum1] - spectra.line.table[input$elementnum2] / spectra.line.table[input$elementnum3])/(spectra.line.table[input$elementden1] * spectra.line.table[input$elementden2] * spectra.line.table[input$elementden3])
+      } else if(input$transform1=="*" && input$elementnum2!="None" && input$transform2=="/" && input$elementnum3!="None" && input$elementden1!="None" && input$transform3=="*" && input$elementden2!="None" && input$transform4=="*" && input$elementden3!="None"){
+          (spectra.line.table[input$elementnum1] * spectra.line.table[input$elementnum2] / spectra.line.table[input$elementnum3])/(spectra.line.table[input$elementden1] * spectra.line.table[input$elementden2] * spectra.line.table[input$elementden3])
+      } else if(input$transform1=="/" && input$elementnum2!="None" && input$transform2=="/" && input$elementnum3!="None" && input$elementden1!="None" && input$transform3=="*" && input$elementden2!="None" && input$transform4=="*" && input$elementden3!="None"){
+          (spectra.line.table[input$elementnum1] / spectra.line.table[input$elementnum2] / spectra.line.table[input$elementnum3])/(spectra.line.table[input$elementden1] * spectra.line.table[input$elementden2] * spectra.line.table[input$elementden3])
+          ####################################
+          #####Division Two Denominators######
+          ####################################
+      } else if (input$transform1=="None" && input$elementden1!="None" && input$transform3=="/" && input$elementden2!="None" && input$transform4=="*" && input$elementden3!="None"){
+          spectra.line.table[input$elementnum1]/(spectra.line.table[input$elementden1] / spectra.line.table[input$elementden2] * spectra.line.table[input$elementden3])
+      } else if(input$transform1=="+" && input$elementnum2!="None" && input$elementden1!="None" && input$transform3=="/" && input$elementden2!="None" && input$transform4=="*" && input$elementden3!="None"){
+          (spectra.line.table[input$elementnum1] + spectra.line.table[input$elementden2] * spectra.line.table[input$elementden3])/(spectra.line.table[input$elementden1] / spectra.line.table[input$elementden2] * spectra.line.table[input$elementden3])
+      } else if(input$transform1=="-" && input$elementnum2!="None" && input$elementden1!="None" && input$transform3=="/" && input$elementden2!="None" && input$transform4=="*" && input$elementden3!="None"){
+          (spectra.line.table[input$elementnum1] - spectra.line.table[input$elementden2] * spectra.line.table[input$elementden3])/(spectra.line.table[input$elementden1] / spectra.line.table[input$elementden2] * spectra.line.table[input$elementden3])
+      } else if(input$transform1=="*" && input$elementnum2!="None" && input$elementden1!="None" && input$transform3=="/" && input$elementden2!="None" && input$transform4=="*" && input$elementden3!="None"){
+          (spectra.line.table[input$elementnum1] * spectra.line.table[input$elementden2] * spectra.line.table[input$elementden3])/(spectra.line.table[input$elementden1] / spectra.line.table[input$elementden2] * spectra.line.table[input$elementden3])
+      } else if(input$transform1=="/" && input$elementnum2!="None" && input$elementden1!="None" && input$transform3=="/" && input$elementden2!="None" && input$transform4=="*" && input$elementden3!="None"){
+          (spectra.line.table[input$elementnum1] / spectra.line.table[input$elementden2] * spectra.line.table[input$elementden3])/(spectra.line.table[input$elementden1] / spectra.line.table[input$elementden2] * spectra.line.table[input$elementden3])
+          ######Addition Third Variable
+      } else if(input$transform1=="+" && input$elementnum2!="None" && input$transform2=="+" && input$elementnum3!="None" && input$elementden1!="None" && input$transform3=="/" && input$elementden2!="None" && input$transform4=="*" && input$elementden3!="None"){
+          (spectra.line.table[input$elementnum1] + spectra.line.table[input$elementnum2] + spectra.line.table[input$elementnum3])/(spectra.line.table[input$elementden1] / spectra.line.table[input$elementden2] * spectra.line.table[input$elementden3])
+      } else if(input$transform1=="-" && input$elementnum2!="None" && input$transform2=="+" && input$elementnum3!="None" && input$elementden1!="None" && input$transform3=="/" && input$elementden2!="None" && input$transform4=="*" && input$elementden3!="None"){
+          (spectra.line.table[input$elementnum1] - spectra.line.table[input$elementnum2] + spectra.line.table[input$elementnum3])/(spectra.line.table[input$elementden1] / spectra.line.table[input$elementden2] * spectra.line.table[input$elementden3])
+      } else if(input$transform1=="*" && input$elementnum2!="None" && input$transform2=="+" && input$elementnum3!="None" && input$elementden1!="None" && input$transform3=="/" && input$elementden2!="None" && input$transform4=="*" && input$elementden3!="None"){
+          (spectra.line.table[input$elementnum1] * spectra.line.table[input$elementnum2] + spectra.line.table[input$elementnum3])/(spectra.line.table[input$elementden1] / spectra.line.table[input$elementden2] * spectra.line.table[input$elementden3])
+      } else if(input$transform1=="/" && input$elementnum2!="None" && input$transform2=="+" && input$elementnum3!="None" && input$elementden1!="None" && input$transform3=="/" && input$elementden2!="None" && input$transform4=="*" && input$elementden3!="None"){
+          (spectra.line.table[input$elementnum1] / spectra.line.table[input$elementnum2] + spectra.line.table[input$elementnum3])/(spectra.line.table[input$elementden1] / spectra.line.table[input$elementden2] * spectra.line.table[input$elementden3])
+          ######Subtraction Third Variable
+      } else if(input$transform1=="+" && input$elementnum2!="None" && input$transform2=="-" && input$elementnum3!="None" && input$elementden1!="None" && input$transform3=="/" && input$elementden2!="None" && input$transform4=="*" && input$elementden3!="None"){
+          (spectra.line.table[input$elementnum1] + spectra.line.table[input$elementnum2] - spectra.line.table[input$elementnum3])/(spectra.line.table[input$elementden1] / spectra.line.table[input$elementden2] * spectra.line.table[input$elementden3])
+      } else if(input$transform1=="-" && input$elementnum2!="None" && input$transform2=="-" && input$elementnum3!="None" && input$elementden1!="None" && input$transform3=="/" && input$elementden2!="None" && input$transform4=="*" && input$elementden3!="None"){
+          (spectra.line.table[input$elementnum1] - spectra.line.table[input$elementnum2] - spectra.line.table[input$elementnum3])/(spectra.line.table[input$elementden1] / spectra.line.table[input$elementden2] * spectra.line.table[input$elementden3])
+      } else if(input$transform1=="*" && input$elementnum2!="None" && input$transform2=="-" && input$elementnum3!="None" && input$elementden1!="None" && input$transform3=="/" && input$elementden2!="None" && input$transform4=="*" && input$elementden3!="None"){
+          (spectra.line.table[input$elementnum1] * spectra.line.table[input$elementnum2] - spectra.line.table[input$elementnum3])/(spectra.line.table[input$elementden1] / spectra.line.table[input$elementden2] * spectra.line.table[input$elementden3])
+      } else if(input$transform1=="/" && input$elementnum2!="None" && input$transform2=="-" && input$elementnum3!="None" && input$elementden1!="None" && input$transform3=="/" && input$elementden2!="None" && input$transform4=="*" && input$elementden3!="None"){
+          (spectra.line.table[input$elementnum1] / spectra.line.table[input$elementnum2] - spectra.line.table[input$elementnum3])/(spectra.line.table[input$elementden1] / spectra.line.table[input$elementden2] * spectra.line.table[input$elementden3])
+          ######Multiplication Third Variable
+      } else if(input$transform1=="+" && input$elementnum2!="None" && input$transform2=="*" && input$elementnum3!="None" && input$elementden1!="None" && input$transform3=="/" && input$elementden2!="None" && input$transform4=="*" && input$elementden3!="None"){
+          (spectra.line.table[input$elementnum1] + spectra.line.table[input$elementnum2] * spectra.line.table[input$elementnum3])/(spectra.line.table[input$elementden1] / spectra.line.table[input$elementden2] * spectra.line.table[input$elementden3])
+      } else if(input$transform1=="-" && input$elementnum2!="None" && input$transform2=="*" && input$elementnum3!="None" && input$elementden1!="None" && input$transform3=="/" && input$elementden2!="None" && input$transform4=="*" && input$elementden3!="None"){
+          (spectra.line.table[input$elementnum1] - spectra.line.table[input$elementnum2] * spectra.line.table[input$elementnum3])/(spectra.line.table[input$elementden1] / spectra.line.table[input$elementden2] * spectra.line.table[input$elementden3])
+      } else if(input$transform1=="*" && input$elementnum2!="None" && input$transform2=="*" && input$elementnum3!="None" && input$elementden1!="None" && input$transform3=="/" && input$elementden2!="None" && input$transform4=="*" && input$elementden3!="None"){
+          (spectra.line.table[input$elementnum1] * spectra.line.table[input$elementnum2] * spectra.line.table[input$elementnum3])/(spectra.line.table[input$elementden1] / spectra.line.table[input$elementden2] * spectra.line.table[input$elementden3])
+      } else if(input$transform1=="/" && input$elementnum2!="None" && input$transform2=="*" && input$elementnum3!="None" && input$elementden1!="None" && input$transform3=="/" && input$elementden2!="None" && input$transform4=="*" && input$elementden3!="None"){
+          (spectra.line.table[input$elementnum1] / spectra.line.table[input$elementnum2] * spectra.line.table[input$elementnum3])/(spectra.line.table[input$elementden1] / spectra.line.table[input$elementden2] * spectra.line.table[input$elementden3])
+          ######Division Third Variable
+      } else if(input$transform1=="+" && input$elementnum2!="None" && input$transform2=="/" && input$elementnum3!="None" && input$elementden1!="None" && input$transform3=="/" && input$elementden2!="None" && input$transform4=="*" && input$elementden3!="None"){
+          (spectra.line.table[input$elementnum1] + spectra.line.table[input$elementnum2] / spectra.line.table[input$elementnum3])/(spectra.line.table[input$elementden1] / spectra.line.table[input$elementden2] * spectra.line.table[input$elementden3])
+      } else if(input$transform1=="-" && input$elementnum2!="None" && input$transform2=="/" && input$elementnum3!="None" && input$elementden1!="None" && input$transform3=="/" && input$elementden2!="None" && input$transform4=="*" && input$elementden3!="None"){
+          (spectra.line.table[input$elementnum1] - spectra.line.table[input$elementnum2] / spectra.line.table[input$elementnum3])/(spectra.line.table[input$elementden1] / spectra.line.table[input$elementden2] * spectra.line.table[input$elementden3])
+      } else if(input$transform1=="*" && input$elementnum2!="None" && input$transform2=="/" && input$elementnum3!="None" && input$elementden1!="None" && input$transform3=="/" && input$elementden2!="None" && input$transform4=="*" && input$elementden3!="None"){
+          (spectra.line.table[input$elementnum1] * spectra.line.table[input$elementnum2] / spectra.line.table[input$elementnum3])/(spectra.line.table[input$elementden1] / spectra.line.table[input$elementden2] * spectra.line.table[input$elementden3])
+      } else if(input$transform1=="/" && input$elementnum2!="None" && input$transform2=="/" && input$elementnum3!="None" && input$elementden1!="None" && input$transform3=="/" && input$elementden2!="None" && input$transform4=="*" && input$elementden3!="None"){
+          (spectra.line.table[input$elementnum1] / spectra.line.table[input$elementnum2] / spectra.line.table[input$elementnum3])/(spectra.line.table[input$elementden1] / spectra.line.table[input$elementden2] * spectra.line.table[input$elementden3])
+          #######################################
+          #######################################
+          ########################################Phyt01ith!
+          ####Divide Third Denominator#########
+          #######################################
+          #######################################
+          ####################################
+          #####Addition Two Denominators######
+          ####################################
+      } else if (input$transform1=="None" && input$elementden1!="None" && input$transform3=="+" && input$elementden2!="None" && input$transform4=="/" && input$elementden3!="None"){
+          spectra.line.table[input$elementnum1]/(spectra.line.table[input$elementden1] + spectra.line.table[input$elementden2] / spectra.line.table[input$elementden3])
+      } else if(input$transform1=="+" && input$elementnum2!="None" && input$elementden1!="None" && input$transform3=="+" && input$elementden2!="None" && input$transform4=="/" && input$elementden3!="None"){
+          (spectra.line.table[input$elementnum1] + spectra.line.table[input$elementden2] / spectra.line.table[input$elementden3])/(spectra.line.table[input$elementden1] + spectra.line.table[input$elementden2] / spectra.line.table[input$elementden3])
+      } else if(input$transform1=="-" && input$elementnum2!="None" && input$elementden1!="None" && input$transform3=="+" && input$elementden2!="None" && input$transform4=="/" && input$elementden3!="None"){
+          (spectra.line.table[input$elementnum1] - spectra.line.table[input$elementden2] / spectra.line.table[input$elementden3])/(spectra.line.table[input$elementden1] + spectra.line.table[input$elementden2] / spectra.line.table[input$elementden3])
+      } else if(input$transform1=="*" && input$elementnum2!="None" && input$elementden1!="None" && input$transform3=="+" && input$elementden2!="None" && input$transform4=="/" && input$elementden3!="None"){
+          (spectra.line.table[input$elementnum1] * spectra.line.table[input$elementden2] / spectra.line.table[input$elementden3])/(spectra.line.table[input$elementden1] + spectra.line.table[input$elementden2] / spectra.line.table[input$elementden3])
+      } else if(input$transform1=="/" && input$elementnum2!="None" && input$elementden1!="None" && input$transform3=="+" && input$elementden2!="None" && input$transform4=="/" && input$elementden3!="None"){
+          (spectra.line.table[input$elementnum1] / spectra.line.table[input$elementden2] / spectra.line.table[input$elementden3])/(spectra.line.table[input$elementden1] + spectra.line.table[input$elementden2] / spectra.line.table[input$elementden3])
+          ######Addition Third Variable
+      } else if(input$transform1=="+" && input$elementnum2!="None" && input$transform2=="+" && input$elementnum3!="None" && input$elementden1!="None" && input$transform3=="+" && input$elementden2!="None" && input$transform4=="/" && input$elementden3!="None"){
+          (spectra.line.table[input$elementnum1] + spectra.line.table[input$elementnum2] + spectra.line.table[input$elementnum3])/(spectra.line.table[input$elementden1] + spectra.line.table[input$elementden2] / spectra.line.table[input$elementden3])
+      } else if(input$transform1=="-" && input$elementnum2!="None" && input$transform2=="+" && input$elementnum3!="None" && input$elementden1!="None" && input$transform3=="+" && input$elementden2!="None" && input$transform4=="/" && input$elementden3!="None"){
+          (spectra.line.table[input$elementnum1] - spectra.line.table[input$elementnum2] + spectra.line.table[input$elementnum3])/(spectra.line.table[input$elementden1] + spectra.line.table[input$elementden2] / spectra.line.table[input$elementden3])
+      } else if(input$transform1=="*" && input$elementnum2!="None" && input$transform2=="+" && input$elementnum3!="None" && input$elementden1!="None" && input$transform3=="+" && input$elementden2!="None" && input$transform4=="/" && input$elementden3!="None"){
+          (spectra.line.table[input$elementnum1] * spectra.line.table[input$elementnum2] + spectra.line.table[input$elementnum3])/(spectra.line.table[input$elementden1] + spectra.line.table[input$elementden2] / spectra.line.table[input$elementden3])
+      } else if(input$transform1=="/" && input$elementnum2!="None" && input$transform2=="+" && input$elementnum3!="None" && input$elementden1!="None" && input$transform3=="+" && input$elementden2!="None" && input$transform4=="/" && input$elementden3!="None"){
+          (spectra.line.table[input$elementnum1] / spectra.line.table[input$elementnum2] + spectra.line.table[input$elementnum3])/(spectra.line.table[input$elementden1] + spectra.line.table[input$elementden2] / spectra.line.table[input$elementden3])
+          ######Subtraction Third Variable
+      } else if(input$transform1=="+" && input$elementnum2!="None" && input$transform2=="-" && input$elementnum3!="None" && input$elementden1!="None" && input$transform3=="+" && input$elementden2!="None" && input$transform4=="/" && input$elementden3!="None"){
+          (spectra.line.table[input$elementnum1] + spectra.line.table[input$elementnum2] - spectra.line.table[input$elementnum3])/(spectra.line.table[input$elementden1] + spectra.line.table[input$elementden2] / spectra.line.table[input$elementden3])
+      } else if(input$transform1=="-" && input$elementnum2!="None" && input$transform2=="-" && input$elementnum3!="None" && input$elementden1!="None" && input$transform3=="+" && input$elementden2!="None" && input$transform4=="/" && input$elementden3!="None"){
+          (spectra.line.table[input$elementnum1] - spectra.line.table[input$elementnum2] - spectra.line.table[input$elementnum3])/(spectra.line.table[input$elementden1] + spectra.line.table[input$elementden2] / spectra.line.table[input$elementden3])
+      } else if(input$transform1=="*" && input$elementnum2!="None" && input$transform2=="-" && input$elementnum3!="None" && input$elementden1!="None" && input$transform3=="+" && input$elementden2!="None" && input$transform4=="/" && input$elementden3!="None"){
+          (spectra.line.table[input$elementnum1] * spectra.line.table[input$elementnum2] - spectra.line.table[input$elementnum3])/(spectra.line.table[input$elementden1] + spectra.line.table[input$elementden2] / spectra.line.table[input$elementden3])
+      } else if(input$transform1=="/" && input$elementnum2!="None" && input$transform2=="-" && input$elementnum3!="None" && input$elementden1!="None" && input$transform3=="+" && input$elementden2!="None" && input$transform4=="/" && input$elementden3!="None"){
+          (spectra.line.table[input$elementnum1] / spectra.line.table[input$elementnum2] - spectra.line.table[input$elementnum3])/(spectra.line.table[input$elementden1] + spectra.line.table[input$elementden2] / spectra.line.table[input$elementden3])
+          ######Multiplication Third Variable
+      } else if(input$transform1=="+" && input$elementnum2!="None" && input$transform2=="*" && input$elementnum3!="None" && input$elementden1!="None" && input$transform3=="+" && input$elementden2!="None" && input$transform4=="/" && input$elementden3!="None"){
+          (spectra.line.table[input$elementnum1] + spectra.line.table[input$elementnum2] * spectra.line.table[input$elementnum3])/(spectra.line.table[input$elementden1] + spectra.line.table[input$elementden2] / spectra.line.table[input$elementden3])
+      } else if(input$transform1=="-" && input$elementnum2!="None" && input$transform2=="*" && input$elementnum3!="None" && input$elementden1!="None" && input$transform3=="+" && input$elementden2!="None" && input$transform4=="/" && input$elementden3!="None"){
+          (spectra.line.table[input$elementnum1] - spectra.line.table[input$elementnum2] * spectra.line.table[input$elementnum3])/(spectra.line.table[input$elementden1] + spectra.line.table[input$elementden2] / spectra.line.table[input$elementden3])
+      } else if(input$transform1=="*" && input$elementnum2!="None" && input$transform2=="*" && input$elementnum3!="None" && input$elementden1!="None" && input$transform3=="+" && input$elementden2!="None" && input$transform4=="/" && input$elementden3!="None"){
+          (spectra.line.table[input$elementnum1] * spectra.line.table[input$elementnum2] * spectra.line.table[input$elementnum3])/(spectra.line.table[input$elementden1] + spectra.line.table[input$elementden2] / spectra.line.table[input$elementden3])
+      } else if(input$transform1=="/" && input$elementnum2!="None" && input$transform2=="*" && input$elementnum3!="None" && input$elementden1!="None" && input$transform3=="+" && input$elementden2!="None" && input$transform4=="/" && input$elementden3!="None"){
+          (spectra.line.table[input$elementnum1] / spectra.line.table[input$elementnum2] * spectra.line.table[input$elementnum3])/(spectra.line.table[input$elementden1] + spectra.line.table[input$elementden2] / spectra.line.table[input$elementden3])
+          ######Division Third Variable
+      } else if(input$transform1=="+" && input$elementnum2!="None" && input$transform2=="/" && input$elementnum3!="None" && input$elementden1!="None" && input$transform3=="+" && input$elementden2!="None" && input$transform4=="/" && input$elementden3!="None"){
+          (spectra.line.table[input$elementnum1] + spectra.line.table[input$elementnum2] / spectra.line.table[input$elementnum3])/(spectra.line.table[input$elementden1] + spectra.line.table[input$elementden2] / spectra.line.table[input$elementden3])
+      } else if(input$transform1=="-" && input$elementnum2!="None" && input$transform2=="/" && input$elementnum3!="None" && input$elementden1!="None" && input$transform3=="+" && input$elementden2!="None" && input$transform4=="/" && input$elementden3!="None"){
+          (spectra.line.table[input$elementnum1] - spectra.line.table[input$elementnum2] / spectra.line.table[input$elementnum3])/(spectra.line.table[input$elementden1] + spectra.line.table[input$elementden2] / spectra.line.table[input$elementden3])
+      } else if(input$transform1=="*" && input$elementnum2!="None" && input$transform2=="/" && input$elementnum3!="None" && input$elementden1!="None" && input$transform3=="+" && input$elementden2!="None" && input$transform4=="/" && input$elementden3!="None"){
+          (spectra.line.table[input$elementnum1] * spectra.line.table[input$elementnum2] / spectra.line.table[input$elementnum3])/(spectra.line.table[input$elementden1] + spectra.line.table[input$elementden2] / spectra.line.table[input$elementden3])
+      } else if(input$transform1=="/" && input$elementnum2!="None" && input$transform2=="/" && input$elementnum3!="None" && input$elementden1!="None" && input$transform3=="+" && input$elementden2!="None" && input$transform4=="/" && input$elementden3!="None"){
+          (spectra.line.table[input$elementnum1] / spectra.line.table[input$elementnum2] / spectra.line.table[input$elementnum3])/(spectra.line.table[input$elementden1] + spectra.line.table[input$elementden2] / spectra.line.table[input$elementden3])
+          ####################################
+          #####Subtraction Two Denominators######
+          ####################################
+      } else if (input$transform1=="None" && input$elementden1!="None" && input$transform3=="-" && input$elementden2!="None" && input$transform4=="/" && input$elementden3!="None"){
+          spectra.line.table[input$elementnum1]/(spectra.line.table[input$elementden1] - spectra.line.table[input$elementden2] / spectra.line.table[input$elementden3])
+      } else if(input$transform1=="+" && input$elementnum2!="None" && input$elementden1!="None" && input$transform3=="-" && input$elementden2!="None" && input$transform4=="/" && input$elementden3!="None"){
+          (spectra.line.table[input$elementnum1] + spectra.line.table[input$elementden2] / spectra.line.table[input$elementden3])/(spectra.line.table[input$elementden1] - spectra.line.table[input$elementden2] / spectra.line.table[input$elementden3])
+      } else if(input$transform1=="-" && input$elementnum2!="None" && input$elementden1!="None" && input$transform3=="-" && input$elementden2!="None" && input$transform4=="/" && input$elementden3!="None"){
+          (spectra.line.table[input$elementnum1] - spectra.line.table[input$elementden2] / spectra.line.table[input$elementden3])/(spectra.line.table[input$elementden1] - spectra.line.table[input$elementden2] / spectra.line.table[input$elementden3])
+      } else if(input$transform1=="*" && input$elementnum2!="None" && input$elementden1!="None" && input$transform3=="-" && input$elementden2!="None" && input$transform4=="/" && input$elementden3!="None"){
+          (spectra.line.table[input$elementnum1] * spectra.line.table[input$elementden2] / spectra.line.table[input$elementden3])/(spectra.line.table[input$elementden1] - spectra.line.table[input$elementden2] / spectra.line.table[input$elementden3])
+      } else if(input$transform1=="/" && input$elementnum2!="None" && input$elementden1!="None" && input$transform3=="-" && input$elementden2!="None" && input$transform4=="/" && input$elementden3!="None"){
+          (spectra.line.table[input$elementnum1] / spectra.line.table[input$elementden2] / spectra.line.table[input$elementden3])/(spectra.line.table[input$elementden1] - spectra.line.table[input$elementden2] / spectra.line.table[input$elementden3])
+          ######Addition Third Variable
+      } else if(input$transform1=="+" && input$elementnum2!="None" && input$transform2=="+" && input$elementnum3!="None" && input$elementden1!="None" && input$transform3=="-" && input$elementden2!="None" && input$transform4=="/" && input$elementden3!="None"){
+          (spectra.line.table[input$elementnum1] + spectra.line.table[input$elementnum2] + spectra.line.table[input$elementnum3])/(spectra.line.table[input$elementden1] - spectra.line.table[input$elementden2] / spectra.line.table[input$elementden3])
+      } else if(input$transform1=="-" && input$elementnum2!="None" && input$transform2=="+" && input$elementnum3!="None" && input$elementden1!="None" && input$transform3=="-" && input$elementden2!="None" && input$transform4=="/" && input$elementden3!="None"){
+          (spectra.line.table[input$elementnum1] - spectra.line.table[input$elementnum2] + spectra.line.table[input$elementnum3])/(spectra.line.table[input$elementden1] - spectra.line.table[input$elementden2] / spectra.line.table[input$elementden3])
+      } else if(input$transform1=="*" && input$elementnum2!="None" && input$transform2=="+" && input$elementnum3!="None" && input$elementden1!="None" && input$transform3=="-" && input$elementden2!="None" && input$transform4=="/" && input$elementden3!="None"){
+          (spectra.line.table[input$elementnum1] * spectra.line.table[input$elementnum2] + spectra.line.table[input$elementnum3])/(spectra.line.table[input$elementden1] - spectra.line.table[input$elementden2] / spectra.line.table[input$elementden3])
+      } else if(input$transform1=="/" && input$elementnum2!="None" && input$transform2=="+" && input$elementnum3!="None" && input$elementden1!="None" && input$transform3=="-" && input$elementden2!="None" && input$transform4=="/" && input$elementden3!="None"){
+          (spectra.line.table[input$elementnum1] / spectra.line.table[input$elementnum2] + spectra.line.table[input$elementnum3])/(spectra.line.table[input$elementden1] - spectra.line.table[input$elementden2] / spectra.line.table[input$elementden3])
+          ######Subtraction Third Variable
+      } else if(input$transform1=="+" && input$elementnum2!="None" && input$transform2=="-" && input$elementnum3!="None" && input$elementden1!="None" && input$transform3=="-" && input$elementden2!="None" && input$transform4=="/" && input$elementden3!="None"){
+          (spectra.line.table[input$elementnum1] + spectra.line.table[input$elementnum2] - spectra.line.table[input$elementnum3])/(spectra.line.table[input$elementden1] - spectra.line.table[input$elementden2] / spectra.line.table[input$elementden3])
+      } else if(input$transform1=="-" && input$elementnum2!="None" && input$transform2=="-" && input$elementnum3!="None" && input$elementden1!="None" && input$transform3=="-" && input$elementden2!="None" && input$transform4=="/" && input$elementden3!="None"){
+          (spectra.line.table[input$elementnum1] - spectra.line.table[input$elementnum2] - spectra.line.table[input$elementnum3])/(spectra.line.table[input$elementden1] - spectra.line.table[input$elementden2] / spectra.line.table[input$elementden3])
+      } else if(input$transform1=="*" && input$elementnum2!="None" && input$transform2=="-" && input$elementnum3!="None" && input$elementden1!="None" && input$transform3=="-" && input$elementden2!="None" && input$transform4=="/" && input$elementden3!="None"){
+          (spectra.line.table[input$elementnum1] * spectra.line.table[input$elementnum2] - spectra.line.table[input$elementnum3])/(spectra.line.table[input$elementden1] - spectra.line.table[input$elementden2] / spectra.line.table[input$elementden3])
+      } else if(input$transform1=="/" && input$elementnum2!="None" && input$transform2=="-" && input$elementnum3!="None" && input$elementden1!="None" && input$transform3=="-" && input$elementden2!="None" && input$transform4=="/" && input$elementden3!="None"){
+          (spectra.line.table[input$elementnum1] / spectra.line.table[input$elementnum2] - spectra.line.table[input$elementnum3])/(spectra.line.table[input$elementden1] - spectra.line.table[input$elementden2] / spectra.line.table[input$elementden3])
+          ######Multiplication Third Variable
+      } else if(input$transform1=="+" && input$elementnum2!="None" && input$transform2=="*" && input$elementnum3!="None" && input$elementden1!="None" && input$transform3=="-" && input$elementden2!="None" && input$transform4=="/" && input$elementden3!="None"){
+          (spectra.line.table[input$elementnum1] + spectra.line.table[input$elementnum2] * spectra.line.table[input$elementnum3])/(spectra.line.table[input$elementden1] - spectra.line.table[input$elementden2] / spectra.line.table[input$elementden3])
+      } else if(input$transform1=="-" && input$elementnum2!="None" && input$transform2=="*" && input$elementnum3!="None" && input$elementden1!="None" && input$transform3=="-" && input$elementden2!="None" && input$transform4=="/" && input$elementden3!="None"){
+          (spectra.line.table[input$elementnum1] - spectra.line.table[input$elementnum2] * spectra.line.table[input$elementnum3])/(spectra.line.table[input$elementden1] - spectra.line.table[input$elementden2] / spectra.line.table[input$elementden3])
+      } else if(input$transform1=="*" && input$elementnum2!="None" && input$transform2=="*" && input$elementnum3!="None" && input$elementden1!="None" && input$transform3=="-" && input$elementden2!="None" && input$transform4=="/" && input$elementden3!="None"){
+          (spectra.line.table[input$elementnum1] * spectra.line.table[input$elementnum2] * spectra.line.table[input$elementnum3])/(spectra.line.table[input$elementden1] - spectra.line.table[input$elementden2] / spectra.line.table[input$elementden3])
+      } else if(input$transform1=="/" && input$elementnum2!="None" && input$transform2=="*" && input$elementnum3!="None" && input$elementden1!="None" && input$transform3=="-" && input$elementden2!="None" && input$transform4=="/" && input$elementden3!="None"){
+          (spectra.line.table[input$elementnum1] / spectra.line.table[input$elementnum2] * spectra.line.table[input$elementnum3])/(spectra.line.table[input$elementden1] - spectra.line.table[input$elementden2] / spectra.line.table[input$elementden3])
+          ######Division Third Variable
+      } else if(input$transform1=="+" && input$elementnum2!="None" && input$transform2=="/" && input$elementnum3!="None" && input$elementden1!="None" && input$transform3=="-" && input$elementden2!="None" && input$transform4=="/" && input$elementden3!="None"){
+          (spectra.line.table[input$elementnum1] + spectra.line.table[input$elementnum2] / spectra.line.table[input$elementnum3])/(spectra.line.table[input$elementden1] - spectra.line.table[input$elementden2] / spectra.line.table[input$elementden3])
+      } else if(input$transform1=="-" && input$elementnum2!="None" && input$transform2=="/" && input$elementnum3!="None" && input$elementden1!="None" && input$transform3=="-" && input$elementden2!="None" && input$transform4=="/" && input$elementden3!="None"){
+          (spectra.line.table[input$elementnum1] - spectra.line.table[input$elementnum2] / spectra.line.table[input$elementnum3])/(spectra.line.table[input$elementden1] - spectra.line.table[input$elementden2] / spectra.line.table[input$elementden3])
+      } else if(input$transform1=="*" && input$elementnum2!="None" && input$transform2=="/" && input$elementnum3!="None" && input$elementden1!="None" && input$transform3=="-" && input$elementden2!="None" && input$transform4=="/" && input$elementden3!="None"){
+          (spectra.line.table[input$elementnum1] * spectra.line.table[input$elementnum2] / spectra.line.table[input$elementnum3])/(spectra.line.table[input$elementden1] - spectra.line.table[input$elementden2] / spectra.line.table[input$elementden3])
+      } else if(input$transform1=="/" && input$elementnum2!="None" && input$transform2=="/" && input$elementnum3!="None" && input$elementden1!="None" && input$transform3=="-" && input$elementden2!="None" && input$transform4=="/" && input$elementden3!="None"){
+          (spectra.line.table[input$elementnum1] / spectra.line.table[input$elementnum2] / spectra.line.table[input$elementnum3])/(spectra.line.table[input$elementden1] - spectra.line.table[input$elementden2] / spectra.line.table[input$elementden3])
+          ####################################
+          #####Multiplication Two Denominators######
+          ####################################
+      } else if (input$transform1=="None" && input$elementden1!="None" && input$transform3=="*" && input$elementden2!="None" && input$transform4=="/" && input$elementden3!="None"){
+          spectra.line.table[input$elementnum1]/(spectra.line.table[input$elementden1] * spectra.line.table[input$elementden2] / spectra.line.table[input$elementden3])
+      } else if(input$transform1=="+" && input$elementnum2!="None" && input$elementden1!="None" && input$transform3=="*" && input$elementden2!="None" && input$transform4=="/" && input$elementden3!="None"){
+          (spectra.line.table[input$elementnum1] + spectra.line.table[input$elementden2] / spectra.line.table[input$elementden3])/(spectra.line.table[input$elementden1] * spectra.line.table[input$elementden2] / spectra.line.table[input$elementden3])
+      } else if(input$transform1=="-" && input$elementnum2!="None" && input$elementden1!="None" && input$transform3=="*" && input$elementden2!="None" && input$transform4=="/" && input$elementden3!="None"){
+          (spectra.line.table[input$elementnum1] - spectra.line.table[input$elementden2] / spectra.line.table[input$elementden3])/(spectra.line.table[input$elementden1] * spectra.line.table[input$elementden2] / spectra.line.table[input$elementden3])
+      } else if(input$transform1=="*" && input$elementnum2!="None" && input$elementden1!="None" && input$transform3=="*" && input$elementden2!="None" && input$transform4=="/" && input$elementden3!="None"){
+          (spectra.line.table[input$elementnum1] * spectra.line.table[input$elementden2] / spectra.line.table[input$elementden3])/(spectra.line.table[input$elementden1] * spectra.line.table[input$elementden2] / spectra.line.table[input$elementden3])
+      } else if(input$transform1=="/" && input$elementnum2!="None" && input$elementden1!="None" && input$transform3=="*" && input$elementden2!="None" && input$transform4=="/" && input$elementden3!="None"){
+          (spectra.line.table[input$elementnum1] / spectra.line.table[input$elementden2] / spectra.line.table[input$elementden3])/(spectra.line.table[input$elementden1] * spectra.line.table[input$elementden2] / spectra.line.table[input$elementden3])
+          ######Addition Third Variable
+      } else if(input$transform1=="+" && input$elementnum2!="None" && input$transform2=="+" && input$elementnum3!="None" && input$elementden1!="None" && input$transform3=="*" && input$elementden2!="None" && input$transform4=="/" && input$elementden3!="None"){
+          (spectra.line.table[input$elementnum1] + spectra.line.table[input$elementnum2] + spectra.line.table[input$elementnum3])/(spectra.line.table[input$elementden1] * spectra.line.table[input$elementden2] / spectra.line.table[input$elementden3])
+      } else if(input$transform1=="-" && input$elementnum2!="None" && input$transform2=="+" && input$elementnum3!="None" && input$elementden1!="None" && input$transform3=="*" && input$elementden2!="None" && input$transform4=="/" && input$elementden3!="None"){
+          (spectra.line.table[input$elementnum1] - spectra.line.table[input$elementnum2] + spectra.line.table[input$elementnum3])/(spectra.line.table[input$elementden1] * spectra.line.table[input$elementden2] / spectra.line.table[input$elementden3])
+      } else if(input$transform1=="*" && input$elementnum2!="None" && input$transform2=="+" && input$elementnum3!="None" && input$elementden1!="None" && input$transform3=="*" && input$elementden2!="None" && input$transform4=="/" && input$elementden3!="None"){
+          (spectra.line.table[input$elementnum1] * spectra.line.table[input$elementnum2] + spectra.line.table[input$elementnum3])/(spectra.line.table[input$elementden1] * spectra.line.table[input$elementden2] / spectra.line.table[input$elementden3])
+      } else if(input$transform1=="/" && input$elementnum2!="None" && input$transform2=="+" && input$elementnum3!="None" && input$elementden1!="None" && input$transform3=="*" && input$elementden2!="None" && input$transform4=="/" && input$elementden3!="None"){
+          (spectra.line.table[input$elementnum1] / spectra.line.table[input$elementnum2] + spectra.line.table[input$elementnum3])/(spectra.line.table[input$elementden1] * spectra.line.table[input$elementden2] / spectra.line.table[input$elementden3])
+          ######Subtraction Third Variable
+      } else if(input$transform1=="+" && input$elementnum2!="None" && input$transform2=="-" && input$elementnum3!="None" && input$elementden1!="None" && input$transform3=="*" && input$elementden2!="None" && input$transform4=="/" && input$elementden3!="None"){
+          (spectra.line.table[input$elementnum1] + spectra.line.table[input$elementnum2] - spectra.line.table[input$elementnum3])/(spectra.line.table[input$elementden1] * spectra.line.table[input$elementden2] / spectra.line.table[input$elementden3])
+      } else if(input$transform1=="-" && input$elementnum2!="None" && input$transform2=="-" && input$elementnum3!="None" && input$elementden1!="None" && input$transform3=="*" && input$elementden2!="None" && input$transform4=="/" && input$elementden3!="None"){
+          (spectra.line.table[input$elementnum1] - spectra.line.table[input$elementnum2] - spectra.line.table[input$elementnum3])/(spectra.line.table[input$elementden1] * spectra.line.table[input$elementden2] / spectra.line.table[input$elementden3])
+      } else if(input$transform1=="*" && input$elementnum2!="None" && input$transform2=="-" && input$elementnum3!="None" && input$elementden1!="None" && input$transform3=="*" && input$elementden2!="None" && input$transform4=="/" && input$elementden3!="None"){
+          (spectra.line.table[input$elementnum1] * spectra.line.table[input$elementnum2] - spectra.line.table[input$elementnum3])/(spectra.line.table[input$elementden1] * spectra.line.table[input$elementden2] / spectra.line.table[input$elementden3])
+      } else if(input$transform1=="/" && input$elementnum2!="None" && input$transform2=="-" && input$elementnum3!="None" && input$elementden1!="None" && input$transform3=="*" && input$elementden2!="None" && input$transform4=="/" && input$elementden3!="None"){
+          (spectra.line.table[input$elementnum1] / spectra.line.table[input$elementnum2] - spectra.line.table[input$elementnum3])/(spectra.line.table[input$elementden1] * spectra.line.table[input$elementden2] / spectra.line.table[input$elementden3])
+          ######Multiplication Third Variable
+      } else if(input$transform1=="+" && input$elementnum2!="None" && input$transform2=="*" && input$elementnum3!="None" && input$elementden1!="None" && input$transform3=="*" && input$elementden2!="None" && input$transform4=="/" && input$elementden3!="None"){
+          (spectra.line.table[input$elementnum1] + spectra.line.table[input$elementnum2] * spectra.line.table[input$elementnum3])/(spectra.line.table[input$elementden1] * spectra.line.table[input$elementden2] / spectra.line.table[input$elementden3])
+      } else if(input$transform1=="-" && input$elementnum2!="None" && input$transform2=="*" && input$elementnum3!="None" && input$elementden1!="None" && input$transform3=="*" && input$elementden2!="None" && input$transform4=="/" && input$elementden3!="None"){
+          (spectra.line.table[input$elementnum1] - spectra.line.table[input$elementnum2] * spectra.line.table[input$elementnum3])/(spectra.line.table[input$elementden1] * spectra.line.table[input$elementden2] / spectra.line.table[input$elementden3])
+      } else if(input$transform1=="*" && input$elementnum2!="None" && input$transform2=="*" && input$elementnum3!="None" && input$elementden1!="None" && input$transform3=="*" && input$elementden2!="None" && input$transform4=="/" && input$elementden3!="None"){
+          (spectra.line.table[input$elementnum1] * spectra.line.table[input$elementnum2] * spectra.line.table[input$elementnum3])/(spectra.line.table[input$elementden1] * spectra.line.table[input$elementden2] / spectra.line.table[input$elementden3])
+      } else if(input$transform1=="/" && input$elementnum2!="None" && input$transform2=="*" && input$elementnum3!="None" && input$elementden1!="None" && input$transform3=="*" && input$elementden2!="None" && input$transform4=="/" && input$elementden3!="None"){
+          (spectra.line.table[input$elementnum1] / spectra.line.table[input$elementnum2] * spectra.line.table[input$elementnum3])/(spectra.line.table[input$elementden1] * spectra.line.table[input$elementden2] / spectra.line.table[input$elementden3])
+          ######Division Third Variable
+      } else if(input$transform1=="+" && input$elementnum2!="None" && input$transform2=="/" && input$elementnum3!="None" && input$elementden1!="None" && input$transform3=="*" && input$elementden2!="None" && input$transform4=="/" && input$elementden3!="None"){
+          (spectra.line.table[input$elementnum1] + spectra.line.table[input$elementnum2] / spectra.line.table[input$elementnum3])/(spectra.line.table[input$elementden1] * spectra.line.table[input$elementden2] / spectra.line.table[input$elementden3])
+      } else if(input$transform1=="-" && input$elementnum2!="None" && input$transform2=="/" && input$elementnum3!="None" && input$elementden1!="None" && input$transform3=="*" && input$elementden2!="None" && input$transform4=="/" && input$elementden3!="None"){
+          (spectra.line.table[input$elementnum1] - spectra.line.table[input$elementnum2] / spectra.line.table[input$elementnum3])/(spectra.line.table[input$elementden1] * spectra.line.table[input$elementden2] / spectra.line.table[input$elementden3])
+      } else if(input$transform1=="*" && input$elementnum2!="None" && input$transform2=="/" && input$elementnum3!="None" && input$elementden1!="None" && input$transform3=="*" && input$elementden2!="None" && input$transform4=="/" && input$elementden3!="None"){
+          (spectra.line.table[input$elementnum1] * spectra.line.table[input$elementnum2] / spectra.line.table[input$elementnum3])/(spectra.line.table[input$elementden1] * spectra.line.table[input$elementden2] / spectra.line.table[input$elementden3])
+      } else if(input$transform1=="/" && input$elementnum2!="None" && input$transform2=="/" && input$elementnum3!="None" && input$elementden1!="None" && input$transform3=="*" && input$elementden2!="None" && input$transform4=="/" && input$elementden3!="None"){
+          (spectra.line.table[input$elementnum1] / spectra.line.table[input$elementnum2] / spectra.line.table[input$elementnum3])/(spectra.line.table[input$elementden1] * spectra.line.table[input$elementden2] / spectra.line.table[input$elementden3])
+          ####################################
+          #####Division Two Denominators######
+          ####################################
+      } else if (input$transform1=="None" && input$elementden1!="None" && input$transform3=="/" && input$elementden2!="None" && input$transform4=="/" && input$elementden3!="None"){
+          spectra.line.table[input$elementnum1]/(spectra.line.table[input$elementden1] / spectra.line.table[input$elementden2] / spectra.line.table[input$elementden3])
+      } else if(input$transform1=="+" && input$elementnum2!="None" && input$elementden1!="None" && input$transform3=="/" && input$elementden2!="None" && input$transform4=="/" && input$elementden3!="None"){
+          (spectra.line.table[input$elementnum1] + spectra.line.table[input$elementden2] / spectra.line.table[input$elementden3])/(spectra.line.table[input$elementden1] / spectra.line.table[input$elementden2] / spectra.line.table[input$elementden3])
+      } else if(input$transform1=="-" && input$elementnum2!="None" && input$elementden1!="None" && input$transform3=="/" && input$elementden2!="None" && input$transform4=="/" && input$elementden3!="None"){
+          (spectra.line.table[input$elementnum1] - spectra.line.table[input$elementden2] / spectra.line.table[input$elementden3])/(spectra.line.table[input$elementden1] / spectra.line.table[input$elementden2] / spectra.line.table[input$elementden3])
+      } else if(input$transform1=="*" && input$elementnum2!="None" && input$elementden1!="None" && input$transform3=="/" && input$elementden2!="None" && input$transform4=="/" && input$elementden3!="None"){
+          (spectra.line.table[input$elementnum1] * spectra.line.table[input$elementden2] / spectra.line.table[input$elementden3])/(spectra.line.table[input$elementden1] / spectra.line.table[input$elementden2] / spectra.line.table[input$elementden3])
+      } else if(input$transform1=="/" && input$elementnum2!="None" && input$elementden1!="None" && input$transform3=="/" && input$elementden2!="None" && input$transform4=="/" && input$elementden3!="None"){
+          (spectra.line.table[input$elementnum1] / spectra.line.table[input$elementden2] / spectra.line.table[input$elementden3])/(spectra.line.table[input$elementden1] / spectra.line.table[input$elementden2] / spectra.line.table[input$elementden3])
+          ######Addition Third Variable
+      } else if(input$transform1=="+" && input$elementnum2!="None" && input$transform2=="+" && input$elementnum3!="None" && input$elementden1!="None" && input$transform3=="/" && input$elementden2!="None" && input$transform4=="/" && input$elementden3!="None"){
+          (spectra.line.table[input$elementnum1] + spectra.line.table[input$elementnum2] + spectra.line.table[input$elementnum3])/(spectra.line.table[input$elementden1] / spectra.line.table[input$elementden2] / spectra.line.table[input$elementden3])
+      } else if(input$transform1=="-" && input$elementnum2!="None" && input$transform2=="+" && input$elementnum3!="None" && input$elementden1!="None" && input$transform3=="/" && input$elementden2!="None" && input$transform4=="/" && input$elementden3!="None"){
+          (spectra.line.table[input$elementnum1] - spectra.line.table[input$elementnum2] + spectra.line.table[input$elementnum3])/(spectra.line.table[input$elementden1] / spectra.line.table[input$elementden2] / spectra.line.table[input$elementden3])
+      } else if(input$transform1=="*" && input$elementnum2!="None" && input$transform2=="+" && input$elementnum3!="None" && input$elementden1!="None" && input$transform3=="/" && input$elementden2!="None" && input$transform4=="/" && input$elementden3!="None"){
+          (spectra.line.table[input$elementnum1] * spectra.line.table[input$elementnum2] + spectra.line.table[input$elementnum3])/(spectra.line.table[input$elementden1] / spectra.line.table[input$elementden2] / spectra.line.table[input$elementden3])
+      } else if(input$transform1=="/" && input$elementnum2!="None" && input$transform2=="+" && input$elementnum3!="None" && input$elementden1!="None" && input$transform3=="/" && input$elementden2!="None" && input$transform4=="/" && input$elementden3!="None"){
+          (spectra.line.table[input$elementnum1] / spectra.line.table[input$elementnum2] + spectra.line.table[input$elementnum3])/(spectra.line.table[input$elementden1] / spectra.line.table[input$elementden2] / spectra.line.table[input$elementden3])
+          ######Subtraction Third Variable
+      } else if(input$transform1=="+" && input$elementnum2!="None" && input$transform2=="-" && input$elementnum3!="None" && input$elementden1!="None" && input$transform3=="/" && input$elementden2!="None" && input$transform4=="/" && input$elementden3!="None"){
+          (spectra.line.table[input$elementnum1] + spectra.line.table[input$elementnum2] - spectra.line.table[input$elementnum3])/(spectra.line.table[input$elementden1] / spectra.line.table[input$elementden2] / spectra.line.table[input$elementden3])
+      } else if(input$transform1=="-" && input$elementnum2!="None" && input$transform2=="-" && input$elementnum3!="None" && input$elementden1!="None" && input$transform3=="/" && input$elementden2!="None" && input$transform4=="/" && input$elementden3!="None"){
+          (spectra.line.table[input$elementnum1] - spectra.line.table[input$elementnum2] - spectra.line.table[input$elementnum3])/(spectra.line.table[input$elementden1] / spectra.line.table[input$elementden2] / spectra.line.table[input$elementden3])
+      } else if(input$transform1=="*" && input$elementnum2!="None" && input$transform2=="-" && input$elementnum3!="None" && input$elementden1!="None" && input$transform3=="/" && input$elementden2!="None" && input$transform4=="/" && input$elementden3!="None"){
+          (spectra.line.table[input$elementnum1] * spectra.line.table[input$elementnum2] - spectra.line.table[input$elementnum3])/(spectra.line.table[input$elementden1] / spectra.line.table[input$elementden2] / spectra.line.table[input$elementden3])
+      } else if(input$transform1=="/" && input$elementnum2!="None" && input$transform2=="-" && input$elementnum3!="None" && input$elementden1!="None" && input$transform3=="/" && input$elementden2!="None" && input$transform4=="/" && input$elementden3!="None"){
+          (spectra.line.table[input$elementnum1] / spectra.line.table[input$elementnum2] - spectra.line.table[input$elementnum3])/(spectra.line.table[input$elementden1] / spectra.line.table[input$elementden2] / spectra.line.table[input$elementden3])
+          ######Multiplication Third Variable
+      } else if(input$transform1=="+" && input$elementnum2!="None" && input$transform2=="*" && input$elementnum3!="None" && input$elementden1!="None" && input$transform3=="/" && input$elementden2!="None" && input$transform4=="/" && input$elementden3!="None"){
+          (spectra.line.table[input$elementnum1] + spectra.line.table[input$elementnum2] * spectra.line.table[input$elementnum3])/(spectra.line.table[input$elementden1] / spectra.line.table[input$elementden2] / spectra.line.table[input$elementden3])
+      } else if(input$transform1=="-" && input$elementnum2!="None" && input$transform2=="*" && input$elementnum3!="None" && input$elementden1!="None" && input$transform3=="/" && input$elementden2!="None" && input$transform4=="/" && input$elementden3!="None"){
+          (spectra.line.table[input$elementnum1] - spectra.line.table[input$elementnum2] * spectra.line.table[input$elementnum3])/(spectra.line.table[input$elementden1] / spectra.line.table[input$elementden2] / spectra.line.table[input$elementden3])
+      } else if(input$transform1=="*" && input$elementnum2!="None" && input$transform2=="*" && input$elementnum3!="None" && input$elementden1!="None" && input$transform3=="/" && input$elementden2!="None" && input$transform4=="/" && input$elementden3!="None"){
+          (spectra.line.table[input$elementnum1] * spectra.line.table[input$elementnum2] * spectra.line.table[input$elementnum3])/(spectra.line.table[input$elementden1] / spectra.line.table[input$elementden2] / spectra.line.table[input$elementden3])
+      } else if(input$transform1=="/" && input$elementnum2!="None" && input$transform2=="*" && input$elementnum3!="None" && input$elementden1!="None" && input$transform3=="/" && input$elementden2!="None" && input$transform4=="/" && input$elementden3!="None"){
+          (spectra.line.table[input$elementnum1] / spectra.line.table[input$elementnum2] * spectra.line.table[input$elementnum3])/(spectra.line.table[input$elementden1] / spectra.line.table[input$elementden2] / spectra.line.table[input$elementden3])
+          ######Division Third Variable
+      } else if(input$transform1=="+" && input$elementnum2!="None" && input$transform2=="/" && input$elementnum3!="None" && input$elementden1!="None" && input$transform3=="/" && input$elementden2!="None" && input$transform4=="/" && input$elementden3!="None"){
+          (spectra.line.table[input$elementnum1] + spectra.line.table[input$elementnum2] / spectra.line.table[input$elementnum3])/(spectra.line.table[input$elementden1] / spectra.line.table[input$elementden2] / spectra.line.table[input$elementden3])
+      } else if(input$transform1=="-" && input$elementnum2!="None" && input$transform2=="/" && input$elementnum3!="None" && input$elementden1!="None" && input$transform3=="/" && input$elementden2!="None" && input$transform4=="/" && input$elementden3!="None"){
+          (spectra.line.table[input$elementnum1] - spectra.line.table[input$elementnum2] / spectra.line.table[input$elementnum3])/(spectra.line.table[input$elementden1] / spectra.line.table[input$elementden2] / spectra.line.table[input$elementden3])
+      } else if(input$transform1=="*" && input$elementnum2!="None" && input$transform2=="/" && input$elementnum3!="None" && input$elementden1!="None" && input$transform3=="/" && input$elementden2!="None" && input$transform4=="/" && input$elementden3!="None"){
+          (spectra.line.table[input$elementnum1] * spectra.line.table[input$elementnum2] / spectra.line.table[input$elementnum3])/(spectra.line.table[input$elementden1] / spectra.line.table[input$elementden2] / spectra.line.table[input$elementden3])
+      } else if(input$transform1=="/" && input$elementnum2!="None" && input$transform2=="/" && input$elementnum3!="None" && input$elementden1!="None" && input$transform3=="/" && input$elementden2!="None" && input$transform4=="/" && input$elementden3!="None"){
+          (spectra.line.table[input$elementnum1] / spectra.line.table[input$elementnum2] / spectra.line.table[input$elementnum3])/(spectra.line.table[input$elementden1] / spectra.line.table[input$elementden2] / spectra.line.table[input$elementden3])
+      }
+      
+      data.transformation.selection.norm <- t(t(data.transformation.selection)/rowSums(t(data.transformation.selection)))
+      
+      
+      data.transformation <- if(input$transformnorm==FALSE){
+          data.transformation.selection
+      } else if(input$transformnorm==TRUE){
+          data.transformation.selection.norm
+      }
+      
+      
+      data.transformation
+  })  
   
+  
+  
+  
+  
+  
+  
+  
+  #############Mathematical Transformations
+  
+  
+  plotInput6a <- reactive({
+      
+      spectra.line.table <- ageData()
+      data.transformation <- dataTransform()
+      
+      
+      x.axis <- if (input$xaxistypeeq=="Depth") {
+          paste("Depth (", input$lengthuniteq, ")", sep="", collapse="")
+      } else if (input$xaxistypeeq=="Age" && input$timetypeeq=="BP"){
+          paste("cal year BP")
+      } else if (input$xaxistypeeq=="Age" && input$timetypeeq=="BC") {
+          paste("cal year BC")
+      } else if (input$axistype=="Age" && input$timetypeeq=="AD") {
+          paste("cal year AD")
+      } else if (input$axistype=="Age" && input$timetypeeq=="BC/AD") {
+          paste("cal year BC/AD")
+      }
+      
+          
+          spectra.line.table.norm <- data.frame(spectra.line.table, null)
+          colnames(spectra.line.table.norm) <- c(names(spectra.line.table), "None")
+          spectra.line.table.norm
+          
+          #interval <- unique.spec*as.numeric(input$intervalmm)+as.numeric(input$startmmeq)
+          
+          #spectra.timeseries.table <- data.frame(interval, spectra.line.table[c(input$elementtrend)]/spectra.line.table.norm[c(input$elementnorm)], spectra.line.table$Cluster, spectra.line.table$Qualitative, spectra.line.table$Depth)
+          #colnames(spectra.timeseries.table) <- c("Interval", "Selected", "Cluster", "Qualitative", "Depth")
+          
+          spectra.timeseries.table <- data.frame(spectra.line.table[c(input$xaxistypeeq)], data.transformation, spectra.line.table$Cluster, spectra.line.table$Qualitative, spectra.line.table$Depth, spectra.line.table$Climate)
+          colnames(spectra.timeseries.table) <- c("Interval", "Selected", "Cluster", "Qualitative", "Depth", "Climate")
+          
+          
+          
+          
+          
+          
+          
+          
+          
+          
+          
+          
+          
+          
+          
+          black.time.series <- qplot(Interval, SMA(Selected, input$smoothingeq), input$xaxistypeeq, geom="line", data = spectra.timeseries.table) +
+          geom_line(colour = "black", lwd=input$linesizeeq) +
+          theme_light() +
+          theme(axis.text.x = element_text(size=15)) +
+          theme(axis.text.y = element_text(size=15)) +
+          theme(axis.title.x = element_text(size=15)) +
+          theme(axis.title.y = element_text(size=15, angle=90)) +
+          theme(plot.title=element_text(size=20)) +
+          theme(legend.title=element_text(size=15)) +
+          theme(legend.text=element_text(size=15)) +
+          scale_x_continuous(paste(x.axis), label=comma) +
+          scale_y_continuous(paste(input$yaxistype))
+          
+          
+          smooth.time.series <- qplot(spectra.timeseries.table$Interval, SMA(spectra.timeseries.table$Selected, input$smoothingeq), xlab = input$xaxistypeeq, geom="point") +
+          theme_light() +
+          stat_smooth() +
+          theme(axis.text.x = element_text(size=15)) +
+          theme(axis.text.y = element_text(size=15)) +
+          theme(axis.title.x = element_text(size=15)) +
+          theme(axis.title.y = element_text(size=15, angle=90)) +
+          theme(plot.title=element_text(size=20)) +
+          theme(legend.title=element_text(size=15)) +
+          theme(legend.text=element_text(size=15)) +
+          scale_x_continuous(paste(x.axis), label=comma) +
+          scale_y_continuous(paste(input$yaxistype))
+          
+          
+          ramp.time.series <- qplot(Interval, SMA(Selected, input$smoothingeq), xlab = input$xaxistypeeq, geom="line", data = spectra.timeseries.table) +
+          geom_line(aes(colour = Selected), lwd=input$linesizeeq) +
+          theme_light() +
+          scale_colour_gradientn(colours=rainbow(7)) +
+          theme(axis.text.x = element_text(size=15)) +
+          theme(axis.text.y = element_text(size=15)) +
+          theme(axis.title.x = element_text(size=15)) +
+          theme(axis.title.y = element_text(size=15, angle=90)) +
+          theme(plot.title=element_text(size=20)) +
+          theme(legend.title=element_text(size=15)) +
+          theme(legend.text=element_text(size=15)) +
+          scale_x_continuous(paste(x.axis), label=comma) +
+          scale_y_continuous(paste(input$yaxistype))
+          
+          
+          area.time.series <- ggplot(spectra.timeseries.table, aes(Interval)) +
+          theme_classic() +
+          geom_area(aes(y=Selected, colour="grey60", fill="grey60"), alpha=0.6) +
+          scale_x_continuous(input$xaxistypeeq) +
+          theme(axis.text.x = element_text(size=15)) +
+          theme(axis.text.y = element_text(size=15)) +
+          theme(axis.title.x = element_text(size=15)) +
+          theme(axis.title.y = element_text(size=15, angle=90)) +
+          theme(plot.title=element_text(size=20)) +
+          theme(legend.title=element_text(size=15)) +
+          theme(legend.text=element_text(size=15)) +
+          scale_x_continuous(paste(x.axis), label=comma) +
+          scale_y_continuous(paste(input$yaxistype))
+          
+          
+          
+          cluster.time.series <- qplot(Interval, SMA(Selected, input$smoothingeq), xlab = input$xaxistypeeq, geom="line", data = spectra.timeseries.table) +
+          geom_point(aes(colour = as.factor(Cluster)), size=input$pointsizeeq) +
+          scale_colour_discrete("Cluster") +
+          theme_light() +
+          theme(axis.text.x = element_text(size=15)) +
+          theme(axis.text.y = element_text(size=15)) +
+          theme(axis.title.x = element_text(size=15)) +
+          theme(axis.title.y = element_text(size=15, angle=90)) +
+          theme(plot.title=element_text(size=20)) +
+          theme(legend.title=element_text(size=15)) +
+          theme(legend.text=element_text(size=15)) +
+          scale_x_continuous(paste(x.axis), label=comma) +
+          scale_y_continuous(paste(input$yaxistype))
+          
+          climate.time.series.line <- qplot(Interval, SMA(Selected, input$smoothingeq), xlab = input$xaxistypeeq, geom="line", data = spectra.timeseries.table, colour = as.factor(Climate)) +
+          scale_colour_discrete("Climatic Period") +
+          theme_light() +
+          theme(axis.text.x = element_text(size=15)) +
+          theme(axis.text.y = element_text(size=15)) +
+          theme(axis.title.x = element_text(size=15)) +
+          theme(axis.title.y = element_text(size=15, angle=90)) +
+          theme(plot.title=element_text(size=20)) +
+          theme(legend.title=element_text(size=15)) +
+          theme(legend.text=element_text(size=15)) +
+          scale_x_continuous(paste(x.axis), label=comma) +
+          scale_y_continuous(paste(input$yaxistype))
+          
+          
+          qualitative.time.series.line <- qplot(Interval, SMA(Selected, input$smoothingeq), xlab = input$xaxistypeeq, geom="line", data = spectra.timeseries.table, colour = as.factor(Qualitative)) +
+          scale_colour_discrete("Qualitative") +
+          theme_light() +
+          theme(axis.text.x = element_text(size=15)) +
+          theme(axis.text.y = element_text(size=15)) +
+          theme(axis.title.x = element_text(size=15)) +
+          theme(axis.title.y = element_text(size=15, angle=90)) +
+          theme(plot.title=element_text(size=20)) +
+          theme(legend.title=element_text(size=15)) +
+          theme(legend.text=element_text(size=15)) +
+          scale_x_continuous(paste(x.axis), label=comma) +
+          scale_y_continuous(paste(input$yaxistype))
+          
+          qualitative.time.series.point <- qplot(Interval, SMA(Selected, input$smoothingeq), xlab = input$xaxistypeeq, geom="line", data = spectra.timeseries.table) +
+          geom_point(aes(colour = as.factor(Qualitative)), lwd=input$pointsizeeq) +
+          scale_colour_discrete("Qualitative") +
+          theme_light() +
+          theme(axis.text.x = element_text(size=15)) +
+          theme(axis.text.y = element_text(size=15)) +
+          theme(axis.title.x = element_text(size=15)) +
+          theme(axis.title.y = element_text(size=15, angle=90)) +
+          theme(plot.title=element_text(size=20)) +
+          theme(legend.title=element_text(size=15)) +
+          theme(legend.text=element_text(size=15)) +
+          scale_x_continuous(paste(x.axis), label=comma) +
+          scale_y_continuous(paste(input$yaxistype))
+          
+          
+          Depth.time.series <- qplot(Interval, SMA(Selected, input$smoothingeq), xlab = input$xaxistypeeq, geom="line", data = spectra.timeseries.table) +
+          geom_point(aes(colour = Depth), lwd=input$pointsizeeq) +
+          scale_colour_gradientn("Depth", colours=rainbow(length(spectra.line.table$Depth))) +
+          theme_light() +
+          theme(axis.text.x = element_text(size=15)) +
+          theme(axis.text.y = element_text(size=15)) +
+          theme(axis.title.x = element_text(size=15)) +
+          theme(axis.title.y = element_text(size=15, angle=90)) +
+          theme(plot.title=element_text(size=20)) +
+          theme(legend.title=element_text(size=15)) +
+          theme(legend.text=element_text(size=15)) +
+          scale_x_continuous(paste(x.axis), label=comma) +
+          scale_y_continuous(paste(input$yaxistype))
+          
+          
+          
+          if (input$timecoloureq == "Black") {
+              black.time.series
+          } else if (input$timecoloureq == "Smooth") {
+              smooth.time.series
+          } else if (input$timecoloureq == "Selected") {
+              ramp.time.series
+          } else if (input$timecoloureq == "Cluster") {
+              cluster.time.series
+          } else if (input$timecoloureq == "Climate") {
+              climate.time.series.line
+          } else if (input$timecoloureq == "QualitativePoint") {
+              qualitative.time.series.point
+          } else if (input$timecoloureq == "QualitativeLine") {
+              qualitative.time.series.line
+          } else if (input$timecoloureq == "Depth") {
+              Depth.time.series
+          } else if (input$timecoloureq == "Area") {
+              area.time.series
+          }
+          
+          
+          
+          
+      })
+      
+      
+      observeEvent(input$timeserieseq1, {
+          
+      })
+      
+      output$timeserieseqplot1 <- renderPlot({
+          input$timeserieseq1
+          isolate(print(plotInput6a()))
+          
+      })
+      
+
+      
+      output$downloadPlot6a <- downloadHandler(
+      
+      
+      filename = function() { paste(input$projectname, "_", input$yaxistype, '.tiff', sep='') },
+      content = function(file) {
+          ggsave(file,plotInput6a(), device="tiff", dpi=300, width=12, height=7)
+      }
+      )
+      
+      
+      
+      plotInput6b <- reactive({
+          spectra.line.table <- ageData()
+          data.transformation <- dataTransform()
+          
+          
+          x.axis <- if (input$xaxistypeeq=="Depth") {
+              paste("Depth (", input$lengthuniteq, ")", sep="", collapse="")
+          } else if (input$xaxistypeeq=="Age" && input$timetypeeq=="BP"){
+              paste("cal year BP")
+          } else if (input$xaxistypeeq=="Age" && input$timetypeeq=="BC") {
+              paste("cal year BC")
+          } else if (input$axistype=="Age" && input$timetypeeq=="AD") {
+              paste("cal year AD")
+          } else if (input$axistype=="Age" && input$timetypeeq=="BC/AD") {
+              paste("cal year BC/AD")
+          }
+          
+          
+          spectra.line.table.norm <- data.frame(spectra.line.table, null)
+          colnames(spectra.line.table.norm) <- c(names(spectra.line.table), "None")
+          spectra.line.table.norm
+          
+          #interval <- unique.spec*as.numeric(input$intervalmm)+as.numeric(input$startmmeq)
+          
+          #spectra.timeseries.table <- data.frame(interval, spectra.line.table[c(input$elementtrend)]/spectra.line.table.norm[c(input$elementnorm)], spectra.line.table$Cluster, spectra.line.table$Qualitative, spectra.line.table$Depth)
+          #colnames(spectra.timeseries.table) <- c("Interval", "Selected", "Cluster", "Qualitative", "Depth")
+          
+          spectra.timeseries.table <- data.frame(spectra.line.table[c(input$xaxistypeeq)], data.transformation, spectra.line.table$Cluster, spectra.line.table$Qualitative, spectra.line.table$Depth, spectra.line.table$Climate)
+          colnames(spectra.timeseries.table) <- c("Interval", "Selected", "Cluster", "Qualitative", "Depth", "Climate")
+          
+          
+          
+          
+          
+          
+          
+          
+          
+          
+          
+          
+          
+          
+          
+          
+          black.time.series <- qplot(Interval, SMA(Selected, input$smoothingeq), input$xaxistypeeq, geom="line", data = spectra.timeseries.table) +
+          geom_line(colour = "black", lwd=input$linesizeeq) +
+          theme_light() +
+          theme(axis.text.x = element_text(size=15)) +
+          theme(axis.text.y = element_text(size=15)) +
+          theme(axis.title.x = element_text(size=15)) +
+          theme(axis.title.y = element_text(size=15, angle=90)) +
+          theme(plot.title=element_text(size=20)) +
+          theme(legend.title=element_text(size=15)) +
+          theme(legend.text=element_text(size=15)) +
+          scale_x_continuous(paste(x.axis), label=comma) +
+          scale_y_continuous(paste(input$yaxistype))
+          
+          smooth.time.series <- qplot(spectra.timeseries.table$Interval, SMA(spectra.timeseries.table$Selected, input$smoothingeq), xlab = input$xaxistypeeq, geom="point") +
+          theme_light() +
+          stat_smooth() +
+          theme(axis.text.x = element_text(size=15)) +
+          theme(axis.text.y = element_text(size=15)) +
+          theme(axis.title.x = element_text(size=15)) +
+          theme(axis.title.y = element_text(size=15, angle=90)) +
+          theme(plot.title=element_text(size=20)) +
+          theme(legend.title=element_text(size=15)) +
+          theme(legend.text=element_text(size=15)) +
+          scale_x_continuous(paste(x.axis), label=comma) +
+          scale_y_continuous(paste(input$yaxistype))
+          
+          
+          ramp.time.series <- qplot(Interval, SMA(Selected, input$smoothingeq), xlab = input$xaxistypeeq, geom="line", data = spectra.timeseries.table) +
+          geom_line(aes(colour = Selected), lwd=input$linesizeeq) +
+          theme_light() +
+          scale_colour_gradientn(colours=rainbow(7)) +
+          theme(axis.text.x = element_text(size=15)) +
+          theme(axis.text.y = element_text(size=15)) +
+          theme(axis.title.x = element_text(size=15)) +
+          theme(axis.title.y = element_text(size=15, angle=90)) +
+          theme(plot.title=element_text(size=20)) +
+          theme(legend.title=element_text(size=15)) +
+          theme(legend.text=element_text(size=15)) +
+          scale_x_continuous(paste(x.axis), label=comma) +
+          scale_y_continuous(paste(input$yaxistype))
+          
+          
+          area.time.series <- ggplot(spectra.timeseries.table, aes(Interval)) +
+          theme_classic() +
+          geom_area(aes(y=Selected, colour="grey60", fill="grey60"), alpha=0.6) +
+          scale_x_continuous(input$xaxistypeeq) +
+          theme(axis.text.x = element_text(size=15)) +
+          theme(axis.text.y = element_text(size=15)) +
+          theme(axis.title.x = element_text(size=15)) +
+          theme(axis.title.y = element_text(size=15, angle=90)) +
+          theme(plot.title=element_text(size=20)) +
+          theme(legend.title=element_text(size=15)) +
+          theme(legend.text=element_text(size=15)) +
+          scale_x_continuous(paste(x.axis), label=comma) +
+          scale_y_continuous(paste(input$yaxistype))
+          
+          
+          
+          cluster.time.series <- qplot(Interval, SMA(Selected, input$smoothingeq), xlab = input$xaxistypeeq, geom="line", data = spectra.timeseries.table) +
+          geom_point(aes(colour = as.factor(Cluster)), size=input$pointsizeeq) +
+          scale_colour_discrete("Cluster") +
+          theme_light() +
+          theme(axis.text.x = element_text(size=15)) +
+          theme(axis.text.y = element_text(size=15)) +
+          theme(axis.title.x = element_text(size=15)) +
+          theme(axis.title.y = element_text(size=15, angle=90)) +
+          theme(plot.title=element_text(size=20)) +
+          theme(legend.title=element_text(size=15)) +
+          theme(legend.text=element_text(size=15)) +
+          scale_x_continuous(paste(x.axis), label=comma) +
+          scale_y_continuous(paste(input$yaxistype))
+          
+          climate.time.series.line <- qplot(Interval, SMA(Selected, input$smoothingeq), xlab = input$xaxistypeeq, geom="line", data = spectra.timeseries.table, colour = as.factor(Climate)) +
+          scale_colour_discrete("Climatic Period") +
+          theme_light() +
+          theme(axis.text.x = element_text(size=15)) +
+          theme(axis.text.y = element_text(size=15)) +
+          theme(axis.title.x = element_text(size=15)) +
+          theme(axis.title.y = element_text(size=15, angle=90)) +
+          theme(plot.title=element_text(size=20)) +
+          theme(legend.title=element_text(size=15)) +
+          theme(legend.text=element_text(size=15)) +
+          scale_x_continuous(paste(x.axis), label=comma) +
+          scale_y_continuous(paste(input$yaxistype))
+          
+          
+          qualitative.time.series.line <- qplot(Interval, SMA(Selected, input$smoothingeq), xlab = input$xaxistypeeq, geom="line", data = spectra.timeseries.table, colour = as.factor(Qualitative)) +
+          scale_colour_discrete("Qualitative") +
+          theme_light() +
+          theme(axis.text.x = element_text(size=15)) +
+          theme(axis.text.y = element_text(size=15)) +
+          theme(axis.title.x = element_text(size=15)) +
+          theme(axis.title.y = element_text(size=15, angle=90)) +
+          theme(plot.title=element_text(size=20)) +
+          theme(legend.title=element_text(size=15)) +
+          theme(legend.text=element_text(size=15)) +
+          scale_x_continuous(paste(x.axis), label=comma) +
+          scale_y_continuous(paste(input$yaxistype))
+          
+          qualitative.time.series.point <- qplot(Interval, SMA(Selected, input$smoothingeq), xlab = input$xaxistypeeq, geom="line", data = spectra.timeseries.table) +
+          geom_point(aes(colour = as.factor(Qualitative)), lwd=input$pointsizeeq) +
+          scale_colour_discrete("Qualitative") +
+          theme_light() +
+          theme(axis.text.x = element_text(size=15)) +
+          theme(axis.text.y = element_text(size=15)) +
+          theme(axis.title.x = element_text(size=15)) +
+          theme(axis.title.y = element_text(size=15, angle=90)) +
+          theme(plot.title=element_text(size=20)) +
+          theme(legend.title=element_text(size=15)) +
+          theme(legend.text=element_text(size=15)) +
+          scale_x_continuous(paste(x.axis), label=comma) +
+          scale_y_continuous(paste(input$yaxistype))
+          
+          
+          Depth.time.series <- qplot(Interval, SMA(Selected, input$smoothingeq), xlab = input$xaxistypeeq, geom="line", data = spectra.timeseries.table) +
+          geom_point(aes(colour = Depth), lwd=input$pointsizeeq) +
+          scale_colour_gradientn("Depth", colours=rainbow(length(spectra.line.table$Depth))) +
+          theme_light() +
+          theme(axis.text.x = element_text(size=15)) +
+          theme(axis.text.y = element_text(size=15)) +
+          theme(axis.title.x = element_text(size=15)) +
+          theme(axis.title.y = element_text(size=15, angle=90)) +
+          theme(plot.title=element_text(size=20)) +
+          theme(legend.title=element_text(size=15)) +
+          theme(legend.text=element_text(size=15)) +
+          scale_x_continuous(paste(x.axis), label=comma) +
+          scale_y_continuous(paste(input$yaxistype))
+          
+          
+          if (input$timecoloureq == "Black") {
+              black.time.series
+          } else if (input$timecoloureq == "Smooth") {
+              smooth.time.series
+          } else if (input$timecoloureq == "Selected") {
+              ramp.time.series
+          } else if (input$timecoloureq == "Cluster") {
+              cluster.time.series
+          } else if (input$timecoloureq == "Climate") {
+              climate.time.series.line
+          } else if (input$timecoloureq == "QualitativePoint") {
+              qualitative.time.series.point
+          } else if (input$timecoloureq == "QualitativeLine") {
+              qualitative.time.series.line
+          } else if (input$timecoloureq == "Depth") {
+              Depth.time.series
+          } else if (input$timecoloureq == "Area") {
+              area.time.series
+          }
+          
+          
+          
+      })
+      
+      
+      observeEvent(input$timeserieseq2, {
+          
+          
+      })
+      output$timeserieseqplot2 <- renderPlot({
+          input$timeserieseq2
+          isolate(print(plotInput6b()))
+          
+      })
+      
+      
+      output$downloadPlot6b <- downloadHandler(
+      
+      
+      
+      filename = function() { paste(input$projectname, "_", input$yaxistype, '.tiff', sep='') },
+      content = function(file) {
+          ggsave(file,plotInput6b(), device="tiff", dpi=300, width=12, height=7)
+      }
+      )
+      
+      
+      
+      plotInput6c <- reactive({
+          
+          spectra.line.table <- ageData()
+          data.transformation <- dataTransform()
+          
+          
+          x.axis <- if (input$xaxistypeeq=="Depth") {
+              paste("Depth (", input$lengthuniteq, ")", sep="", collapse="")
+          } else if (input$xaxistypeeq=="Age" && input$timetypeeq=="BP"){
+              paste("cal year BP")
+          } else if (input$xaxistypeeq=="Age" && input$timetypeeq=="BC") {
+              paste("cal year BC")
+          } else if (input$axistype=="Age" && input$timetypeeq=="AD") {
+              paste("cal year AD")
+          } else if (input$axistype=="Age" && input$timetypeeq=="BC/AD") {
+              paste("cal year BC/AD")
+          }
+          
+          
+          spectra.line.table.norm <- data.frame(spectra.line.table, null)
+          colnames(spectra.line.table.norm) <- c(names(spectra.line.table), "None")
+          spectra.line.table.norm
+          
+          #interval <- unique.spec*as.numeric(input$intervalmm)+as.numeric(input$startmmeq)
+          
+          #spectra.timeseries.table <- data.frame(interval, spectra.line.table[c(input$elementtrend)]/spectra.line.table.norm[c(input$elementnorm)], spectra.line.table$Cluster, spectra.line.table$Qualitative, spectra.line.table$Depth)
+          #colnames(spectra.timeseries.table) <- c("Interval", "Selected", "Cluster", "Qualitative", "Depth")
+          
+          spectra.timeseries.table <- data.frame(spectra.line.table[c(input$xaxistypeeq)], data.transformation, spectra.line.table$Cluster, spectra.line.table$Qualitative, spectra.line.table$Depth, spectra.line.table$Climate)
+          colnames(spectra.timeseries.table) <- c("Interval", "Selected", "Cluster", "Qualitative", "Depth", "Climate")
+          
+          
+          
+          
+          
+          
+          
+          
+          
+          
+          
+          
+          
+          
+          
+          
+          
+          black.time.series <- qplot(Interval, SMA(Selected, input$smoothingeq), input$xaxistypeeq, geom="line", data = spectra.timeseries.table) +
+          geom_line(colour = "black", lwd=input$linesizeeq) +
+          theme_light() +
+          theme(axis.text.x = element_text(size=15)) +
+          theme(axis.text.y = element_text(size=15)) +
+          theme(axis.title.x = element_text(size=15)) +
+          theme(axis.title.y = element_text(size=15, angle=90)) +
+          theme(plot.title=element_text(size=20)) +
+          theme(legend.title=element_text(size=15)) +
+          theme(legend.text=element_text(size=15)) +
+          scale_x_continuous(paste(x.axis), label=comma) +
+          scale_y_continuous(paste(input$yaxistype))
+          
+          smooth.time.series <- qplot(spectra.timeseries.table$Interval, SMA(spectra.timeseries.table$Selected, input$smoothingeq), xlab = input$xaxistypeeq, geom="point") +
+          theme_light() +
+          stat_smooth() +
+          theme(axis.text.x = element_text(size=15)) +
+          theme(axis.text.y = element_text(size=15)) +
+          theme(axis.title.x = element_text(size=15)) +
+          theme(axis.title.y = element_text(size=15, angle=90)) +
+          theme(plot.title=element_text(size=20)) +
+          theme(legend.title=element_text(size=15)) +
+          theme(legend.text=element_text(size=15)) +
+          scale_x_continuous(paste(x.axis), label=comma) +
+          scale_y_continuous(paste(input$yaxistype))
+          
+          
+          ramp.time.series <- qplot(Interval, SMA(Selected, input$smoothingeq), xlab = input$xaxistypeeq, geom="line", data = spectra.timeseries.table) +
+          geom_line(aes(colour = Selected), lwd=input$linesizeeq) +
+          theme_light() +
+          scale_colour_gradientn(colours=rainbow(7)) +
+          theme(axis.text.x = element_text(size=15)) +
+          theme(axis.text.y = element_text(size=15)) +
+          theme(axis.title.x = element_text(size=15)) +
+          theme(axis.title.y = element_text(size=15, angle=90)) +
+          theme(plot.title=element_text(size=20)) +
+          theme(legend.title=element_text(size=15)) +
+          theme(legend.text=element_text(size=15)) +
+          scale_x_continuous(paste(x.axis), label=comma) +
+          scale_y_continuous(paste(input$yaxistype))
+          
+          
+          area.time.series <- ggplot(spectra.timeseries.table, aes(Interval)) +
+          theme_classic() +
+          geom_area(aes(y=Selected, colour="grey60", fill="grey60"), alpha=0.6) +
+          scale_x_continuous(input$xaxistypeeq) +
+          theme(axis.text.x = element_text(size=15)) +
+          theme(axis.text.y = element_text(size=15)) +
+          theme(axis.title.x = element_text(size=15)) +
+          theme(axis.title.y = element_text(size=15, angle=90)) +
+          theme(plot.title=element_text(size=20)) +
+          theme(legend.title=element_text(size=15)) +
+          theme(legend.text=element_text(size=15)) +
+          scale_x_continuous(paste(x.axis), label=comma) +
+          scale_y_continuous(paste(input$yaxistype))
+          
+          
+          
+          cluster.time.series <- qplot(Interval, SMA(Selected, input$smoothingeq), xlab = input$xaxistypeeq, geom="line", data = spectra.timeseries.table) +
+          geom_point(aes(colour = as.factor(Cluster)), size=input$pointsizeeq) +
+          scale_colour_discrete("Cluster") +
+          theme_light() +
+          theme(axis.text.x = element_text(size=15)) +
+          theme(axis.text.y = element_text(size=15)) +
+          theme(axis.title.x = element_text(size=15)) +
+          theme(axis.title.y = element_text(size=15, angle=90)) +
+          theme(plot.title=element_text(size=20)) +
+          theme(legend.title=element_text(size=15)) +
+          theme(legend.text=element_text(size=15)) +
+          scale_x_continuous(paste(x.axis), label=comma) +
+          scale_y_continuous(paste(input$yaxistype))
+          
+          climate.time.series.line <- qplot(Interval, SMA(Selected, input$smoothingeq), xlab = input$xaxistypeeq, geom="line", data = spectra.timeseries.table, colour = as.factor(Climate)) +
+          scale_colour_discrete("Climatic Period") +
+          theme_light() +
+          theme(axis.text.x = element_text(size=15)) +
+          theme(axis.text.y = element_text(size=15)) +
+          theme(axis.title.x = element_text(size=15)) +
+          theme(axis.title.y = element_text(size=15, angle=90)) +
+          theme(plot.title=element_text(size=20)) +
+          theme(legend.title=element_text(size=15)) +
+          theme(legend.text=element_text(size=15)) +
+          scale_x_continuous(paste(x.axis), label=comma) +
+          scale_y_continuous(paste(input$yaxistype))
+          
+          
+          qualitative.time.series.line <- qplot(Interval, SMA(Selected, input$smoothingeq), xlab = input$xaxistypeeq, geom="line", data = spectra.timeseries.table, colour = as.factor(Qualitative)) +
+          scale_colour_discrete("Qualitative") +
+          theme_light() +
+          theme(axis.text.x = element_text(size=15)) +
+          theme(axis.text.y = element_text(size=15)) +
+          theme(axis.title.x = element_text(size=15)) +
+          theme(axis.title.y = element_text(size=15, angle=90)) +
+          theme(plot.title=element_text(size=20)) +
+          theme(legend.title=element_text(size=15)) +
+          theme(legend.text=element_text(size=15)) +
+          scale_x_continuous(paste(x.axis), label=comma) +
+          scale_y_continuous(paste(input$yaxistype))
+          
+          qualitative.time.series.point <- qplot(Interval, SMA(Selected, input$smoothingeq), xlab = input$xaxistypeeq, geom="line", data = spectra.timeseries.table) +
+          geom_point(aes(colour = as.factor(Qualitative)), lwd=input$pointsizeeq) +
+          scale_colour_discrete("Qualitative") +
+          theme_light() +
+          theme(axis.text.x = element_text(size=15)) +
+          theme(axis.text.y = element_text(size=15)) +
+          theme(axis.title.x = element_text(size=15)) +
+          theme(axis.title.y = element_text(size=15, angle=90)) +
+          theme(plot.title=element_text(size=20)) +
+          theme(legend.title=element_text(size=15)) +
+          theme(legend.text=element_text(size=15)) +
+          scale_x_continuous(paste(x.axis), label=comma) +
+          scale_y_continuous(paste(input$yaxistype))
+          
+          
+          Depth.time.series <- qplot(Interval, SMA(Selected, input$smoothingeq), xlab = input$xaxistypeeq, geom="line", data = spectra.timeseries.table) +
+          geom_point(aes(colour = Depth), lwd=input$pointsizeeq) +
+          scale_colour_gradientn("Depth", colours=rainbow(length(spectra.line.table$Depth))) +
+          theme_light() +
+          theme(axis.text.x = element_text(size=15)) +
+          theme(axis.text.y = element_text(size=15)) +
+          theme(axis.title.x = element_text(size=15)) +
+          theme(axis.title.y = element_text(size=15, angle=90)) +
+          theme(plot.title=element_text(size=20)) +
+          theme(legend.title=element_text(size=15)) +
+          theme(legend.text=element_text(size=15)) +
+          scale_x_continuous(paste(x.axis), label=comma) +
+          scale_y_continuous(paste(input$yaxistype))
+          
+          
+          if (input$timecoloureq == "Black") {
+              black.time.series
+          } else if (input$timecoloureq == "Smooth") {
+              smooth.time.series
+          } else if (input$timecoloureq == "Selected") {
+              ramp.time.series
+          } else if (input$timecoloureq == "Cluster") {
+              cluster.time.series
+          } else if (input$timecoloureq == "Climate") {
+              climate.time.series.line
+          } else if (input$timecoloureq == "QualitativePoint") {
+              qualitative.time.series.point
+          } else if (input$timecoloureq == "QualitativeLine") {
+              qualitative.time.series.line
+          } else if (input$timecoloureq == "Depth") {
+              Depth.time.series
+          } else if (input$timecoloureq == "Area") {
+              area.time.series
+          }
+          
+          
+          
+          
+      })
+      
+      observeEvent(input$timeserieseq3, {
+      })
+      
+      output$timeserieseqplot3 <- renderPlot({
+          input$timeserieseq3
+          
+          isolate(print(plotInput6c()))
+          
+          
+      })
+      
+      output$downloadPlot6c <- downloadHandler(
+      
+      
+      filename = function() { paste(input$projectname, "_", input$yaxistype, '.tiff', sep='') },
+      content = function(file) {
+          ggsave(file,plotInput6c(), device="tiff", dpi=300, width=12, height=7)
+      }
+      )
+      
+      
+      plotInput6d <- reactive({
+          
+          spectra.line.table <- ageData()
+          data.transformation <- dataTransform()
+          
+          
+          x.axis <- if (input$xaxistypeeq=="Depth") {
+              paste("Depth (", input$lengthuniteq, ")", sep="", collapse="")
+          } else if (input$xaxistypeeq=="Age" && input$timetypeeq=="BP"){
+              paste("cal year BP")
+          } else if (input$xaxistypeeq=="Age" && input$timetypeeq=="BC") {
+              paste("cal year BC")
+          } else if (input$axistype=="Age" && input$timetypeeq=="AD") {
+              paste("cal year AD")
+          } else if (input$axistype=="Age" && input$timetypeeq=="BC/AD") {
+              paste("cal year BC/AD")
+          }
+          
+          
+          spectra.line.table.norm <- data.frame(spectra.line.table, null)
+          colnames(spectra.line.table.norm) <- c(names(spectra.line.table), "None")
+          spectra.line.table.norm
+          
+          #interval <- unique.spec*as.numeric(input$intervalmm)+as.numeric(input$startmmeq)
+          
+          #spectra.timeseries.table <- data.frame(interval, spectra.line.table[c(input$elementtrend)]/spectra.line.table.norm[c(input$elementnorm)], spectra.line.table$Cluster, spectra.line.table$Qualitative, spectra.line.table$Depth)
+          #colnames(spectra.timeseries.table) <- c("Interval", "Selected", "Cluster", "Qualitative", "Depth")
+          
+          spectra.timeseries.table <- data.frame(spectra.line.table[c(input$xaxistypeeq)], data.transformation, spectra.line.table$Cluster, spectra.line.table$Qualitative, spectra.line.table$Depth, spectra.line.table$Climate)
+          colnames(spectra.timeseries.table) <- c("Interval", "Selected", "Cluster", "Qualitative", "Depth", "Climate")
+          
+          
+          
+          
+          
+          
+          
+          
+          
+          
+          
+          
+          
+          
+          
+          
+          black.time.series <- qplot(Interval, SMA(Selected, input$smoothingeq), input$xaxistypeeq, geom="line", data = spectra.timeseries.table) +
+          geom_line(colour = "black", lwd=input$linesizeeq) +
+          theme_light() +
+          theme(axis.text.x = element_text(size=15)) +
+          theme(axis.text.y = element_text(size=15)) +
+          theme(axis.title.x = element_text(size=15)) +
+          theme(axis.title.y = element_text(size=15, angle=90)) +
+          theme(plot.title=element_text(size=20)) +
+          theme(legend.title=element_text(size=15)) +
+          theme(legend.text=element_text(size=15)) +
+          scale_x_continuous(paste(x.axis), label=comma) +
+          scale_y_continuous(paste(input$yaxistype))
+          
+          smooth.time.series <- qplot(spectra.timeseries.table$Interval, SMA(spectra.timeseries.table$Selected, input$smoothingeq), xlab = input$xaxistypeeq, geom="point") +
+          theme_light() +
+          stat_smooth() +
+          theme(axis.text.x = element_text(size=15)) +
+          theme(axis.text.y = element_text(size=15)) +
+          theme(axis.title.x = element_text(size=15)) +
+          theme(axis.title.y = element_text(size=15, angle=90)) +
+          theme(plot.title=element_text(size=20)) +
+          theme(legend.title=element_text(size=15)) +
+          theme(legend.text=element_text(size=15)) +
+          scale_x_continuous(paste(x.axis), label=comma) +
+          scale_y_continuous(paste(input$yaxistype))
+          
+          
+          ramp.time.series <- qplot(Interval, SMA(Selected, input$smoothingeq), xlab = input$xaxistypeeq, geom="line", data = spectra.timeseries.table) +
+          geom_line(aes(colour = Selected), lwd=input$linesizeeq) +
+          theme_light() +
+          scale_colour_gradientn(colours=rainbow(7)) +
+          theme(axis.text.x = element_text(size=15)) +
+          theme(axis.text.y = element_text(size=15)) +
+          theme(axis.title.x = element_text(size=15)) +
+          theme(axis.title.y = element_text(size=15, angle=90)) +
+          theme(plot.title=element_text(size=20)) +
+          theme(legend.title=element_text(size=15)) +
+          theme(legend.text=element_text(size=15)) +
+          scale_x_continuous(paste(x.axis), label=comma) +
+          scale_y_continuous(paste(input$yaxistype))
+          
+          
+          area.time.series <- ggplot(spectra.timeseries.table, aes(Interval)) +
+          theme_classic() +
+          geom_area(aes(y=Selected, colour="grey60", fill="grey60"), alpha=0.6) +
+          scale_x_continuous(input$xaxistypeeq) +
+          theme(axis.text.x = element_text(size=15)) +
+          theme(axis.text.y = element_text(size=15)) +
+          theme(axis.title.x = element_text(size=15)) +
+          theme(axis.title.y = element_text(size=15, angle=90)) +
+          theme(plot.title=element_text(size=20)) +
+          theme(legend.title=element_text(size=15)) +
+          theme(legend.text=element_text(size=15)) +
+          scale_x_continuous(paste(x.axis), label=comma) +
+          scale_y_continuous(paste(input$yaxistype))
+          
+          
+          
+          cluster.time.series <- qplot(Interval, SMA(Selected, input$smoothingeq), xlab = input$xaxistypeeq, geom="line", data = spectra.timeseries.table) +
+          geom_point(aes(colour = as.factor(Cluster)), size=input$pointsizeeq) +
+          scale_colour_discrete("Cluster") +
+          theme_light() +
+          theme(axis.text.x = element_text(size=15)) +
+          theme(axis.text.y = element_text(size=15)) +
+          theme(axis.title.x = element_text(size=15)) +
+          theme(axis.title.y = element_text(size=15, angle=90)) +
+          theme(plot.title=element_text(size=20)) +
+          theme(legend.title=element_text(size=15)) +
+          theme(legend.text=element_text(size=15)) +
+          scale_x_continuous(paste(x.axis), label=comma) +
+          scale_y_continuous(paste(input$yaxistype))
+          
+          climate.time.series.line <- qplot(Interval, SMA(Selected, input$smoothingeq), xlab = input$xaxistypeeq, geom="line", data = spectra.timeseries.table, colour = as.factor(Climate)) +
+          scale_colour_discrete("Climatic Period") +
+          theme_light() +
+          theme(axis.text.x = element_text(size=15)) +
+          theme(axis.text.y = element_text(size=15)) +
+          theme(axis.title.x = element_text(size=15)) +
+          theme(axis.title.y = element_text(size=15, angle=90)) +
+          theme(plot.title=element_text(size=20)) +
+          theme(legend.title=element_text(size=15)) +
+          theme(legend.text=element_text(size=15)) +
+          scale_x_continuous(paste(x.axis), label=comma) +
+          scale_y_continuous(paste(input$yaxistype))
+          
+          
+          qualitative.time.series.line <- qplot(Interval, SMA(Selected, input$smoothingeq), xlab = input$xaxistypeeq, geom="line", data = spectra.timeseries.table, colour = as.factor(Qualitative)) +
+          scale_colour_discrete("Qualitative") +
+          theme_light() +
+          theme(axis.text.x = element_text(size=15)) +
+          theme(axis.text.y = element_text(size=15)) +
+          theme(axis.title.x = element_text(size=15)) +
+          theme(axis.title.y = element_text(size=15, angle=90)) +
+          theme(plot.title=element_text(size=20)) +
+          theme(legend.title=element_text(size=15)) +
+          theme(legend.text=element_text(size=15)) +
+          scale_x_continuous(paste(x.axis), label=comma) +
+          scale_y_continuous(paste(input$yaxistype))
+          
+          qualitative.time.series.point <- qplot(Interval, SMA(Selected, input$smoothingeq), xlab = input$xaxistypeeq, geom="line", data = spectra.timeseries.table) +
+          geom_point(aes(colour = as.factor(Qualitative)), lwd=input$pointsizeeq) +
+          scale_colour_discrete("Qualitative") +
+          theme_light() +
+          theme(axis.text.x = element_text(size=15)) +
+          theme(axis.text.y = element_text(size=15)) +
+          theme(axis.title.x = element_text(size=15)) +
+          theme(axis.title.y = element_text(size=15, angle=90)) +
+          theme(plot.title=element_text(size=20)) +
+          theme(legend.title=element_text(size=15)) +
+          theme(legend.text=element_text(size=15)) +
+          scale_x_continuous(paste(x.axis), label=comma) +
+          scale_y_continuous(paste(input$yaxistype))
+          
+          
+          Depth.time.series <- qplot(Interval, SMA(Selected, input$smoothingeq), xlab = input$xaxistypeeq, geom="line", data = spectra.timeseries.table) +
+          geom_point(aes(colour = Depth), lwd=input$pointsizeeq) +
+          scale_colour_gradientn("Depth", colours=rainbow(length(spectra.line.table$Depth))) +
+          theme_light() +
+          theme(axis.text.x = element_text(size=15)) +
+          theme(axis.text.y = element_text(size=15)) +
+          theme(axis.title.x = element_text(size=15)) +
+          theme(axis.title.y = element_text(size=15, angle=90)) +
+          theme(plot.title=element_text(size=20)) +
+          theme(legend.title=element_text(size=15)) +
+          theme(legend.text=element_text(size=15)) +
+          scale_x_continuous(paste(x.axis), label=comma) +
+          scale_y_continuous(paste(input$yaxistype))
+          
+          
+          if (input$timecoloureq == "Black") {
+              black.time.series
+          } else if (input$timecoloureq == "Smooth") {
+              smooth.time.series
+          } else if (input$timecoloureq == "Selected") {
+              ramp.time.series
+          } else if (input$timecoloureq == "Cluster") {
+              cluster.time.series
+          } else if (input$timecoloureq == "Climate") {
+              climate.time.series.line
+          } else if (input$timecoloureq == "QualitativePoint") {
+              qualitative.time.series.point
+          } else if (input$timecoloureq == "QualitativeLine") {
+              qualitative.time.series.line
+          } else if (input$timecoloureq == "Depth") {
+              Depth.time.series
+          } else if (input$timecoloureq == "Area") {
+              area.time.series
+          }
+          
+          
+          
+          
+      })
+      
+      observeEvent(input$timeserieseq4, {
+          
+      })
+      
+      
+      
+      output$timeserieseqplot4 <- renderPlot({
+          input$timeserieseq4
+          isolate(print(plotInput6d()))
+          
+      })
+      
+      output$downloadPlot6d <- downloadHandler(
+      
+      
+      
+      filename = function() { paste(input$projectname, "_", input$yaxistype, '.tiff', sep='') },
+      content = function(file) {
+          ggsave(file,plotInput6d(), device="tiff", dpi=300, width=12, height=7)
+      }
+      )
+      
+      
+      
+      
+      
+      plotInput6e <- reactive({
+          
+          spectra.line.table <- ageData()
+          data.transformation <- dataTransform()
+          
+          
+          x.axis <- if (input$xaxistypeeq=="Depth") {
+              paste("Depth (", input$lengthuniteq, ")", sep="", collapse="")
+          } else if (input$xaxistypeeq=="Age" && input$timetypeeq=="BP"){
+              paste("cal year BP")
+          } else if (input$xaxistypeeq=="Age" && input$timetypeeq=="BC") {
+              paste("cal year BC")
+          } else if (input$axistype=="Age" && input$timetypeeq=="AD") {
+              paste("cal year AD")
+          } else if (input$axistype=="Age" && input$timetypeeq=="BC/AD") {
+              paste("cal year BC/AD")
+          }
+          
+          
+          spectra.line.table.norm <- data.frame(spectra.line.table, null)
+          colnames(spectra.line.table.norm) <- c(names(spectra.line.table), "None")
+          spectra.line.table.norm
+          
+          #interval <- unique.spec*as.numeric(input$intervalmm)+as.numeric(input$startmmeq)
+          
+          #spectra.timeseries.table <- data.frame(interval, spectra.line.table[c(input$elementtrend)]/spectra.line.table.norm[c(input$elementnorm)], spectra.line.table$Cluster, spectra.line.table$Qualitative, spectra.line.table$Depth)
+          #colnames(spectra.timeseries.table) <- c("Interval", "Selected", "Cluster", "Qualitative", "Depth")
+          
+          spectra.timeseries.table <- data.frame(spectra.line.table[c(input$xaxistypeeq)], data.transformation, spectra.line.table$Cluster, spectra.line.table$Qualitative, spectra.line.table$Depth, spectra.line.table$Climate)
+          colnames(spectra.timeseries.table) <- c("Interval", "Selected", "Cluster", "Qualitative", "Depth", "Climate")
+          
+          
+          
+          
+          
+          
+          
+          
+          
+          
+          
+          
+          
+          
+          
+          
+          black.time.series <- qplot(Interval, SMA(Selected, input$smoothingeq), input$xaxistypeeq, geom="line", data = spectra.timeseries.table) +
+          geom_line(colour = "black", lwd=input$linesizeeq) +
+          theme_light() +
+          theme(axis.text.x = element_text(size=15)) +
+          theme(axis.text.y = element_text(size=15)) +
+          theme(axis.title.x = element_text(size=15)) +
+          theme(axis.title.y = element_text(size=15, angle=90)) +
+          theme(plot.title=element_text(size=20)) +
+          theme(legend.title=element_text(size=15)) +
+          theme(legend.text=element_text(size=15)) +
+          scale_x_continuous(paste(x.axis), label=comma) +
+          scale_y_continuous(paste(input$yaxistype))
+          
+          smooth.time.series <- qplot(spectra.timeseries.table$Interval, SMA(spectra.timeseries.table$Selected, input$smoothingeq), xlab = input$xaxistypeeq, geom="point") +
+          theme_light() +
+          stat_smooth() +
+          theme(axis.text.x = element_text(size=15)) +
+          theme(axis.text.y = element_text(size=15)) +
+          theme(axis.title.x = element_text(size=15)) +
+          theme(axis.title.y = element_text(size=15, angle=90)) +
+          theme(plot.title=element_text(size=20)) +
+          theme(legend.title=element_text(size=15)) +
+          theme(legend.text=element_text(size=15)) +
+          scale_x_continuous(paste(x.axis), label=comma) +
+          scale_y_continuous(paste(input$yaxistype))
+          
+          
+          ramp.time.series <- qplot(Interval, SMA(Selected, input$smoothingeq), xlab = input$xaxistypeeq, geom="line", data = spectra.timeseries.table) +
+          geom_line(aes(colour = Selected), lwd=input$linesizeeq) +
+          theme_light() +
+          scale_colour_gradientn(colours=rainbow(7)) +
+          theme(axis.text.x = element_text(size=15)) +
+          theme(axis.text.y = element_text(size=15)) +
+          theme(axis.title.x = element_text(size=15)) +
+          theme(axis.title.y = element_text(size=15, angle=90)) +
+          theme(plot.title=element_text(size=20)) +
+          theme(legend.title=element_text(size=15)) +
+          theme(legend.text=element_text(size=15)) +
+          scale_x_continuous(paste(x.axis), label=comma) +
+          scale_y_continuous(paste(input$yaxistype))
+          
+          
+          area.time.series <- ggplot(spectra.timeseries.table, aes(Interval)) +
+          theme_classic() +
+          geom_area(aes(y=Selected, colour="grey60", fill="grey60"), alpha=0.6) +
+          scale_x_continuous(input$xaxistypeeq) +
+          theme(axis.text.x = element_text(size=15)) +
+          theme(axis.text.y = element_text(size=15)) +
+          theme(axis.title.x = element_text(size=15)) +
+          theme(axis.title.y = element_text(size=15, angle=90)) +
+          theme(plot.title=element_text(size=20)) +
+          theme(legend.title=element_text(size=15)) +
+          theme(legend.text=element_text(size=15)) +
+          scale_x_continuous(paste(x.axis), label=comma) +
+          scale_y_continuous(paste(input$yaxistype))
+          
+          
+          
+          cluster.time.series <- qplot(Interval, SMA(Selected, input$smoothingeq), xlab = input$xaxistypeeq, geom="line", data = spectra.timeseries.table) +
+          geom_point(aes(colour = as.factor(Cluster)), size=input$pointsizeeq) +
+          scale_colour_discrete("Cluster") +
+          theme_light() +
+          theme(axis.text.x = element_text(size=15)) +
+          theme(axis.text.y = element_text(size=15)) +
+          theme(axis.title.x = element_text(size=15)) +
+          theme(axis.title.y = element_text(size=15, angle=90)) +
+          theme(plot.title=element_text(size=20)) +
+          theme(legend.title=element_text(size=15)) +
+          theme(legend.text=element_text(size=15)) +
+          scale_x_continuous(paste(x.axis), label=comma) +
+          scale_y_continuous(paste(input$yaxistype))
+          
+          climate.time.series.line <- qplot(Interval, SMA(Selected, input$smoothingeq), xlab = input$xaxistypeeq, geom="line", data = spectra.timeseries.table, colour = as.factor(Climate)) +
+          scale_colour_discrete("Climatic Period") +
+          theme_light() +
+          theme(axis.text.x = element_text(size=15)) +
+          theme(axis.text.y = element_text(size=15)) +
+          theme(axis.title.x = element_text(size=15)) +
+          theme(axis.title.y = element_text(size=15, angle=90)) +
+          theme(plot.title=element_text(size=20)) +
+          theme(legend.title=element_text(size=15)) +
+          theme(legend.text=element_text(size=15)) +
+          scale_x_continuous(paste(x.axis), label=comma) +
+          scale_y_continuous(paste(input$yaxistype))
+          
+          
+          qualitative.time.series.line <- qplot(Interval, SMA(Selected, input$smoothingeq), xlab = input$xaxistypeeq, geom="line", data = spectra.timeseries.table, colour = as.factor(Qualitative)) +
+          scale_colour_discrete("Qualitative") +
+          theme_light() +
+          theme(axis.text.x = element_text(size=15)) +
+          theme(axis.text.y = element_text(size=15)) +
+          theme(axis.title.x = element_text(size=15)) +
+          theme(axis.title.y = element_text(size=15, angle=90)) +
+          theme(plot.title=element_text(size=20)) +
+          theme(legend.title=element_text(size=15)) +
+          theme(legend.text=element_text(size=15)) +
+          scale_x_continuous(paste(x.axis), label=comma) +
+          scale_y_continuous(paste(input$yaxistype))
+          
+          qualitative.time.series.point <- qplot(Interval, SMA(Selected, input$smoothingeq), xlab = input$xaxistypeeq, geom="line", data = spectra.timeseries.table) +
+          geom_point(aes(colour = as.factor(Qualitative)), lwd=input$pointsizeeq) +
+          scale_colour_discrete("Qualitative") +
+          theme_light() +
+          theme(axis.text.x = element_text(size=15)) +
+          theme(axis.text.y = element_text(size=15)) +
+          theme(axis.title.x = element_text(size=15)) +
+          theme(axis.title.y = element_text(size=15, angle=90)) +
+          theme(plot.title=element_text(size=20)) +
+          theme(legend.title=element_text(size=15)) +
+          theme(legend.text=element_text(size=15)) +
+          scale_x_continuous(paste(x.axis), label=comma) +
+          scale_y_continuous(paste(input$yaxistype))
+          
+          
+          Depth.time.series <- qplot(Interval, SMA(Selected, input$smoothingeq), xlab = input$xaxistypeeq, geom="line", data = spectra.timeseries.table) +
+          geom_point(aes(colour = Depth), lwd=input$pointsizeeq) +
+          scale_colour_gradientn("Depth", colours=rainbow(length(spectra.line.table$Depth))) +
+          theme_light() +
+          theme(axis.text.x = element_text(size=15)) +
+          theme(axis.text.y = element_text(size=15)) +
+          theme(axis.title.x = element_text(size=15)) +
+          theme(axis.title.y = element_text(size=15, angle=90)) +
+          theme(plot.title=element_text(size=20)) +
+          theme(legend.title=element_text(size=15)) +
+          theme(legend.text=element_text(size=15)) +
+          scale_x_continuous(paste(x.axis), label=comma) +
+          scale_y_continuous(paste(input$yaxistype))
+          
+          
+          if (input$timecoloureq == "Black") {
+              black.time.series
+          } else if (input$timecoloureq == "Smooth") {
+              smooth.time.series
+          } else if (input$timecoloureq == "Selected") {
+              ramp.time.series
+          } else if (input$timecoloureq == "Cluster") {
+              cluster.time.series
+          } else if (input$timecoloureq == "Climate") {
+              climate.time.series.line
+          } else if (input$timecoloureq == "QualitativePoint") {
+              qualitative.time.series.point
+          } else if (input$timecoloureq == "QualitativeLine") {
+              qualitative.time.series.line
+          } else if (input$timecoloureq == "Depth") {
+              Depth.time.series
+          } else if (input$timecoloureq == "Area") {
+              area.time.series
+          }
+          
+          
+          
+          
+      })
+      
+      observeEvent(input$timeserieseq5, {
+          
+          
+      })
+      
+      output$timeserieseqplot5 <- renderPlot({
+          input$timeserieseq5
+          
+          
+          
+          isolate(print(plotInput6e()))
+          
+      })
+      
+      
+      output$downloadPlot6e <- downloadHandler(
+      
+      
+      
+      filename = function() { paste(input$projectname, "_", input$yaxistype, '.tiff', sep='') },
+      content = function(file) {
+          ggsave(file,plotInput6e(), device="tiff", dpi=300, width=12, height=7)
+      }
+      )
+      
+      
+      
     })
     
 })
