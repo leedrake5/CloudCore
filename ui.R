@@ -27,6 +27,9 @@ accept=c('text/csv',
 'text/comma-separated-values,text/plain',
 '.csv')),
 
+radioButtons("filetype", label=NULL, c("Spectra", "Net"), selected="Spectra"),
+
+
 tags$hr(),
 
 
@@ -161,9 +164,8 @@ downloadButton('downloadData', "Table"),
 tags$hr(),
 
 conditionalPanel(
-condition='input.dataset === spectra.line.table',
-checkboxGroupInput('show_vars', 'Elemental lines to show:',
-names(spectra.line.table), selected = standard)
+condition='input.dataset === myData()',
+uiOutput('defaultlines')
 )),
 
 
@@ -293,8 +295,8 @@ downloadButton('downloadPlot3e', "5"),
 
 tags$hr(),
 
-selectInput("elementtrend", "Element:", names(spectra.line.table), selected="Fe.K.alpha"),
-selectInput("elementnorm", "Ratio:", names(spectra.line.table.norm), selected="None"),
+uiOutput('inelementtrend'),
+uiOutput('inelementnorm'),
 
 selectInput(
 "timecolour", "Time Series Type",
@@ -404,9 +406,10 @@ selected="Cluster"),
 tags$hr(),
 
 
-selectInput("axisa", "Axis A", names(spectra.line.table), selected="Al.K.alpha"),
-selectInput("axisb", "Axis B", names(spectra.line.table), selected="Si.K.alpha"),
-selectInput("axisc", "Axis C", names(spectra.line.table), selected="Ca.K.alpha"),
+uiOutput('inaxisa'),
+uiOutput('inaxisb'),
+uiOutput('inaxisc'),
+
 checkboxInput('terndensityplot', "Density Contour"),
 checkboxInput('ternnormplot', "Normalize"),
 
@@ -456,11 +459,11 @@ c(
 tags$hr(),
 
 
-selectInput("elementratioa", "Element A", names(spectra.line.table), selected="Fe.K.alpha"),
-selectInput("elementratiob", "Element B", names(spectra.line.table), selected="Ca.K.alpha"),
+uiOutput('inelementratioa'),
+uiOutput('inelementratiob'),
 
-selectInput("elementratioc", "Element C", names(spectra.line.table), selected="Ti.K.alpha"),
-selectInput("elementratiod", "Element D", names(spectra.line.table), selected="K.K.alpha"),
+uiOutput('inelementratioc'),
+uiOutput('inelementratiod'),
 
 tags$hr(),
 
@@ -523,17 +526,17 @@ downloadButton('downloadPlot6e', "5"),
 
 tags$hr(),
 
-selectInput("elementnum1", "Numerator 1", names(spectra.line.table), selected="Fe.K.alpha"),
+uiOutput('inelementnum1'),
 selectInput("transform1", label=NULL, c("None", "+", "-", "*", "/"), selected="None"),
-selectInput("elementnum2", "Numerator 2", names(spectra.line.table.norm), selected="None"),
+uiOutput('inelementnum2'),
 selectInput("transform2", label=NULL, c("None", "+", "-", "*", "/"), selected="None"),
-selectInput("elementnum3", "Numerator 3", names(spectra.line.table.norm), selected="None"),
+uiOutput('inelementnum3'),
 
-selectInput("elementden1", "Denominator 1", names(spectra.line.table.norm), selected="None"),
+uiOutput('inelementden1'),
 selectInput("transform3", label=NULL, c("None", "+", "-", "*", "/"), selected="None"),
-selectInput("elementden2", "Denominator 2", names(spectra.line.table.norm), selected="None"),
+uiOutput('inelementden2'),
 selectInput("transform4", label=NULL, c("None", "+", "-", "*", "/"), selected="None"),
-selectInput("elementden3", "Denominator 3", names(spectra.line.table.norm), selected="None"),
+uiOutput('inelementden3'),
 
 tags$hr(),
 

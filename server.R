@@ -20,54 +20,114 @@ library(scales)
 shinyServer(function(input, output, session) {
     
     
+    fullSpectra <- reactive({
+        
+          withProgress(message = 'Processing Data', value = 0, {
+        
+        inFile <- input$file1
+        if (is.null(inFile)) return(NULL)
+        temp = inFile$name
+        temp <- gsub(".csv", "", temp)
+        id.seq <- seq(1, 2048,1)
+        
+        n <- length(temp)*id.seq
+        
+        myfiles.x = pblapply(inFile$datapath, read_csv_filename_x)
+        
+        
+        
+        myfiles.y = pblapply(inFile$datapath, read_csv_filename_y)
+        
+        
+        
+        
+        xrf.x <- data.frame(id.seq, myfiles.x)
+        colnames(xrf.x) <- c("ID", temp)
+        xrf.y <- data.frame(id.seq, myfiles.y)
+        colnames(xrf.y) <- c("ID", temp)
+        
+        
+        xrf.x <- data.table(xrf.x)
+        xrf.y <- data.table(xrf.y)
+        
+        
+        energy.m <- xrf.x[, list(variable = names(.SD), value = unlist(.SD, use.names = F)), by = ID]
+        cps.m <- xrf.y[, list(variable = names(.SD), value = unlist(.SD, use.names = F)), by = ID]
+        
+        
+        spectra.frame <- data.frame(energy.m$value, cps.m$value, cps.m$variable)
+        colnames(spectra.frame) <- c("Energy", "CPS", "Spectrum")
+        
+        spectra.table <- spectra.line.fn(spectra.frame)
+
+        
+        incProgress(1/n)
+        Sys.sleep(0.1)
+          })
+          
+          spectra.table
+
+
+    })
     
+    
+    netCounts <- reactive({
+        
+        withProgress(message = 'Processing Data', value = 0, {
+
+
+        inFile <- input$file1
+        if (is.null(inFile)) return(NULL)
+        
+        #inName <- inFile$name
+        #inPath <- inFile$datapath
+        
+        #inList <- list(inName, inPath)
+        #names(inList) <- c("inName", "inPath")
+        
+        
+        n <- length(inFile$name)
+        net.names <- gsub("\\@.*","",inFile$name)
+        
+        myfiles = pblapply(inFile$datapath, function(x) read_csv_net(x))
+        
+    
+        myfiles.frame.list <- pblapply(myfiles, data.frame, stringsAsFactors=FALSE)
+        nms = unique(unlist(pblapply(myfiles.frame.list, names)))
+        myfiles.frame <- as.data.frame(do.call(rbind, lapply(myfiles.frame.list, "[", nms)))
+        myfiles.frame <- as.data.frame(sapply(myfiles.frame, as.numeric))
+
+
+#myfiles.frame$Spectrum <- net.names
+        
+        united.frame <- data.frame(net.names, myfiles.frame)
+        colnames(united.frame) <- c("Spectrum", names(myfiles.frame))
+        united.frame$None <- rep(1, length(united.frame$Spectrum))
+        
+        
+        incProgress(1/n)
+        Sys.sleep(0.1)
+    })
+        
+        united.frame <- as.data.frame(united.frame)
+        united.frame
+
+    })
     
     
     observeEvent(input$actionprocess, {
         
         myData <- reactive({
             
-            withProgress(message = 'Processing Data', value = 0, {
+          
                 
-                inFile <- input$file1
-                if (is.null(inFile)) return(NULL)
-                temp = inFile$name
-                temp <- gsub(".csv", "", temp)
-                id.seq <- seq(1, 2048,1)
+                data <- if(input$filetype=="Spectra"){
+                    fullSpectra()
+                } else if(input$filetype=="Net"){
+                    netCounts()
+                }
                 
-                n <- length(temp)*id.seq
-                
-                myfiles.x = pblapply(inFile$datapath, read_csv_filename_x)
-                
-                
-                
-                myfiles.y = pblapply(inFile$datapath, read_csv_filename_y)
-                
-                
-                
-                
-                xrf.x <- data.frame(id.seq, myfiles.x)
-                colnames(xrf.x) <- c("ID", temp)
-                xrf.y <- data.frame(id.seq, myfiles.y)
-                colnames(xrf.y) <- c("ID", temp)
-                
-                
-                xrf.x <- data.table(xrf.x)
-                xrf.y <- data.table(xrf.y)
-                
-                
-                energy.m <- xrf.x[, list(variable = names(.SD), value = unlist(.SD, use.names = F)), by = ID]
-                cps.m <- xrf.y[, list(variable = names(.SD), value = unlist(.SD, use.names = F)), by = ID]
-                
-                
-                spectra.frame <- data.frame(energy.m$value, cps.m$value, cps.m$variable)
-                colnames(spectra.frame) <- c("Energy", "CPS", "Spectrum")
-                data <- spectra.frame
-                
-                
-                incProgress(1/n)
-                Sys.sleep(0.1)
-            })
+          
             
             data
             
@@ -291,20 +351,34 @@ shinyServer(function(input, output, session) {
         })
         
         
-        data <- myData()
         
         
-        spectra.line.table <- spectra.line.fn(data)
-        select.line.table <- datatable(spectra.line.table[, input$show_vars, drop = FALSE])
-        select.line.table
         
+       spectra.line.table <- myData()
         
-        fordownload <- spectra.line.table[input$show_vars]
-        
+
+defaultLines <- reactive({
+    
+    spectra.line.table <- myData()
+    
+    standard <- if(input$filetype=="Spectra"){
+        c("Spectrum", "Ca.K.alpha", "Ti.K.alpha", "Fe.K.alpha", "Cu.K.alpha", "Zn.K.alpha")
+    } else if(input$filetype=="Net"){
+        colnames(spectra.line.table)
+    }
+    
+})
+
+output$defaultlines <- renderUI({
+    spectra.line.table <- myData()
+    checkboxGroupInput('show_vars', 'Elemental lines to show:',
+    names(spectra.line.table), selected = defaultLines())
+})
+
+
+
         tableInput <- reactive({
-            spectra.line.table <- spectra.line.fn(data)
-            select.line.table <- datatable(spectra.line.table[, input$show_vars, drop = FALSE])
-            select.line.table
+          spectra.line.table[input$show_vars]
         })
         
         
@@ -314,16 +388,16 @@ shinyServer(function(input, output, session) {
             
         })
         
-        fullTable <- reactive({
-            
-            
-        })
-        
+    
         
         hotableInput <- reactive({
-            empty.line.table <-  spectra.line.table[input$show_vars] * 0
+            
+            spectra.line.table <- myData()
+            
+            empty.line.table <-  spectra.line.table
             empty.line.table <- empty.line.table[1:2]
             colnames(empty.line.table) <- c("Qualitative", "Depth")
+            empty.line.table$Depth <- empty.line.table$Depth*0
             empty.line.table$Spectrum <- spectra.line.table$Spectrum
             na.vector <- rep("NULL", length(empty.line.table$Qualitative))
             na.matrix <- as.matrix(na.vector)
@@ -382,7 +456,10 @@ shinyServer(function(input, output, session) {
 
 xrfKReactive <- reactive({
     
-    
+    spectra.line.table <- myData()
+
+
+
     xrf.pca.header <- input$show_vars
     xrf.pca.frame <- spectra.line.table[input$show_vars]
     xrf.pca.n <- length(xrf.pca.frame)
@@ -406,9 +483,10 @@ xrfKReactive <- reactive({
 xrfPCAReactive <- reactive({
     
     
-    
-    
-    
+    spectra.line.table <- myData()
+
+
+
     xrf.clusters <- xrfKReactive()
     
     element.counts <- spectra.line.table[input$show_vars]
@@ -465,6 +543,9 @@ xrfPCAReactive <- reactive({
   
   dataProcessed <- reactive({
       
+      spectra.line.table <- myData()
+
+
       xrf.k <- xrfKReactive()
       
       quality.table <- values[["DF"]]
@@ -910,6 +991,46 @@ xrfPCAReactive <- reactive({
   
   
   
+  choiceLines <- reactive({
+      
+      spectra.line.table <- myData()
+      
+      standard <- if(input$filetype=="Spectra"){
+          colnames(spectra.line.table.norm)
+      } else if(input$filetype=="Net"){
+          colnames(spectra.line.table)
+      }
+      
+  })
+  
+ 
+ dataDefaultSelect <- reactive({
+     
+     data.options <-defaultLines()
+     data.selected <- data.options[5]
+     data.selected
+     
+ })
+ 
+ output$inelementtrend <- renderUI({
+     selectInput("elementtrend", "Element:", choices=choiceLines(), selected=dataDefaultSelect())
+ })
+ 
+ output$inelementnorm <- renderUI({
+     selectInput("elementnorm", "Ratio:", choices=choiceLines(), selected="None")
+ })
+ 
+
+ 
+ 
+ 
+ 
+
+ 
+ 
+ 
+ 
+ 
   
   plotInput3a <- reactive({
       
@@ -2012,6 +2133,81 @@ xrfPCAReactive <- reactive({
   )
   
   
+  
+  ratioChooseA <- reactive({
+      spectra.line.table <- myData()
+      spectra.line.names <- colnames(spectra.line.table)
+
+
+      standard <- if(input$filetype=="Spectra"){
+          "Fe.K.Alpha"
+      } else if(input$filetype=="Net"){
+          spectra.line.names[2]
+      }
+      
+  })
+  
+  
+  
+  ratioChooseB <- reactive({
+      spectra.line.table <- myData()
+      spectra.line.names <- colnames(spectra.line.table)
+
+
+      standard <- if(input$filetype=="Spectra"){
+          "Ca.K.Alpha"
+      } else if(input$filetype=="Net"){
+          spectra.line.names[3]
+      }
+      
+  })
+  
+  
+  ratioChooseC <- reactive({
+      spectra.line.table <- myData()
+      spectra.line.names <- colnames(spectra.line.table)
+
+
+      standard <- if(input$filetype=="Spectra"){
+          "Ti.K.Alpha"
+      } else if(input$filetype=="Net"){
+          spectra.line.names[4]
+      }
+      
+  })
+  
+  
+  ratioChooseD <- reactive({
+      spectra.line.table <- myData()
+      spectra.line.names <- colnames(spectra.line.table)
+      
+      standard <- if(input$filetype=="Spectra"){
+          "K.K.Alpha"
+      } else if(input$filetype=="Net"){
+          spectra.line.names[5]
+      }
+      
+  })
+  
+  
+  output$inelementratioa <- renderUI({
+      selectInput("elementratioa", "Element A", choices=choiceLines(), selected=ratioChooseA())
+  })
+  
+  output$inelementratiob <- renderUI({
+      selectInput("elementratiob", "Element B", choices=choiceLines(), selected=ratioChooseB())
+  })
+  
+  output$inelementratioc <- renderUI({
+      selectInput("elementratioc", "Element C", choices=choiceLines(), selected=ratioChooseC())
+  })
+  
+  output$inelementratiod <- renderUI({
+      selectInput("elementratiod", "Element D", choices=choiceLines(), selected=ratioChooseD())
+  })
+  
+  
+  
   plotInput4 <- reactive({
       
       
@@ -2214,6 +2410,56 @@ xrfPCAReactive <- reactive({
   
   
   
+  ternaryChooseA <- reactive({
+      spectra.line.table <- myData()
+      spectra.line.names <- colnames(spectra.line.table)
+
+
+      standard <- if(input$filetype=="Spectra"){
+          "Al.K.alpha"
+      } else if(input$filetype=="Net"){
+          spectra.line.names[2]
+      }
+      
+  })
+  
+  ternaryChooseB <- reactive({
+      spectra.line.table <- myData()
+      spectra.line.names <- colnames(spectra.line.table)
+
+
+      standard <- if(input$filetype=="Spectra"){
+          "Si.K.alpha"
+      } else if(input$filetype=="Net"){
+          spectra.line.names[3]
+      }
+      
+  })
+  
+  ternaryChooseC <- reactive({
+      spectra.line.table <- myData()
+      spectra.line.names <- colnames(spectra.line.table)
+
+
+      standard <- if(input$filetype=="Spectra"){
+          "Ca.K.alpha"
+      } else if(input$filetype=="Net"){
+          spectra.line.names[4]
+      }
+      
+  })
+  
+  output$inaxisa <- renderUI({
+      selectInput("axisa", "Axis A", choices=choiceLines(), selected=ternaryChooseA())
+  })
+  
+  output$inaxisb <- renderUI({
+      selectInput("axisb", "Axis B", choices=choiceLines(), selected=ternaryChooseB())
+  })
+  
+  output$inaxisc <- renderUI({
+      selectInput("axisc", "Axis C", choices=choiceLines(), selected=ternaryChooseC())
+  })
   
   
   
@@ -3720,6 +3966,32 @@ xrfPCAReactive <- reactive({
   
   
   #############Mathematical Transformations
+  
+  
+  
+  output$inelementnum1 <- renderUI({
+      selectInput("elementnum1", "Numerator 1", choices=choiceLines(), selected=dataDefaultSelect())
+  })
+  
+  output$inelementnum2 <- renderUI({
+      selectInput("elementnum2", "Numerator 2", choices=choiceLines(), selected="None")
+  })
+  
+  output$inelementnum3 <- renderUI({
+      selectInput("elementnum3", "Numerator 3", choices=choiceLines(), selected="None")
+  })
+  
+  output$inelementden1 <- renderUI({
+      selectInput("elementden1", "Denominator 1", choices=choiceLines(), selected="None")
+  })
+  
+  output$inelementden2 <- renderUI({
+      selectInput("elementden2", "Denominator 2", choices=choiceLines(), selected="None")
+  })
+  
+  output$inelementden3 <- renderUI({
+      selectInput("elementden3", "Denominator 3", choices=choiceLines(), selected="None")
+  })
   
   
   plotInput6a <- reactive({

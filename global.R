@@ -51,14 +51,14 @@ read_csv_net <- function(filepath) {
     line <- ret$Line
     net <- ret$Net
     background <- ret$Backgr.
+    eline <- paste(element, line, sep="-")
     
+    simple.table <- data.frame(net)
+    colnames(simple.table) <- NULL
+    simple.transpose <- as.data.frame(t(simple.table))
+    colnames(simple.transpose) <- eline
     
-    parsed.file <- data.frame(element, line, net, background)
-    colnames(parsed.file) <- c( "Element", "Line", "Net", "Background")
-    
-    parsed.file
-    
-    
+    simple.transpose
     
 }
 
@@ -2048,9 +2048,11 @@ data <- NULL
 if (is.null(data)){ data <- black.diamond.melt}
 
 
+
+
 spectra.line.table <- spectra.line.fn(data)
 spectra.line.table
- unique.spec <- seq(1, length(spectra.line.table$Spectrum), 1)
+unique.spec <- seq(1, length(spectra.line.table$Spectrum), 1)
 
 null <- rep(1, length(spectra.line.table$Spectrum))
 
@@ -2059,9 +2061,6 @@ colnames(spectra.line.table.norm) <- c("None", names(spectra.line.table))
 spectra.line.table.norm
 
 
-
-
-standard <- c("Spectrum", "Ca.K.alpha", "Ti.K.alpha", "Fe.K.alpha", "Cu.K.alpha", "Zn.K.alpha", "Pb.L.alpha")
 
 
 
