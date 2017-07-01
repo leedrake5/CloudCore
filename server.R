@@ -2341,9 +2341,9 @@ xrfPCAReactive <- reactive({
       theme(legend.title=element_text(size=15)) +
       theme(legend.text=element_text(size=15))
       
-      quanitative.ratio.plot <- qplot(ratio.frame[,1]/ratio.frame[,2], ratio.frame[,3]/ratio.frame[,4], xlab = ratio.names.x, ylab = ratio.names.y ) +
-      geom_point(aes(colour=ratio.frame$Depth), size=input$spotsize2) +
-      scale_colour_gradientn("Depth", colours=rainbow(length(ratio.frame$Depth))) +
+      depth.ratio.plot <- qplot(ratio.frame[,1]/ratio.frame[,2], ratio.frame[,3]/ratio.frame[,4], xlab = ratio.names.x, ylab = ratio.names.y ) +
+      geom_point(aes(colour = Depth, size=input$spotsize2+1)) +
+      scale_colour_gradientn("Depth", colours = terrain.colors(10))+
       theme_light() +
       theme(axis.text.x = element_text(size=15)) +
       theme(axis.text.y = element_text(size=15)) +
@@ -2353,9 +2353,17 @@ xrfPCAReactive <- reactive({
       theme(legend.title=element_text(size=15)) +
       theme(legend.text=element_text(size=15))
       
-      
-      
-      
+      age.ratio.plot <- qplot(ratio.frame[,1]/ratio.frame[,2], ratio.frame[,3]/ratio.frame[,4], xlab = ratio.names.x, ylab = ratio.names.y ) +
+      geom_point(aes(colour = Age, size=input$spotsize2+1)) +
+      scale_colour_gradientn("Age", colours = terrain.colors(10))+
+      theme_light() +
+      theme(axis.text.x = element_text(size=15)) +
+      theme(axis.text.y = element_text(size=15)) +
+      theme(axis.title.x = element_text(size=15)) +
+      theme(axis.title.y = element_text(size=15, angle=90)) +
+      theme(plot.title=element_text(size=20)) +
+      theme(legend.title=element_text(size=15)) +
+      theme(legend.text=element_text(size=15))
       
       
       
@@ -2377,10 +2385,10 @@ xrfPCAReactive <- reactive({
           qualitative.ratio.plot
       } else if (input$ratiocolour == "Qualitative" && input$elipseplot2==TRUE ) {
           qualitative.ratio.ellipse.plot
-      } else if (input$ratiocolour == "Depth" && input$elipseplot2==FALSE ) {
-          quanitative.ratio.plot
-      } else if (input$ratiocolour == "Depth" && input$elipseplot2==TRUE) {
-          quanitative.ratio.plot
+      } else if (input$ratiocolour == "Depth") {
+          depth.ratio.plot
+      } else if (input$ratiocolour == "Age") {
+          age.ratio.plot
       }
       
   })
@@ -2484,8 +2492,8 @@ xrfPCAReactive <- reactive({
       axis.frame <- data.frame(first.axis, second.axis, third.axis, spectra.line.table$Cluster, spectra.line.table$Qualitative, spectra.line.table$Depth, spectra.line.table$Climate)
       colnames(axis.frame) <- gsub("[.]", "", c(substr(input$axisa, 1, 2), substr(input$axisb, 1, 2), substr(input$axisc, 1, 2), "Cluster", "Qualitative", "Depth", "Climate"))
       
-      axis.frame.norm <- data.frame(first.axis.norm, second.axis.norm, third.axis.norm, spectra.line.table$Cluster, spectra.line.table$Qualitative, spectra.line.table$Depth, spectra.line.table$Climate)
-      colnames(axis.frame.norm) <- gsub("[.]", "", c(substr(input$axisa, 1, 2), substr(input$axisb, 1, 2), substr(input$axisc, 1, 2), "Cluster", "Qualitative", "Depth", "Climate"))
+      axis.frame.norm <- data.frame(first.axis.norm, second.axis.norm, third.axis.norm, spectra.line.table$Cluster, spectra.line.table$Qualitative, spectra.line.table$Depth, spectra.line.table$Age, spectra.line.table$Climate)
+      colnames(axis.frame.norm) <- gsub("[.]", "", c(substr(input$axisa, 1, 2), substr(input$axisb, 1, 2), substr(input$axisc, 1, 2), "Cluster", "Qualitative", "Depth", "Age", "Climate"))
       
       ternaryplot1 <- ggtern(data=axis.frame, aes_string(x = colnames(axis.frame)[1], y = colnames(axis.frame)[2], z = colnames(axis.frame)[3])) +
       geom_point(size=input$ternpointsize) +
@@ -2569,6 +2577,58 @@ xrfPCAReactive <- reactive({
       theme(legend.text=element_text(size=15))
       
       
+      ternaryplotdepthellipse <- ggtern(data=axis.frame, aes_string(x = colnames(axis.frame)[1], y = colnames(axis.frame)[2], z = colnames(axis.frame)[3])) +
+      geom_point(aes(colour = Depth, size=input$ternpointsize+1)) +
+      scale_colour_gradientn("Depth", colours = terrain.colors(10))+
+      theme_light() +
+      theme(axis.text.x = element_text(size=15)) +
+      theme(axis.text.y = element_text(size=15)) +
+      theme(axis.title.x = element_text(size=15)) +
+      theme(axis.title.y = element_text(size=15, angle=90)) +
+      theme(plot.title=element_text(size=20)) +
+      theme(legend.title=element_text(size=15)) +
+      theme(legend.text=element_text(size=15))
+      
+      ternaryplotdepth <- ggtern(data=axis.frame, aes_string(x = colnames(axis.frame)[1], y = colnames(axis.frame)[2], z = colnames(axis.frame)[3])) +
+      geom_density_tern() +
+      geom_point(aes(colour = Depth, size=input$ternpointsize+1)) +
+      scale_colour_gradientn("Depth", colours = terrain.colors(10))+
+      theme_light() +
+      theme(axis.text.x = element_text(size=15)) +
+      theme(axis.text.y = element_text(size=15)) +
+      theme(axis.title.x = element_text(size=15)) +
+      theme(axis.title.y = element_text(size=15, angle=90)) +
+      theme(plot.title=element_text(size=20)) +
+      theme(legend.title=element_text(size=15)) +
+      theme(legend.text=element_text(size=15))
+      
+      ternaryplotage <- ggtern(data=axis.frame, aes_string(x = colnames(axis.frame)[1], y = colnames(axis.frame)[2], z = colnames(axis.frame)[3])) +
+      geom_point(aes(colour = Age, size=input$ternpointsize+1)) +
+      scale_colour_gradientn("Age", colours = terrain.colors(10))+
+      theme_light() +
+      theme(axis.text.x = element_text(size=15)) +
+      theme(axis.text.y = element_text(size=15)) +
+      theme(axis.title.x = element_text(size=15)) +
+      theme(axis.title.y = element_text(size=15, angle=90)) +
+      theme(plot.title=element_text(size=20)) +
+      theme(legend.title=element_text(size=15)) +
+      theme(legend.text=element_text(size=15))
+      
+      ternaryplotage <- ggtern(data=axis.frame, aes_string(x = colnames(axis.frame)[1], y = colnames(axis.frame)[2], z = colnames(axis.frame)[3])) +
+      geom_density_tern() +
+      geom_point(aes(colour = Age, size=input$ternpointsize+1)) +
+      scale_colour_gradientn("Age", colours = terrain.colors(10))+
+      theme_light() +
+      theme(axis.text.x = element_text(size=15)) +
+      theme(axis.text.y = element_text(size=15)) +
+      theme(axis.title.x = element_text(size=15)) +
+      theme(axis.title.y = element_text(size=15, angle=90)) +
+      theme(plot.title=element_text(size=20)) +
+      theme(legend.title=element_text(size=15)) +
+      theme(legend.text=element_text(size=15))
+      
+    
+      
       ternaryplotqualitative <- ggtern(data=axis.frame, aes_string(x = colnames(axis.frame)[1], y = colnames(axis.frame)[2], z = colnames(axis.frame)[3])) +
       geom_point(aes(colour = as.factor(Qualitative), shape=as.factor(Qualitative)), size=input$ternpointsize+1) +
       geom_point(colour="grey30", size=input$ternpointsize-2) +
@@ -2598,32 +2658,7 @@ xrfPCAReactive <- reactive({
       theme(legend.title=element_text(size=15)) +
       theme(legend.text=element_text(size=15))
       
-      ternaryplotDepth <- ggtern(data=axis.frame, aes_string(x = colnames(axis.frame)[1], y = colnames(axis.frame)[2], z = colnames(axis.frame)[3])) +
-      geom_point(aes(colour = Depth), size=input$ternpointsize+1) +
-      geom_point(size=input$ternpointsize-2) +
-      scale_colour_gradientn("Depth", colours=rainbow(length(axis.frame$Depth))) +
-      theme_light() +
-      theme(axis.text.x = element_text(size=15)) +
-      theme(axis.text.y = element_text(size=15)) +
-      theme(axis.title.x = element_text(size=15)) +
-      theme(axis.title.y = element_text(size=15, angle=90)) +
-      theme(plot.title=element_text(size=20)) +
-      theme(legend.title=element_text(size=15)) +
-      theme(legend.text=element_text(size=15))
-      
-      ternaryplotquanitativeellipse <- ggtern(data=axis.frame, aes_string(x = colnames(axis.frame)[1], y = colnames(axis.frame)[2], z = colnames(axis.frame)[3])) +
-      geom_density_tern() +
-      geom_point(aes(colour = Depth), size=input$ternpointsize) +
-      scale_colour_gradientn("Depth", colours=rainbow(length(axis.frame$Depth))) +
-      theme_light() +
-      theme(axis.text.x = element_text(size=15)) +
-      theme(axis.text.y = element_text(size=15)) +
-      theme(axis.title.x = element_text(size=15)) +
-      theme(axis.title.y = element_text(size=15, angle=90)) +
-      theme(plot.title=element_text(size=20)) +
-      theme(legend.title=element_text(size=15)) +
-      theme(legend.text=element_text(size=15))
-      
+
       
       
       #####Normalization
@@ -2738,7 +2773,7 @@ xrfPCAReactive <- reactive({
       theme(legend.title=element_text(size=15)) +
       theme(legend.text=element_text(size=15))
       
-      ternaryplotDepth.norm <- ggtern(data=axis.frame.norm, aes_string(x = colnames(axis.frame.norm)[1], y = colnames(axis.frame.norm)[2], z = colnames(axis.frame.norm)[3])) +
+      ternaryplotdepth.norm <- ggtern(data=axis.frame.norm, aes_string(x = colnames(axis.frame.norm)[1], y = colnames(axis.frame.norm)[2], z = colnames(axis.frame.norm)[3])) +
       geom_point(aes(colour = Depth), size=input$ternpointsize+1) +
       geom_point(size=input$ternpointsize-2) +
       scale_colour_gradientn("Depth", colours=rainbow(length(axis.frame$Depth))) +
@@ -2751,10 +2786,38 @@ xrfPCAReactive <- reactive({
       theme(legend.title=element_text(size=15)) +
       theme(legend.text=element_text(size=15))
       
-      ternaryplotquanitativeellipse.norm <- ggtern(data=axis.frame.norm, aes_string(x = colnames(axis.frame.norm)[1], y = colnames(axis.frame.norm)[2], z = colnames(axis.frame.norm)[3])) +
+      
+      ternaryplotdepthellipse.norm <- ggtern(data=axis.frame.norm, aes_string(x = colnames(axis.frame.norm)[1], y = colnames(axis.frame.norm)[2], z = colnames(axis.frame.norm)[3])) +
       geom_density_tern() +
       geom_point(aes(colour = Depth), size=input$ternpointsize) +
       scale_colour_gradientn("Depth", colours=rainbow(length(axis.frame$Depth))) +
+      theme_light() +
+      theme(axis.text.x = element_text(size=15)) +
+      theme(axis.text.y = element_text(size=15)) +
+      theme(axis.title.x = element_text(size=15)) +
+      theme(axis.title.y = element_text(size=15, angle=90)) +
+      theme(plot.title=element_text(size=20)) +
+      theme(legend.title=element_text(size=15)) +
+      theme(legend.text=element_text(size=15))
+      
+      ternaryplotage.norm <- ggtern(data=axis.frame.norm, aes_string(x = colnames(axis.frame.norm)[1], y = colnames(axis.frame.norm)[2], z = colnames(axis.frame.norm)[3])) +
+      geom_point(aes(colour = Age), size=input$ternpointsize+1) +
+      geom_point(size=input$ternpointsize-2) +
+      scale_colour_gradientn("Age", colours=rainbow(length(axis.frame$Depth))) +
+      theme_light() +
+      theme(axis.text.x = element_text(size=15)) +
+      theme(axis.text.y = element_text(size=15)) +
+      theme(axis.title.x = element_text(size=15)) +
+      theme(axis.title.y = element_text(size=15, angle=90)) +
+      theme(plot.title=element_text(size=20)) +
+      theme(legend.title=element_text(size=15)) +
+      theme(legend.text=element_text(size=15))
+      
+      ternaryplotageellipse.norm <- ggtern(data=axis.frame.norm, aes_string(x = colnames(axis.frame.norm)[1], y = colnames(axis.frame.norm)[2], z = colnames(axis.frame.norm)[3])) +
+      geom_density_tern() +
+      geom_point(aes(colour = Age), size=input$ternpointsize+1) +
+      geom_point(size=input$ternpointsize-2) +
+      scale_colour_gradientn("Age", colours=rainbow(length(axis.frame$Depth))) +
       theme_light() +
       theme(axis.text.x = element_text(size=15)) +
       theme(axis.text.y = element_text(size=15)) +
@@ -2782,9 +2845,13 @@ xrfPCAReactive <- reactive({
       } else if (input$ternarycolour == "Climate" && input$terndensityplot==TRUE && input$ternnormplot==FALSE) {
           ternaryplotclimateellipse
       } else if (input$ternarycolour == "Depth" && input$terndensityplot==FALSE && input$ternnormplot==FALSE) {
-          ternaryplotDepth
+          ternaryplotdepth
       } else if (input$ternarycolour == "Depth" && input$terndensityplot==TRUE && input$ternnormplot==FALSE) {
-          ternaryplotquanitativeellipse
+          ternaryplotdepthellipse
+      } else if (input$ternarycolour == "Age" && input$terndensityplot==FALSE && input$ternnormplot==FALSE) {
+          ternaryplotage
+      } else if (input$ternarycolour == "Age" && input$terndensityplot==TRUE && input$ternnormplot==FALSE) {
+          ternaryplotageellipse
       } else if (input$ternarycolour == "black" && input$terndensityplot==FALSE && input$ternnormplot==TRUE) {
           ternaryplot1.norm
       } else if (input$ternarycolour == "black" && input$terndensityplot==TRUE && input$ternnormplot==TRUE) {
@@ -2802,9 +2869,13 @@ xrfPCAReactive <- reactive({
       } else if (input$ternarycolour == "Qualitative" && input$terndensityplot==TRUE && input$ternnormplot==TRUE) {
           ternaryplotqualitativeellipse.norm
       } else if (input$ternarycolour == "Depth" && input$terndensityplot==FALSE && input$ternnormplot==TRUE) {
-          ternaryplotDepth.norm
+          ternaryplotdepth.norm
       } else if (input$ternarycolour == "Depth" && input$terndensityplot==TRUE && input$ternnormplot==TRUE) {
-          ternaryplotquanitativeellipse.norm
+          ternaryplotdepthellipse.norm
+      } else if (input$ternarycolour == "Age" && input$terndensityplot==FALSE && input$ternnormplot==TRUE) {
+          ternaryplotage.norm
+      } else if (input$ternarycolour == "Age" && input$terndensityplot==TRUE && input$ternnormplot==TRUE) {
+          ternaryplotageellipse.norm
       }
       
       

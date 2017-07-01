@@ -398,8 +398,9 @@ selectInput("ternarycolour", "Colour", choices=c(
 "Black"="black",
 "Cluster"="Cluster",
 "Climate"="Climate",
-"Qualitative" = "Qualitative",
-"Quantitative" = "Quantitative"),
+"Age"="Age",
+"Depth"="Depth",
+"Qualitative" = "Qualitative"),
 selected="Cluster"),
 
 
@@ -452,8 +453,9 @@ c(
 "Black" = "Black",
 "Cluster" = "Cluster",
 "Climate"="Climate",
-"Qualitative" = "Qualitative",
-"Quantitative" = "Quantitative"
+"Age"="Age",
+"Depth"="Depth",
+"Qualitative" = "Qualitative"
 ), selected="Cluster"),
 
 tags$hr(),
