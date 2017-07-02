@@ -1190,7 +1190,7 @@ xrfPCAReactive <- reactive({
 
       Depth.time.series <- qplot(Interval, SMA(Selected, input$smoothing), xlab = input$xaxistype, ylab = trendy, geom="line", data = spectra.timeseries.table) +
       geom_point(aes(colour = Depth), lwd=input$pointsize) +
-      scale_colour_gradientn("Depth", colours=rainbow(length(spectra.line.table$Depth))) +
+      scale_colour_gradientn("Depth", colours=rev(terrain.colors(length(spectra.line.table$Depth)))) +
       theme_light() +
       theme(axis.text.x = element_text(size=15)) +
       theme(axis.text.y = element_text(size=15)) +
@@ -1418,7 +1418,7 @@ xrfPCAReactive <- reactive({
       
       Depth.time.series <- qplot(Interval, SMA(Selected, input$smoothing), xlab = input$xaxistype, ylab = trendy, geom="line", data = spectra.timeseries.table) +
       geom_point(aes(colour = Depth), lwd=input$pointsize) +
-      scale_colour_gradientn("Depth", colours=rainbow(length(spectra.line.table$Depth))) +
+      scale_colour_gradientn("Depth", colours=rev(terrain.colors(length(spectra.line.table$Depth)))) +
       theme_light() +
       theme(axis.text.x = element_text(size=15)) +
       theme(axis.text.y = element_text(size=15)) +
@@ -1634,7 +1634,7 @@ xrfPCAReactive <- reactive({
       
       Depth.time.series <- qplot(Interval, SMA(Selected, input$smoothing), xlab = input$xaxistype, ylab = trendy, geom="line", data = spectra.timeseries.table) +
       geom_point(aes(colour = Depth), lwd=input$pointsize) +
-      scale_colour_gradientn("Depth", colours=rainbow(length(spectra.line.table$Depth))) +
+      scale_colour_gradientn("Depth", colours=rev(terrain.colors(length(spectra.line.table$Depth)))) +
       theme_light() +
       theme(axis.text.x = element_text(size=15)) +
       theme(axis.text.y = element_text(size=15)) +
@@ -1849,7 +1849,7 @@ xrfPCAReactive <- reactive({
       
       Depth.time.series <- qplot(Interval, SMA(Selected, input$smoothing), xlab = input$xaxistype, ylab = trendy, geom="line", data = spectra.timeseries.table) +
       geom_point(aes(colour = Depth), lwd=input$pointsize) +
-      scale_colour_gradientn("Depth", colours=rainbow(length(spectra.line.table$Depth))) +
+      scale_colour_gradientn("Depth", colours=rev(terrain.colors(length(spectra.line.table$Depth)))) +
       theme_light() +
       theme(axis.text.x = element_text(size=15)) +
       theme(axis.text.y = element_text(size=15)) +
@@ -2070,7 +2070,7 @@ xrfPCAReactive <- reactive({
       
       Depth.time.series <- qplot(Interval, SMA(Selected, input$smoothing), xlab = input$xaxistype, ylab = trendy, geom="line", data = spectra.timeseries.table) +
       geom_point(aes(colour = Depth), lwd=input$pointsize) +
-      scale_colour_gradientn("Depth", colours=rainbow(length(spectra.line.table$Depth))) +
+      scale_colour_gradientn("Depth", colours=rev(terrain.colors(length(spectra.line.table$Depth)))) +
       theme_light() +
       theme(axis.text.x = element_text(size=15)) +
       theme(axis.text.y = element_text(size=15)) +
@@ -2222,18 +2222,26 @@ xrfPCAReactive <- reactive({
       third.ratio <- spectra.line.table[input$elementratioc]
       fourth.ratio <- spectra.line.table[input$elementratiod]
       
-      first.ratio.norm <- first.ratio/sum(first.ratio)
-      second.ratio.norm <- second.ratio/sum(second.ratio)
-      third.ratio.norm <- third.ratio/sum(third.ratio)
-      fourth.ratio.norm <- fourth.ratio/sum(fourth.ratio)
+   
+      
+      ratio.frame <- data.frame(first.ratio, second.ratio, third.ratio, fourth.ratio, spectra.line.table$Cluster, spectra.line.table$Qualitative, spectra.line.table$Depth, spectra.line.table$Age, spectra.line.table$Climate)
+      colnames(ratio.frame) <- c(gsub("[.]", "", c(substr(input$elementratioa, 1, 2), substr(input$elementratiob, 1, 2), substr(input$elementratioc, 1, 2), substr(input$elementratiod, 1, 2), "Cluster", "Qualitative", "Depth", "Age", "Climate")))
+      
+
       
       
-      ratio.frame <- data.frame(first.ratio, second.ratio, third.ratio, fourth.ratio, spectra.line.table$Cluster, spectra.line.table$Qualitative, spectra.line.table$Depth, spectra.line.table$Climate)
-      colnames(ratio.frame) <- gsub("[.]", "", c(substr(input$elementratioa, 1, 2), substr(input$elementratiob, 1, 2), substr(input$elementratioc, 1, 2), substr(input$elementratiod, 1, 2), "Cluster", "Qualitative", "Depth", "Climate"))
+      ratio.names.x <- if(input$elementratiob!="None"){
+          paste(names(ratio.frame[1]), "/", names(ratio.frame[2]), sep="", collapse="")
+      } else if(input$elementratiob=="None"){
+          paste(names(ratio.frame[1]))
+      }
       
       
-      ratio.names.x <- c(names(ratio.frame[1]), "/", names(ratio.frame[2]))
-      ratio.names.y <- c(names(ratio.frame[3]), "/", names(ratio.frame[4]))
+      ratio.names.y <- if(input$elementratiod!="None"){
+          paste(names(ratio.frame[3]), "/", names(ratio.frame[4]), sep="", collapse="")
+      } else if(input$elementratiod=="None"){
+          paste(names(ratio.frame[3]))
+      }
       
       ratio.names.x <- paste(ratio.names.x, sep=",", collapse="")
       ratio.names.y <- paste(ratio.names.y, sep=",", collapse="")
@@ -2342,8 +2350,9 @@ xrfPCAReactive <- reactive({
       theme(legend.text=element_text(size=15))
       
       depth.ratio.plot <- qplot(ratio.frame[,1]/ratio.frame[,2], ratio.frame[,3]/ratio.frame[,4], xlab = ratio.names.x, ylab = ratio.names.y ) +
-      geom_point(aes(colour = Depth, size=input$spotsize2+1)) +
-      scale_colour_gradientn("Depth", colours = terrain.colors(10))+
+      geom_point(aes(colour = ratio.frame$Depth), size=input$spotsize2+1) +
+      geom_point(size=input$spotsize2-2) +
+      scale_colour_gradientn("Depth", colours=rev(terrain.colors(length(ratio.frame$Depth)))) +
       theme_light() +
       theme(axis.text.x = element_text(size=15)) +
       theme(axis.text.y = element_text(size=15)) +
@@ -2354,8 +2363,9 @@ xrfPCAReactive <- reactive({
       theme(legend.text=element_text(size=15))
       
       age.ratio.plot <- qplot(ratio.frame[,1]/ratio.frame[,2], ratio.frame[,3]/ratio.frame[,4], xlab = ratio.names.x, ylab = ratio.names.y ) +
-      geom_point(aes(colour = Age, size=input$spotsize2+1)) +
-      scale_colour_gradientn("Age", colours = terrain.colors(10))+
+      geom_point(aes(colour = ratio.frame$Age), size=input$spotsize2+1) +
+      geom_point(size=input$spotsize2-2) +
+      scale_colour_gradientn("Age", colours=terrain.colors(length(ratio.frame$Age))) +
       theme_light() +
       theme(axis.text.x = element_text(size=15)) +
       theme(axis.text.y = element_text(size=15)) +
@@ -2402,8 +2412,26 @@ xrfPCAReactive <- reactive({
   
   ratioTerm <- reactive({
       
-      ratio.names <- paste(c(c(substr(input$elementratioa, 1,2), "-", substr(input$elementratiob, 1, 2)), "_", c(substr(input$elementratioc,1,2), "-", substr(input$elementratiod,1,2), "_RatioPlot")), collapse="")
-      ratio.label <- paste(c(input$projectname, "_", ratio.names), collapse='')
+      ratio.names.x <- if(input$elementratiob!="None"){
+          paste(substr(input$elementratioa, 1, 2), "-", substr(input$elementratiob, 1, 2), sep="", collapse="")
+      } else if(input$elementratiob=="None"){
+          paste(substr(input$elementratioa, 1, 2))
+      }
+      
+      
+      ratio.names.y <- if(input$elementratiod!="None"){
+          paste(substr(input$elementratioc, 1, 2), "-", substr(input$elementratiod, 1, 2), sep="", collapse="")
+      } else if(input$elementratiod=="None"){
+          paste(substr(input$elementratioc, 1, 2))
+      }
+      
+      ratio.names.x <- paste(ratio.names.x, sep=",", collapse="")
+      ratio.names.y <- paste(ratio.names.y, sep=",", collapse="")
+      
+      ratio.names <- paste(ratio.names.x, ratio.names.y, sep= "-", collapse="")
+      
+      ratio.label <- paste(input$projectname, "_", ratio.names, collapse="")
+
       ratio.label
   })
   
@@ -2489,8 +2517,8 @@ xrfPCAReactive <- reactive({
       second.axis.norm <- second.axis/sum(second.axis)
       third.axis.norm <- third.axis/sum(third.axis)
       
-      axis.frame <- data.frame(first.axis, second.axis, third.axis, spectra.line.table$Cluster, spectra.line.table$Qualitative, spectra.line.table$Depth, spectra.line.table$Climate)
-      colnames(axis.frame) <- gsub("[.]", "", c(substr(input$axisa, 1, 2), substr(input$axisb, 1, 2), substr(input$axisc, 1, 2), "Cluster", "Qualitative", "Depth", "Climate"))
+      axis.frame <- data.frame(first.axis, second.axis, third.axis, spectra.line.table$Cluster, spectra.line.table$Qualitative, spectra.line.table$Depth, spectra.line.table$Age, spectra.line.table$Climate)
+      colnames(axis.frame) <- gsub("[.]", "", c(substr(input$axisa, 1, 2), substr(input$axisb, 1, 2), substr(input$axisc, 1, 2), "Cluster", "Qualitative", "Depth", "Age", "Climate"))
       
       axis.frame.norm <- data.frame(first.axis.norm, second.axis.norm, third.axis.norm, spectra.line.table$Cluster, spectra.line.table$Qualitative, spectra.line.table$Depth, spectra.line.table$Age, spectra.line.table$Climate)
       colnames(axis.frame.norm) <- gsub("[.]", "", c(substr(input$axisa, 1, 2), substr(input$axisb, 1, 2), substr(input$axisc, 1, 2), "Cluster", "Qualitative", "Depth", "Age", "Climate"))
@@ -2578,8 +2606,9 @@ xrfPCAReactive <- reactive({
       
       
       ternaryplotdepthellipse <- ggtern(data=axis.frame, aes_string(x = colnames(axis.frame)[1], y = colnames(axis.frame)[2], z = colnames(axis.frame)[3])) +
-      geom_point(aes(colour = Depth, size=input$ternpointsize+1)) +
-      scale_colour_gradientn("Depth", colours = terrain.colors(10))+
+      geom_point(aes(colour = Depth), size=input$ternpointsize+1) +
+      geom_point(size=input$ternpointsize-2) +
+      scale_colour_gradientn("Depth", colours=rev(terrain.colors(length(axis.frame$Depth)))) +
       theme_light() +
       theme(axis.text.x = element_text(size=15)) +
       theme(axis.text.y = element_text(size=15)) +
@@ -2591,8 +2620,9 @@ xrfPCAReactive <- reactive({
       
       ternaryplotdepth <- ggtern(data=axis.frame, aes_string(x = colnames(axis.frame)[1], y = colnames(axis.frame)[2], z = colnames(axis.frame)[3])) +
       geom_density_tern() +
-      geom_point(aes(colour = Depth, size=input$ternpointsize+1)) +
-      scale_colour_gradientn("Depth", colours = terrain.colors(10))+
+      geom_point(aes(colour = Depth), size=input$ternpointsize+1) +
+      geom_point(size=input$ternpointsize-2) +
+      scale_colour_gradientn("Depth", colours=rev(terrain.colors(length(axis.frame$Depth)))) +
       theme_light() +
       theme(axis.text.x = element_text(size=15)) +
       theme(axis.text.y = element_text(size=15)) +
@@ -2603,8 +2633,9 @@ xrfPCAReactive <- reactive({
       theme(legend.text=element_text(size=15))
       
       ternaryplotage <- ggtern(data=axis.frame, aes_string(x = colnames(axis.frame)[1], y = colnames(axis.frame)[2], z = colnames(axis.frame)[3])) +
-      geom_point(aes(colour = Age, size=input$ternpointsize+1)) +
-      scale_colour_gradientn("Age", colours = terrain.colors(10))+
+      geom_point(aes(colour = Age), size=input$ternpointsize+1) +
+      geom_point(size=input$ternpointsize-2) +
+      scale_colour_gradientn("Age", colours=terrain.colors(length(axis.frame$Age))) +
       theme_light() +
       theme(axis.text.x = element_text(size=15)) +
       theme(axis.text.y = element_text(size=15)) +
@@ -2614,10 +2645,11 @@ xrfPCAReactive <- reactive({
       theme(legend.title=element_text(size=15)) +
       theme(legend.text=element_text(size=15))
       
-      ternaryplotage <- ggtern(data=axis.frame, aes_string(x = colnames(axis.frame)[1], y = colnames(axis.frame)[2], z = colnames(axis.frame)[3])) +
+      ternaryplotageellipse <- ggtern(data=axis.frame, aes_string(x = colnames(axis.frame)[1], y = colnames(axis.frame)[2], z = colnames(axis.frame)[3])) +
       geom_density_tern() +
-      geom_point(aes(colour = Age, size=input$ternpointsize+1)) +
-      scale_colour_gradientn("Age", colours = terrain.colors(10))+
+      geom_point(aes(colour = Age), size=input$ternpointsize+1) +
+      geom_point(size=input$ternpointsize-2) +
+      scale_colour_gradientn("Age", colours=terrain.colors(length(axis.frame$Age))) +
       theme_light() +
       theme(axis.text.x = element_text(size=15)) +
       theme(axis.text.y = element_text(size=15)) +
@@ -2776,7 +2808,7 @@ xrfPCAReactive <- reactive({
       ternaryplotdepth.norm <- ggtern(data=axis.frame.norm, aes_string(x = colnames(axis.frame.norm)[1], y = colnames(axis.frame.norm)[2], z = colnames(axis.frame.norm)[3])) +
       geom_point(aes(colour = Depth), size=input$ternpointsize+1) +
       geom_point(size=input$ternpointsize-2) +
-      scale_colour_gradientn("Depth", colours=rainbow(length(axis.frame$Depth))) +
+      scale_colour_gradientn("Depth", colours=rev(terrain.colors(length(axis.frame$Depth)))) +
       theme_light() +
       theme(axis.text.x = element_text(size=15)) +
       theme(axis.text.y = element_text(size=15)) +
@@ -2790,7 +2822,7 @@ xrfPCAReactive <- reactive({
       ternaryplotdepthellipse.norm <- ggtern(data=axis.frame.norm, aes_string(x = colnames(axis.frame.norm)[1], y = colnames(axis.frame.norm)[2], z = colnames(axis.frame.norm)[3])) +
       geom_density_tern() +
       geom_point(aes(colour = Depth), size=input$ternpointsize) +
-      scale_colour_gradientn("Depth", colours=rainbow(length(axis.frame$Depth))) +
+      scale_colour_gradientn("Depth", colours=rev(terrain.colors(length(axis.frame$Depth)))) +
       theme_light() +
       theme(axis.text.x = element_text(size=15)) +
       theme(axis.text.y = element_text(size=15)) +
@@ -2803,7 +2835,7 @@ xrfPCAReactive <- reactive({
       ternaryplotage.norm <- ggtern(data=axis.frame.norm, aes_string(x = colnames(axis.frame.norm)[1], y = colnames(axis.frame.norm)[2], z = colnames(axis.frame.norm)[3])) +
       geom_point(aes(colour = Age), size=input$ternpointsize+1) +
       geom_point(size=input$ternpointsize-2) +
-      scale_colour_gradientn("Age", colours=rainbow(length(axis.frame$Depth))) +
+      scale_colour_gradientn("Age", colours=terrain.colors(length(axis.frame$Age))) +
       theme_light() +
       theme(axis.text.x = element_text(size=15)) +
       theme(axis.text.y = element_text(size=15)) +
@@ -2817,7 +2849,7 @@ xrfPCAReactive <- reactive({
       geom_density_tern() +
       geom_point(aes(colour = Age), size=input$ternpointsize+1) +
       geom_point(size=input$ternpointsize-2) +
-      scale_colour_gradientn("Age", colours=rainbow(length(axis.frame$Depth))) +
+      scale_colour_gradientn("Age", colours=terrain.colors(length(axis.frame$Age))) +
       theme_light() +
       theme(axis.text.x = element_text(size=15)) +
       theme(axis.text.y = element_text(size=15)) +
@@ -4141,7 +4173,7 @@ xrfPCAReactive <- reactive({
           ramp.time.series <- qplot(Interval, SMA(Selected, input$smoothingeq), xlab = input$xaxistypeeq, geom="line", data = spectra.timeseries.table) +
           geom_line(aes(colour = Selected), lwd=input$linesizeeq) +
           theme_light() +
-          scale_colour_gradientn(colours=rainbow(7)) +
+          scale_colour_gradientn(colours=terrain.colors(length(Interval))) +
           theme(axis.text.x = element_text(size=15)) +
           theme(axis.text.y = element_text(size=15)) +
           theme(axis.title.x = element_text(size=15)) +
@@ -4227,7 +4259,7 @@ xrfPCAReactive <- reactive({
           
           Depth.time.series <- qplot(Interval, SMA(Selected, input$smoothingeq), xlab = input$xaxistypeeq, geom="line", data = spectra.timeseries.table) +
           geom_point(aes(colour = Depth), lwd=input$pointsizeeq) +
-          scale_colour_gradientn("Depth", colours=rainbow(length(spectra.line.table$Depth))) +
+          scale_colour_gradientn("Depth", colours=rev(terrain.colors(length(spectra.line.table$Depth)))) +
           theme_light() +
           theme(axis.text.x = element_text(size=15)) +
           theme(axis.text.y = element_text(size=15)) +
@@ -4365,7 +4397,7 @@ xrfPCAReactive <- reactive({
           ramp.time.series <- qplot(Interval, SMA(Selected, input$smoothingeq), xlab = input$xaxistypeeq, geom="line", data = spectra.timeseries.table) +
           geom_line(aes(colour = Selected), lwd=input$linesizeeq) +
           theme_light() +
-          scale_colour_gradientn(colours=rainbow(7)) +
+          scale_colour_gradientn(colours=rev(terrain.colors(length(Interval)))) +
           theme(axis.text.x = element_text(size=15)) +
           theme(axis.text.y = element_text(size=15)) +
           theme(axis.title.x = element_text(size=15)) +
@@ -4451,7 +4483,7 @@ xrfPCAReactive <- reactive({
           
           Depth.time.series <- qplot(Interval, SMA(Selected, input$smoothingeq), xlab = input$xaxistypeeq, geom="line", data = spectra.timeseries.table) +
           geom_point(aes(colour = Depth), lwd=input$pointsizeeq) +
-          scale_colour_gradientn("Depth", colours=rainbow(length(spectra.line.table$Depth))) +
+          scale_colour_gradientn("Depth", colours=rev(terrain.colors(length(spectra.line.table$Depth)))) +
           theme_light() +
           theme(axis.text.x = element_text(size=15)) +
           theme(axis.text.y = element_text(size=15)) +
@@ -4589,7 +4621,7 @@ xrfPCAReactive <- reactive({
           ramp.time.series <- qplot(Interval, SMA(Selected, input$smoothingeq), xlab = input$xaxistypeeq, geom="line", data = spectra.timeseries.table) +
           geom_line(aes(colour = Selected), lwd=input$linesizeeq) +
           theme_light() +
-          scale_colour_gradientn(colours=rainbow(7)) +
+          scale_colour_gradientn(colours=rev(terrain.colors(length(Interval)))) +
           theme(axis.text.x = element_text(size=15)) +
           theme(axis.text.y = element_text(size=15)) +
           theme(axis.title.x = element_text(size=15)) +
@@ -4675,7 +4707,7 @@ xrfPCAReactive <- reactive({
           
           Depth.time.series <- qplot(Interval, SMA(Selected, input$smoothingeq), xlab = input$xaxistypeeq, geom="line", data = spectra.timeseries.table) +
           geom_point(aes(colour = Depth), lwd=input$pointsizeeq) +
-          scale_colour_gradientn("Depth", colours=rainbow(length(spectra.line.table$Depth))) +
+          scale_colour_gradientn("Depth", colours=rev(terrain.colors(length(spectra.line.table$Depth)))) +
           theme_light() +
           theme(axis.text.x = element_text(size=15)) +
           theme(axis.text.y = element_text(size=15)) +
@@ -4810,7 +4842,7 @@ xrfPCAReactive <- reactive({
           ramp.time.series <- qplot(Interval, SMA(Selected, input$smoothingeq), xlab = input$xaxistypeeq, geom="line", data = spectra.timeseries.table) +
           geom_line(aes(colour = Selected), lwd=input$linesizeeq) +
           theme_light() +
-          scale_colour_gradientn(colours=rainbow(7)) +
+          scale_colour_gradientn(colours=rev(terrain.colors(length(Interval)))) +
           theme(axis.text.x = element_text(size=15)) +
           theme(axis.text.y = element_text(size=15)) +
           theme(axis.title.x = element_text(size=15)) +
@@ -4896,7 +4928,7 @@ xrfPCAReactive <- reactive({
           
           Depth.time.series <- qplot(Interval, SMA(Selected, input$smoothingeq), xlab = input$xaxistypeeq, geom="line", data = spectra.timeseries.table) +
           geom_point(aes(colour = Depth), lwd=input$pointsizeeq) +
-          scale_colour_gradientn("Depth", colours=rainbow(length(spectra.line.table$Depth))) +
+          scale_colour_gradientn("Depth", colours=rev(terrain.colors(length(spectra.line.table$Depth)))) +
           theme_light() +
           theme(axis.text.x = element_text(size=15)) +
           theme(axis.text.y = element_text(size=15)) +
@@ -5036,7 +5068,7 @@ xrfPCAReactive <- reactive({
           ramp.time.series <- qplot(Interval, SMA(Selected, input$smoothingeq), xlab = input$xaxistypeeq, geom="line", data = spectra.timeseries.table) +
           geom_line(aes(colour = Selected), lwd=input$linesizeeq) +
           theme_light() +
-          scale_colour_gradientn(colours=rainbow(7)) +
+          scale_colour_gradientn(colours=rev(terrain.colors(length(Interval)))) +
           theme(axis.text.x = element_text(size=15)) +
           theme(axis.text.y = element_text(size=15)) +
           theme(axis.title.x = element_text(size=15)) +
@@ -5122,7 +5154,7 @@ xrfPCAReactive <- reactive({
           
           Depth.time.series <- qplot(Interval, SMA(Selected, input$smoothingeq), xlab = input$xaxistypeeq, geom="line", data = spectra.timeseries.table) +
           geom_point(aes(colour = Depth), lwd=input$pointsizeeq) +
-          scale_colour_gradientn("Depth", colours=rainbow(length(spectra.line.table$Depth))) +
+          scale_colour_gradientn("Depth", colours=rev(terrain.colors(length(spectra.line.table$Depth)))) +
           theme_light() +
           theme(axis.text.x = element_text(size=15)) +
           theme(axis.text.y = element_text(size=15)) +
