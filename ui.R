@@ -308,7 +308,7 @@ c(
 "Climate" = "Climate",
 "Qualitative Point" = "QualitativePoint",
 "Qualitative Line" = "QualitativeLine",
-"Quantitative" = "Quantitative",
+"Depth" = "Depth",
 "Area" = "Area")
 ),
 
@@ -557,7 +557,7 @@ c(
 "Climate" = "Climate",
 "Qualitative Point" = "QualitativePoint",
 "Qualitative Line" = "QualitativeLine",
-"Quantitative" = "Quantitative",
+"Depth" = "Depth",
 "Area" = "Area")
 ),
 

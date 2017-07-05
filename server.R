@@ -337,7 +337,7 @@ shinyServer(function(input, output, session) {
             
             filename = function() { paste(paste(c(input$projectname, "-", plotname), collapse=''), '.tiff', sep='') },
             content = function(file) {
-                ggsave(file,plotInput(), device="tiff", dpi=300, width=12, height=7)
+                ggplot2::ccsave(file,plotInput(), compression="lzw", dpi=300, width=12, height=7)
             }
             )
             
@@ -915,7 +915,7 @@ xrfPCAReactive <- reactive({
   output$downloadPlot2 <- downloadHandler(
   filename = function() { paste(paste(c(input$projectname, "_", "PCAPlot"), collapse=''), '.tiff',  sep='') },
   content = function(file) {
-      ggsave(file,plotInput2(), device="tiff", dpi=300, width=12, height=7)
+      ggsave(file,plotInput2(), device="tiff", compression="lzw", type="cairo", dpi=300, width=12, height=7)
   }
   )
   
@@ -1063,11 +1063,13 @@ xrfPCAReactive <- reactive({
       colnames(spectra.timeseries.table) <- c("Interval", "Selected", "Cluster", "Qualitative", "Depth", "Climate")
       
       
-      trendy <-  as.vector((if(input$elementnorm=="None") {
+      trendy <-  if(input$elementnorm=="None" && input$filetype=="Spectra") {
           paste(gsub("[.]", "", c(substr(input$elementtrend, 1, 2), " Counts per Second")), sep=",", collapse="")
-      } else {
+      } else if(input$elementnorm=="None" && input$filetype=="Net") {
+              paste(gsub("[.]", "", c(substr(input$elementtrend, 1, 2), " Net Counts")), sep=",", collapse="")
+          } else if(input$elementnorm!="None"){
           paste(gsub("[.]", "", c(substr(input$elementtrend, 1, 2), "/", substr(input$elementnorm, 1, 2))), sep=",", collapse="")
-      }))
+          }
       
       
       
@@ -1200,7 +1202,8 @@ xrfPCAReactive <- reactive({
 
 
       depth.time.series <- qplot(Interval, SMA(Selected, input$smoothing),  , geom="line", data = spectra.timeseries.table) +
-      geom_point(aes(colour = Depth), lwd=input$pointsize) +
+      geom_line(aes(colour = Depth), lwd=input$linesize+0.5) +
+      geom_line(lwd=input$linesize-0.5) +
       scale_colour_gradientn("Depth", colours=rev(terrain.colors(length(spectra.line.table$Depth)))) +
       theme_light() +
       theme(axis.text.x = element_text(size=15)) +
@@ -1330,7 +1333,8 @@ xrfPCAReactive <- reactive({
       
       
       depth.time.series.reverse <- qplot(Interval, SMA(Selected, input$smoothing),  , geom="line", data = spectra.timeseries.table) +
-      geom_point(aes(colour = Depth), lwd=input$pointsize) +
+      geom_line(aes(colour = Depth), lwd=input$linesize+0.5) +
+      geom_line(lwd=input$linesize-0.5) +
       scale_colour_gradientn("Depth", colours=rev(terrain.colors(length(spectra.line.table$Depth)))) +
       theme_light() +
       theme(axis.text.x = element_text(size=15)) +
@@ -1340,8 +1344,9 @@ xrfPCAReactive <- reactive({
       theme(plot.title=element_text(size=20)) +
       theme(legend.title=element_text(size=15)) +
       theme(legend.text=element_text(size=15)) +
-      scale_x_continuous(paste(x.axis), label=comma) +
+      scale_x_reverse(paste(x.axis), label=comma) +
       scale_y_continuous(paste(trendy), label=comma)
+
 
 
 
@@ -1378,7 +1383,7 @@ xrfPCAReactive <- reactive({
       } else if (input$timecolour == "QualitativeLine" && input$xaxistype=="Depth") {
           qualitative.time.series.line.reverse
       } else if (input$timecolour == "Depth" && input$xaxistype=="Depth") {
-          Depth.time.series.reverse
+          depth.time.series.reverse
       } else if (input$timecolour == "Area" && input$xaxistype=="Depth") {
           area.time.series.reverse
       }
@@ -1400,11 +1405,14 @@ xrfPCAReactive <- reactive({
   })
   
   trendPlot <- reactive({
-      trendy <-  as.vector((if(input$elementnorm=="None") {
+      trendy <-  if(input$elementnorm=="None" && input$filetype=="Spectra") {
           paste(gsub("[.]", "", c(substr(input$elementtrend, 1, 2), " CPS")), sep=",", collapse="")
-      } else {
+      } else
+        if(input$elementnorm=="None" && input$filetype=="Net") {
+              paste(gsub("[.]", "", c(substr(input$elementtrend, 1, 2), " NetCounts")), sep=",", collapse="")
+          } else if(input$elementnorm!="None"){
           paste(gsub("[.]", "", c(substr(input$elementtrend, 1, 2), "/", substr(input$elementnorm, 1, 2))), sep=",", collapse="")
-      }))
+      }
       
       trendy.label <- paste(c(input$projectname, "_", trendy), collapse='')
       trendy.label
@@ -1416,7 +1424,9 @@ xrfPCAReactive <- reactive({
   
   filename = function() { paste(trendPlot(), '.tiff', sep='') },
   content = function(file) {
-      ggsave(file,plotInput3a(), device="tiff", dpi=300, width=12, height=7)
+  ggsave(file,plotInput3a(), device="tiff", compression="lzw", type="cairo", dpi=300, width=12, height=7)
+  
+
   }
   )
   
@@ -1451,11 +1461,15 @@ xrfPCAReactive <- reactive({
       colnames(spectra.timeseries.table) <- c("Interval", "Selected", "Cluster", "Qualitative", "Depth", "Climate")
       
       
-      trendy <-  as.vector((if(input$elementnorm=="None") {
+         trendy <-  if(input$elementnorm=="None" && input$filetype=="Spectra") {
           paste(gsub("[.]", "", c(substr(input$elementtrend, 1, 2), " Counts per Second")), sep=",", collapse="")
-      } else {
+      } else if(input$elementnorm=="None" && input$filetype=="Net") {
+              paste(gsub("[.]", "", c(substr(input$elementtrend, 1, 2), " Net Counts")), sep=",", collapse="")
+          } else if(input$elementnorm!="None"){
           paste(gsub("[.]", "", c(substr(input$elementtrend, 1, 2), "/", substr(input$elementnorm, 1, 2))), sep=",", collapse="")
-      }))
+          }
+      
+      
       
       
       
@@ -1584,7 +1598,8 @@ xrfPCAReactive <- reactive({
       
       
       depth.time.series <- qplot(Interval, SMA(Selected, input$smoothing),  , geom="line", data = spectra.timeseries.table) +
-      geom_point(aes(colour = Depth), lwd=input$pointsize) +
+      geom_line(aes(colour = Depth), lwd=input$linesize+0.5) +
+      geom_line(lwd=input$linesize-0.5) +
       scale_colour_gradientn("Depth", colours=rev(terrain.colors(length(spectra.line.table$Depth)))) +
       theme_light() +
       theme(axis.text.x = element_text(size=15)) +
@@ -1714,7 +1729,8 @@ xrfPCAReactive <- reactive({
       
       
       depth.time.series.reverse <- qplot(Interval, SMA(Selected, input$smoothing),  , geom="line", data = spectra.timeseries.table) +
-      geom_point(aes(colour = Depth), lwd=input$pointsize) +
+      geom_line(aes(colour = Depth), lwd=input$linesize+0.5) +
+      geom_line(lwd=input$linesize-0.5) +
       scale_colour_gradientn("Depth", colours=rev(terrain.colors(length(spectra.line.table$Depth)))) +
       theme_light() +
       theme(axis.text.x = element_text(size=15)) +
@@ -1761,7 +1777,7 @@ xrfPCAReactive <- reactive({
       } else if (input$timecolour == "QualitativeLine" && input$xaxistype=="Depth") {
           qualitative.time.series.line.reverse
       } else if (input$timecolour == "Depth" && input$xaxistype=="Depth") {
-          Depth.time.series.reverse
+          depth.time.series.reverse
       } else if (input$timecolour == "Area" && input$xaxistype=="Depth") {
           area.time.series.reverse
       }
@@ -1788,7 +1804,7 @@ xrfPCAReactive <- reactive({
   
   filename = function() { paste(trendPlot(), '.tiff', sep='') },
   content = function(file) {
-      ggsave(file,plotInput3b(), device="tiff", dpi=300, width=12, height=7)
+      ggsave(file,plotInput3b(), device="tiff", compression="lzw", type="cairo", type="cairo", dpi=300, width=12, height=7)
   }
   )
   
@@ -1823,11 +1839,15 @@ xrfPCAReactive <- reactive({
       colnames(spectra.timeseries.table) <- c("Interval", "Selected", "Cluster", "Qualitative", "Depth", "Climate")
       
       
-      trendy <-  as.vector((if(input$elementnorm=="None") {
+         trendy <-  if(input$elementnorm=="None" && input$filetype=="Spectra") {
           paste(gsub("[.]", "", c(substr(input$elementtrend, 1, 2), " Counts per Second")), sep=",", collapse="")
-      } else {
+      } else if(input$elementnorm=="None" && input$filetype=="Net") {
+              paste(gsub("[.]", "", c(substr(input$elementtrend, 1, 2), " Net Counts")), sep=",", collapse="")
+          } else if(input$elementnorm!="None"){
           paste(gsub("[.]", "", c(substr(input$elementtrend, 1, 2), "/", substr(input$elementnorm, 1, 2))), sep=",", collapse="")
-      }))
+          }
+      
+      
       
       
       
@@ -1956,8 +1976,8 @@ xrfPCAReactive <- reactive({
       
       
       depth.time.series <- qplot(Interval, SMA(Selected, input$smoothing),  , geom="line", data = spectra.timeseries.table) +
-      geom_point(aes(colour = Depth), lwd=input$pointsize) +
-      scale_colour_gradientn("Depth", colours=rev(terrain.colors(length(spectra.line.table$Depth)))) +
+      geom_line(aes(colour = Depth), lwd=input$linesize+0.5) +
+      geom_line(lwd=input$linesize-0.5) +      scale_colour_gradientn("Depth", colours=rev(terrain.colors(length(spectra.line.table$Depth)))) +
       theme_light() +
       theme(axis.text.x = element_text(size=15)) +
       theme(axis.text.y = element_text(size=15)) +
@@ -2086,8 +2106,8 @@ xrfPCAReactive <- reactive({
       
       
       depth.time.series.reverse <- qplot(Interval, SMA(Selected, input$smoothing),  , geom="line", data = spectra.timeseries.table) +
-      geom_point(aes(colour = Depth), lwd=input$pointsize) +
-      scale_colour_gradientn("Depth", colours=rev(terrain.colors(length(spectra.line.table$Depth)))) +
+      geom_line(aes(colour = Depth), lwd=input$linesize+0.5) +
+      geom_line(lwd=input$linesize-0.5) +      scale_colour_gradientn("Depth", colours=rev(terrain.colors(length(spectra.line.table$Depth)))) +
       theme_light() +
       theme(axis.text.x = element_text(size=15)) +
       theme(axis.text.y = element_text(size=15)) +
@@ -2132,7 +2152,7 @@ xrfPCAReactive <- reactive({
       } else if (input$timecolour == "QualitativeLine" && input$xaxistype=="Depth") {
           qualitative.time.series.line.reverse
       } else if (input$timecolour == "Depth" && input$xaxistype=="Depth") {
-          Depth.time.series.reverse
+          depth.time.series.reverse
       } else if (input$timecolour == "Area" && input$xaxistype=="Depth") {
           area.time.series.reverse
       }
@@ -2158,7 +2178,7 @@ xrfPCAReactive <- reactive({
   
   filename = function() { paste(trendPlot(), '.tiff', sep='') },
   content = function(file) {
-      ggsave(file,plotInput3c(), device="tiff", dpi=300, width=12, height=7)
+      ggsave(file,plotInput3c(), device="tiff", compression="lzw", type="cairo", dpi=300, width=12, height=7)
   }
   )
   
@@ -2193,11 +2213,15 @@ xrfPCAReactive <- reactive({
       colnames(spectra.timeseries.table) <- c("Interval", "Selected", "Cluster", "Qualitative", "Depth", "Climate")
       
       
-      trendy <-  as.vector((if(input$elementnorm=="None") {
+         trendy <-  if(input$elementnorm=="None" && input$filetype=="Spectra") {
           paste(gsub("[.]", "", c(substr(input$elementtrend, 1, 2), " Counts per Second")), sep=",", collapse="")
-      } else {
+      } else if(input$elementnorm=="None" && input$filetype=="Net") {
+              paste(gsub("[.]", "", c(substr(input$elementtrend, 1, 2), " Net Counts")), sep=",", collapse="")
+          } else if(input$elementnorm!="None"){
           paste(gsub("[.]", "", c(substr(input$elementtrend, 1, 2), "/", substr(input$elementnorm, 1, 2))), sep=",", collapse="")
-      }))
+          }
+      
+      
       
       
       
@@ -2326,8 +2350,8 @@ xrfPCAReactive <- reactive({
       
       
       depth.time.series <- qplot(Interval, SMA(Selected, input$smoothing),  , geom="line", data = spectra.timeseries.table) +
-      geom_point(aes(colour = Depth), lwd=input$pointsize) +
-      scale_colour_gradientn("Depth", colours=rev(terrain.colors(length(spectra.line.table$Depth)))) +
+      geom_line(aes(colour = Depth), lwd=input$linesize+0.5) +
+      geom_line(lwd=input$linesize-0.5) +      scale_colour_gradientn("Depth", colours=rev(terrain.colors(length(spectra.line.table$Depth)))) +
       theme_light() +
       theme(axis.text.x = element_text(size=15)) +
       theme(axis.text.y = element_text(size=15)) +
@@ -2459,7 +2483,8 @@ xrfPCAReactive <- reactive({
       
       
       depth.time.series.reverse <- qplot(Interval, SMA(Selected, input$smoothing),  , geom="line", data = spectra.timeseries.table) +
-      geom_point(aes(colour = Depth), lwd=input$pointsize) +
+      geom_line(aes(colour = Depth), lwd=input$linesize+0.5) +
+      geom_line(lwd=input$linesize-0.5) +
       scale_colour_gradientn("Depth", colours=rev(terrain.colors(length(spectra.line.table$Depth)))) +
       theme_light() +
       theme(axis.text.x = element_text(size=15)) +
@@ -2506,7 +2531,7 @@ xrfPCAReactive <- reactive({
       } else if (input$timecolour == "QualitativeLine" && input$xaxistype=="Depth") {
           qualitative.time.series.line.reverse
       } else if (input$timecolour == "Depth" && input$xaxistype=="Depth") {
-          Depth.time.series.reverse
+          depth.time.series.reverse
       } else if (input$timecolour == "Area" && input$xaxistype=="Depth") {
           area.time.series.reverse
       }
@@ -2534,7 +2559,7 @@ xrfPCAReactive <- reactive({
   
   filename = function() { paste(trendPlot(), '.tiff', sep='') },
   content = function(file) {
-      ggsave(file,plotInput3d(), device="tiff", dpi=300, width=12, height=7)
+      ggsave(file,plotInput3d(), device="tiff", compression="lzw", type="cairo", dpi=300, width=12, height=7)
   }
   )
   
@@ -2573,11 +2598,15 @@ xrfPCAReactive <- reactive({
       colnames(spectra.timeseries.table) <- c("Interval", "Selected", "Cluster", "Qualitative", "Depth", "Climate")
       
       
-      trendy <-  as.vector((if(input$elementnorm=="None") {
+         trendy <-  if(input$elementnorm=="None" && input$filetype=="Spectra") {
           paste(gsub("[.]", "", c(substr(input$elementtrend, 1, 2), " Counts per Second")), sep=",", collapse="")
-      } else {
+      } else if(input$elementnorm=="None" && input$filetype=="Net") {
+              paste(gsub("[.]", "", c(substr(input$elementtrend, 1, 2), " Net Counts")), sep=",", collapse="")
+          } else if(input$elementnorm!="None"){
           paste(gsub("[.]", "", c(substr(input$elementtrend, 1, 2), "/", substr(input$elementnorm, 1, 2))), sep=",", collapse="")
-      }))
+          }
+      
+      
       
       
       
@@ -2706,7 +2735,8 @@ xrfPCAReactive <- reactive({
       
       
       depth.time.series <- qplot(Interval, SMA(Selected, input$smoothing),  , geom="line", data = spectra.timeseries.table) +
-      geom_point(aes(colour = Depth), lwd=input$pointsize) +
+      geom_line(aes(colour = Depth), lwd=input$linesize+0.5) +
+      geom_line(lwd=input$linesize-0.5) +
       scale_colour_gradientn("Depth", colours=rev(terrain.colors(length(spectra.line.table$Depth)))) +
       theme_light() +
       theme(axis.text.x = element_text(size=15)) +
@@ -2837,7 +2867,8 @@ xrfPCAReactive <- reactive({
       
       
       depth.time.series.reverse <- qplot(Interval, SMA(Selected, input$smoothing),  , geom="line", data = spectra.timeseries.table) +
-      geom_point(aes(colour = Depth), lwd=input$pointsize) +
+      geom_line(aes(colour = Depth), lwd=input$linesize+0.5) +
+      geom_line(lwd=input$linesize-0.5) +
       scale_colour_gradientn("Depth", colours=rev(terrain.colors(length(spectra.line.table$Depth)))) +
       theme_light() +
       theme(axis.text.x = element_text(size=15)) +
@@ -2884,7 +2915,7 @@ xrfPCAReactive <- reactive({
       } else if (input$timecolour == "QualitativeLine" && input$xaxistype=="Depth") {
           qualitative.time.series.line.reverse
       } else if (input$timecolour == "Depth" && input$xaxistype=="Depth") {
-          Depth.time.series.reverse
+          depth.time.series.reverse
       } else if (input$timecolour == "Area" && input$xaxistype=="Depth") {
           area.time.series.reverse
       }
@@ -2915,7 +2946,7 @@ xrfPCAReactive <- reactive({
   
   filename = function() { paste(trendPlot(), '.tiff', sep='') },
   content = function(file) {
-      ggsave(file,plotInput3e(), device="tiff", dpi=300, width=12, height=7)
+      ggsave(file,plotInput3e(), device="tiff", compression="lzw", type="cairo", dpi=300, width=12, height=7)
   }
   )
   
@@ -3245,7 +3276,7 @@ xrfPCAReactive <- reactive({
   
   filename = function() { paste(ratioTerm(), '.tiff', sep='') },
   content = function(file) {
-      ggsave(file,plotInput4(), device="tiff", dpi=300, width=12, height=7)
+      ggsave(file,plotInput4(), device="tiff", compression="lzw", type="cairo", dpi=300, width=12, height=7)
   }
   )
   
@@ -3424,7 +3455,6 @@ xrfPCAReactive <- reactive({
       theme(legend.text=element_text(size=15))
       
       ternaryplotdepth <- ggtern(data=axis.frame, aes_string(x = colnames(axis.frame)[1], y = colnames(axis.frame)[2], z = colnames(axis.frame)[3])) +
-      geom_density_tern() +
       geom_point(aes(colour = Depth), size=input$ternpointsize+1) +
       geom_point(size=input$ternpointsize-2) +
       scale_colour_gradientn("Depth", colours=rev(terrain.colors(length(axis.frame$Depth)))) +
@@ -3736,7 +3766,7 @@ xrfPCAReactive <- reactive({
   
   filename = function() { paste(axisTerm(), '.tiff', sep='') },
   content = function(file) {
-      ggsave(file,plotInput5(), device="tiff", dpi=300, width=12, height=7)
+      ggsave(file,plotInput5(), device="tiff", compression="lzw", type="cairo", dpi=300, width=12, height=7)
   }
   )
   
@@ -5052,7 +5082,8 @@ xrfPCAReactive <- reactive({
       
       
       depth.time.series <- qplot(Interval, SMA(Selected, input$smoothingeq),  geom="line", data = spectra.timeseries.table) +
-      geom_point(aes(colour = Depth), lwd=input$pointsizeeq) +
+      geom_line(aes(colour = Depth), lwd=input$linesize+0.5) +
+      geom_line(lwd=input$linesize-0.5) +
       scale_colour_gradientn("Depth", colours=rev(terrain.colors(length(spectra.line.table$Depth)))) +
       theme_light() +
       theme(axis.text.x = element_text(size=15)) +
@@ -5185,7 +5216,8 @@ scale_colour_gradientn(colours=rev(terrain.colors(length(spectra.timeseries.tabl
       
       
       depth.time.series.reverse <- qplot(Interval, SMA(Selected, input$smoothingeq),  geom="line", data = spectra.timeseries.table) +
-      geom_point(aes(colour = Depth), lwd=input$pointsizeeq) +
+      geom_line(aes(colour = Depth), lwd=input$linesize+0.5) +
+      geom_line(lwd=input$linesize-0.5) +
       scale_colour_gradientn("Depth", colours=rev(terrain.colors(length(spectra.line.table$Depth)))) +
       theme_light() +
       theme(axis.text.x = element_text(size=15)) +
@@ -5233,7 +5265,7 @@ scale_colour_gradientn(colours=rev(terrain.colors(length(spectra.timeseries.tabl
       } else if (input$timecoloureq == "QualitativeLine" && input$xaxistypeeq=="Depth") {
           qualitative.time.series.line.reverse
       } else if (input$timecoloureq == "Depth" && input$xaxistypeeq=="Depth") {
-          Depth.time.series.reverse
+          depth.time.series.reverse
       } else if (input$timecoloureq == "Area" && input$xaxistypeeq=="Depth") {
           area.time.series.reverse
       }
@@ -5260,7 +5292,7 @@ scale_colour_gradientn(colours=rev(terrain.colors(length(spectra.timeseries.tabl
   
   filename = function() { paste(input$projectname, "_", input$yaxistype, '.tiff', sep='') },
   content = function(file) {
-      ggsave(file,plotInput6a(), device="tiff", dpi=300, width=12, height=7)
+      ggsave(file,plotInput6a(), device="tiff", compression="lzw", type="cairo", dpi=300, width=12, height=7)
   }
   )
   
@@ -5426,7 +5458,8 @@ scale_colour_gradientn(colours=rev(terrain.colors(length(spectra.timeseries.tabl
       
       
       depth.time.series <- qplot(Interval, SMA(Selected, input$smoothingeq),  geom="line", data = spectra.timeseries.table) +
-      geom_point(aes(colour = Depth), lwd=input$pointsizeeq) +
+      geom_line(aes(colour = Depth), lwd=input$linesize+0.5) +
+      geom_line(lwd=input$linesize-0.5) +
       scale_colour_gradientn("Depth", colours=rev(terrain.colors(length(spectra.line.table$Depth)))) +
       theme_light() +
       theme(axis.text.x = element_text(size=15)) +
@@ -5558,7 +5591,8 @@ scale_colour_gradientn(colours=rev(terrain.colors(length(spectra.timeseries.tabl
       
       
       depth.time.series.reverse <- qplot(Interval, SMA(Selected, input$smoothingeq),  geom="line", data = spectra.timeseries.table) +
-      geom_point(aes(colour = Depth), lwd=input$pointsizeeq) +
+      geom_line(aes(colour = Depth), lwd=input$linesize+0.5) +
+      geom_line(lwd=input$linesize-0.5) +
       scale_colour_gradientn("Depth", colours=rev(terrain.colors(length(spectra.line.table$Depth)))) +
       theme_light() +
       theme(axis.text.x = element_text(size=15)) +
@@ -5605,7 +5639,7 @@ scale_colour_gradientn(colours=rev(terrain.colors(length(spectra.timeseries.tabl
       } else if (input$timecoloureq == "QualitativeLine" && input$xaxistypeeq=="Depth") {
           qualitative.time.series.line.reverse
       } else if (input$timecoloureq == "Depth" && input$xaxistypeeq=="Depth") {
-          Depth.time.series.reverse
+          depth.time.series.reverse
       } else if (input$timecoloureq == "Area" && input$xaxistypeeq=="Depth") {
           area.time.series.reverse
       }
@@ -5631,7 +5665,7 @@ scale_colour_gradientn(colours=rev(terrain.colors(length(spectra.timeseries.tabl
   
   filename = function() { paste(input$projectname, "_", input$yaxistype, '.tiff', sep='') },
   content = function(file) {
-      ggsave(file,plotInput6b(), device="tiff", dpi=300, width=12, height=7)
+      ggsave(file,plotInput6b(), device="tiff", compression="lzw", type="cairo", dpi=300, width=12, height=7)
   }
   )
   
@@ -5799,7 +5833,8 @@ scale_colour_gradientn(colours=rev(terrain.colors(length(spectra.timeseries.tabl
       
       
       depth.time.series <- qplot(Interval, SMA(Selected, input$smoothingeq),  geom="line", data = spectra.timeseries.table) +
-      geom_point(aes(colour = Depth), lwd=input$pointsizeeq) +
+      geom_line(aes(colour = Depth), lwd=input$linesize+0.5) +
+      geom_line(lwd=input$linesize-0.5) +
       scale_colour_gradientn("Depth", colours=rev(terrain.colors(length(spectra.line.table$Depth)))) +
       theme_light() +
       theme(axis.text.x = element_text(size=15)) +
@@ -5931,7 +5966,8 @@ scale_colour_gradientn(colours=rev(terrain.colors(length(spectra.timeseries.tabl
       
       
       depth.time.series.reverse <- qplot(Interval, SMA(Selected, input$smoothingeq),  geom="line", data = spectra.timeseries.table) +
-      geom_point(aes(colour = Depth), lwd=input$pointsizeeq) +
+      geom_line(aes(colour = Depth), lwd=input$linesize+0.5) +
+      geom_line(lwd=input$linesize-0.5) +
       scale_colour_gradientn("Depth", colours=rev(terrain.colors(length(spectra.line.table$Depth)))) +
       theme_light() +
       theme(axis.text.x = element_text(size=15)) +
@@ -5978,7 +6014,7 @@ scale_colour_gradientn(colours=rev(terrain.colors(length(spectra.timeseries.tabl
       } else if (input$timecoloureq == "QualitativeLine" && input$xaxistypeeq=="Depth") {
           qualitative.time.series.line.reverse
       } else if (input$timecoloureq == "Depth" && input$xaxistypeeq=="Depth") {
-          Depth.time.series.reverse
+          depth.time.series.reverse
       } else if (input$timecoloureq == "Area" && input$xaxistypeeq=="Depth") {
           area.time.series.reverse
       }
@@ -6003,7 +6039,7 @@ scale_colour_gradientn(colours=rev(terrain.colors(length(spectra.timeseries.tabl
   
   filename = function() { paste(input$projectname, "_", input$yaxistype, '.tiff', sep='') },
   content = function(file) {
-      ggsave(file,plotInput6c(), device="tiff", dpi=300, width=12, height=7)
+      ggsave(file,plotInput6c(), device="tiff", compression="lzw", type="cairo", dpi=300, width=12, height=7)
   }
   )
   
@@ -6169,7 +6205,8 @@ scale_colour_gradientn(colours=rev(terrain.colors(length(spectra.timeseries.tabl
       
       
       depth.time.series <- qplot(Interval, SMA(Selected, input$smoothingeq),  geom="line", data = spectra.timeseries.table) +
-      geom_point(aes(colour = Depth), lwd=input$pointsizeeq) +
+      geom_line(aes(colour = Depth), lwd=input$linesize+0.5) +
+      geom_line(lwd=input$linesize-0.5) +
       scale_colour_gradientn("Depth", colours=rev(terrain.colors(length(spectra.line.table$Depth)))) +
       theme_light() +
       theme(axis.text.x = element_text(size=15)) +
@@ -6301,7 +6338,8 @@ scale_colour_gradientn(colours=rev(terrain.colors(length(spectra.timeseries.tabl
       
       
       depth.time.series.reverse <- qplot(Interval, SMA(Selected, input$smoothingeq),  geom="line", data = spectra.timeseries.table) +
-      geom_point(aes(colour = Depth), lwd=input$pointsizeeq) +
+      geom_line(aes(colour = Depth), lwd=input$linesize+0.5) +
+      geom_line(lwd=input$linesize-0.5) +
       scale_colour_gradientn("Depth", colours=rev(terrain.colors(length(spectra.line.table$Depth)))) +
       theme_light() +
       theme(axis.text.x = element_text(size=15)) +
@@ -6348,7 +6386,7 @@ scale_colour_gradientn(colours=rev(terrain.colors(length(spectra.timeseries.tabl
       } else if (input$timecoloureq == "QualitativeLine" && input$xaxistypeeq=="Depth") {
           qualitative.time.series.line.reverse
       } else if (input$timecoloureq == "Depth" && input$xaxistypeeq=="Depth") {
-          Depth.time.series.reverse
+          depth.time.series.reverse
       } else if (input$timecoloureq == "Area" && input$xaxistypeeq=="Depth") {
           area.time.series.reverse
       }
@@ -6374,7 +6412,7 @@ scale_colour_gradientn(colours=rev(terrain.colors(length(spectra.timeseries.tabl
   
   filename = function() { paste(input$projectname, "_", input$yaxistype, '.tiff', sep='') },
   content = function(file) {
-      ggsave(file,plotInput6d(), device="tiff", dpi=300, width=12, height=7)
+      ggsave(file,plotInput6d(), device="tiff", compression="lzw", type="cairo", dpi=300, width=12, height=7)
   }
   )
   
@@ -6543,7 +6581,8 @@ scale_colour_gradientn(colours=rev(terrain.colors(length(spectra.timeseries.tabl
       
       
       depth.time.series <- qplot(Interval, SMA(Selected, input$smoothingeq),  geom="line", data = spectra.timeseries.table) +
-      geom_point(aes(colour = Depth), lwd=input$pointsizeeq) +
+      geom_line(aes(colour = Depth), lwd=input$linesize+0.5) +
+      geom_line(lwd=input$linesize-0.5) +
       scale_colour_gradientn("Depth", colours=rev(terrain.colors(length(spectra.line.table$Depth)))) +
       theme_light() +
       theme(axis.text.x = element_text(size=15)) +
@@ -6675,7 +6714,8 @@ scale_colour_gradientn(colours=rev(terrain.colors(length(spectra.timeseries.tabl
       
       
       depth.time.series.reverse <- qplot(Interval, SMA(Selected, input$smoothingeq),  geom="line", data = spectra.timeseries.table) +
-      geom_point(aes(colour = Depth), lwd=input$pointsizeeq) +
+      geom_line(aes(colour = Depth), lwd=input$linesize+0.5) +
+      geom_line(lwd=input$linesize-0.5) +
       scale_colour_gradientn("Depth", colours=rev(terrain.colors(length(spectra.line.table$Depth)))) +
       theme_light() +
       theme(axis.text.x = element_text(size=15)) +
@@ -6722,7 +6762,7 @@ scale_colour_gradientn(colours=rev(terrain.colors(length(spectra.timeseries.tabl
       } else if (input$timecoloureq == "QualitativeLine" && input$xaxistypeeq=="Depth") {
           qualitative.time.series.line.reverse
       } else if (input$timecoloureq == "Depth" && input$xaxistypeeq=="Depth") {
-          Depth.time.series.reverse
+          depth.time.series.reverse
       } else if (input$timecoloureq == "Area" && input$xaxistypeeq=="Depth") {
           area.time.series.reverse
       }
@@ -6752,7 +6792,7 @@ scale_colour_gradientn(colours=rev(terrain.colors(length(spectra.timeseries.tabl
   
   filename = function() { paste(input$projectname, "_", input$yaxistype, '.tiff', sep='') },
   content = function(file) {
-      ggsave(file,plotInput6e(), device="tiff", dpi=300, width=12, height=7)
+      ggsave(file,plotInput6e(), device="tiff", compression="lzw", type="cairo", dpi=300, width=12, height=7)
   }
   )
   
