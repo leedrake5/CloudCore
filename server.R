@@ -1023,18 +1023,47 @@ xrfPCAReactive <- reactive({
 
  
  
+ xmindata <- reactive({
+     
+     spectra.line.table <- ageData()
+     
+     x.data <- spectra.line.table[input$xaxistype]
+     xmindata <- min(x.data)
+     
+         xmindata
+     
+
+ })
+ 
+ xmaxdata <- reactive({
+     spectra.line.table <- ageData()
+     
+     x.data <- spectra.line.table[input$xaxistype]
+     xmaxdata <- max(x.data)
+     xmaxdata
+
+ })
  
  
 
- 
- 
- 
- 
+
+output$inxlimrange <- renderUI({
+
+
+    sliderInput("xlimrange", "X axis", min=xmindata(), max=xmaxdata(), value=c(xmindata(), xmaxdata()))
+})
+
+
+
+
+
+
  
   
   plotInput3a <- reactive({
       
       spectra.line.table <- ageData()
+      spectra.line.table <- subset(spectra.line.table, !(spectra.line.table[input$xaxistype] < input$xlimrange[1] | spectra.line.table[input$xaxistype] > input$xlimrange[2]))
       
       
       x.axis <- if (input$xaxistype=="Depth") {

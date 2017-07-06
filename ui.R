@@ -328,8 +328,11 @@ selectInput("xaxistype", label="X Axis", c("Depth", "Age"), selected="Depth"),
 
 radioButtons("lengthunit", label=NULL, c("mm", "cm", "m", "inches", "feet"), selected="mm"),
 numericInput("startmm", label = "Start Point (mm)", value=0),
-radioButtons("timetype", label=NULL, c("AD", "BC", "BC/AD", "BP"), selected="BP")
+radioButtons("timetype", label=NULL, c("AD", "BC", "BC/AD", "BP"), selected="BP"),
 
+tags$hr(),
+
+uiOutput('inxlimrange')
 
 
 
