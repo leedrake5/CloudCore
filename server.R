@@ -1075,7 +1075,7 @@ xrfPCAReactive <- reactive({
 output$inxlimrange <- renderUI({
 
 
-    sliderInput("xlimrange", "X axis", min=xmindata(), max=xmaxdata(), value=c(xmindata(), xmaxdata()))
+    sliderInput("xlimrange", "X axis", min=xmindata(), max=xmaxdata(), value=c(xmindata(), xmaxdata()), round=FALSE)
 })
 
 
