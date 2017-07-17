@@ -34,12 +34,7 @@ shinyServer(function(input, output, session) {
         
         myfiles.x = pblapply(inFile$datapath, read_csv_filename_x)
         
-        
-        
         myfiles.y = pblapply(inFile$datapath, read_csv_filename_y)
-        
-        
-        
         
         xrf.x <- data.frame(id.seq, myfiles.x)
         colnames(xrf.x) <- c("ID", temp)
@@ -66,8 +61,6 @@ shinyServer(function(input, output, session) {
           })
           
           spectra.table
-
-
     })
     
     
@@ -89,7 +82,7 @@ shinyServer(function(input, output, session) {
         n <- length(inFile$name)
         net.names <- gsub("\\@.*","",inFile$name)
         
-        myfiles = pblapply(inFile$datapath, function(x) read_csv_net(x))
+        myfiles = pblapply(inFile$datapath,  read_csv_net)
         
     
         myfiles.frame.list <- pblapply(myfiles, data.frame, stringsAsFactors=FALSE)
@@ -132,6 +125,8 @@ shinyServer(function(input, output, session) {
             data
             
         })
+        
+    
         
         
         output$contents <- renderTable({
@@ -578,8 +573,13 @@ xrfPCAReactive <- reactive({
       DF4 <- subset(DF3, !DF3$Sigma==0)
       DF5 <- as.data.frame(DF4)
       
-      age.math <- Bchronology(ages=as.numeric(as.vector(DF5[,2])), ageSds=as.numeric(as.vector(DF5[,3])), positions=as.numeric(as.vector(DF5[,1])), positionThickness=rep(0.5, length(DF5$Sigma)), calCurves=DF5[,4], burn=2000, jitterPositions=TRUE)
-      
+      age.math <- if(input$ageon==TRUE){
+          Bchronology(ages=as.numeric(as.vector(DF5[,2])), ageSds=as.numeric(as.vector(DF5[,3])), positions=as.numeric(as.vector(DF5[,1])), positionThickness=rep(0.5, length(DF5$Sigma)), calCurves=DF5[,4], burn=2000, jitterPositions=TRUE)
+      }else if(input$ageon==FALSE){
+          NULL
+      }
+  
+  
       age.math
 
   })
@@ -589,13 +589,27 @@ xrfPCAReactive <- reactive({
       age.math <- ageResults()
       
       spectra.line.table <- dataProcessed()
+      
+      age.results <- if(input$ageon==TRUE){
+          predict(age.math, newPositions=spectra.line.table$Depth, newPositionThicknesses=rep(0.0, length(spectra.line.table$Depth)))
+      }else if(input$ageon==FALSE) {
+          NULL
+      }
+      
+      age.medians <- if(input$ageon==TRUE){
+          apply(age.results, 2, median)
+      }else if(input$ageon==FALSE) {
+          spectra.line.table$Depth
+      }
 
-      age.results <- predict(age.math, newPositions=spectra.line.table$Depth, newPositionThicknesses=rep(0.0, length(spectra.line.table$Depth)))
-      
-      age.medians <- apply(age.results, 2, median)
-      
-      age.sd <- apply(age.results, 2, sd)
-      
+
+      age.sd <-  if(input$ageon==TRUE){
+          apply(age.results, 2, sd)
+      }else if(input$ageon==FALSE) {
+          rep(0, length(spectra.line.table$Depth))
+      }
+
+
       age.min.sd1 <- age.medians - age.sd
       age.min.sd2 <- age.medians - age.sd*2
       
@@ -736,6 +750,7 @@ xrfPCAReactive <- reactive({
       
       
       spectra.line.table <- ageData()
+    
       
       
       
@@ -1112,7 +1127,7 @@ output$inxlimrange <- renderUI({
       
       
       
-      black.time.series <- qplot(Interval, SMA(Selected, input$smoothing), input$xaxistype, , geom="line", data = spectra.timeseries.table) +
+      black.time.series <- qplot(Interval, SMA(Selected, input$smoothing), geom="line", data = spectra.timeseries.table) +
       geom_line(colour = "black", lwd=input$linesize) +
       theme_light() +
       theme(axis.text.x = element_text(size=15)) +
@@ -1126,7 +1141,7 @@ output$inxlimrange <- renderUI({
         scale_y_continuous(paste(trendy), label=comma)
 
       
-      smooth.time.series <- qplot(spectra.timeseries.table$Interval, SMA(spectra.timeseries.table$Selected, input$smoothing), , geom="point") +
+      smooth.time.series <- qplot(spectra.timeseries.table$Interval, SMA(spectra.timeseries.table$Selected, input$smoothing), geom="point") +
       theme_light() +
       stat_smooth() +
       theme(axis.text.x = element_text(size=15)) +
@@ -1141,7 +1156,7 @@ output$inxlimrange <- renderUI({
 
 
 
-      ramp.time.series <- qplot(Interval, SMA(Selected, input$smoothing),  , geom="line", data = spectra.timeseries.table) +
+      ramp.time.series <- qplot(Interval, SMA(Selected, input$smoothing),  geom="line", data = spectra.timeseries.table) +
       geom_line(aes(colour = Selected), lwd=input$linesize) +
       theme_light() +
       scale_colour_gradientn(colours=rainbow(7)) +
@@ -1173,7 +1188,7 @@ output$inxlimrange <- renderUI({
 
 
       
-      cluster.time.series <- qplot(Interval, SMA(Selected, input$smoothing),  , geom="line", data = spectra.timeseries.table) +
+      cluster.time.series <- qplot(Interval, SMA(Selected, input$smoothing),  geom="line", data = spectra.timeseries.table) +
       geom_point(aes(colour = as.factor(Cluster)), size=input$pointsize) +
       scale_colour_discrete("Cluster") +
       theme_light() +
@@ -1188,7 +1203,7 @@ output$inxlimrange <- renderUI({
            scale_y_continuous(paste(trendy), label=comma)
 
       
-      climate.time.series.line <- qplot(Interval, SMA(Selected, input$smoothing), xlab = input$xaxistype, , geom="line", data = spectra.timeseries.table, colour = as.factor(Climate)) +
+      climate.time.series.line <- qplot(Interval, SMA(Selected, input$smoothing), geom="line", data = spectra.timeseries.table, colour = as.factor(Climate)) +
       scale_colour_discrete("Climatic Period") +
       theme_light() +
       theme(axis.text.x = element_text(size=15)) +
@@ -1202,7 +1217,7 @@ output$inxlimrange <- renderUI({
       scale_y_continuous(paste(trendy), label=comma)
 
 
-      qualitative.time.series.line <- qplot(Interval, SMA(Selected, input$smoothing), xlab = input$xaxistype, , geom="line", data = spectra.timeseries.table, colour = as.factor(Qualitative)) +
+      qualitative.time.series.line <- qplot(Interval, SMA(Selected, input$smoothing), geom="line", data = spectra.timeseries.table, colour = as.factor(Qualitative)) +
       scale_colour_discrete("Qualitative") +
       theme_light() +
       theme(axis.text.x = element_text(size=15)) +
@@ -1215,7 +1230,7 @@ output$inxlimrange <- renderUI({
        scale_x_continuous(paste(x.axis), label=comma) +
       scale_y_continuous(paste(trendy), label=comma)
       
-      qualitative.time.series.point <- qplot(Interval, SMA(Selected, input$smoothing),  , geom="line", data = spectra.timeseries.table) +
+      qualitative.time.series.point <- qplot(Interval, SMA(Selected, input$smoothing),  geom="line", data = spectra.timeseries.table) +
       geom_point(aes(colour = as.factor(Qualitative)), lwd=input$pointsize) +
       scale_colour_discrete("Qualitative") +
       theme_light() +
@@ -1230,7 +1245,7 @@ output$inxlimrange <- renderUI({
       scale_y_continuous(paste(trendy), label=comma)
 
 
-      depth.time.series <- qplot(Interval, SMA(Selected, input$smoothing),  , geom="line", data = spectra.timeseries.table) +
+      depth.time.series <- qplot(Interval, SMA(Selected, input$smoothing),  geom="line", data = spectra.timeseries.table) +
       geom_line(aes(colour = Depth), lwd=input$linesize+0.5) +
       geom_line(lwd=input$linesize-0.5) +
       scale_colour_gradientn("Depth", colours=rev(terrain.colors(length(spectra.line.table$Depth)))) +
@@ -1248,7 +1263,7 @@ output$inxlimrange <- renderUI({
       
       ####Flipped X Axis
       
-      black.time.series.reverse <- qplot(Interval, SMA(Selected, input$smoothing), input$xaxistype, , geom="line", data = spectra.timeseries.table) +
+      black.time.series.reverse <- qplot(Interval, SMA(Selected, input$smoothing), geom="line", data = spectra.timeseries.table) +
       geom_line(colour = "black", lwd=input$linesize) +
       theme_light() +
       theme(axis.text.x = element_text(size=15)) +
@@ -1261,7 +1276,7 @@ output$inxlimrange <- renderUI({
       scale_x_reverse(paste(x.axis), label=comma) +
       scale_y_continuous(paste(trendy), label=comma)
       
-      smooth.time.series.reverse <- qplot(spectra.timeseries.table$Interval, SMA(spectra.timeseries.table$Selected, input$smoothing), xlab = input$xaxistype, , geom="point") +
+      smooth.time.series.reverse <- qplot(spectra.timeseries.table$Interval, SMA(spectra.timeseries.table$Selected, input$smoothing), geom="point") +
       theme_light() +
       stat_smooth() +
       theme(axis.text.x = element_text(size=15)) +
@@ -1275,7 +1290,7 @@ output$inxlimrange <- renderUI({
       scale_y_continuous(paste(trendy), label=comma)
       
       
-      ramp.time.series.reverse <- qplot(Interval, SMA(Selected, input$smoothing), , geom="line", data = spectra.timeseries.table) +
+      ramp.time.series.reverse <- qplot(Interval, SMA(Selected, input$smoothing), geom="line", data = spectra.timeseries.table) +
       geom_line(aes(colour = Selected), lwd=input$linesize) +
       theme_light() +
       scale_colour_gradientn(colours=rainbow(7)) +
@@ -1305,7 +1320,7 @@ output$inxlimrange <- renderUI({
       
       
       
-      cluster.time.series.reverse <- qplot(Interval, SMA(Selected, input$smoothing),  , geom="line", data = spectra.timeseries.table) +
+      cluster.time.series.reverse <- qplot(Interval, SMA(Selected, input$smoothing),  geom="line", data = spectra.timeseries.table) +
       geom_point(aes(colour = as.factor(Cluster)), size=input$pointsize) +
       scale_colour_discrete("Cluster") +
       theme_light() +
@@ -1319,7 +1334,7 @@ output$inxlimrange <- renderUI({
       scale_x_reverse(paste(x.axis), label=comma) +
       scale_y_continuous(paste(trendy), label=comma)
       
-      climate.time.series.line.reverse <- qplot(Interval, SMA(Selected, input$smoothing), xlab = input$xaxistype, , geom="line", data = spectra.timeseries.table, colour = as.factor(Climate)) +
+      climate.time.series.line.reverse <- qplot(Interval, SMA(Selected, input$smoothing), geom="line", data = spectra.timeseries.table, colour = as.factor(Climate)) +
       scale_colour_discrete("Climatic Period") +
       theme_light() +
       theme(axis.text.x = element_text(size=15)) +
@@ -1333,7 +1348,7 @@ output$inxlimrange <- renderUI({
       scale_y_continuous(paste(trendy), label=comma)
       
       
-      qualitative.time.series.line.reverse <- qplot(Interval, SMA(Selected, input$smoothing), xlab = input$xaxistype, , geom="line", data = spectra.timeseries.table, colour = as.factor(Qualitative)) +
+      qualitative.time.series.line.reverse <- qplot(Interval, SMA(Selected, input$smoothing), geom="line", data = spectra.timeseries.table, colour = as.factor(Qualitative)) +
       scale_colour_discrete("Qualitative") +
       theme_light() +
       theme(axis.text.x = element_text(size=15)) +
@@ -1346,7 +1361,7 @@ output$inxlimrange <- renderUI({
       scale_x_reverse(paste(x.axis), label=comma) +
       scale_y_continuous(paste(trendy), label=comma)
       
-      qualitative.time.series.point.reverse <- qplot(Interval, SMA(Selected, input$smoothing),  , geom="line", data = spectra.timeseries.table) +
+      qualitative.time.series.point.reverse <- qplot(Interval, SMA(Selected, input$smoothing),  geom="line", data = spectra.timeseries.table) +
       geom_point(aes(colour = as.factor(Qualitative)), lwd=input$pointsize) +
       scale_colour_discrete("Qualitative") +
       theme_light() +
@@ -1361,7 +1376,7 @@ output$inxlimrange <- renderUI({
       scale_y_continuous(paste(trendy), label=comma)
       
       
-      depth.time.series.reverse <- qplot(Interval, SMA(Selected, input$smoothing),  , geom="line", data = spectra.timeseries.table) +
+      depth.time.series.reverse <- qplot(Interval, SMA(Selected, input$smoothing),  geom="line", data = spectra.timeseries.table) +
       geom_line(aes(colour = Depth), lwd=input$linesize+0.5) +
       geom_line(lwd=input$linesize-0.5) +
       scale_colour_gradientn("Depth", colours=rev(terrain.colors(length(spectra.line.table$Depth)))) +
@@ -1512,7 +1527,7 @@ output$inxlimrange <- renderUI({
       
       
       
-      black.time.series <- qplot(Interval, SMA(Selected, input$smoothing), input$xaxistype, , geom="line", data = spectra.timeseries.table) +
+      black.time.series <- qplot(Interval, SMA(Selected, input$smoothing), geom="line", data = spectra.timeseries.table) +
       geom_line(colour = "black", lwd=input$linesize) +
       theme_light() +
       theme(axis.text.x = element_text(size=15)) +
@@ -1525,7 +1540,7 @@ output$inxlimrange <- renderUI({
        scale_x_continuous(paste(x.axis), label=comma) +
       scale_y_continuous(paste(trendy), label=comma)
       
-      smooth.time.series <- qplot(spectra.timeseries.table$Interval, SMA(spectra.timeseries.table$Selected, input$smoothing), , geom="point") +
+      smooth.time.series <- qplot(spectra.timeseries.table$Interval, SMA(spectra.timeseries.table$Selected, input$smoothing), geom="point") +
       theme_light() +
       stat_smooth() +
       theme(axis.text.x = element_text(size=15)) +
@@ -1539,7 +1554,7 @@ output$inxlimrange <- renderUI({
       scale_y_continuous(paste(trendy), label=comma)
       
       
-      ramp.time.series <- qplot(Interval, SMA(Selected, input$smoothing),  , geom="line", data = spectra.timeseries.table) +
+      ramp.time.series <- qplot(Interval, SMA(Selected, input$smoothing),  geom="line", data = spectra.timeseries.table) +
       geom_line(aes(colour = Selected), lwd=input$linesize) +
       theme_light() +
       scale_colour_gradientn(colours=rainbow(7)) +
@@ -1570,7 +1585,7 @@ output$inxlimrange <- renderUI({
       
       
       
-      cluster.time.series <- qplot(Interval, SMA(Selected, input$smoothing),  , geom="line", data = spectra.timeseries.table) +
+      cluster.time.series <- qplot(Interval, SMA(Selected, input$smoothing),  geom="line", data = spectra.timeseries.table) +
       geom_point(aes(colour = as.factor(Cluster)), size=input$pointsize) +
       scale_colour_discrete("Cluster") +
       theme_light() +
@@ -1584,7 +1599,7 @@ output$inxlimrange <- renderUI({
        scale_x_continuous(paste(x.axis), label=comma) +
       scale_y_continuous(paste(trendy), label=comma)
       
-      climate.time.series.line <- qplot(Interval, SMA(Selected, input$smoothing), xlab = input$xaxistype, , geom="line", data = spectra.timeseries.table, colour = as.factor(Climate)) +
+      climate.time.series.line <- qplot(Interval, SMA(Selected, input$smoothing), geom="line", data = spectra.timeseries.table, colour = as.factor(Climate)) +
       scale_colour_discrete("Climatic Period") +
       theme_light() +
       theme(axis.text.x = element_text(size=15)) +
@@ -1598,7 +1613,7 @@ output$inxlimrange <- renderUI({
       scale_y_continuous(paste(trendy), label=comma)
       
       
-      qualitative.time.series.line <- qplot(Interval, SMA(Selected, input$smoothing), xlab = input$xaxistype, , geom="line", data = spectra.timeseries.table, colour = as.factor(Qualitative)) +
+      qualitative.time.series.line <- qplot(Interval, SMA(Selected, input$smoothing), geom="line", data = spectra.timeseries.table, colour = as.factor(Qualitative)) +
       scale_colour_discrete("Qualitative") +
       theme_light() +
       theme(axis.text.x = element_text(size=15)) +
@@ -1611,7 +1626,7 @@ output$inxlimrange <- renderUI({
        scale_x_continuous(paste(x.axis), label=comma) +
       scale_y_continuous(paste(trendy), label=comma)
       
-      qualitative.time.series.point <- qplot(Interval, SMA(Selected, input$smoothing),  , geom="line", data = spectra.timeseries.table) +
+      qualitative.time.series.point <- qplot(Interval, SMA(Selected, input$smoothing),  geom="line", data = spectra.timeseries.table) +
       geom_point(aes(colour = as.factor(Qualitative)), lwd=input$pointsize) +
       scale_colour_discrete("Qualitative") +
       theme_light() +
@@ -1626,7 +1641,7 @@ output$inxlimrange <- renderUI({
       scale_y_continuous(paste(trendy), label=comma)
       
       
-      depth.time.series <- qplot(Interval, SMA(Selected, input$smoothing),  , geom="line", data = spectra.timeseries.table) +
+      depth.time.series <- qplot(Interval, SMA(Selected, input$smoothing),  geom="line", data = spectra.timeseries.table) +
       geom_line(aes(colour = Depth), lwd=input$linesize+0.5) +
       geom_line(lwd=input$linesize-0.5) +
       scale_colour_gradientn("Depth", colours=rev(terrain.colors(length(spectra.line.table$Depth)))) +
@@ -1644,7 +1659,7 @@ output$inxlimrange <- renderUI({
       
       ####Flipped X Axis
       
-      black.time.series.reverse <- qplot(Interval, SMA(Selected, input$smoothing), input$xaxistype, , geom="line", data = spectra.timeseries.table) +
+      black.time.series.reverse <- qplot(Interval, SMA(Selected, input$smoothing), geom="line", data = spectra.timeseries.table) +
       geom_line(colour = "black", lwd=input$linesize) +
       theme_light() +
       theme(axis.text.x = element_text(size=15)) +
@@ -1657,7 +1672,7 @@ output$inxlimrange <- renderUI({
       scale_x_reverse(paste(x.axis), label=comma) +
       scale_y_continuous(paste(trendy), label=comma)
       
-      smooth.time.series.reverse <- qplot(spectra.timeseries.table$Interval, SMA(spectra.timeseries.table$Selected, input$smoothing), xlab = input$xaxistype, , geom="point") +
+      smooth.time.series.reverse <- qplot(spectra.timeseries.table$Interval, SMA(spectra.timeseries.table$Selected, input$smoothing), geom="point") +
       theme_light() +
       stat_smooth() +
       theme(axis.text.x = element_text(size=15)) +
@@ -1671,7 +1686,7 @@ output$inxlimrange <- renderUI({
       scale_y_continuous(paste(trendy), label=comma)
       
       
-      ramp.time.series.reverse <- qplot(Interval, SMA(Selected, input$smoothing), , geom="line", data = spectra.timeseries.table) +
+      ramp.time.series.reverse <- qplot(Interval, SMA(Selected, input$smoothing), geom="line", data = spectra.timeseries.table) +
       geom_line(aes(colour = Selected), lwd=input$linesize) +
       theme_light() +
       scale_colour_gradientn(colours=rainbow(7)) +
@@ -1701,7 +1716,7 @@ output$inxlimrange <- renderUI({
       
       
       
-      cluster.time.series.reverse <- qplot(Interval, SMA(Selected, input$smoothing),  , geom="line", data = spectra.timeseries.table) +
+      cluster.time.series.reverse <- qplot(Interval, SMA(Selected, input$smoothing),  geom="line", data = spectra.timeseries.table) +
       geom_point(aes(colour = as.factor(Cluster)), size=input$pointsize) +
       scale_colour_discrete("Cluster") +
       theme_light() +
@@ -1715,7 +1730,7 @@ output$inxlimrange <- renderUI({
       scale_x_reverse(paste(x.axis), label=comma) +
       scale_y_continuous(paste(trendy), label=comma)
       
-      climate.time.series.line.reverse <- qplot(Interval, SMA(Selected, input$smoothing), xlab = input$xaxistype, , geom="line", data = spectra.timeseries.table, colour = as.factor(Climate)) +
+      climate.time.series.line.reverse <- qplot(Interval, SMA(Selected, input$smoothing), geom="line", data = spectra.timeseries.table, colour = as.factor(Climate)) +
       scale_colour_discrete("Climatic Period") +
       theme_light() +
       theme(axis.text.x = element_text(size=15)) +
@@ -1729,7 +1744,7 @@ output$inxlimrange <- renderUI({
       scale_y_continuous(paste(trendy), label=comma)
       
       
-      qualitative.time.series.line.reverse <- qplot(Interval, SMA(Selected, input$smoothing), xlab = input$xaxistype, , geom="line", data = spectra.timeseries.table, colour = as.factor(Qualitative)) +
+      qualitative.time.series.line.reverse <- qplot(Interval, SMA(Selected, input$smoothing), geom="line", data = spectra.timeseries.table, colour = as.factor(Qualitative)) +
       scale_colour_discrete("Qualitative") +
       theme_light() +
       theme(axis.text.x = element_text(size=15)) +
@@ -1742,7 +1757,7 @@ output$inxlimrange <- renderUI({
       scale_x_reverse(paste(x.axis), label=comma) +
       scale_y_continuous(paste(trendy), label=comma)
       
-      qualitative.time.series.point.reverse <- qplot(Interval, SMA(Selected, input$smoothing),  , geom="line", data = spectra.timeseries.table) +
+      qualitative.time.series.point.reverse <- qplot(Interval, SMA(Selected, input$smoothing),  geom="line", data = spectra.timeseries.table) +
       geom_point(aes(colour = as.factor(Qualitative)), lwd=input$pointsize) +
       scale_colour_discrete("Qualitative") +
       theme_light() +
@@ -1757,7 +1772,7 @@ output$inxlimrange <- renderUI({
       scale_y_continuous(paste(trendy), label=comma)
       
       
-      depth.time.series.reverse <- qplot(Interval, SMA(Selected, input$smoothing),  , geom="line", data = spectra.timeseries.table) +
+      depth.time.series.reverse <- qplot(Interval, SMA(Selected, input$smoothing),  geom="line", data = spectra.timeseries.table) +
       geom_line(aes(colour = Depth), lwd=input$linesize+0.5) +
       geom_line(lwd=input$linesize-0.5) +
       scale_colour_gradientn("Depth", colours=rev(terrain.colors(length(spectra.line.table$Depth)))) +
@@ -1890,7 +1905,7 @@ output$inxlimrange <- renderUI({
       
       
       
-      black.time.series <- qplot(Interval, SMA(Selected, input$smoothing), input$xaxistype, , geom="line", data = spectra.timeseries.table) +
+      black.time.series <- qplot(Interval, SMA(Selected, input$smoothing), geom="line", data = spectra.timeseries.table) +
       geom_line(colour = "black", lwd=input$linesize) +
       theme_light() +
       theme(axis.text.x = element_text(size=15)) +
@@ -1903,7 +1918,7 @@ output$inxlimrange <- renderUI({
        scale_x_continuous(paste(x.axis), label=comma) +
       scale_y_continuous(paste(trendy), label=comma)
       
-      smooth.time.series <- qplot(spectra.timeseries.table$Interval, SMA(spectra.timeseries.table$Selected, input$smoothing), , geom="point") +
+      smooth.time.series <- qplot(spectra.timeseries.table$Interval, SMA(spectra.timeseries.table$Selected, input$smoothing), geom="point") +
       theme_light() +
       stat_smooth() +
       theme(axis.text.x = element_text(size=15)) +
@@ -1917,7 +1932,7 @@ output$inxlimrange <- renderUI({
       scale_y_continuous(paste(trendy), label=comma)
       
       
-      ramp.time.series <- qplot(Interval, SMA(Selected, input$smoothing),  , geom="line", data = spectra.timeseries.table) +
+      ramp.time.series <- qplot(Interval, SMA(Selected, input$smoothing),  geom="line", data = spectra.timeseries.table) +
       geom_line(aes(colour = Selected), lwd=input$linesize) +
       theme_light() +
       scale_colour_gradientn(colours=rainbow(7)) +
@@ -1948,7 +1963,7 @@ output$inxlimrange <- renderUI({
       
       
       
-      cluster.time.series <- qplot(Interval, SMA(Selected, input$smoothing),  , geom="line", data = spectra.timeseries.table) +
+      cluster.time.series <- qplot(Interval, SMA(Selected, input$smoothing),  geom="line", data = spectra.timeseries.table) +
       geom_point(aes(colour = as.factor(Cluster)), size=input$pointsize) +
       scale_colour_discrete("Cluster") +
       theme_light() +
@@ -1962,7 +1977,7 @@ output$inxlimrange <- renderUI({
        scale_x_continuous(paste(x.axis), label=comma) +
       scale_y_continuous(paste(trendy), label=comma)
       
-      climate.time.series.line <- qplot(Interval, SMA(Selected, input$smoothing), xlab = input$xaxistype, , geom="line", data = spectra.timeseries.table, colour = as.factor(Climate)) +
+      climate.time.series.line <- qplot(Interval, SMA(Selected, input$smoothing), geom="line", data = spectra.timeseries.table, colour = as.factor(Climate)) +
       scale_colour_discrete("Climatic Period") +
       theme_light() +
       theme(axis.text.x = element_text(size=15)) +
@@ -1976,7 +1991,7 @@ output$inxlimrange <- renderUI({
       scale_y_continuous(paste(trendy), label=comma)
       
       
-      qualitative.time.series.line <- qplot(Interval, SMA(Selected, input$smoothing), xlab = input$xaxistype, , geom="line", data = spectra.timeseries.table, colour = as.factor(Qualitative)) +
+      qualitative.time.series.line <- qplot(Interval, SMA(Selected, input$smoothing), geom="line", data = spectra.timeseries.table, colour = as.factor(Qualitative)) +
       scale_colour_discrete("Qualitative") +
       theme_light() +
       theme(axis.text.x = element_text(size=15)) +
@@ -1989,7 +2004,7 @@ output$inxlimrange <- renderUI({
        scale_x_continuous(paste(x.axis), label=comma) +
       scale_y_continuous(paste(trendy), label=comma)
       
-      qualitative.time.series.point <- qplot(Interval, SMA(Selected, input$smoothing),  , geom="line", data = spectra.timeseries.table) +
+      qualitative.time.series.point <- qplot(Interval, SMA(Selected, input$smoothing),  geom="line", data = spectra.timeseries.table) +
       geom_point(aes(colour = as.factor(Qualitative)), lwd=input$pointsize) +
       scale_colour_discrete("Qualitative") +
       theme_light() +
@@ -2004,7 +2019,7 @@ output$inxlimrange <- renderUI({
       scale_y_continuous(paste(trendy), label=comma)
       
       
-      depth.time.series <- qplot(Interval, SMA(Selected, input$smoothing),  , geom="line", data = spectra.timeseries.table) +
+      depth.time.series <- qplot(Interval, SMA(Selected, input$smoothing),  geom="line", data = spectra.timeseries.table) +
       geom_line(aes(colour = Depth), lwd=input$linesize+0.5) +
       geom_line(lwd=input$linesize-0.5) +      scale_colour_gradientn("Depth", colours=rev(terrain.colors(length(spectra.line.table$Depth)))) +
       theme_light() +
@@ -2020,7 +2035,7 @@ output$inxlimrange <- renderUI({
       
       ####Flipped X Axis
       
-      black.time.series.reverse <- qplot(Interval, SMA(Selected, input$smoothing), input$xaxistype, , geom="line", data = spectra.timeseries.table) +
+      black.time.series.reverse <- qplot(Interval, SMA(Selected, input$smoothing), geom="line", data = spectra.timeseries.table) +
       geom_line(colour = "black", lwd=input$linesize) +
       theme_light() +
       theme(axis.text.x = element_text(size=15)) +
@@ -2033,7 +2048,7 @@ output$inxlimrange <- renderUI({
       scale_x_reverse(paste(x.axis), label=comma) +
       scale_y_continuous(paste(trendy), label=comma)
       
-      smooth.time.series.reverse <- qplot(spectra.timeseries.table$Interval, SMA(spectra.timeseries.table$Selected, input$smoothing), xlab = input$xaxistype, , geom="point") +
+      smooth.time.series.reverse <- qplot(spectra.timeseries.table$Interval, SMA(spectra.timeseries.table$Selected, input$smoothing), geom="point") +
       theme_light() +
       stat_smooth() +
       theme(axis.text.x = element_text(size=15)) +
@@ -2047,7 +2062,7 @@ output$inxlimrange <- renderUI({
       scale_y_continuous(paste(trendy), label=comma)
       
       
-      ramp.time.series.reverse <- qplot(Interval, SMA(Selected, input$smoothing), , geom="line", data = spectra.timeseries.table) +
+      ramp.time.series.reverse <- qplot(Interval, SMA(Selected, input$smoothing), geom="line", data = spectra.timeseries.table) +
       geom_line(aes(colour = Selected), lwd=input$linesize) +
       theme_light() +
       scale_colour_gradientn(colours=rainbow(7)) +
@@ -2077,7 +2092,7 @@ output$inxlimrange <- renderUI({
       
       
       
-      cluster.time.series.reverse <- qplot(Interval, SMA(Selected, input$smoothing),  , geom="line", data = spectra.timeseries.table) +
+      cluster.time.series.reverse <- qplot(Interval, SMA(Selected, input$smoothing),  geom="line", data = spectra.timeseries.table) +
       geom_point(aes(colour = as.factor(Cluster)), size=input$pointsize) +
       scale_colour_discrete("Cluster") +
       theme_light() +
@@ -2092,7 +2107,7 @@ output$inxlimrange <- renderUI({
       scale_y_continuous(paste(trendy), label=comma)
       
       
-      climate.time.series.line.reverse <- qplot(Interval, SMA(Selected, input$smoothing), xlab = input$xaxistype, , geom="line", data = spectra.timeseries.table, colour = as.factor(Climate)) +
+      climate.time.series.line.reverse <- qplot(Interval, SMA(Selected, input$smoothing), geom="line", data = spectra.timeseries.table, colour = as.factor(Climate)) +
       scale_colour_discrete("Climatic Period") +
       theme_light() +
       theme(axis.text.x = element_text(size=15)) +
@@ -2106,7 +2121,7 @@ output$inxlimrange <- renderUI({
       scale_y_continuous(paste(trendy), label=comma)
       
       
-      qualitative.time.series.line.reverse <- qplot(Interval, SMA(Selected, input$smoothing), xlab = input$xaxistype, , geom="line", data = spectra.timeseries.table, colour = as.factor(Qualitative)) +
+      qualitative.time.series.line.reverse <- qplot(Interval, SMA(Selected, input$smoothing), geom="line", data = spectra.timeseries.table, colour = as.factor(Qualitative)) +
       scale_colour_discrete("Qualitative") +
       theme_light() +
       theme(axis.text.x = element_text(size=15)) +
@@ -2119,7 +2134,7 @@ output$inxlimrange <- renderUI({
       scale_x_reverse(paste(x.axis), label=comma) +
       scale_y_continuous(paste(trendy), label=comma)
       
-      qualitative.time.series.point.reverse <- qplot(Interval, SMA(Selected, input$smoothing),  , geom="line", data = spectra.timeseries.table) +
+      qualitative.time.series.point.reverse <- qplot(Interval, SMA(Selected, input$smoothing),  geom="line", data = spectra.timeseries.table) +
       geom_point(aes(colour = as.factor(Qualitative)), lwd=input$pointsize) +
       scale_colour_discrete("Qualitative") +
       theme_light() +
@@ -2134,7 +2149,7 @@ output$inxlimrange <- renderUI({
       scale_y_continuous(paste(trendy), label=comma)
       
       
-      depth.time.series.reverse <- qplot(Interval, SMA(Selected, input$smoothing),  , geom="line", data = spectra.timeseries.table) +
+      depth.time.series.reverse <- qplot(Interval, SMA(Selected, input$smoothing),  geom="line", data = spectra.timeseries.table) +
       geom_line(aes(colour = Depth), lwd=input$linesize+0.5) +
       geom_line(lwd=input$linesize-0.5) +      scale_colour_gradientn("Depth", colours=rev(terrain.colors(length(spectra.line.table$Depth)))) +
       theme_light() +
@@ -2264,7 +2279,7 @@ output$inxlimrange <- renderUI({
       
       
       
-      black.time.series <- qplot(Interval, SMA(Selected, input$smoothing), input$xaxistype, , geom="line", data = spectra.timeseries.table) +
+      black.time.series <- qplot(Interval, SMA(Selected, input$smoothing), geom="line", data = spectra.timeseries.table) +
       geom_line(colour = "black", lwd=input$linesize) +
       theme_light() +
       theme(axis.text.x = element_text(size=15)) +
@@ -2277,7 +2292,7 @@ output$inxlimrange <- renderUI({
        scale_x_continuous(paste(x.axis), label=comma) +
       scale_y_continuous(paste(trendy), label=comma)
       
-      smooth.time.series <- qplot(spectra.timeseries.table$Interval, SMA(spectra.timeseries.table$Selected, input$smoothing), , geom="point") +
+      smooth.time.series <- qplot(spectra.timeseries.table$Interval, SMA(spectra.timeseries.table$Selected, input$smoothing), geom="point") +
       theme_light() +
       stat_smooth() +
       theme(axis.text.x = element_text(size=15)) +
@@ -2291,7 +2306,7 @@ output$inxlimrange <- renderUI({
       scale_y_continuous(paste(trendy), label=comma)
       
       
-      ramp.time.series <- qplot(Interval, SMA(Selected, input$smoothing),  , geom="line", data = spectra.timeseries.table) +
+      ramp.time.series <- qplot(Interval, SMA(Selected, input$smoothing),  geom="line", data = spectra.timeseries.table) +
       geom_line(aes(colour = Selected), lwd=input$linesize) +
       theme_light() +
       scale_colour_gradientn(colours=rainbow(7)) +
@@ -2322,7 +2337,7 @@ output$inxlimrange <- renderUI({
       
       
       
-      cluster.time.series <- qplot(Interval, SMA(Selected, input$smoothing),  , geom="line", data = spectra.timeseries.table) +
+      cluster.time.series <- qplot(Interval, SMA(Selected, input$smoothing),  geom="line", data = spectra.timeseries.table) +
       geom_point(aes(colour = as.factor(Cluster)), size=input$pointsize) +
       scale_colour_discrete("Cluster") +
       theme_light() +
@@ -2336,7 +2351,7 @@ output$inxlimrange <- renderUI({
        scale_x_continuous(paste(x.axis), label=comma) +
       scale_y_continuous(paste(trendy), label=comma)
       
-      climate.time.series.line <- qplot(Interval, SMA(Selected, input$smoothing), xlab = input$xaxistype, , geom="line", data = spectra.timeseries.table, colour = as.factor(Climate)) +
+      climate.time.series.line <- qplot(Interval, SMA(Selected, input$smoothing), geom="line", data = spectra.timeseries.table, colour = as.factor(Climate)) +
       scale_colour_discrete("Climatic Period") +
       theme_light() +
       theme(axis.text.x = element_text(size=15)) +
@@ -2350,7 +2365,7 @@ output$inxlimrange <- renderUI({
       scale_y_continuous(paste(trendy), label=comma)
       
       
-      qualitative.time.series.line <- qplot(Interval, SMA(Selected, input$smoothing), xlab = input$xaxistype, , geom="line", data = spectra.timeseries.table, colour = as.factor(Qualitative)) +
+      qualitative.time.series.line <- qplot(Interval, SMA(Selected, input$smoothing), geom="line", data = spectra.timeseries.table, colour = as.factor(Qualitative)) +
       scale_colour_discrete("Qualitative") +
       theme_light() +
       theme(axis.text.x = element_text(size=15)) +
@@ -2363,7 +2378,7 @@ output$inxlimrange <- renderUI({
        scale_x_continuous(paste(x.axis), label=comma) +
       scale_y_continuous(paste(trendy), label=comma)
       
-      qualitative.time.series.point <- qplot(Interval, SMA(Selected, input$smoothing),  , geom="line", data = spectra.timeseries.table) +
+      qualitative.time.series.point <- qplot(Interval, SMA(Selected, input$smoothing),  geom="line", data = spectra.timeseries.table) +
       geom_point(aes(colour = as.factor(Qualitative)), lwd=input$pointsize) +
       scale_colour_discrete("Qualitative") +
       theme_light() +
@@ -2378,7 +2393,7 @@ output$inxlimrange <- renderUI({
       scale_y_continuous(paste(trendy), label=comma)
       
       
-      depth.time.series <- qplot(Interval, SMA(Selected, input$smoothing),  , geom="line", data = spectra.timeseries.table) +
+      depth.time.series <- qplot(Interval, SMA(Selected, input$smoothing),  geom="line", data = spectra.timeseries.table) +
       geom_line(aes(colour = Depth), lwd=input$linesize+0.5) +
       geom_line(lwd=input$linesize-0.5) +      scale_colour_gradientn("Depth", colours=rev(terrain.colors(length(spectra.line.table$Depth)))) +
       theme_light() +
@@ -2397,7 +2412,7 @@ output$inxlimrange <- renderUI({
       
       ####Flipped X Axis
       
-      black.time.series.reverse <- qplot(Interval, SMA(Selected, input$smoothing), input$xaxistype, , geom="line", data = spectra.timeseries.table) +
+      black.time.series.reverse <- qplot(Interval, SMA(Selected, input$smoothing), geom="line", data = spectra.timeseries.table) +
       geom_line(colour = "black", lwd=input$linesize) +
       theme_light() +
       theme(axis.text.x = element_text(size=15)) +
@@ -2410,7 +2425,7 @@ output$inxlimrange <- renderUI({
       scale_x_reverse(paste(x.axis), label=comma) +
       scale_y_continuous(paste(trendy), label=comma)
       
-      smooth.time.series.reverse <- qplot(spectra.timeseries.table$Interval, SMA(spectra.timeseries.table$Selected, input$smoothing), xlab = input$xaxistype, , geom="point") +
+      smooth.time.series.reverse <- qplot(spectra.timeseries.table$Interval, SMA(spectra.timeseries.table$Selected, input$smoothing), geom="point") +
       theme_light() +
       stat_smooth() +
       theme(axis.text.x = element_text(size=15)) +
@@ -2424,7 +2439,7 @@ output$inxlimrange <- renderUI({
       scale_y_continuous(paste(trendy), label=comma)
       
       
-      ramp.time.series.reverse <- qplot(Interval, SMA(Selected, input$smoothing), , geom="line", data = spectra.timeseries.table) +
+      ramp.time.series.reverse <- qplot(Interval, SMA(Selected, input$smoothing), geom="line", data = spectra.timeseries.table) +
       geom_line(aes(colour = Selected), lwd=input$linesize) +
       theme_light() +
       scale_colour_gradientn(colours=rainbow(7)) +
@@ -2454,7 +2469,7 @@ output$inxlimrange <- renderUI({
       
       
       
-      cluster.time.series.reverse <- qplot(Interval, SMA(Selected, input$smoothing),  , geom="line", data = spectra.timeseries.table) +
+      cluster.time.series.reverse <- qplot(Interval, SMA(Selected, input$smoothing),  geom="line", data = spectra.timeseries.table) +
       geom_point(aes(colour = as.factor(Cluster)), size=input$pointsize) +
       scale_colour_discrete("Cluster") +
       theme_light() +
@@ -2469,7 +2484,7 @@ output$inxlimrange <- renderUI({
       scale_y_continuous(paste(trendy), label=comma)
       
       
-      climate.time.series.line.reverse <- qplot(Interval, SMA(Selected, input$smoothing), xlab = input$xaxistype, , geom="line", data = spectra.timeseries.table, colour = as.factor(Climate)) +
+      climate.time.series.line.reverse <- qplot(Interval, SMA(Selected, input$smoothing), geom="line", data = spectra.timeseries.table, colour = as.factor(Climate)) +
       scale_colour_discrete("Climatic Period") +
       theme_light() +
       theme(axis.text.x = element_text(size=15)) +
@@ -2483,7 +2498,7 @@ output$inxlimrange <- renderUI({
       scale_y_continuous(paste(trendy), label=comma)
       
       
-      qualitative.time.series.line.reverse <- qplot(Interval, SMA(Selected, input$smoothing), xlab = input$xaxistype, , geom="line", data = spectra.timeseries.table, colour = as.factor(Qualitative)) +
+      qualitative.time.series.line.reverse <- qplot(Interval, SMA(Selected, input$smoothing), geom="line", data = spectra.timeseries.table, colour = as.factor(Qualitative)) +
       scale_colour_discrete("Qualitative") +
       theme_light() +
       theme(axis.text.x = element_text(size=15)) +
@@ -2496,7 +2511,7 @@ output$inxlimrange <- renderUI({
       scale_x_reverse(paste(x.axis), label=comma) +
       scale_y_continuous(paste(trendy), label=comma)
       
-      qualitative.time.series.point.reverse <- qplot(Interval, SMA(Selected, input$smoothing),  , geom="line", data = spectra.timeseries.table) +
+      qualitative.time.series.point.reverse <- qplot(Interval, SMA(Selected, input$smoothing),  geom="line", data = spectra.timeseries.table) +
       geom_point(aes(colour = as.factor(Qualitative)), lwd=input$pointsize) +
       scale_colour_discrete("Qualitative") +
       theme_light() +
@@ -2511,7 +2526,7 @@ output$inxlimrange <- renderUI({
       scale_y_continuous(paste(trendy), label=comma)
       
       
-      depth.time.series.reverse <- qplot(Interval, SMA(Selected, input$smoothing),  , geom="line", data = spectra.timeseries.table) +
+      depth.time.series.reverse <- qplot(Interval, SMA(Selected, input$smoothing),  geom="line", data = spectra.timeseries.table) +
       geom_line(aes(colour = Depth), lwd=input$linesize+0.5) +
       geom_line(lwd=input$linesize-0.5) +
       scale_colour_gradientn("Depth", colours=rev(terrain.colors(length(spectra.line.table$Depth)))) +
@@ -2649,7 +2664,7 @@ output$inxlimrange <- renderUI({
       
       
       
-      black.time.series <- qplot(Interval, SMA(Selected, input$smoothing), input$xaxistype, , geom="line", data = spectra.timeseries.table) +
+      black.time.series <- qplot(Interval, SMA(Selected, input$smoothing), geom="line", data = spectra.timeseries.table) +
       geom_line(colour = "black", lwd=input$linesize) +
       theme_light() +
       theme(axis.text.x = element_text(size=15)) +
@@ -2662,7 +2677,7 @@ output$inxlimrange <- renderUI({
        scale_x_continuous(paste(x.axis), label=comma) +
       scale_y_continuous(paste(trendy), label=comma)
       
-      smooth.time.series <- qplot(spectra.timeseries.table$Interval, SMA(spectra.timeseries.table$Selected, input$smoothing), , geom="point") +
+      smooth.time.series <- qplot(spectra.timeseries.table$Interval, SMA(spectra.timeseries.table$Selected, input$smoothing), geom="point") +
       theme_light() +
       stat_smooth() +
       theme(axis.text.x = element_text(size=15)) +
@@ -2676,7 +2691,7 @@ output$inxlimrange <- renderUI({
       scale_y_continuous(paste(trendy), label=comma)
       
       
-      ramp.time.series <- qplot(Interval, SMA(Selected, input$smoothing),  , geom="line", data = spectra.timeseries.table) +
+      ramp.time.series <- qplot(Interval, SMA(Selected, input$smoothing),  geom="line", data = spectra.timeseries.table) +
       geom_line(aes(colour = Selected), lwd=input$linesize) +
       theme_light() +
       scale_colour_gradientn(colours=rainbow(7)) +
@@ -2707,7 +2722,7 @@ output$inxlimrange <- renderUI({
       
       
       
-      cluster.time.series <- qplot(Interval, SMA(Selected, input$smoothing),  , geom="line", data = spectra.timeseries.table) +
+      cluster.time.series <- qplot(Interval, SMA(Selected, input$smoothing),  geom="line", data = spectra.timeseries.table) +
       geom_point(aes(colour = as.factor(Cluster)), size=input$pointsize) +
       scale_colour_discrete("Cluster") +
       theme_light() +
@@ -2721,7 +2736,7 @@ output$inxlimrange <- renderUI({
        scale_x_continuous(paste(x.axis), label=comma) +
       scale_y_continuous(paste(trendy), label=comma)
       
-      climate.time.series.line <- qplot(Interval, SMA(Selected, input$smoothing), xlab = input$xaxistype, , geom="line", data = spectra.timeseries.table, colour = as.factor(Climate)) +
+      climate.time.series.line <- qplot(Interval, SMA(Selected, input$smoothing), geom="line", data = spectra.timeseries.table, colour = as.factor(Climate)) +
       scale_colour_discrete("Climatic Period") +
       theme_light() +
       theme(axis.text.x = element_text(size=15)) +
@@ -2735,7 +2750,7 @@ output$inxlimrange <- renderUI({
       scale_y_continuous(paste(trendy), label=comma)
       
       
-      qualitative.time.series.line <- qplot(Interval, SMA(Selected, input$smoothing), xlab = input$xaxistype, , geom="line", data = spectra.timeseries.table, colour = as.factor(Qualitative)) +
+      qualitative.time.series.line <- qplot(Interval, SMA(Selected, input$smoothing), geom="line", data = spectra.timeseries.table, colour = as.factor(Qualitative)) +
       scale_colour_discrete("Qualitative") +
       theme_light() +
       theme(axis.text.x = element_text(size=15)) +
@@ -2748,7 +2763,7 @@ output$inxlimrange <- renderUI({
        scale_x_continuous(paste(x.axis), label=comma) +
       scale_y_continuous(paste(trendy), label=comma)
       
-      qualitative.time.series.point <- qplot(Interval, SMA(Selected, input$smoothing),  , geom="line", data = spectra.timeseries.table) +
+      qualitative.time.series.point <- qplot(Interval, SMA(Selected, input$smoothing),  geom="line", data = spectra.timeseries.table) +
       geom_point(aes(colour = as.factor(Qualitative)), lwd=input$pointsize) +
       scale_colour_discrete("Qualitative") +
       theme_light() +
@@ -2763,7 +2778,7 @@ output$inxlimrange <- renderUI({
       scale_y_continuous(paste(trendy), label=comma)
       
       
-      depth.time.series <- qplot(Interval, SMA(Selected, input$smoothing),  , geom="line", data = spectra.timeseries.table) +
+      depth.time.series <- qplot(Interval, SMA(Selected, input$smoothing),  geom="line", data = spectra.timeseries.table) +
       geom_line(aes(colour = Depth), lwd=input$linesize+0.5) +
       geom_line(lwd=input$linesize-0.5) +
       scale_colour_gradientn("Depth", colours=rev(terrain.colors(length(spectra.line.table$Depth)))) +
@@ -2782,7 +2797,7 @@ output$inxlimrange <- renderUI({
       
       ####X Axis Flipped
       
-      black.time.series.reverse <- qplot(Interval, SMA(Selected, input$smoothing), input$xaxistype, , geom="line", data = spectra.timeseries.table) +
+      black.time.series.reverse <- qplot(Interval, SMA(Selected, input$smoothing), geom="line", data = spectra.timeseries.table) +
       geom_line(colour = "black", lwd=input$linesize) +
       theme_light() +
       theme(axis.text.x = element_text(size=15)) +
@@ -2795,7 +2810,7 @@ output$inxlimrange <- renderUI({
       scale_x_reverse(paste(x.axis), label=comma) +
       scale_y_continuous(paste(trendy), label=comma)
       
-      smooth.time.series.reverse <- qplot(spectra.timeseries.table$Interval, SMA(spectra.timeseries.table$Selected, input$smoothing), xlab = input$xaxistype, , geom="point") +
+      smooth.time.series.reverse <- qplot(spectra.timeseries.table$Interval, SMA(spectra.timeseries.table$Selected, input$smoothing), geom="point") +
       theme_light() +
       stat_smooth() +
       theme(axis.text.x = element_text(size=15)) +
@@ -2809,7 +2824,7 @@ output$inxlimrange <- renderUI({
       scale_y_continuous(paste(trendy), label=comma)
       
       
-      ramp.time.series.reverse <- qplot(Interval, SMA(Selected, input$smoothing), , geom="line", data = spectra.timeseries.table) +
+      ramp.time.series.reverse <- qplot(Interval, SMA(Selected, input$smoothing), geom="line", data = spectra.timeseries.table) +
       geom_line(aes(colour = Selected), lwd=input$linesize) +
       theme_light() +
       scale_colour_gradientn(colours=rainbow(7)) +
@@ -2839,7 +2854,7 @@ output$inxlimrange <- renderUI({
       
       
       
-      cluster.time.series.reverse <- qplot(Interval, SMA(Selected, input$smoothing),  , geom="line", data = spectra.timeseries.table) +
+      cluster.time.series.reverse <- qplot(Interval, SMA(Selected, input$smoothing),  geom="line", data = spectra.timeseries.table) +
       geom_point(aes(colour = as.factor(Cluster)), size=input$pointsize) +
       scale_colour_discrete("Cluster") +
       theme_light() +
@@ -2853,7 +2868,7 @@ output$inxlimrange <- renderUI({
       scale_x_reverse(paste(x.axis), label=comma) +
       scale_y_continuous(paste(trendy), label=comma)
       
-      climate.time.series.line.reverse <- qplot(Interval, SMA(Selected, input$smoothing), xlab = input$xaxistype, , geom="line", data = spectra.timeseries.table, colour = as.factor(Climate)) +
+      climate.time.series.line.reverse <- qplot(Interval, SMA(Selected, input$smoothing), geom="line", data = spectra.timeseries.table, colour = as.factor(Climate)) +
       scale_colour_discrete("Climatic Period") +
       theme_light() +
       theme(axis.text.x = element_text(size=15)) +
@@ -2867,7 +2882,7 @@ output$inxlimrange <- renderUI({
       scale_y_continuous(paste(trendy), label=comma)
       
       
-      qualitative.time.series.line.reverse <- qplot(Interval, SMA(Selected, input$smoothing), xlab = input$xaxistype, , geom="line", data = spectra.timeseries.table, colour = as.factor(Qualitative)) +
+      qualitative.time.series.line.reverse <- qplot(Interval, SMA(Selected, input$smoothing), geom="line", data = spectra.timeseries.table, colour = as.factor(Qualitative)) +
       scale_colour_discrete("Qualitative") +
       theme_light() +
       theme(axis.text.x = element_text(size=15)) +
@@ -2880,7 +2895,7 @@ output$inxlimrange <- renderUI({
       scale_x_reverse(paste(x.axis), label=comma) +
       scale_y_continuous(paste(trendy), label=comma)
       
-      qualitative.time.series.point.reverse <- qplot(Interval, SMA(Selected, input$smoothing),  , geom="line", data = spectra.timeseries.table) +
+      qualitative.time.series.point.reverse <- qplot(Interval, SMA(Selected, input$smoothing),  geom="line", data = spectra.timeseries.table) +
       geom_point(aes(colour = as.factor(Qualitative)), lwd=input$pointsize) +
       scale_colour_discrete("Qualitative") +
       theme_light() +
@@ -2895,7 +2910,7 @@ output$inxlimrange <- renderUI({
       scale_y_continuous(paste(trendy), label=comma)
       
       
-      depth.time.series.reverse <- qplot(Interval, SMA(Selected, input$smoothing),  , geom="line", data = spectra.timeseries.table) +
+      depth.time.series.reverse <- qplot(Interval, SMA(Selected, input$smoothing),  geom="line", data = spectra.timeseries.table) +
       geom_line(aes(colour = Depth), lwd=input$linesize+0.5) +
       geom_line(lwd=input$linesize-0.5) +
       scale_colour_gradientn("Depth", colours=rev(terrain.colors(length(spectra.line.table$Depth)))) +
@@ -2992,6 +3007,8 @@ output$inxlimrange <- renderUI({
           spectra.line.names[2]
       }
       
+      standard
+      
   })
   
   
@@ -3007,6 +3024,8 @@ output$inxlimrange <- renderUI({
           spectra.line.names[3]
       }
       
+      standard
+      
   })
   
   
@@ -3021,6 +3040,8 @@ output$inxlimrange <- renderUI({
           spectra.line.names[4]
       }
       
+      standard
+      
   })
   
   
@@ -3033,6 +3054,8 @@ output$inxlimrange <- renderUI({
       } else if(input$filetype=="Net"){
           spectra.line.names[5]
       }
+      
+      standard
       
   })
   

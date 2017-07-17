@@ -197,6 +197,8 @@ actionButton('hotableprocess3', "Run Age Model"),
 downloadButton('ageresults', "Age Results Table"),
 
 tags$hr(),
+checkboxInput("ageon", label="Age Model On", TRUE),
+
 checkboxInput("constrainage", label="Constrain Chronology", TRUE)
 
 
@@ -315,6 +317,8 @@ c(
 
 tags$hr(),
 
+uiOutput('inxlimrange'),
+
 
 sliderInput("smoothing", label = "Smoothed Mean Average", value=1, min=1, max=50),
 
@@ -328,12 +332,7 @@ selectInput("xaxistype", label="X Axis", c("Depth", "Age"), selected="Depth"),
 
 radioButtons("lengthunit", label=NULL, c("mm", "cm", "m", "inches", "feet"), selected="mm"),
 numericInput("startmm", label = "Start Point (mm)", value=0),
-radioButtons("timetype", label=NULL, c("AD", "BC", "BC/AD", "BP"), selected="BP"),
-
-tags$hr(),
-
-uiOutput('inxlimrange')
-
+radioButtons("timetype", label=NULL, c("AD", "BC", "BC/AD", "BP"), selected="BP")
 
 
 
