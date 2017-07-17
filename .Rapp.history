@@ -1,183 +1,3 @@
-age.math <- Bchronology(ages=as.numeric(as.vector(age.frame[,2])), ageSds=as.numeric(as.vector(age.frame[,3])), positions=as.numeric(as.vector(age.frame[,1])), positionThickness=rep(0.5, length(age.frame$Sigma)), calCurves=age.frame[,4], burn=2000, predictPositions=as.numeric(as.vector(data.stuff$Depth)))
-age.frame
-as.numeric(as.vector(age.frame[,2]))
-age.math <- Bchronology(ages=as.numeric(as.vector(age.subset[,2])), ageSds=as.numeric(as.vector(age.subset[,3])), positions=as.numeric(as.vector(age.subset[,1])), positionThickness=rep(0.5, length(age.subset $Sigma)), calCurves= age.subset[,4], burn=2000, predictPositions=as.numeric(as.vector(data.stuff$Depth)))
-age.results <- predict(age.math, newPositions= data.stuff$Depth, newPositionThicknesses=rep(0.0, length(data.stuff$Depth)))
-quartz()
-plot(age.math)
-head(age.results)
-age.results
-str(age.results)
-str(age.math)
-age.results <- predict.BchronologyRun(age.math, newPositions= data.stuff$Depth, newPositionThicknesses=rep(0.0, length(data.stuff$Depth)))
-library(Bchron)
-age.results <- predict.BchronologyRun(age.math, newPositions= data.stuff$Depth, newPositionThicknesses=rep(0.0, length(data.stuff$Depth)))
-age.results <- predict(age.math, newPositions= data.stuff$Depth, newPositionThicknesses=rep(0.0, length(data.stuff$Depth)))
-head(age.results)
-plot(age.results)
-x <- c(500, 1000, 2000, 3000)#
-y <- c(50, 100, 100, 100)#
-z <- c("intcal13","intcal13","intcal13","intcal13" )#
-d <- c(2, 8, 0, 0)#
-#
-fe <- c(5, 6, 7, 8)#
-depth <-c(1, 10, 15, 30)#
-#
-data.stuff <- data.frame(fe, depth)#
-colnames(data.stuff) <- c("Fe", "Depth")#
-#
-age.frame <- data.frame(d, x, y, z)#
-colnames(age.frame) <- c("Depth", "14C Age", "Sigma", "CalCurve")#
-#
-age.subset <- subset(age.frame, !age.frame$Sigma==0)#
-#
-      age.math <- Bchronology(ages=as.numeric(as.vector(age.subset[,2])), ageSds=as.numeric(as.vector(age.subset[,3])), positions=as.numeric(as.vector(age.subset[,1])), positionThickness=rep(0.5, length(age.subset $Sigma)), calCurves= age.subset[,4], burn=2000, predictPositions=as.numeric(as.vector(data.stuff$Depth)))#
-            age.results <- predict(age.math, newPositions= data.stuff$Depth, newPositionThicknesses=rep(0.0, length(data.stuff$Depth)))
-age.subset
-x <- c(500, 1000, 2000, 3000)#
-y <- c(50, 100, 100, 100)#
-z <- c("intcal13","intcal13","intcal13","intcal13" )#
-d <- c(2, 8, 0, 0)#
-#
-fe <- c(5, 6, 7, 8)#
-depth <-c(1, 10, 15, 30)#
-#
-data.stuff <- data.frame(fe, depth)#
-colnames(data.stuff) <- c("Fe", "Depth")#
-#
-age.frame <- data.frame(d, x, y, z)#
-colnames(age.frame) <- c("Depth", "14C Age", "Sigma", "CalCurve")#
-#
-age.subset <- subset(age.frame, !age.frame$Sigma==0)
-age.subset
-age.frame
-x
-age.frame <- data.frame(d, x, y, z)
-x <- c(500, 1000, 2000, 3000)#
-y <- c(50, 100, 100, 100)#
-z <- c("intcal13","intcal13","intcal13","intcal13" )#
-d <- c(2, 8, 20, 40)#
-#
-fe <- c(5, 6, 7, 8)#
-depth <-c(1, 10, 15, 30)#
-#
-data.stuff <- data.frame(fe, depth)#
-colnames(data.stuff) <- c("Fe", "Depth")#
-#
-age.frame <- data.frame(d, x, y, z)#
-colnames(age.frame) <- c("Depth", "14C Age", "Sigma", "CalCurve")#
-#
-age.subset <- subset(age.frame, !age.frame$Sigma==0)#
-#
-      age.math <- Bchronology(ages=as.numeric(as.vector(age.subset[,2])), ageSds=as.numeric(as.vector(age.subset[,3])), positions=as.numeric(as.vector(age.subset[,1])), positionThickness=rep(0.5, length(age.subset $Sigma)), calCurves= age.subset[,4], burn=2000, predictPositions=as.numeric(as.vector(data.stuff$Depth)))#
-            age.results <- predict(age.math, newPositions= data.stuff$Depth, newPositionThicknesses=rep(0.0, length(data.stuff$Depth)))
-quartz()
-plot(age.math)
-?plot
-head(age.results)
-summary(age.results)
-fe <- c(5, 6, 7, 8,5, 6, 7, 8,5, 6, 7, 8,5, 6, 7, 8)
-length(few)
-length(fe)
-depth <-seq(1, 30, 2)
-length(depth)
-fe <- c(5, 6, 7, 8,5, 6, 7, 8,5, 6, 7, 8,5, 6, 7)#
-depth <-seq(1, 30, 2)#
-#
-data.stuff <- data.frame(fe, depth)#
-colnames(data.stuff) <- c("Fe", "Depth")
-age.results <- predict(age.math, newPositions= data.stuff$Depth, newPositionThicknesses=rep(0.0, length(data.stuff$Depth)))
-head(age.results)
-median(age.results)
-age.vector <- apply(age.results, 1, median)
-age.vector
-age.vector <- apply(age.results, 2, median)
-head(age.vector)
-age.vector
-age.sd <- apply(age.results, 2, sd)
-age.sd
-runApp("~/GitHub/Cloudcore")
-library(shiny)
-runApp("~/GitHub/Cloudcore")
-library(shiny)
-runApp("~/GitHub/CloudCal")
-install.packages("dtplyr")
-runApp("~/GitHub/CloudCal")
-x <- c(1, 2, 3, 4, 5)
-data.frame(x)
-as.data.frame(x)
-load("~/Downloads/myCalibration-3.quant", verbose=TRUE)
-str(Calibration)
-ls(Calibration)
-test.list <- Calibration$calList
-str(test.list)
-piece <- "Fe.K.alpha"
-piece
-test.list[piece]
-even.tester <- predict(test.list[piece], as.data.frame(x))
-test <- read.csv(file="~/Desktop/Cezanne Face/Cezanne Face_PDHID 81410(X 16.520 Y 12.500)@170617_142335.csv")
-head(test)
-strsplit('Cezanne Face_PDHID 81410(X 16.520 Y 12.500)@170617_142335.csvv', '[.]')[[1]]
-strsplit('Cezanne Face_PDHID 81410(X 16.520 Y 12.500)@170617_142335.csvv', '[X ]')[[1]]
-strsplit('Cezanne Face_PDHID 81410(X 16.520 Y 12.500)@170617_142335.csvv', '[X ]', '[Y ]')[[1]]
-strsplit('Cezanne Face_PDHID 81410(X 16.520 Y 12.500)@170617_142335.csvv', '[X ]', '[Y ]', '[)]')[[1]]
-strsplit('Cezanne Face_PDHID 81410(X 16.520 Y 12.500)@170617_142335.csvv', '[X ]', '[Y ]', '')''')[[1]]
-strsplit('Cezanne Face_PDHID 81410(X 16.520 Y 12.500)@170617_142335.csvv', '[X ]', '[Y ]', ')'')[[1]]
-)
-'
-strsplit('Cezanne Face_PDHID 81410(X 16.520 Y 12.500)@170617_142335.csvv', '[X ]', '[Y ]', ')')[[1]]
-strsplit('Cezanne Face_PDHID 81410(X 16.520 Y 12.500)@170617_142335.csvv', '[X ]', '[Y]', ')')[[1]]
-strsplit('Cezanne Face_PDHID 81410(X 16.520 Y 12.500)@170617_142335.csvv', '[X ]', '[Y]', ')@')[[1]]
-strsplit('Cezanne Face_PDHID 81410(X 16.520 Y 12.500)@170617_142335.csvv', '[X ]', '[Y]', '[)@]')[[1]]
-?strsplit
-strsplit('Cezanne Face_PDHID 81410(X 16.520 Y 12.500)@170617_142335.csvv', '[X ]', '[Y]', '[)@]')[[3]]
-strsplit('Cezanne Face_PDHID 81410(X 16.520 Y 12.500)@170617_142335.csvv', '[X ]', '[Y]', '[)@]')[[2]]
-strsplit('Cezanne Face_PDHID 81410(X 16.520 Y 12.500)@170617_142335.csvv', '[X ]', '[Y]', '[)@]')[[1]]
-strsplit('Cezanne Face_PDHID 81410(X 16.520 Y 12.500)@170617_142335.csvv', c('[X ]', '[Y]', '[)@]'))[[1]]
-name <- "Cezanne Face_PDHID 81410(X 16.520 Y 12.500)@170617_142335.csvv"
-name
-sub('\\D*(\\d{5}).*', '\\1', name)
-sub('\\D*(\\d{6}).*', '\\1', name)
-sub('\\D*(\\d{5}).*', '\\1', name)
-sub('\\D*(\\\d{5}).*', '\\1', name)
-sub('\\D*(\\d{5}).*', '\\1', name)
-sub('\\D*(\\d{5}).*', '\\2', name)
-sub('\\D*(\\d{5}).*', '\\3', name)
-sub('\\D*(\\d{5}).*', '\\1', name)
-sub('\\D*([X]\\d{5}).*', '\\1', name)
-sub('\\D*[X ](\\d{5}).*', '\\1', name)
-sub('\\D*(\\d{5}).*', '\\3', name)
-sub('\\D*(\\d{6}).*', '\\3', name)
-regmatches(name, gregexpr("(?<=@)[a-z]+", tweet,perl=T))
-regmatches(name, gregexpr("(?<=@)[a-z]+", name,perl=T))
-regmatches(name, gregexpr("(()", name,perl=T))
-regmatches(name, gregexpr("()", name,perl=T))
-sub('.(_(\\d{5})_.*', '\\1', name)
-sub('.'('_(\\d{5})_.*', '\\1', name)
-)
-sub('.'''('_(\\d{5})_.*', '\\1', name)
-sub('.''('_(\\d{5})_.*', '\\1', name)
-strapplyc(name, "_(\\d{5})_", simplify = TRUE)
-install.packages("gsubfn")
-strapplyc(name, "_(\\d{5})_", simplify = TRUE)
-library(gsubfn)
-strapplyc(name, "_(\\d{5})_", simplify = TRUE)
-strapplyc(name, "_(\\d{6})_", simplify = TRUE)
-name
-ll = unlist(strsplit(name,'()'))
-ll
-name
-strsplit(name, "_")[[1]][3]
-strsplit(name, "(X )")[[1]][3]
-strsplit(name, "(X ")[[1]][3]
-strsplit(name, '(X '[[1]][3]
-)
-strsplit(name, '(X '[[1]][3])
-strsplit(name, '( '[[1]][3])
-strsplit(name, '( '[[1]][6])
-strsplit(name, '[X ]', '[Y]', '[)@]')[[1]]
-strsplit(name, '[ ]', '[Y]', '[)@]')[[1]]
-strsplit(name, '[ ]''[)@]')[[1]]
 strsplit(name, '[ ]')[[1]]
 strsplit(name, '[ ]')
 strsplit(name, '[ ]', ')')
@@ -458,33 +278,434 @@ plot(fit) # dendogram with p values#
 # add rectangles around groups highly supported by the data#
 pvrect(fit, alpha=.95)#
 j
+library(pvclust)#
+big <- read.csv(file="/Users/lee/Google Drive/Liang Bua XRF/Stone 2017/Rock Types/ChertTuff/Big-Table 1.csv")#
+attach(big)#
+smalls.s <- data.frame(Material, Ca.K12, Ga.K12, Cu.K12, Nb.K12, Ge.K12)#
+flores.stones.t = setNames(data.frame(t(smalls.s[,-1])), smalls.s[,1])#
+fit <- pvclust(flores.stones.t, method.hclust="ward.D",#
+   method.dist="euclidean")#
+plot(fit) # dendogram with p values#
+# add rectangles around groups highly supported by the data#
+pvrect(fit, alpha=.95)
+library(pvclust)#
+big <- read.csv(file="/Users/lee/Google Drive/Liang Bua XRF/Stone 2017/Rock Types/ChertTuff/Big-Table 1.csv")#
+attach(big)#
+smalls.s <- data.frame(Material, Ca.K12, Ga.K12, Cu.K12, Nb.K12, Ge.K12, Rb.K12)#
+flores.stones.t = setNames(data.frame(t(smalls.s[,-1])), smalls.s[,1])#
+fit <- pvclust(flores.stones.t, method.hclust="ward.D",#
+   method.dist="euclidean")#
+plot(fit) # dendogram with p values#
+# add rectangles around groups highly supported by the data#
+pvrect(fit, alpha=.95)
+library(pvclust)#
+big <- read.csv(file="/Users/lee/Google Drive/Liang Bua XRF/Stone 2017/Rock Types/ChertTuff/Big-Table 1.csv")#
+attach(big)#
+smalls.s <- data.frame(Material,Rb.K12, Cu.K12, Zn.K12, Y.K12, Ti.K12, Ga.K12, Nb.K12, Ge.K12)#
+flores.stones.t = setNames(data.frame(t(smalls.s[,-1])), smalls.s[,1])#
+fit <- pvclust(flores.stones.t, method.hclust="ward.D",#
+   method.dist="euclidean")#
+plot(fit) # dendogram with p values#
+# add rectangles around groups highly supported by the data#
+pvrect(fit, alpha=.95)
+runApp("~/GitHub/CloudCore")
 library(shiny)
-runApp("~/GitHub/Cloudcore")
-runApp("~/GitHub/Cloudcore")
-runApp("~/GitHub/Cloudcore")
-runApp("~/GitHub/Cloudcore")
-runApp("~/GitHub/Cloudcore")
-runApp("~/GitHub/Cloudcore")
-runApp("~/GitHub/Cloudcore")
-runApp("~/GitHub/Cloudcore")
-runApp("~/GitHub/Cloudcore")
-runApp("~/GitHub/Cloudcore")
-runApp("~/GitHub/Cloudcore")
-runApp("~/GitHub/Cloudcore")
-runApp("~/GitHub/Cloudcore")
-runApp("~/GitHub/Cloudcore")
-runApp("~/GitHub/Cloudcore")
-runApp("~/GitHub/Cloudcore")
-runApp("~/GitHub/Cloudcore")
-runApp("~/GitHub/Cloudcore")
-runApp("~/GitHub/Cloudcore")
-runApp("~/GitHub/Cloudcore")
-runApp("~/GitHub/Cloudcore")
-runApp("~/GitHub/Cloudcore")
-runApp("~/GitHub/Cloudcore")
-runApp("~/GitHub/Cloudcore")
-runApp("~/GitHub/Cloudcore")
-runApp("~/GitHub/Cloudcore")
-runApp("~/GitHub/Cloudcore")
-runApp("~/GitHub/Cloudcore")
-runApp("~/GitHub/Cloudcore")
+runApp("~/GitHub/CloudCore")
+runApp("~/GitHub/Cezanne")
+runApp("~/GitHub/CloudCore")
+library(shiny)
+runApp("~/GitHub/CloudCore")
+x <- c(1, 2, 3, 4, 5)
+x[4]
+x
+runApp("~/GitHub/CloudCore")
+gisp2 <- read.csv(file="~/Dropbox/Documents/Utah Core/gisp2.csv")
+gisp2 <- read.csv(file="~/Dropbox/Documents/University of Utah//Utah Core/gisp2.csv")
+library(ggplot2)
+gisp2 <- read.csv(file="~/Dropbox/Documents/University of Utah/gisp2.csv")
+ls(gisp2)
+lateholocene <- subset(gisp2$Age, gisp2$Age <= 5000 & gisp2$Age > -1000)#
+      altithermal <- subset(gisp2$Age, gisp2$Age <= 9000 & gisp2$Age > 5000)#
+      holocenetransition <- subset(gisp2$Age, gisp2$Age <= 11700 & gisp2$Age > 9000)#
+      youngerdryas <- subset(gisp2$Age, gisp2$Age <= 12900 & gisp2$Age > 11700)#
+      bollingalerod <- subset(gisp2$Age, gisp2$Age <= 14700 & gisp2$Age > 12900)#
+      deglaciation <- subset(gisp2$Age, gisp2$Age <= 19000 & gisp2$Age > 14700)#
+      lastglacialmax <- subset(gisp2$Age, gisp2$Age <= 25000 & gisp2$Age > 19000)#
+      glacial <- subset(gisp2$Age, gisp2$Age <= 120000 & gisp2$Age > 25000)#
+      climateperiods <- c(#
+      rep("1. Late Holocene", length(lateholocene)),#
+      rep("2. Altithermal", length(altithermal)),#
+      rep("3. Holocene Transition", length(holocenetransition)),#
+      rep("4. Younger Dryas", length(youngerdryas)),#
+      rep("5. Bølling-Allerød", length(bollingalerod)),#
+      rep("6. Deglaciation", length(deglaciation)),#
+      rep("7. Last Glacial Maximum", length(lastglacialmax)),#
+      rep("8. Glacial", length(glacial))#
+      )
+head(climateperiods)
+gisp2$Climate <-climateperiods
+climate.time.series.line <- qplot(Age,Temperature..C., geom="line", data = gisp2, colour = as.factor(Climate)) +#
+scale_colour_discrete("Climatic Period") +#
+theme_light() +#
+theme(axis.text.x = element_text(size=15)) +#
+theme(axis.text.y = element_text(size=15)) +#
+theme(axis.title.x = element_text(size=15)) +#
+theme(axis.title.y = element_text(size=15, angle=90)) +#
+theme(plot.title=element_text(size=20)) +#
+theme(legend.title=element_text(size=15)) +#
+theme(legend.text=element_text(size=15)) +#
+scale_x_continuous("cal yr BP", label=comma)+#
+scale_y_continuous("Temperature (ºC)")
+library(pbapply)#
+library(reshape2)#
+library(TTR)#
+library(dplyr)#
+library(data.table)#
+library(ggtern)#
+library(ggplot2)#
+library(shiny)#
+library(random)#
+library(rhandsontable)#
+library(Bchron)#
+library(scales)
+climate.time.series.line <- qplot(Age,Temperature..C., geom="line", data = gisp2, colour = as.factor(Climate)) +#
+scale_colour_discrete("Climatic Period") +#
+theme_light() +#
+theme(axis.text.x = element_text(size=15)) +#
+theme(axis.text.y = element_text(size=15)) +#
+theme(axis.title.x = element_text(size=15)) +#
+theme(axis.title.y = element_text(size=15, angle=90)) +#
+theme(plot.title=element_text(size=20)) +#
+theme(legend.title=element_text(size=15)) +#
+theme(legend.text=element_text(size=15)) +#
+scale_x_continuous("cal yr BP", label=comma)+#
+scale_y_continuous("Temperature (ºC)")
+climate.time.series.line
+climate.time.series.line <- qplot(Age2,Temperature..C., geom="line", data = gisp2, colour = as.factor(Climate)) +#
+scale_colour_discrete("Climatic Period") +#
+theme_light() +#
+theme(axis.text.x = element_text(size=15)) +#
+theme(axis.text.y = element_text(size=15)) +#
+theme(axis.title.x = element_text(size=15)) +#
+theme(axis.title.y = element_text(size=15, angle=90)) +#
+theme(plot.title=element_text(size=20)) +#
+theme(legend.title=element_text(size=15)) +#
+theme(legend.text=element_text(size=15)) +#
+scale_x_continuous("cal yr BP", label=comma)+#
+scale_y_continuous("Temperature (ºC)")
+climate.time.series.line
+gisp2$Climate <- climateperiods#
+gisp2$Age2 <- gisp2$Age * -1#
+climate.time.series.line <- qplot(Age2,Temperature..C., geom="line", data = gisp2, colour = as.factor(Climate)) +#
+scale_colour_discrete("Climatic Period") +#
+theme_light() +#
+theme(axis.text.x = element_text(size=15)) +#
+theme(axis.text.y = element_text(size=15)) +#
+theme(axis.title.x = element_text(size=15)) +#
+theme(axis.title.y = element_text(size=15, angle=90)) +#
+theme(plot.title=element_text(size=20)) +#
+theme(legend.title=element_text(size=15)) +#
+theme(legend.text=element_text(size=15)) +#
+scale_x_continuous("cal yr BP", label=comma)+#
+scale_y_continuous("Temperature (ºC)")
+climate.time.series.line
+climate.time.series.line <- qplot(Age2,Temperature..C., geom="line", data = gisp2, colour = as.factor(Climate)) +#
+scale_colour_discrete("Climatic Period") +#
+theme_light() +#
+theme(axis.text.x = element_text(size=15)) +#
+theme(axis.text.y = element_text(size=15)) +#
+theme(axis.title.x = element_text(size=15)) +#
+theme(axis.title.y = element_text(size=15, angle=90)) +#
+theme(plot.title=element_text(size=20)) +#
+theme(legend.title=element_text(size=15)) +#
+theme(legend.text=element_text(size=15)) +#
+scale_x_reverse("cal yr BP", label=comma)+#
+scale_y_continuous("Temperature (ºC)")
+climate.time.series.line
+gisp2 <- read.csv(file="~/Dropbox/Documents/University of Utah/gisp2.csv")
+gisp2$Climate <- climateperiods#
+climate.time.series.line <- qplot(Age2,Temperature..C., geom="line", data = gisp2, colour = as.factor(Climate)) +#
+scale_colour_discrete("Climatic Period") +#
+theme_light() +#
+theme(axis.text.x = element_text(size=15)) +#
+theme(axis.text.y = element_text(size=15)) +#
+theme(axis.title.x = element_text(size=15)) +#
+theme(axis.title.y = element_text(size=15, angle=90)) +#
+theme(plot.title=element_text(size=20)) +#
+theme(legend.title=element_text(size=15)) +#
+theme(legend.text=element_text(size=15)) +#
+scale_x_reverse("cal yr BP", label=comma)+#
+scale_y_continuous("Temperature (ºC)")
+climate.time.series.line
+climate.time.series.line <- qplot(Age,Temperature..C., geom="line", data = gisp2, colour = as.factor(Climate)) +#
+scale_colour_discrete("Climatic Period") +#
+theme_light() +#
+theme(axis.text.x = element_text(size=15)) +#
+theme(axis.text.y = element_text(size=15)) +#
+theme(axis.title.x = element_text(size=15)) +#
+theme(axis.title.y = element_text(size=15, angle=90)) +#
+theme(plot.title=element_text(size=20)) +#
+theme(legend.title=element_text(size=15)) +#
+theme(legend.text=element_text(size=15)) +#
+scale_x_reverse("cal yr BP", label=comma)+#
+scale_y_continuous("Temperature (ºC)")
+climate.time.series.line
+head(gisp2)
+gisp2$Climate <- rev(climateperiods)
+head(gisp2)
+gisp2$Age2 <- gisp2$Age*-1
+climate.time.series.line <- qplot(Age2,Temperature..C., geom="line", data = gisp2, colour = as.factor(Climate)) +#
+scale_colour_discrete("Climatic Period") +#
+theme_light() +#
+theme(axis.text.x = element_text(size=15)) +#
+theme(axis.text.y = element_text(size=15)) +#
+theme(axis.title.x = element_text(size=15)) +#
+theme(axis.title.y = element_text(size=15, angle=90)) +#
+theme(plot.title=element_text(size=20)) +#
+theme(legend.title=element_text(size=15)) +#
+theme(legend.text=element_text(size=15)) +#
+scale_x_continuous("cal yr BP", label=comma)+#
+scale_y_continuous("Temperature (ºC)")
+climate.time.series.line
+ggsave("~/Desktop/GIS2.jpg",climate.time.series.line, device="jpg", dpi=300, width=12, height=7)
+climate.time.series.line <- qplot(Age2,Temperature..C., geom="line", data = gisp2, colour = as.factor(Climate)) +#
+scale_colour_discrete("Climatic Period") +#
+theme_light() +#
+theme(axis.text.x = element_text(size=15)) +#
+theme(axis.text.y = element_text(size=15)) +#
+theme(axis.title.x = element_text(size=15)) +#
+theme(axis.title.y = element_text(size=15, angle=90)) +#
+theme(plot.title=element_text(size=20)) +#
+theme(legend.title=element_text(size=15)) +#
+theme(legend.text=element_text(size=15)) +#
+scale_x_continuous("cal yr BP", limits=c(-29000, 0), label=comma)+#
+scale_y_continuous("Temperature (ºC)")
+climate.time.series.line
+climate.time.series.line <- qplot(Age2,Temperature..C., geom="line", data = gisp2, colour = as.factor(Climate)) +#
+scale_colour_discrete("Climatic Period") +#
+theme_light() +#
+theme(axis.text.x = element_text(size=15)) +#
+theme(axis.text.y = element_text(size=15)) +#
+theme(axis.title.x = element_text(size=15)) +#
+theme(axis.title.y = element_text(size=15, angle=90)) +#
+theme(plot.title=element_text(size=20)) +#
+theme(legend.title=element_text(size=15)) +#
+theme(legend.text=element_text(size=15)) +#
+scale_x_continuous("cal yr BP", limits=c(-27000, -1000), label=comma)+#
+scale_y_continuous("Temperature (ºC)")
+climate.time.series.line
+climate.time.series.line <- qplot(Age2,Temperature..C., geom="line", data = gisp2, colour = as.factor(Climate)) +#
+scale_colour_discrete("Climatic Period") +#
+theme_light() +#
+theme(axis.text.x = element_text(size=15)) +#
+theme(axis.text.y = element_text(size=15)) +#
+theme(axis.title.x = element_text(size=15)) +#
+theme(axis.title.y = element_text(size=15, angle=90)) +#
+theme(plot.title=element_text(size=20)) +#
+theme(legend.title=element_text(size=15)) +#
+theme(legend.text=element_text(size=15)) +#
+scale_x_continuous("cal yr BP", limits=c(-27000, -3000), label=comma)+#
+scale_y_continuous("Temperature (ºC)")
+climate.time.series.line
+ggsave("~/Desktop/GIS2.jpg",climate.time.series.line, device="jpg", dpi=300, width=12, height=7)
+ggplotColours <- function(n = 6, h = c(0, 360) + 15){#
+  if ((diff(h) %% 360) < 1) h[2] <- h[2] - 360/n#
+  hcl(h = (seq(h[1], h[2], length = n)), c = 100, l = 65)#
+}
+ggplotColours(7)
+ggplotColours(8)
+climate.time.series.line <- qplot(Age2,Temperature..C., geom="line", data = gisp2, colour = as.factor(Climate)) +#
+scale_colour_manual("Climatic Period",#
+breaks=c("1. Late Holocene", "2. Altithermal", "3. Holocene Transition", "4. Younger Dryas", "5. Bølling-Allerød", "6. Deglaciation", "7. Last Glacial Maximum", "8. Glacial"),#
+values=c("#F8766D", "#CD9600", "#7CAE00", "#00BE67", "#00BFC4", "#00A9FF", "#C77CFF", "#FF61CC" )) +#
+theme_light() +#
+theme(axis.text.x = element_text(size=15)) +#
+theme(axis.text.y = element_text(size=15)) +#
+theme(axis.title.x = element_text(size=15)) +#
+theme(axis.title.y = element_text(size=15, angle=90)) +#
+theme(plot.title=element_text(size=20)) +#
+theme(legend.title=element_text(size=15)) +#
+theme(legend.text=element_text(size=15)) +#
+scale_x_continuous("cal yr BP", limits=c(-27000, -3000), label=comma)+#
+scale_y_continuous("Temperature (ºC)")
+climate.time.series.line
+climate.time.series.line <- qplot(Age2,Temperature..C., geom="line", data = gisp2, colour = as.factor(Climate)) +#
+scale_colour_discrete("Climatic Period", drop=FALSE) +#
+theme_light() +#
+theme(axis.text.x = element_text(size=15)) +#
+theme(axis.text.y = element_text(size=15)) +#
+theme(axis.title.x = element_text(size=15)) +#
+theme(axis.title.y = element_text(size=15, angle=90)) +#
+theme(plot.title=element_text(size=20)) +#
+theme(legend.title=element_text(size=15)) +#
+theme(legend.text=element_text(size=15)) +#
+scale_x_continuous("cal yr BP", limits=c(-27000, -1000), label=comma)+#
+scale_y_continuous("Temperature (ºC)")
+climate.time.series.line
+gisp2 <- read.csv(file="~/Dropbox/Documents/University of Utah/gisp2.csv")
+###GIPS2#
+#
+lateholocene <- subset(gisp2$Age, gisp2$Age <= 5000 & gisp2$Age > -1000)#
+#
+altithermal <- subset(gisp2$Age, gisp2$Age <= 9000 & gisp2$Age > 5000)#
+#
+holocenetransition <- subset(gisp2$Age, gisp2$Age <= 11700 & gisp2$Age > 9000)#
+#
+youngerdryas <- subset(gisp2$Age, gisp2$Age <= 12900 & gisp2$Age > 11700)#
+#
+bollingalerod <- subset(gisp2$Age, gisp2$Age <= 14700 & gisp2$Age > 12900)#
+#
+deglaciation <- subset(gisp2$Age, gisp2$Age <= 19000 & gisp2$Age > 14700)#
+#
+lastglacialmax <- subset(gisp2$Age, gisp2$Age <= 25000 & gisp2$Age > 19000)#
+#
+glacial <- subset(gisp2$Age, gisp2$Age <= 120000 & gisp2$Age > 25000)#
+#
+climateperiods <- c(#
+rep("1. Late Holocene", length(lateholocene)),#
+rep("2. Altithermal", length(altithermal)),#
+rep("3. Holocene Transition", length(holocenetransition)),#
+rep("4. Younger Dryas", length(youngerdryas)),#
+rep("5. Bølling-Allerød", length(bollingalerod)),#
+rep("6. Deglaciation", length(deglaciation)),#
+rep("7. Last Glacial Maximum", length(lastglacialmax)),#
+rep("8. Glacial", length(glacial))#
+)#
+#
+gisp2$Climate <- rev(climateperiods)#
+gisp2$Age2 <- gisp2$Age*-1
+climate.time.series.line <- qplot(Age2,Temperature..C., geom="line", data = gisp2, colour = as.factor(Climate)) +#
+scale_colour_discrete("Climatic Period", drop=FALSE) +#
+theme_light() +#
+theme(axis.text.x = element_text(size=15)) +#
+theme(axis.text.y = element_text(size=15)) +#
+theme(axis.title.x = element_text(size=15)) +#
+theme(axis.title.y = element_text(size=15, angle=90)) +#
+theme(plot.title=element_text(size=20)) +#
+theme(legend.title=element_text(size=15)) +#
+theme(legend.text=element_text(size=15)) +#
+scale_x_continuous("cal yr BP", limits=c(-27000, -1000), label=comma)+#
+scale_y_continuous("Temperature (ºC)")
+climate.time.series.line
+gisp2$Climate <- climateperiods#
+gisp2$Age2 <- gisp2$Age*-1
+climate.time.series.line <- qplot(Age2,Temperature..C., geom="line", data = gisp2, colour = as.factor(Climate)) +#
+scale_colour_discrete("Climatic Period", drop=FALSE) +#
+theme_light() +#
+theme(axis.text.x = element_text(size=15)) +#
+theme(axis.text.y = element_text(size=15)) +#
+theme(axis.title.x = element_text(size=15)) +#
+theme(axis.title.y = element_text(size=15, angle=90)) +#
+theme(plot.title=element_text(size=20)) +#
+theme(legend.title=element_text(size=15)) +#
+theme(legend.text=element_text(size=15)) +#
+scale_x_continuous("cal yr BP", limits=c(-27000, -1000), label=comma)+#
+scale_y_continuous("Temperature (ºC)")
+climate.time.series.line
+ggsave("~/Desktop/GIS2.jpg",climate.time.series.line, device="jpg", dpi=300, width=12, height=7)
+runApp("~/GitHub/CloudCore")
+runApp("~/GitHub/CongressionalImpact")
+runApp("~/GitHub/CongressImpact")
+runApp("~/GitHub/CloudCore")
+runApp("~/GitHub/Cezanne")
+?interp
+runApp("~/GitHub/Cezanne")
+library(shiny)
+runApp("~/GitHub/CloudCore")
+GGSAVE
+ggsave
+runApp("~/GitHub/CloudCore")
+ggplot2::ggsave
+runApp("~/GitHub/CloudCore")
+plot_dev
+ggplot2::plot_dev
+runApp("~/GitHub/CloudCore")
+library(shiny)
+runApp("~/GitHub/CloudCore")
+library(shiny)
+runApp("~/GitHub/Berkeley-webGeochemistry")
+library(rgl)
+bg3d("white") # if you want a black background#
+rgl.spheres(0, 0, 0, texture="~/Dropbox/Documents/Anacom/Maps/Raw/Silicon.png", lit=FALSE)
+raw <- read.csv(file="~/Dropbox/Documents/XRF-UNM-Stanford/Tokyo Test Results/Belize Total K0732/Total-Table 1.csv")
+small.Ka1 <- data.frame(Rb.Ka1, Zr.Ka1, Y.Ka1, Nb.Ka1)#
+#
+hyp.Ka1 <- kmeans(small.Ka1, 3)#
+#
+plot3d(x= Rb.Ka1/Zr.Ka1, y= Sr.Ka1/Zr.Ka1, z= Y.Ka1/Zr.Ka1, zlab="Y/Zr", ylab="Sr/Zr", xlab="Rb/Zr", type="s",  size=.009, radius=.009, box=F)
+####RATIOS#
+ppm.plot <- qplot(Rb.ppm/Zr.ppm, Sr.ppm/Zr.ppm, data=raw, ylab = "Rb/Zr (ppm)", xlab = "Sr/Zr (ppm)", main = "Calibrated Data", colour=hyp.ppm$cluster) + theme_bw() + theme(legend.position="none") +  theme(legend.position="none")
+small.Ka1 <- data.frame(Rb.Ka1, Zr.Ka1, Y.Ka1, Nb.Ka1)#
+#
+hyp.Ka1 <- kmeans(small.Ka1, 3)#
+#
+plot3d(x= Rb.Ka1/Zr.Ka1, y= Sr.Ka1/Zr.Ka1, z= Y.Ka1/Zr.Ka1, zlab="Y/Zr", ylab="Sr/Zr", xlab="Rb/Zr", type="s",  size=.009, radius=.009, box=F)
+attach(raw)
+small.Ka1 <- data.frame(Rb.Ka1, Zr.Ka1, Y.Ka1, Nb.Ka1)#
+#
+hyp.Ka1 <- kmeans(small.Ka1, 3)#
+#
+plot3d(x= Rb.Ka1/Zr.Ka1, y= Sr.Ka1/Zr.Ka1, z= Y.Ka1/Zr.Ka1, zlab="Y/Zr", ylab="Sr/Zr", xlab="Rb/Zr", type="s",  size=.009, radius=.009, box=F)
+library(readxl)
+?readxl
+data <- read_excel("~/GitHub/web_geochemistry-master/inbound/Obsidian Sources.xlsx")
+ls(data)
+data <- read_excel("~/GitHub/web_geochemistry-master/inbound/Obsidian Sources.xlsx", 3)
+ls(data)
+head(data)
+data <- read_excel("~/GitHub/web_geochemistry-master/inbound/Obsidian Sources.xlsx", 3, header=FALSE)
+? read_excel
+data <- read_excel("~/GitHub/web_geochemistry-master/inbound/Obsidian Sources.xlsx", 3, col_names=FALSE)
+head(data)
+data
+data <- read_excel("~/GitHub/web_geochemistry-master/inbound/Obsidian Sources.xlsx", 3)
+head(data)
+data["Rb m"]
+is.data.table(data)
+data.dt <- data.table(data)
+library(data.table)
+data.dt <- data.table(data)
+head(data.dt)
+data.dt
+library(shiny)
+runApp("~/GitHub/Cezanne")
+x <- c(1, 2)
+y <- c(3, 4)
+xy.frame <- data.frame(x, y)
+head(xy.frame)
+xy.frame[,1]
+library(shiny)
+runApp("~/GitHub/Cezanne")
+x
+y
+z <- "b"
+xy.frame <- data.frame(x, y, z)
+xy.frame
+runApp("~/GitHub/Cezanne")
+x
+rep(x, each=5)
+data <- read.csv(file="~/GitHub/Cezanne/data/blackdiamondmelt.csv")
+head(data)
+Ne.Ka.frame <- subset(data, !(data$Energy < Ne.K[2]-0.02 | data$Energy > Ne.K[1]+0.02))
+head(Ne.Ka.frame)
+Ne.Ka.ag <- aggregate(list(Ne.Ka.frame$Counts), by=list(Ne.Ka.frame$Spectrum), FUN="sum")
+Ne.Ka.ag <- aggregate(list(Ne.Ka.frame$CPS), by=list(Ne.Ka.frame$Spectrum), FUN="sum")
+Ne.Ka.ag
+library(shiny)
+runApp("~/GitHub/CloudCore")
+runApp("~/GitHub/CloudCore")
+runApp("~/GitHub/CloudCore")
+runApp("~/GitHub/CloudCore")
+runApp("~/GitHub/CloudCore")
+runApp("~/GitHub/CloudCore")
+runApp("~/GitHub/CloudCore")
+runApp("~/GitHub/CloudCore")
+runApp("~/GitHub/CloudCore")
+runApp("~/GitHub/CloudCore")
+runApp("~/GitHub/CloudCore")
+runApp("~/GitHub/CloudCore")
+runApp("~/GitHub/CloudCore")
+runApp("~/GitHub/CloudCore")
+runApp("~/GitHub/CloudCore")
+runApp("~/GitHub/CloudCore")
+runApp("~/GitHub/CloudCore")

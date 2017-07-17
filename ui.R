@@ -328,7 +328,9 @@ sliderInput("pointsize", label = "Point Size", value=5, min=1, max=15),
 
 tags$hr(),
 
-selectInput("xaxistype", label="X Axis", c("Depth", "Age"), selected="Depth"),
+selectInput("xaxistype", label="X Axis", c("Depth", "Age", "Custom"), selected="Depth"),
+textInput("customxaxis", label="Custom X Axis"),
+
 
 radioButtons("lengthunit", label=NULL, c("mm", "cm", "m", "inches", "feet"), selected="mm"),
 numericInput("startmm", label = "Start Point (mm)", value=0),
@@ -575,7 +577,9 @@ sliderInput("pointsizeeq", label = "Point Size", value=5, min=1, max=15),
 
 tags$hr(),
 
-selectInput("xaxistypeeq", label="X Axis", c("Depth", "Age"), selected="Depth"),
+selectInput("xaxistypeeq", label="X Axis", c("Depth", "Age", "Custom"), selected="Depth"),
+textInput("customxaxiseq", label="Custom X Axis"),
+
 
 radioButtons("lengthuniteq", label=NULL, c("mm", "cm", "m", "inches", "feet"), selected="mm"),
 numericInput("startmmeq", label = "Start Point (mm)", value=0),

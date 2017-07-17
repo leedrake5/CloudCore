@@ -393,6 +393,10 @@ output$defaultlines <- renderUI({
             empty.line.table <- empty.line.table[1:2]
             colnames(empty.line.table) <- c("Qualitative", "Depth")
             empty.line.table$Depth <- empty.line.table$Depth*0
+            empty.line.table$Custom <- empty.line.table$Depth*0
+            empty.line.table$Quantitative1 <- empty.line.table$Depth*0
+            empty.line.table$Quantitative2 <- empty.line.table$Depth*0
+            empty.line.table$Quantitative3 <- empty.line.table$Depth*0
             empty.line.table$Spectrum <- spectra.line.table$Spectrum
             na.vector <- rep("NULL", length(empty.line.table$Qualitative))
             na.matrix <- as.matrix(na.vector)
@@ -402,8 +406,8 @@ output$defaultlines <- renderUI({
             na.input <- as.vector(na.matrix[,1])
             
             
-            empty.line.table <- data.frame(empty.line.table$Spectrum, na.input, empty.line.table$Depth)
-            colnames(empty.line.table) <- c("Spectrum", "Qualitative", "Depth")
+            empty.line.table <- data.frame(empty.line.table$Spectrum, na.input, empty.line.table$Depth, empty.line.table$Custom, empty.line.table$Quantitative1, empty.line.table$Quantitative2, empty.line.table$Quantitative3)
+            colnames(empty.line.table) <- c("Spectrum", "Qualitative", "Depth", "Custom", "Quantitative1", "Quantitative2", "Quantitative3")
             
             
             empty.line.table
@@ -557,6 +561,10 @@ xrfPCAReactive <- reactive({
       spectra.line.table$Cluster <- xrf.k$Cluster
       spectra.line.table$Qualitative <- quality.table$Qualitative
       spectra.line.table$Depth <- as.numeric(as.vector(quality.table$Depth))
+      spectra.line.table$Custom <- as.numeric(as.vector(quality.table$Custom))
+      spectra.line.table$Quantitative1 <- as.numeric(as.vector(quality.table$Quantitative1))
+      spectra.line.table$Quantitative2 <- as.numeric(as.vector(quality.table$Quantitative2))
+      spectra.line.table$Quantitative3 <- as.numeric(as.vector(quality.table$Quantitative3))
       spectra.line.table$PC1 <- xrf.k$PC1
       spectra.line.table$PC2 <- xrf.k$PC2
       spectra.line.table
@@ -622,6 +630,8 @@ xrfPCAReactive <- reactive({
       spectra.line.table$MinSd1 <-age.min.sd1
       spectra.line.table$MaxSd1 <-age.max.sd1
       spectra.line.table$MaxSd2 <-age.max.sd2
+      
+      spectra.line.table$None <- rep(1, length(spectra.line.table$Depth))
       
       spectra.line.table
 
@@ -1008,10 +1018,10 @@ xrfPCAReactive <- reactive({
   
   choiceLines <- reactive({
       
-      spectra.line.table <- myData()
+      spectra.line.table <- ageData()
       
       standard <- if(input$filetype=="Spectra"){
-          colnames(spectra.line.table.norm)
+          colnames(spectra.line.table)
       } else if(input$filetype=="Net"){
           colnames(spectra.line.table)
       }
@@ -1077,8 +1087,7 @@ output$inxlimrange <- renderUI({
   
   plotInput3a <- reactive({
       
-      spectra.line.table <- ageData()
-      spectra.line.table <- subset(spectra.line.table, !(spectra.line.table[input$xaxistype] < input$xlimrange[1] | spectra.line.table[input$xaxistype] > input$xlimrange[2]))
+
       
       
       x.axis <- if (input$xaxistype=="Depth") {
@@ -1091,7 +1100,13 @@ output$inxlimrange <- renderUI({
           paste("cal year AD")
       } else if (input$xaxistype=="Age" && input$timetype=="BC/AD") {
        paste("cal year BC/AD")
+      } else if (input$xaxistype=="Custom") {
+          input$customxaxis
       }
+      
+      
+      spectra.line.table <- ageData()
+      spectra.line.table <- subset(spectra.line.table, !(spectra.line.table[input$xaxistype] < input$xlimrange[1] | spectra.line.table[input$xaxistype] > input$xlimrange[2]))
       
       
       spectra.line.table.norm <- data.frame(spectra.line.table, null)
@@ -1394,23 +1409,23 @@ output$inxlimrange <- renderUI({
 
 
 
-      if (input$timecolour == "Black" && input$xaxistype=="Age") {
+      if (input$timecolour == "Black" && input$xaxistype!="Depth") {
           black.time.series
-      } else if (input$timecolour == "Smooth" && input$xaxistype=="Age") {
+      } else if (input$timecolour == "Smooth" && input$xaxistype!="Depth") {
           smooth.time.series
-      } else if (input$timecolour == "Selected" && input$xaxistype=="Age") {
+      } else if (input$timecolour == "Selected" && input$xaxistype!="Depth") {
           ramp.time.series
-      } else if (input$timecolour == "Cluster" && input$xaxistype=="Age") {
+      } else if (input$timecolour == "Cluster" && input$xaxistype!="Depth") {
           cluster.time.series
-      } else if (input$timecolour == "Climate" && input$xaxistype=="Age") {
+      } else if (input$timecolour == "Climate" && input$xaxistype!="Depth") {
           climate.time.series.line
-      } else if (input$timecolour == "QualitativePoint" && input$xaxistype=="Age") {
+      } else if (input$timecolour == "QualitativePoint" && input$xaxistype!="Depth") {
           qualitative.time.series.point
-      } else if (input$timecolour == "QualitativeLine" && input$xaxistype=="Age") {
+      } else if (input$timecolour == "QualitativeLine" && input$xaxistype!="Depth") {
           qualitative.time.series.line
-      } else if (input$timecolour == "Depth" && input$xaxistype=="Age") {
+      } else if (input$timecolour == "Depth" && input$xaxistype!="Depth") {
           Depth.time.series
-      } else if (input$timecolour == "Area" && input$xaxistype=="Age") {
+      } else if (input$timecolour == "Area" && input$xaxistype=="Depth") {
           area.time.series
       } else if (input$timecolour == "Black" && input$xaxistype=="Depth") {
           black.time.series.reverse
@@ -1477,7 +1492,7 @@ output$inxlimrange <- renderUI({
   
   
   plotInput3b <- reactive({
-      spectra.line.table <- ageData()
+      
       
       x.axis <- if (input$xaxistype=="Depth") {
           paste("Depth (", input$lengthunit, ")", sep="", collapse="")
@@ -1489,7 +1504,12 @@ output$inxlimrange <- renderUI({
           paste("cal year AD")
       } else if (input$xaxistype=="Age" && input$timetype=="BC/AD") {
           paste("cal year BC/AD")
+      } else if (input$xaxistype=="Custom") {
+          input$customxaxis
       }
+      
+      spectra.line.table <- ageData()
+      spectra.line.table <- subset(spectra.line.table, !(spectra.line.table[input$xaxistype] < input$xlimrange[1] | spectra.line.table[input$xaxistype] > input$xlimrange[2]))
       
       
       spectra.line.table.norm <- data.frame(spectra.line.table, null)
@@ -1788,24 +1808,23 @@ output$inxlimrange <- renderUI({
       scale_y_continuous(paste(trendy), label=comma)
       
       
-      if (input$timecolour == "Black" && input$xaxistype=="Age") {
+     
+      if (input$timecolour == "Black" && input$xaxistype!="Depth") {
           black.time.series
-      } else if (input$timecolour == "Smooth" && input$xaxistype=="Age") {
+      } else if (input$timecolour == "Smooth" && input$xaxistype!="Depth") {
           smooth.time.series
-      } else if (input$timecolour == "Selected" && input$xaxistype=="Age") {
+      } else if (input$timecolour == "Selected" && input$xaxistype!="Depth") {
           ramp.time.series
-      } else if (input$timecolour == "Cluster" && input$xaxistype=="Age") {
+      } else if (input$timecolour == "Cluster" && input$xaxistype!="Depth") {
           cluster.time.series
-      } else if (input$timecolour == "Climate" && input$xaxistype=="Age") {
+      } else if (input$timecolour == "Climate" && input$xaxistype!="Depth") {
           climate.time.series.line
-      } else if (input$timecolour == "QualitativePoint" && input$xaxistype=="Age") {
+      } else if (input$timecolour == "QualitativePoint" && input$xaxistype!="Depth") {
           qualitative.time.series.point
-      } else if (input$timecolour == "QualitativeLine" && input$xaxistype=="Age") {
+      } else if (input$timecolour == "QualitativeLine" && input$xaxistype!="Depth") {
           qualitative.time.series.line
-      } else if (input$timecolour == "Depth" && input$xaxistype=="Age") {
+      } else if (input$timecolour == "Depth" && input$xaxistype!="Depth") {
           Depth.time.series
-      } else if (input$timecolour == "Area" && input$xaxistype=="Age") {
-          area.time.series
       } else if (input$timecolour == "Black" && input$xaxistype=="Depth") {
           black.time.series.reverse
       } else if (input$timecolour == "Smooth" && input$xaxistype=="Depth") {
@@ -1856,7 +1875,6 @@ output$inxlimrange <- renderUI({
   
   plotInput3c <- reactive({
       
-      spectra.line.table <- ageData()
       
       x.axis <- if (input$xaxistype=="Depth") {
           paste("Depth (", input$lengthunit, ")", sep="", collapse="")
@@ -1868,7 +1886,13 @@ output$inxlimrange <- renderUI({
           paste("cal year AD")
       } else if (input$xaxistype=="Age" && input$timetype=="BC/AD") {
           paste("cal year BC/AD")
+      } else if (input$xaxistype=="Custom") {
+          input$customxaxis
       }
+      
+      
+      spectra.line.table <- ageData()
+      spectra.line.table <- subset(spectra.line.table, !(spectra.line.table[input$xaxistype] < input$xlimrange[1] | spectra.line.table[input$xaxistype] > input$xlimrange[2]))
       
       spectra.line.table.norm <- data.frame(spectra.line.table, null)
       colnames(spectra.line.table.norm) <- c(names(spectra.line.table), "None")
@@ -2163,24 +2187,23 @@ output$inxlimrange <- renderUI({
       scale_x_reverse(paste(x.axis), label=comma) +
       scale_y_continuous(paste(trendy), label=comma)
       
-      if (input$timecolour == "Black" && input$xaxistype=="Age") {
+     
+      if (input$timecolour == "Black" && input$xaxistype!="Depth") {
           black.time.series
-      } else if (input$timecolour == "Smooth" && input$xaxistype=="Age") {
+      } else if (input$timecolour == "Smooth" && input$xaxistype!="Depth") {
           smooth.time.series
-      } else if (input$timecolour == "Selected" && input$xaxistype=="Age") {
+      } else if (input$timecolour == "Selected" && input$xaxistype!="Depth") {
           ramp.time.series
-      } else if (input$timecolour == "Cluster" && input$xaxistype=="Age") {
+      } else if (input$timecolour == "Cluster" && input$xaxistype!="Depth") {
           cluster.time.series
-      } else if (input$timecolour == "Climate" && input$xaxistype=="Age") {
+      } else if (input$timecolour == "Climate" && input$xaxistype!="Depth") {
           climate.time.series.line
-      } else if (input$timecolour == "QualitativePoint" && input$xaxistype=="Age") {
+      } else if (input$timecolour == "QualitativePoint" && input$xaxistype!="Depth") {
           qualitative.time.series.point
-      } else if (input$timecolour == "QualitativeLine" && input$xaxistype=="Age") {
+      } else if (input$timecolour == "QualitativeLine" && input$xaxistype!="Depth") {
           qualitative.time.series.line
-      } else if (input$timecolour == "Depth" && input$xaxistype=="Age") {
+      } else if (input$timecolour == "Depth" && input$xaxistype!="Depth") {
           Depth.time.series
-      } else if (input$timecolour == "Area" && input$xaxistype=="Age") {
-          area.time.series
       } else if (input$timecolour == "Black" && input$xaxistype=="Depth") {
           black.time.series.reverse
       } else if (input$timecolour == "Smooth" && input$xaxistype=="Depth") {
@@ -2229,7 +2252,6 @@ output$inxlimrange <- renderUI({
   
   plotInput3d <- reactive({
       
-      spectra.line.table <- ageData()
       
       x.axis <- if (input$xaxistype=="Depth") {
           paste("Depth (", input$lengthunit, ")", sep="", collapse="")
@@ -2243,6 +2265,9 @@ output$inxlimrange <- renderUI({
           paste("cal year BC/AD")
       }
       
+      
+      spectra.line.table <- ageData()
+      spectra.line.table <- subset(spectra.line.table, !(spectra.line.table[input$xaxistype] < input$xlimrange[1] | spectra.line.table[input$xaxistype] > input$xlimrange[2]))
       
       spectra.line.table.norm <- data.frame(spectra.line.table, null)
       colnames(spectra.line.table.norm) <- c(names(spectra.line.table), "None")
@@ -2542,24 +2567,23 @@ output$inxlimrange <- renderUI({
       scale_y_continuous(paste(trendy), label=comma)
       
       
-      if (input$timecolour == "Black" && input$xaxistype=="Age") {
+     
+      if (input$timecolour == "Black" && input$xaxistype!="Depth") {
           black.time.series
-      } else if (input$timecolour == "Smooth" && input$xaxistype=="Age") {
+      } else if (input$timecolour == "Smooth" && input$xaxistype!="Depth") {
           smooth.time.series
-      } else if (input$timecolour == "Selected" && input$xaxistype=="Age") {
+      } else if (input$timecolour == "Selected" && input$xaxistype!="Depth") {
           ramp.time.series
-      } else if (input$timecolour == "Cluster" && input$xaxistype=="Age") {
+      } else if (input$timecolour == "Cluster" && input$xaxistype!="Depth") {
           cluster.time.series
-      } else if (input$timecolour == "Climate" && input$xaxistype=="Age") {
+      } else if (input$timecolour == "Climate" && input$xaxistype!="Depth") {
           climate.time.series.line
-      } else if (input$timecolour == "QualitativePoint" && input$xaxistype=="Age") {
+      } else if (input$timecolour == "QualitativePoint" && input$xaxistype!="Depth") {
           qualitative.time.series.point
-      } else if (input$timecolour == "QualitativeLine" && input$xaxistype=="Age") {
+      } else if (input$timecolour == "QualitativeLine" && input$xaxistype!="Depth") {
           qualitative.time.series.line
-      } else if (input$timecolour == "Depth" && input$xaxistype=="Age") {
+      } else if (input$timecolour == "Depth" && input$xaxistype!="Depth") {
           Depth.time.series
-      } else if (input$timecolour == "Area" && input$xaxistype=="Age") {
-          area.time.series
       } else if (input$timecolour == "Black" && input$xaxistype=="Depth") {
           black.time.series.reverse
       } else if (input$timecolour == "Smooth" && input$xaxistype=="Depth") {
@@ -2613,7 +2637,6 @@ output$inxlimrange <- renderUI({
   
   plotInput3e <- reactive({
       
-      spectra.line.table <- ageData()
       
       
       x.axis <- if (input$xaxistype=="Depth") {
@@ -2626,7 +2649,13 @@ output$inxlimrange <- renderUI({
           paste("cal year AD")
       } else if (input$xaxistype=="Age" && input$timetype=="BC/AD") {
           paste("cal year BC/AD")
+      } else if (input$xaxistype=="Custom") {
+          input$customxaxis
       }
+      
+      
+      spectra.line.table <- ageData()
+      spectra.line.table <- subset(spectra.line.table, !(spectra.line.table[input$xaxistype] < input$xlimrange[1] | spectra.line.table[input$xaxistype] > input$xlimrange[2]))
       
       
       spectra.line.table.norm <- data.frame(spectra.line.table, null)
@@ -2926,24 +2955,23 @@ output$inxlimrange <- renderUI({
       scale_y_continuous(paste(trendy), label=comma)
       
       
-      if (input$timecolour == "Black" && input$xaxistype=="Age") {
+     
+      if (input$timecolour == "Black" && input$xaxistype!="Depth") {
           black.time.series
-      } else if (input$timecolour == "Smooth" && input$xaxistype=="Age") {
+      } else if (input$timecolour == "Smooth" && input$xaxistype!="Depth") {
           smooth.time.series
-      } else if (input$timecolour == "Selected" && input$xaxistype=="Age") {
+      } else if (input$timecolour == "Selected" && input$xaxistype!="Depth") {
           ramp.time.series
-      } else if (input$timecolour == "Cluster" && input$xaxistype=="Age") {
+      } else if (input$timecolour == "Cluster" && input$xaxistype!="Depth") {
           cluster.time.series
-      } else if (input$timecolour == "Climate" && input$xaxistype=="Age") {
+      } else if (input$timecolour == "Climate" && input$xaxistype!="Depth") {
           climate.time.series.line
-      } else if (input$timecolour == "QualitativePoint" && input$xaxistype=="Age") {
+      } else if (input$timecolour == "QualitativePoint" && input$xaxistype!="Depth") {
           qualitative.time.series.point
-      } else if (input$timecolour == "QualitativeLine" && input$xaxistype=="Age") {
+      } else if (input$timecolour == "QualitativeLine" && input$xaxistype!="Depth") {
           qualitative.time.series.line
-      } else if (input$timecolour == "Depth" && input$xaxistype=="Age") {
+      } else if (input$timecolour == "Depth" && input$xaxistype!="Depth") {
           Depth.time.series
-      } else if (input$timecolour == "Area" && input$xaxistype=="Age") {
-          area.time.series
       } else if (input$timecolour == "Black" && input$xaxistype=="Depth") {
           black.time.series.reverse
       } else if (input$timecolour == "Smooth" && input$xaxistype=="Depth") {
@@ -4987,9 +5015,7 @@ output$inxlimrange <- renderUI({
   
   plotInput6a <- reactive({
       
-      spectra.line.table <- ageData()
-      data.transformation <- dataTransform()
-      
+
       
       x.axis <- if (input$xaxistypeeq=="Depth") {
           paste("Depth (", input$lengthuniteq, ")", sep="", collapse="")
@@ -4997,11 +5023,20 @@ output$inxlimrange <- renderUI({
           paste("cal year BP")
       } else if (input$xaxistypeeq=="Age" && input$timetypeeq=="BC") {
           paste("cal year BC")
-      } else if (input$xaxistype=="Age" && input$timetypeeq=="AD") {
+      } else if (input$xaxistypeeq=="Age" && input$timetypeeq=="AD") {
           paste("cal year AD")
-      } else if (input$xaxistype=="Age" && input$timetypeeq=="BC/AD") {
+      } else if (input$xaxistypeeq=="Age" && input$timetypeeq=="BC/AD") {
           paste("cal year BC/AD")
+      } else if (input$xaxistypeeq=="Custom") {
+          input$customxaxiseq
       }
+      
+      
+      spectra.line.table <- ageData()
+      data.transformation <- dataTransform()
+      spectra.line.table <- subset(spectra.line.table, !(spectra.line.table[input$xaxistype] < input$xlimrange[1] | spectra.line.table[input$xaxistype] > input$xlimrange[2]))
+      
+
       
       
       spectra.line.table.norm <- data.frame(spectra.line.table, null)
@@ -5284,24 +5319,23 @@ scale_colour_gradientn(colours=rev(terrain.colors(length(spectra.timeseries.tabl
       
       
       
-      if (input$timecoloureq == "Black" && input$xaxistypeeq=="Age") {
+     
+      if (input$timecoloureq == "Black" && input$xaxistypeeq!="Depth") {
           black.time.series
-      } else if (input$timecoloureq == "Smooth" && input$xaxistypeeq=="Age") {
+      } else if (input$timecoloureq == "Smooth" && input$xaxistypeeq!="Depth") {
           smooth.time.series
-      } else if (input$timecoloureq == "Selected" && input$xaxistypeeq=="Age") {
+      } else if (input$timecoloureq == "Selected" && input$xaxistypeeq!="Depth") {
           ramp.time.series
-      } else if (input$timecoloureq == "Cluster" && input$xaxistypeeq=="Age") {
+      } else if (input$timecoloureq == "Cluster" && input$xaxistypeeq!="Depth") {
           cluster.time.series
-      } else if (input$timecoloureq == "Climate" && input$xaxistypeeq=="Age") {
+      } else if (input$timecoloureq == "Climate" && input$xaxistypeeq!="Depth") {
           climate.time.series.line
-      } else if (input$timecoloureq == "QualitativePoint" && input$xaxistypeeq=="Age") {
+      } else if (input$timecoloureq == "QualitativePoint" && input$xaxistypeeq!="Depth") {
           qualitative.time.series.point
-      } else if (input$timecoloureq == "QualitativeLine" && input$xaxistypeeq=="Age") {
+      } else if (input$timecoloureq == "QualitativeLine" && input$xaxistypeeq!="Depth") {
           qualitative.time.series.line
-      } else if (input$timecoloureq == "Depth" && input$xaxistypeeq=="Age") {
+      } else if (input$timecoloureq == "Depth" && input$xaxistypeeq!="Depth") {
           Depth.time.series
-      } else if (input$timecoloureq == "Area" && input$xaxistypeeq=="Age") {
-          area.time.series
       } else if (input$timecoloureq == "Black" && input$xaxistypeeq=="Depth") {
           black.time.series.reverse
       } else if (input$timecoloureq == "Smooth" && input$xaxistypeeq=="Depth") {
@@ -5351,9 +5385,7 @@ scale_colour_gradientn(colours=rev(terrain.colors(length(spectra.timeseries.tabl
   
   
   plotInput6b <- reactive({
-      spectra.line.table <- ageData()
-      data.transformation <- dataTransform()
-      
+
       
       x.axis <- if (input$xaxistypeeq=="Depth") {
           paste("Depth (", input$lengthuniteq, ")", sep="", collapse="")
@@ -5361,11 +5393,21 @@ scale_colour_gradientn(colours=rev(terrain.colors(length(spectra.timeseries.tabl
           paste("cal year BP")
       } else if (input$xaxistypeeq=="Age" && input$timetypeeq=="BC") {
           paste("cal year BC")
-      } else if (input$axistype=="Age" && input$timetypeeq=="AD") {
+      } else if (input$xaxistypeeq=="Age" && input$timetypeeq=="AD") {
           paste("cal year AD")
-      } else if (input$axistype=="Age" && input$timetypeeq=="BC/AD") {
+      } else if (input$xaxistypeeq=="Age" && input$timetypeeq=="BC/AD") {
           paste("cal year BC/AD")
+      } else if (input$xaxistypeeq=="Custom") {
+          input$customxaxiseq
       }
+      
+      
+      
+      spectra.line.table <- ageData()
+      data.transformation <- dataTransform()
+      spectra.line.table <- subset(spectra.line.table, !(spectra.line.table[input$xaxistype] < input$xlimrange[1] | spectra.line.table[input$xaxistype] > input$xlimrange[2]))
+      
+
       
       
       spectra.line.table.norm <- data.frame(spectra.line.table, null)
@@ -5658,24 +5700,23 @@ scale_colour_gradientn(colours=rev(terrain.colors(length(spectra.timeseries.tabl
       scale_y_continuous(input$yaxistype, label=comma)
       
       
-      if (input$timecoloureq == "Black" && input$xaxistypeeq=="Age") {
+     
+      if (input$timecoloureq == "Black" && input$xaxistypeeq!="Depth") {
           black.time.series
-      } else if (input$timecoloureq == "Smooth" && input$xaxistypeeq=="Age") {
+      } else if (input$timecoloureq == "Smooth" && input$xaxistypeeq!="Depth") {
           smooth.time.series
-      } else if (input$timecoloureq == "Selected" && input$xaxistypeeq=="Age") {
+      } else if (input$timecoloureq == "Selected" && input$xaxistypeeq!="Depth") {
           ramp.time.series
-      } else if (input$timecoloureq == "Cluster" && input$xaxistypeeq=="Age") {
+      } else if (input$timecoloureq == "Cluster" && input$xaxistypeeq!="Depth") {
           cluster.time.series
-      } else if (input$timecoloureq == "Climate" && input$xaxistypeeq=="Age") {
+      } else if (input$timecoloureq == "Climate" && input$xaxistypeeq!="Depth") {
           climate.time.series.line
-      } else if (input$timecoloureq == "QualitativePoint" && input$xaxistypeeq=="Age") {
+      } else if (input$timecoloureq == "QualitativePoint" && input$xaxistypeeq!="Depth") {
           qualitative.time.series.point
-      } else if (input$timecoloureq == "QualitativeLine" && input$xaxistypeeq=="Age") {
+      } else if (input$timecoloureq == "QualitativeLine" && input$xaxistypeeq!="Depth") {
           qualitative.time.series.line
-      } else if (input$timecoloureq == "Depth" && input$xaxistypeeq=="Age") {
+      } else if (input$timecoloureq == "Depth" && input$xaxistypeeq!="Depth") {
           Depth.time.series
-      } else if (input$timecoloureq == "Area" && input$xaxistypeeq=="Age") {
-          area.time.series
       } else if (input$timecoloureq == "Black" && input$xaxistypeeq=="Depth") {
           black.time.series.reverse
       } else if (input$timecoloureq == "Smooth" && input$xaxistypeeq=="Depth") {
@@ -5724,9 +5765,7 @@ scale_colour_gradientn(colours=rev(terrain.colors(length(spectra.timeseries.tabl
   
   
   plotInput6c <- reactive({
-      
-      spectra.line.table <- ageData()
-      data.transformation <- dataTransform()
+
       
       
       x.axis <- if (input$xaxistypeeq=="Depth") {
@@ -5735,12 +5774,22 @@ scale_colour_gradientn(colours=rev(terrain.colors(length(spectra.timeseries.tabl
           paste("cal year BP")
       } else if (input$xaxistypeeq=="Age" && input$timetypeeq=="BC") {
           paste("cal year BC")
-      } else if (input$axistype=="Age" && input$timetypeeq=="AD") {
+      } else if (input$xaxistypeeq=="Age" && input$timetypeeq=="AD") {
           paste("cal year AD")
-      } else if (input$axistype=="Age" && input$timetypeeq=="BC/AD") {
+      } else if (input$xaxistypeeq=="Age" && input$timetypeeq=="BC/AD") {
           paste("cal year BC/AD")
+      } else if (input$xaxistypeeq=="Custom") {
+          input$customxaxiseq
       }
       
+      
+      
+      
+      spectra.line.table <- ageData()
+      data.transformation <- dataTransform()
+      spectra.line.table <- subset(spectra.line.table, !(spectra.line.table[input$xaxistype] < input$xlimrange[1] | spectra.line.table[input$xaxistype] > input$xlimrange[2]))
+      
+
       
       spectra.line.table.norm <- data.frame(spectra.line.table, null)
       colnames(spectra.line.table.norm) <- c(names(spectra.line.table), "None")
@@ -6033,24 +6082,23 @@ scale_colour_gradientn(colours=rev(terrain.colors(length(spectra.timeseries.tabl
       scale_y_continuous(input$yaxistype, label=comma)
       
       
-      if (input$timecoloureq == "Black" && input$xaxistypeeq=="Age") {
+     
+      if (input$timecoloureq == "Black" && input$xaxistypeeq!="Depth") {
           black.time.series
-      } else if (input$timecoloureq == "Smooth" && input$xaxistypeeq=="Age") {
+      } else if (input$timecoloureq == "Smooth" && input$xaxistypeeq!="Depth") {
           smooth.time.series
-      } else if (input$timecoloureq == "Selected" && input$xaxistypeeq=="Age") {
+      } else if (input$timecoloureq == "Selected" && input$xaxistypeeq!="Depth") {
           ramp.time.series
-      } else if (input$timecoloureq == "Cluster" && input$xaxistypeeq=="Age") {
+      } else if (input$timecoloureq == "Cluster" && input$xaxistypeeq!="Depth") {
           cluster.time.series
-      } else if (input$timecoloureq == "Climate" && input$xaxistypeeq=="Age") {
+      } else if (input$timecoloureq == "Climate" && input$xaxistypeeq!="Depth") {
           climate.time.series.line
-      } else if (input$timecoloureq == "QualitativePoint" && input$xaxistypeeq=="Age") {
+      } else if (input$timecoloureq == "QualitativePoint" && input$xaxistypeeq!="Depth") {
           qualitative.time.series.point
-      } else if (input$timecoloureq == "QualitativeLine" && input$xaxistypeeq=="Age") {
+      } else if (input$timecoloureq == "QualitativeLine" && input$xaxistypeeq!="Depth") {
           qualitative.time.series.line
-      } else if (input$timecoloureq == "Depth" && input$xaxistypeeq=="Age") {
+      } else if (input$timecoloureq == "Depth" && input$xaxistypeeq!="Depth") {
           Depth.time.series
-      } else if (input$timecoloureq == "Area" && input$xaxistypeeq=="Age") {
-          area.time.series
       } else if (input$timecoloureq == "Black" && input$xaxistypeeq=="Depth") {
           black.time.series.reverse
       } else if (input$timecoloureq == "Smooth" && input$xaxistypeeq=="Depth") {
@@ -6098,8 +6146,6 @@ scale_colour_gradientn(colours=rev(terrain.colors(length(spectra.timeseries.tabl
   
   plotInput6d <- reactive({
       
-      spectra.line.table <- ageData()
-      data.transformation <- dataTransform()
       
       
       x.axis <- if (input$xaxistypeeq=="Depth") {
@@ -6108,12 +6154,22 @@ scale_colour_gradientn(colours=rev(terrain.colors(length(spectra.timeseries.tabl
           paste("cal year BP")
       } else if (input$xaxistypeeq=="Age" && input$timetypeeq=="BC") {
           paste("cal year BC")
-      } else if (input$axistype=="Age" && input$timetypeeq=="AD") {
+      } else if (input$xaxistypeeq=="Age" && input$timetypeeq=="AD") {
           paste("cal year AD")
-      } else if (input$axistype=="Age" && input$timetypeeq=="BC/AD") {
+      } else if (input$xaxistypeeq=="Age" && input$timetypeeq=="BC/AD") {
           paste("cal year BC/AD")
+      } else if (input$xaxistypeeq=="Custom") {
+          input$customxaxiseq
       }
       
+      
+      
+      spectra.line.table <- ageData()
+      data.transformation <- dataTransform()
+      spectra.line.table <- subset(spectra.line.table, !(spectra.line.table[input$xaxistype] < input$xlimrange[1] | spectra.line.table[input$xaxistype] > input$xlimrange[2]))
+      
+
+
       
       spectra.line.table.norm <- data.frame(spectra.line.table, null)
       colnames(spectra.line.table.norm) <- c(names(spectra.line.table), "None")
@@ -6405,24 +6461,23 @@ scale_colour_gradientn(colours=rev(terrain.colors(length(spectra.timeseries.tabl
       scale_y_continuous(input$yaxistype, label=comma)
       
       
-      if (input$timecoloureq == "Black" && input$xaxistypeeq=="Age") {
+     
+      if (input$timecoloureq == "Black" && input$xaxistypeeq!="Depth") {
           black.time.series
-      } else if (input$timecoloureq == "Smooth" && input$xaxistypeeq=="Age") {
+      } else if (input$timecoloureq == "Smooth" && input$xaxistypeeq!="Depth") {
           smooth.time.series
-      } else if (input$timecoloureq == "Selected" && input$xaxistypeeq=="Age") {
+      } else if (input$timecoloureq == "Selected" && input$xaxistypeeq!="Depth") {
           ramp.time.series
-      } else if (input$timecoloureq == "Cluster" && input$xaxistypeeq=="Age") {
+      } else if (input$timecoloureq == "Cluster" && input$xaxistypeeq!="Depth") {
           cluster.time.series
-      } else if (input$timecoloureq == "Climate" && input$xaxistypeeq=="Age") {
+      } else if (input$timecoloureq == "Climate" && input$xaxistypeeq!="Depth") {
           climate.time.series.line
-      } else if (input$timecoloureq == "QualitativePoint" && input$xaxistypeeq=="Age") {
+      } else if (input$timecoloureq == "QualitativePoint" && input$xaxistypeeq!="Depth") {
           qualitative.time.series.point
-      } else if (input$timecoloureq == "QualitativeLine" && input$xaxistypeeq=="Age") {
+      } else if (input$timecoloureq == "QualitativeLine" && input$xaxistypeeq!="Depth") {
           qualitative.time.series.line
-      } else if (input$timecoloureq == "Depth" && input$xaxistypeeq=="Age") {
+      } else if (input$timecoloureq == "Depth" && input$xaxistypeeq!="Depth") {
           Depth.time.series
-      } else if (input$timecoloureq == "Area" && input$xaxistypeeq=="Age") {
-          area.time.series
       } else if (input$timecoloureq == "Black" && input$xaxistypeeq=="Depth") {
           black.time.series.reverse
       } else if (input$timecoloureq == "Smooth" && input$xaxistypeeq=="Depth") {
@@ -6474,9 +6529,7 @@ scale_colour_gradientn(colours=rev(terrain.colors(length(spectra.timeseries.tabl
   
   plotInput6e <- reactive({
       
-      spectra.line.table <- ageData()
-      data.transformation <- dataTransform()
-      
+
       
       x.axis <- if (input$xaxistypeeq=="Depth") {
           paste("Depth (", input$lengthuniteq, ")", sep="", collapse="")
@@ -6484,12 +6537,22 @@ scale_colour_gradientn(colours=rev(terrain.colors(length(spectra.timeseries.tabl
           paste("cal year BP")
       } else if (input$xaxistypeeq=="Age" && input$timetypeeq=="BC") {
           paste("cal year BC")
-      } else if (input$axistype=="Age" && input$timetypeeq=="AD") {
+      } else if (input$xaxistypeeq=="Age" && input$timetypeeq=="AD") {
           paste("cal year AD")
-      } else if (input$axistype=="Age" && input$timetypeeq=="BC/AD") {
+      } else if (input$xaxistypeeq=="Age" && input$timetypeeq=="BC/AD") {
           paste("cal year BC/AD")
+      } else if (input$xaxistypeeq=="Custom") {
+          input$customxaxiseq
       }
       
+      
+      
+      
+      spectra.line.table <- ageData()
+      data.transformation <- dataTransform()
+      spectra.line.table <- subset(spectra.line.table, !(spectra.line.table[input$xaxistype] < input$xlimrange[1] | spectra.line.table[input$xaxistype] > input$xlimrange[2]))
+      
+
       
       spectra.line.table.norm <- data.frame(spectra.line.table, null)
       colnames(spectra.line.table.norm) <- c(names(spectra.line.table), "None")
@@ -6781,24 +6844,23 @@ scale_colour_gradientn(colours=rev(terrain.colors(length(spectra.timeseries.tabl
       scale_y_continuous(input$yaxistype, label=comma)
       
       
-      if (input$timecoloureq == "Black" && input$xaxistypeeq=="Age") {
+     
+      if (input$timecoloureq == "Black" && input$xaxistypeeq!="Depth") {
           black.time.series
-      } else if (input$timecoloureq == "Smooth" && input$xaxistypeeq=="Age") {
+      } else if (input$timecoloureq == "Smooth" && input$xaxistypeeq!="Depth") {
           smooth.time.series
-      } else if (input$timecoloureq == "Selected" && input$xaxistypeeq=="Age") {
+      } else if (input$timecoloureq == "Selected" && input$xaxistypeeq!="Depth") {
           ramp.time.series
-      } else if (input$timecoloureq == "Cluster" && input$xaxistypeeq=="Age") {
+      } else if (input$timecoloureq == "Cluster" && input$xaxistypeeq!="Depth") {
           cluster.time.series
-      } else if (input$timecoloureq == "Climate" && input$xaxistypeeq=="Age") {
+      } else if (input$timecoloureq == "Climate" && input$xaxistypeeq!="Depth") {
           climate.time.series.line
-      } else if (input$timecoloureq == "QualitativePoint" && input$xaxistypeeq=="Age") {
+      } else if (input$timecoloureq == "QualitativePoint" && input$xaxistypeeq!="Depth") {
           qualitative.time.series.point
-      } else if (input$timecoloureq == "QualitativeLine" && input$xaxistypeeq=="Age") {
+      } else if (input$timecoloureq == "QualitativeLine" && input$xaxistypeeq!="Depth") {
           qualitative.time.series.line
-      } else if (input$timecoloureq == "Depth" && input$xaxistypeeq=="Age") {
+      } else if (input$timecoloureq == "Depth" && input$xaxistypeeq!="Depth") {
           Depth.time.series
-      } else if (input$timecoloureq == "Area" && input$xaxistypeeq=="Age") {
-          area.time.series
       } else if (input$timecoloureq == "Black" && input$xaxistypeeq=="Depth") {
           black.time.series.reverse
       } else if (input$timecoloureq == "Smooth" && input$xaxistypeeq=="Depth") {
