@@ -129,7 +129,16 @@ selected="Fe.table"),
 
 
 
-tags$hr()
+
+tags$hr(),
+tags$hr(),
+tags$hr(),
+
+
+fileInput('calfileinput', 'Load Cal File', accept='.quant', multiple=FALSE),
+checkboxInput('usecalfile', "Use Cal File")
+
+
 
 
 ),
@@ -635,6 +644,81 @@ resetOnNew = TRUE
 
 
 ))
+
+
+)))),
+
+
+tabPanel("Equation Ratios",
+div(class="outer",
+
+
+fluidRow(
+sidebarLayout(
+
+sidebarPanel(
+
+selectInput(
+"ratiocolour", "Ratio Plot Type",
+c(
+"Black" = "Black",
+"Cluster" = "Cluster",
+"Climate"="Climate",
+"Age"="Age",
+"Depth"="Depth",
+"Qualitative" = "Qualitative"
+), selected="Cluster"),
+
+tags$hr(),
+
+textInput("xaxisdef", label="Custom X Axis", value="X axis Index"),
+
+uiOutput('inelementx1'),
+selectInput("xtransform1", label=NULL, c("None", "+", "-", "*", "/"), selected="None"),
+uiOutput('inelementx2'),
+selectInput("xtransform2", label=NULL, c("None", "+", "-", "*", "/"), selected="None"),
+uiOutput('inelementx3'),
+
+tags$hr(),
+
+textInput("yaxisdef", label="Custom Y Axis", value="Y Axis Index"),
+
+uiOutput('inelementy1'),
+selectInput("ytransform1", label=NULL, c("None", "+", "-", "*", "/"), selected="None"),
+uiOutput('inelementy2'),
+selectInput("ytransform1", label=NULL, c("None", "+", "-", "*", "/"), selected="None"),
+uiOutput('inelementy3'),
+
+
+tags$hr(),
+
+sliderInput("spotsize3", label = "Point Size", value=5, min=2, max=15),
+
+
+checkboxInput('elipseplot3', "Elipse"),
+
+
+
+tags$hr(),
+
+
+downloadButton('downloadPlot7', "Plot")
+
+
+
+),
+
+mainPanel(
+tabPanel('Element Ratios', plotOutput('elementratiotequation',
+dblclick = "plot1_dblclick", height = 700, width= 1200,
+brush = brushOpts(
+id = "plot1_brush",
+resetOnNew = TRUE
+)))
+
+
+
+)
 
 ))
 

@@ -5,6 +5,8 @@ library(dplyr)
 library(ggtern)
 library(ggplot2)
 library(shiny)
+library(DT)
+
 
 plot_dim2 <- function(dim = c(NA, NA), scale = 1, units = c("in", "cm", "mm"),
 limitsize = TRUE) {
@@ -210,6 +212,7 @@ black.diamond <- read.csv("data/blackdiamond.csv", header=FALSE, sep=",")
 black.diamond.melt <- read.csv(file="data/blackdiamondmelt.csv")
 
 ######Load lines
+fluorescence.lines <- read.csv("data/FluorescenceLines.csv")
 k.lines <- read.csv(file="data/K Line-Table 1.csv", sep=",")
 l.lines <- read.csv(file="data/L Line-Table 1.csv", sep=",")
 
@@ -1287,7 +1290,7 @@ spectra.line.fn <- function(data) {
     colnames(Mo.La.frame) <- c("Counts", "Spectrum")
     Mo.La.ag <- aggregate(list(Mo.La.frame$Counts), by=list(Mo.La.frame$Spectrum), FUN="sum")
     colnames(Mo.La.ag) <- c("Spectrum", "Mo L-alpha")
-
+    
     
     Tc.Ka.cps <- subset(data$CPS, !(data$Energy < Tc.K[2]-0.02 | data$Energy > Tc.K[1]+0.02))
     Tc.file <- subset(data$Spectrum, !(data$Energy < Tc.K[2]-0.02 | data$Energy > Tc.K[1]+0.02))
@@ -1415,7 +1418,7 @@ spectra.line.fn <- function(data) {
     Nd.Ka.ag <- aggregate(list(Nd.Ka.frame$Counts), by=list(Nd.Ka.frame$Spectrum), FUN="sum")
     colnames(Nd.Ka.ag) <- c("Spectrum", "Nd K-alpha")
     
-
+    
     Tc.La.cps <- subset(data$CPS, !(data$Energy < Tc.L[2]-0.02 | data$Energy > Tc.L[1]+0.02))
     Tc.file <- subset(data$Spectrum, !(data$Energy < Tc.L[2]-0.02 | data$Energy > Tc.L[1]+0.02))
     Tc.La.frame <- is.0(Tc.La.cps,Tc.file)
@@ -2130,27 +2133,11 @@ spectra.line.fn <- function(data) {
     U.Lb.ag <- aggregate(list(U.Lb.frame$Counts), by=list(U.Lb.frame$Spectrum), FUN="sum")
     colnames(U.Lb.ag) <- c("Spectrum", "U L-beta")
     
-    Rayleigh.cps <- subset(data$CPS, !(data$Energy < Rh.K[2]-0.2 | data$Energy > Rh.K[1]+0.2))
-    Rayleigh.file <- subset(data$Spectrum, !(data$Energy < Rh.K[2]-0.2 | data$Energy > Rh.K[1]+0.2))
-    Rayleigh.frame <- data.frame(is.0(Rayleigh.cps, Rayleigh.file))
-    colnames(Rayleigh.frame) <- c("Counts", "Spectrum")
-    Rayleigh.ag <- aggregate(list(Rayleigh.frame$Counts), by=list(Rayleigh.frame$Spectrum), FUN="sum")
-    colnames(Rayleigh.ag) <- c("Spectrum", "Rayleigh")
+    spectra.lines <- Reduce(function(x, y) merge(x, y, all=TRUE), list(Ne.Ka.ag, Na.Ka.ag, Mg.Ka.ag, Al.Ka.ag, Si.Ka.ag, P.Ka.ag, S.Ka.ag, Cl.Ka.ag, Ar.Ka.ag, K.Ka.ag, Ca.Ka.ag, Sc.Ka.ag, Ti.Ka.ag, V.Ka.ag, Cr.Ka.ag, Mn.Ka.ag, Fe.Ka.ag, Co.Ka.ag, Ni.Ka.ag, Cu.Ka.ag, Zn.Ka.ag, Ga.Ka.ag, Ge.Ka.ag, As.Ka.ag, Se.Ka.ag, Br.Ka.ag, Kr.Ka.ag, Rb.Ka.ag, Sr.Ka.ag, Y.Ka.ag, Zr.Ka.ag, Nb.Ka.ag, Mo.Ka.ag, Mo.La.ag, Mo.Lb.ag, Ru.Ka.ag, Ru.La.ag, Ru.Lb.ag, Rh.Ka.ag, Rh.La.ag, Rh.Lb.ag, Pd.Ka.ag, Pd.La.ag, Pd.Lb.ag, Ag.Ka.ag, Ag.La.ag, Ag.Lb.ag, Cd.Ka.ag,Cd.La.ag, Cd.Lb.ag,  In.Ka.ag, In.La.ag, Sn.Ka.ag, Sn.La.ag, Sn.Lb.ag, Sb.Ka.ag, Sb.La.ag, Sb.Lb.ag, Te.Ka.ag, Te.La.ag, Te.Lb.ag, I.Ka.ag, I.La.ag, I.Lb.ag, Xe.Ka.ag, Xe.La.ag, Xe.Lb.ag, Cs.Ka.ag, Cs.La.ag, Cs.Lb.ag, Ba.Ka.ag, Ba.La.ag, Ba.Lb.ag, La.Ka.ag, La.La.ag, La.Lb.ag, Ce.Ka.ag, Ce.La.ag, Ce.Lb.ag, Pr.Ka.ag, Pr.La.ag, Pr.Lb.ag, Nd.Ka.ag, Nd.La.ag, Nd.Lb.ag, Pm.La.ag, Pm.Lb.ag, Sm.La.ag, Sm.Lb.ag, Eu.La.ag, Eu.Lb.ag, Gd.La.ag, Gd.Lb.ag, Tb.La.ag, Tb.Lb.ag, Dy.La.ag, Dy.Lb.ag, Ho.La.ag, Ho.Lb.ag, Er.La.ag, Er.Lb.ag, Tm.La.ag, Tm.Lb.ag, Yb.La.ag, Yb.Lb.ag, Lu.La.ag, Lu.Lb.ag, Hf.La.ag, Hf.Lb.ag, Ta.La.ag, Ta.Lb.ag, W.La.ag, W.Lb.ag, Re.La.ag, Re.Lb.ag, Os.La.ag, Os.Lb.ag, Ir.La.ag, Ir.Lb.ag, Pt.La.ag, Pt.Lb.ag, Au.La.ag, Au.Lb.ag, Hg.La.ag, Hg.Lb.ag, Tl.La.ag, Tl.Lb.ag, Pb.La.ag, Pb.Lb.ag, Bi.La.ag, Bi.Lb.ag, Po.La.ag, Po.Lb.ag, At.La.ag, At.Lb.ag, Rn.La.ag, Rn.Lb.ag, Fr.La.ag, Fr.Lb.ag, Ra.La.ag, Ra.Lb.ag, Ac.La.ag, Ac.Lb.ag, Th.La.ag, Th.Lb.ag, Pa.La.ag, Pa.Lb.ag, U.La.ag, U.Lb.ag))
     
-    Compton.cps <- subset(data$CPS, !(data$Energy < 18.4 | data$Energy > 19.4))
-    Compton.file <- subset(data$Spectrum, !(data$Energy < 18.4 | data$Energy > 19.4))
-    Compton.frame <- data.frame(is.0(Compton.cps, Compton.file))
-    colnames(Compton.frame) <- c("Counts", "Spectrum")
-    Compton.ag <- aggregate(list(Compton.frame$Counts), by=list(Compton.frame$Spectrum), FUN="sum")
-    colnames(Compton.ag) <- c("Spectrum", "Compton")
+    spectra.lines <- data.frame(spectra.lines)
+    return(spectra.lines)
     
-
-
-spectra.lines <- Reduce(function(x, y) merge(x, y, all=TRUE), list(Ne.Ka.ag, Na.Ka.ag, Mg.Ka.ag, Al.Ka.ag, Si.Ka.ag, P.Ka.ag, S.Ka.ag, Cl.Ka.ag, Ar.Ka.ag, K.Ka.ag, Ca.Ka.ag, Sc.Ka.ag, Ti.Ka.ag, V.Ka.ag, Cr.Ka.ag, Mn.Ka.ag, Fe.Ka.ag, Co.Ka.ag, Ni.Ka.ag, Cu.Ka.ag, Zn.Ka.ag, Ga.Ka.ag, Ge.Ka.ag, As.Ka.ag, Se.Ka.ag, Br.Ka.ag, Kr.Ka.ag, Rb.Ka.ag, Sr.Ka.ag, Y.Ka.ag, Zr.Ka.ag, Nb.Ka.ag, Mo.Ka.ag, Mo.La.ag, Mo.Lb.ag, Ru.Ka.ag, Ru.La.ag, Ru.Lb.ag, Rh.Ka.ag, Rh.La.ag, Rh.Lb.ag, Pd.Ka.ag, Pd.La.ag, Pd.Lb.ag, Ag.Ka.ag, Ag.La.ag, Ag.Lb.ag, Cd.Ka.ag,Cd.La.ag, Cd.Lb.ag,  In.Ka.ag, In.La.ag, Sn.Ka.ag, Sn.La.ag, Sn.Lb.ag, Sb.Ka.ag, Sb.La.ag, Sb.Lb.ag, Te.Ka.ag, Te.La.ag, Te.Lb.ag, I.Ka.ag, I.La.ag, I.Lb.ag, Xe.Ka.ag, Xe.La.ag, Xe.Lb.ag, Cs.Ka.ag, Cs.La.ag, Cs.Lb.ag, Ba.Ka.ag, Ba.La.ag, Ba.Lb.ag, La.Ka.ag, La.La.ag, La.Lb.ag, Ce.Ka.ag, Ce.La.ag, Ce.Lb.ag, Pr.Ka.ag, Pr.La.ag, Pr.Lb.ag, Nd.Ka.ag, Nd.La.ag, Nd.Lb.ag, Pm.La.ag, Pm.Lb.ag, Sm.La.ag, Sm.Lb.ag, Eu.La.ag, Eu.Lb.ag, Gd.La.ag, Gd.Lb.ag, Tb.La.ag, Tb.Lb.ag, Dy.La.ag, Dy.Lb.ag, Ho.La.ag, Ho.Lb.ag, Er.La.ag, Er.Lb.ag, Tm.La.ag, Tm.Lb.ag, Yb.La.ag, Yb.Lb.ag, Lu.La.ag, Lu.Lb.ag, Hf.La.ag, Hf.Lb.ag, Ta.La.ag, Ta.Lb.ag, W.La.ag, W.Lb.ag, Re.La.ag, Re.Lb.ag, Os.La.ag, Os.Lb.ag, Ir.La.ag, Ir.Lb.ag, Pt.La.ag, Pt.Lb.ag, Au.La.ag, Au.Lb.ag, Hg.La.ag, Hg.Lb.ag, Tl.La.ag, Tl.Lb.ag, Pb.La.ag, Pb.Lb.ag, Bi.La.ag, Bi.Lb.ag, Po.La.ag, Po.Lb.ag, At.La.ag, At.Lb.ag, Rn.La.ag, Rn.Lb.ag, Fr.La.ag, Fr.Lb.ag, Ra.La.ag, Ra.Lb.ag, Ac.La.ag, Ac.Lb.ag, Th.La.ag, Th.Lb.ag, Pa.La.ag, Pa.Lb.ag, U.La.ag, U.Lb.ag, Rayleigh.ag, Compton.ag))
-
-spectra.lines <- data.frame(spectra.lines)
-return(spectra.lines)
-
 }
 
 data <- NULL
@@ -2171,5 +2158,539 @@ spectra.line.table.norm
 
 
 
+spectralLines <- c("Ne.K.alpha", "Ne.K.beta", "Na.K.alpha", "Na.K.beta", "Mg.K.alpha", "Mg.K.beta", "Al.K.alpha", "Al.K.beta", "Si.K.alpha", "Si.K.beta", "P.K.alpha", "P.K.beta", "S.K.alpha", "S.K.beta", "Cl.K.alpha", "Cl.K.beta", "Ar.K.alpha", "Ar.K.beta", "K.K.alpha", "K.K.beta", "Ca.K.alpha", "Ca.K.beta", "Sc.K.alpha", "Sc.K.beta", "Ti.K.alpha", "Ti.K.beta", "V.K.alpha", "V.K.beta", "Cr.K.alpha", "Cr.K.beta", "Mn.K.alpha", "Mn.K.beta", "Fe.K.alpha", "Fe.K.beta", "Co.K.alpha", "Co.K.beta", "Ni.K.alpha", "Ni.K.beta", "Cu.K.alpha", "Cu.K.beta", "Zn.K.alpha", "Zn.K.beta", "Ga.K.alpha", "Ga.K.beta", "Ge.K.alpha", "Ge.K.beta", "As.K.alpha", "As.K.beta", "Se.K.alpha", "Se.K.beta", "Br.K.alpha", "Br.K.beta", "Kr.K.alpha", "Kr.K.beta", "Rb.K.alpha", "Rb.K.beta", "Sr.K.alpha", "Sr.K.beta", "Y.K.alpha", "Y.K.beta", "Zr.K.alpha", "Zr.K.beta", "Nb.K.alpha", "Nb.K.beta", "Mo.K.alpha", "Mo.K.beta", "Mo.L.alpha", "Mo.L.beta", "Ru.K.alpha", "Ru.K.beta", "Ru.L.alpha", "Ru.L.beta", "Rh.K.alpha", "Rh.K.beta", "Rh.L.alpha", "Rh.L.beta", "Pd.K.alpha", "Pd.K.beta", "Pd.L.alpha", "Pd.L.beta", "Ag.K.alpha", "Ag.K.beta", "Ag.L.alpha", "Ag.L.beta", "Cd.K.alpha", "Cd.K.beta", "Cd.L.alpha", "Cd.L.beta", " In.K.alpha", "In.K.beta", "In.L.alpha", "Sn.K.alpha", "Sn.K.beta", "Sn.L.alpha", "Sn.L.beta", "Sb.K.alpha", "Sb.K.beta", "Sb.L.alpha", "Sb.L.beta", "Te.K.alpha", "Te.K.beta", "Te.L.alpha", "Te.L.beta", "I.K.alpha", "I.K.beta", "I.L.alpha", "I.L.beta", "Xe.K.alpha", "Xe.K.beta", "Xe.L.alpha", "Xe.L.beta", "Cs.K.alpha", "Cs.K.beta", "Cs.L.alpha", "Cs.L.beta", "Ba.K.alpha", "Ba.K.beta", "Ba.L.alpha", "Ba.L.beta", "La.K.alpha", "La.K.beta", "La.L.alpha", "La.L.beta", "Ce.K.alpha", "Ce.K.beta", "Ce.L.alpha", "Ce.L.beta", "Pr.K.alpha", "Pr.K.beta", "Pr.L.alpha", "Pr.L.beta", "Nd.K.alpha", "Nd.K.beta", "Nd.L.alpha", "Nd.L.beta", "Pm.L.alpha", "Pm.L.beta", "Sm.L.alpha", "Sm.L.beta", "Eu.L.alpha", "Eu.L.beta", "Gd.L.alpha", "Gd.L.beta", "Tb.L.alpha", "Tb.L.beta", "Dy.L.alpha", "Dy.L.beta", "Ho.L.alpha", "Ho.L.beta", "Er.L.alpha", "Er.L.beta", "Tm.L.alpha", "Tm.L.beta", "Yb.L.alpha", "Yb.L.beta", "Lu.L.alpha", "Lu.L.beta", "Hf.L.alpha", "Hf.L.beta", "Ta.L.alpha", "Ta.L.beta", "W.L.alpha", "W.L.beta", "Re.L.alpha", "Re.L.beta", "Os.L.alpha", "Os.L.beta", "Ir.L.alpha", "Ir.L.beta", "Pt.L.alpha", "Pt.L.beta", "Au.L.alpha", "Au.L.beta", "Hg.L.alpha", "Hg.L.beta", "Tl.L.alpha", "Tl.L.beta", "Pb.L.alpha", "Pb.L.beta", "Bi.L.alpha", "Bi.L.beta", "Po.L.alpha", "Po.L.beta", "At.L.alpha", "At.L.beta", "Rn.L.alpha", "Rn.L.beta", "Fr.L.alpha", "Fr.L.beta", "Ra.L.alpha", "Ra.L.beta", "Ac.L.alpha", "Ac.L.beta", "Th.L.alpha", "Th.L.beta", "Pa.L.alpha", "Pa.L.beta", "U.L.alpha", "U.L.beta", "Pu.L.alpha", "Pu.L.beta")
 
 
+
+elementGrabKalpha <- function(element, data) {
+    
+    elementLine <- subset(fluorescence.lines, fluorescence.lines$Symbol==element)
+    
+    
+    hold.cps <- subset(data$CPS, !(data$Energy < elementLine[6][1,]-0.02 | data$Energy > elementLine[5][1,]+0.02))
+    hold.file <- subset(data$Spectrum, !(data$Energy < elementLine[6][1,]-0.02 | data$Energy > elementLine[5][1,]+0.02))
+    hold.frame <- data.frame(is.0(hold.cps, hold.file))
+    colnames(hold.frame) <- c("Counts", "Spectrum")
+    hold.ag <- aggregate(list(hold.frame$Counts), by=list(hold.frame$Spectrum), FUN="sum")
+    colnames(hold.ag) <- c("Spectrum", paste(element, "K-alpha", sep=" "))
+    
+    hold.ag
+    
+}
+
+elementGrabKbeta <- function(element, data) {
+    
+    elementLine <- subset(fluorescence.lines, fluorescence.lines$Symbol==element)
+    
+    
+    hold.cps <- subset(data$CPS, !(data$Energy < elementLine[7][1,]-0.02 | data$Energy > elementLine[8][1,]+0.02))
+    hold.file <- subset(data$Spectrum, !(data$Energy < elementLine[7][1,]-0.02 | data$Energy > elementLine[8][1,]+0.02))
+    hold.frame <- data.frame(is.0(hold.cps, hold.file))
+    colnames(hold.frame) <- c("Counts", "Spectrum")
+    hold.ag <- aggregate(list(hold.frame$Counts), by=list(hold.frame$Spectrum), FUN="sum")
+    colnames(hold.ag) <- c("Spectrum", paste(element, "K-beta", sep=" "))
+    
+    hold.ag
+    
+}
+
+elementGrabLalpha <- function(element, data) {
+    
+    elementLine <- subset(fluorescence.lines, fluorescence.lines$Symbol==element)
+    
+    
+    hold.cps <- subset(data$CPS, !(data$Energy < elementLine[11][1,]-0.02 | data$Energy > elementLine[10][1,]+0.02))
+    hold.file <- subset(data$Spectrum, !(data$Energy < elementLine[11][1,]-0.02 | data$Energy > elementLine[10][,1]+0.02))
+    hold.frame <- data.frame(is.0(hold.cps, hold.file))
+    colnames(hold.frame) <- c("Counts", "Spectrum")
+    hold.ag <- aggregate(list(hold.frame$Counts), by=list(hold.frame$Spectrum), FUN="sum")
+    colnames(hold.ag) <- c("Spectrum", paste(element, "L-alpha", sep=" "))
+    
+    hold.ag
+    
+}
+
+elementGrabLbeta <- function(element, data) {
+    
+    elementLine <- subset(fluorescence.lines, fluorescence.lines$Symbol==element)
+    
+    
+    hold.cps <- subset(data$CPS, !(data$Energy < elementLine[12][1,]-0.02 | data$Energy > elementLine[14][1,]+0.02))
+    hold.file <- subset(data$Spectrum, !(data$Energy < elementLine[12][1,]-0.02 | data$Energy > elementLine[14][1,]+0.02))
+    
+    hold.frame <- data.frame(is.0(hold.cps, hold.file))
+    colnames(hold.frame) <- c("Counts", "Spectrum")
+    hold.ag <- aggregate(list(hold.frame$Counts), by=list(hold.frame$Spectrum), FUN="sum")
+    colnames(hold.ag) <- c("Spectrum", paste(element, "L-beta", sep=" "))
+    
+    hold.ag
+    
+}
+
+elementGrab <- function(element.line, data) {
+    
+    element <- strsplit(x=element.line, split="\\.")[[1]][1]
+    destination <- strsplit(x=element.line, split="\\.")[[1]][2]
+    distance <- strsplit(x=element.line, split="\\.")[[1]][3]
+    
+    elementSelection <- if(destination=="K" && distance=="alpha"){
+        elementGrabKalpha(element, data)
+    } else if(destination=="K" && distance=="beta"){
+        elementGrabKbeta(element, data)
+    } else if(destination=="L" && distance=="alpha"){
+        elementGrabLalpha(element, data)
+    } else if (destination=="L" && distance=="beta"){
+        elementGrabLbeta(element, data)
+    }
+    
+    elementSelection
+    
+}
+
+
+###############
+###Prep Data###
+###############
+
+
+###############
+###Raw Spectra##
+###############
+
+
+general.prep <- function(spectra.line.table, element.line) {
+    
+    intensity <- spectra.line.table[,element.line]
+    
+    
+    predict.frame <- data.frame(intensity)
+    colnames(predict.frame) <- c("Intensity")
+    
+    
+    
+    predict.intensity <- data.frame(predict.frame$Intensity)
+    colnames(predict.intensity) <- c("Intensity")
+    
+    predict.intensity
+}
+
+simple.tc.prep <- function(data,spectra.line.table, element.line) {
+    
+    intensity <- spectra.line.table[,element.line]
+    
+    
+    total.counts <- aggregate(CPS~Spectrum, data=data, sum)
+    colnames(total.counts) <- c("Spectrum", "CPS")
+    
+    
+    
+    predict.frame.tc <- data.frame(intensity/total.counts$CPS)
+    colnames(predict.frame.tc) <- c("Intensity")
+    
+    
+    
+    predict.intensity.tc <- data.frame(predict.frame.tc$Intensity)
+    colnames(predict.intensity.tc) <- c("Intensity")
+    
+    predict.intensity.tc
+}
+
+
+simple.comp.prep <- function(data, spectra.line.table, element.line, norm.min, norm.max) {
+    
+    
+    
+    intensity <- spectra.line.table[,element.line]
+    
+    
+    compton.norm <- subset(data$CPS, !(data$Energy < norm.min | data$Energy > norm.max))
+    compton.file <- subset(data$Spectrum, !(data$Energy < norm.min | data$Energy > norm.max))
+    compton.frame <- data.frame(is.0(compton.norm, compton.file))
+    colnames(compton.frame) <- c("Compton", "Spectrum")
+    compton.frame.ag <- aggregate(list(compton.frame$Compton), by=list(compton.frame$Spectrum), FUN="sum")
+    colnames(compton.frame.ag) <- c("Spectrum", "Compton")
+    
+    predict.frame.comp <- data.frame( intensity/compton.frame.ag$Compton)
+    colnames(predict.frame.comp) <- c("Intensity")
+    
+    
+    
+    predict.intensity.comp <- data.frame(predict.frame.comp$Intensity)
+    colnames(predict.intensity.comp) <- c("Intensity")
+    
+    predict.intensity.comp
+    
+}
+
+
+
+###Prep Data
+
+
+
+lukas.simp.prep <- function(spectra.line.table, element.line, slope.element.lines, intercept.element.lines) {
+    
+    
+    intensity <- spectra.line.table[,element.line]
+    
+    
+    intercept.none <- rep(0, length(spectra.line.table[,1]))
+    lukas.intercept.table.x <- data.frame(spectra.line.table, intercept.none)
+    colnames(lukas.intercept.table.x) <- c(names(spectra.line.table), "None")
+    
+    
+    
+    
+    slope.none <- rep(1, length(spectra.line.table[,1]))
+    lukas.slope.table <- data.frame(spectra.line.table, slope.none)
+    colnames(lukas.slope.table) <- c(names(spectra.line.table), "None")
+    
+    
+    lukas.intercept.table <- data.frame(rowSums(lukas.intercept.table.x[,c(intercept.element.lines, "None")]))
+    colnames(lukas.intercept.table) <- c("first")
+    
+    
+    
+    lukas.intercept <- lukas.intercept.table$first
+    lukas.slope <- data.frame(lukas.slope.table[,slope.element.lines])
+    colnames(lukas.slope) <- slope.element.lines
+    
+    
+    predict.frame.luk <- data.frame((intensity*lukas.intercept),lukas.slope)
+    colnames(predict.frame.luk) <- c("Intensity", names(lukas.slope))
+    
+    
+    
+    predict.intensity.luk <- data.frame(predict.frame.luk$Intensity, lukas.slope)
+    colnames(predict.intensity.luk) <- c("Intensity", names(lukas.slope))
+    
+    predict.intensity.luk
+    
+    
+}
+
+
+
+lukas.tc.prep <- function(data, spectra.line.table, element.line, slope.element.lines, intercept.element.lines) {
+    
+    
+    intensity <- spectra.line.table[,element.line]
+    
+    
+    total.counts <- aggregate(CPS~Spectrum, data=data, sum)
+    colnames(total.counts) <- c("Spectrum", "CPS")
+    
+    
+    intercept.none <- rep(0, length(spectra.line.table[,1]))
+    lukas.intercept.table.x <- data.frame(spectra.line.table, intercept.none)
+    colnames(lukas.intercept.table.x) <- c(names(spectra.line.table), "None")
+    
+    
+    
+    
+    slope.none <- rep(1, length(spectra.line.table[,1]))
+    lukas.slope.table <- data.frame(spectra.line.table, slope.none)
+    colnames(lukas.slope.table) <- c(names(spectra.line.table), "None")
+    
+    
+    lukas.intercept.table.tc <- data.frame(rowSums(lukas.intercept.table.x[,c(intercept.element.lines, "None")]))/total.counts$CPS
+    colnames(lukas.intercept.table.tc) <- c("first")
+    
+    
+    
+    lukas.intercept.tc <- lukas.intercept.table.tc$first
+    lukas.slope.tc <- data.frame(lukas.slope.table[,slope.element.lines])/total.counts$CPS
+    colnames(lukas.slope.tc) <- slope.element.lines
+    
+    
+    test <- data.frame(lukas.slope.tc, total.counts$CPS)
+    test2 <- data.frame(lukas.slope.tc, intensity)
+    test3 <- data.frame(lukas.slope.tc, lukas.intercept.tc)
+    
+    
+    predict.frame.luk.tc <- data.frame((intensity/total.counts$CPS*lukas.intercept.tc),lukas.slope.tc)
+    colnames(predict.frame.luk.tc) <- c("Intensity", names(lukas.slope.tc))
+    
+    
+    
+    
+    predict.intensity.luk.tc <- data.frame(predict.frame.luk.tc$Intensity, lukas.slope.tc)
+    colnames(predict.intensity.luk.tc) <- c("Intensity", names(lukas.slope.tc))
+    
+    predict.intensity.luk.tc
+}
+
+
+lukas.comp.prep <- function(data, spectra.line.table, element.line, slope.element.lines, intercept.element.lines, norm.min, norm.max) {
+    
+    
+    intensity <- spectra.line.table[,element.line]
+    
+    
+    
+    compton.norm <- subset(data$CPS, !(data$Energy < norm.min | data$Energy > norm.max))
+    compton.file <- subset(data$Spectrum, !(data$Energy < norm.min | data$Energy > norm.max))
+    compton.frame <- data.frame(is.0(compton.norm, compton.file))
+    colnames(compton.frame) <- c("Compton", "Spectrum")
+    compton.frame.ag <- aggregate(list(compton.frame$Compton), by=list(compton.frame$Spectrum), FUN="sum")
+    colnames(compton.frame.ag) <- c("Spectrum", "Compton")
+    
+    
+    intercept.none <- rep(0, length(spectra.line.table[,1]))
+    lukas.intercept.table.x <- data.frame(spectra.line.table, intercept.none)
+    colnames(lukas.intercept.table.x) <- c(names(spectra.line.table), "None")
+    
+    
+    
+    
+    slope.none <- rep(1, length(spectra.line.table[,1]))
+    lukas.slope.table <- data.frame(spectra.line.table, slope.none)
+    colnames(lukas.slope.table) <- c(names(spectra.line.table), "None")
+    
+    
+    
+    lukas.intercept.table.comp <- data.frame(rowSums(lukas.intercept.table.x[,c(intercept.element.lines, "None")]))/compton.frame.ag$Compton
+    colnames(lukas.intercept.table.comp) <- c("first")
+    
+    
+    
+    lukas.intercept.comp <- lukas.intercept.table.comp$first
+    lukas.slope.comp <- data.frame(lukas.slope.table[,slope.element.lines])/compton.frame.ag$Compton
+    colnames(lukas.slope.comp) <- slope.element.lines
+    
+    
+    predict.frame.luk.comp <- data.frame((intensity/compton.frame.ag$Compton*lukas.intercept.comp),lukas.slope.comp)
+    colnames(predict.frame.luk.comp) <- c("Intensity", names(lukas.slope.comp))
+    
+    
+    
+    predict.intensity.luk.comp <- data.frame(predict.frame.luk.comp$Intensity, lukas.slope.comp)
+    colnames(predict.intensity.luk.comp) <- c("Intensity", names(lukas.slope.comp))
+    
+    
+    predict.intensity.luk.comp
+}
+
+
+
+
+###############
+###Prep Data###
+###############
+
+
+###############
+###Net Counts##
+###############
+
+
+general.prep.net <- function(spectra.line.table, element.line) {
+    
+    intensity <- spectra.line.table[,element.line]
+    
+    
+    predict.frame <- data.frame(intensity)
+    colnames(predict.frame) <- c("Intensity")
+    
+    
+    
+    predict.intensity <- data.frame(predict.frame$Intensity)
+    colnames(predict.intensity) <- c("Intensity")
+    
+    predict.intensity
+}
+
+simple.tc.prep.net <- function(data,spectra.line.table, element.line) {
+    
+    intensity <- spectra.line.table[,element.line]
+    
+    total.counts.net <- rowSums(spectra.line.table[length(spectra.line.table)])
+    total.counts <- data.frame(data$Spectrum, total.counts.net)
+    colnames(total.counts) <- c("Spectrum", "CPS")
+    
+    
+    
+    predict.frame.tc <- data.frame(intensity/total.counts$CPS)
+    colnames(predict.frame.tc) <- c("Intensity")
+    
+    
+    
+    predict.intensity.tc <- data.frame(predict.frame.tc$Intensity)
+    colnames(predict.intensity.tc) <- c("Intensity")
+    
+    predict.intensity.tc
+}
+
+
+simple.comp.prep.net <- function(data, spectra.line.table, element.line, norm.min, norm.max) {
+    
+    
+    
+    intensity <- spectra.line.table[,element.line]
+    
+    
+    compton.ag.fake.Spectrum <- data$Spectrum
+    compton.ag.fake.Compton <- rep(1, length(data$Spectrum))
+    compton.ag.fake <- data.frame(compton.ag.fake.Spectrum,compton.ag.fake.Compton)
+    colnames(compton.ag.fake) <- c("Spectrum", "Compton")
+    
+    predict.frame.comp <- data.frame( intensity/compton.ag.fake$Compton)
+    colnames(predict.frame.comp) <- c("Intensity")
+    
+    
+    
+    predict.intensity.comp <- data.frame(predict.frame.comp$Intensity)
+    colnames(predict.intensity.comp) <- c("Intensity")
+    
+    predict.intensity.comp
+    
+}
+
+
+
+###Prep Data
+
+
+
+lukas.simp.prep.net <- function(spectra.line.table, element.line, slope.element.lines, intercept.element.lines) {
+    
+    
+    intensity <- spectra.line.table[,element.line]
+    
+    intercept.none <- rep(0, length(spectra.line.table[,1]))
+    lukas.intercept.table.x <- data.frame(spectra.line.table, intercept.none)
+    colnames(lukas.intercept.table.x) <- c(names(spectra.line.table), "None")
+    
+    
+    
+    
+    slope.none <- rep(1, length(spectra.line.table[,1]))
+    lukas.slope.table <- data.frame(spectra.line.table, slope.none)
+    colnames(lukas.slope.table) <- c(names(spectra.line.table), "None")
+    
+    
+    lukas.intercept.table <- data.frame(rowSums(lukas.intercept.table.x[,c(intercept.element.lines, "None")]))
+    colnames(lukas.intercept.table) <- c("first")
+    
+    
+    
+    lukas.intercept <- lukas.intercept.table$first
+    lukas.slope <- data.frame(lukas.slope.table[,slope.element.lines])
+    colnames(lukas.slope) <- slope.element.lines
+    
+    
+    
+    predict.frame.luk <- data.frame((intensity*lukas.intercept),lukas.slope)
+    colnames(predict.frame.luk) <- c("Intensity", names(lukas.slope))
+    
+    
+    
+    predict.intensity.luk <- data.frame(predict.frame.luk$Intensity, lukas.slope)
+    colnames(predict.intensity.luk) <- c("Intensity", names(lukas.slope))
+    
+    predict.intensity.luk
+    
+    
+}
+
+
+
+lukas.tc.prep.net <- function(data, spectra.line.table, element.line, slope.element.lines, intercept.element.lines) {
+    
+    
+    intensity <- spectra.line.table[,element.line]
+    
+    
+    total.counts.net <- rowSums(spectra.line.table[length(spectra.line.table)])
+    total.counts <- data.frame(data$Spectrum, total.counts.net)
+    colnames(total.counts) <- c("Spectrum", "CPS")
+    
+    
+    
+    
+    intercept.none <- rep(0, length(spectra.line.table[,1]))
+    lukas.intercept.table.x <- data.frame(spectra.line.table, intercept.none)
+    colnames(lukas.intercept.table.x) <- c(names(spectra.line.table), "None")
+    
+    
+    
+    
+    slope.none <- rep(1, length(spectra.line.table[,1]))
+    lukas.slope.table <- data.frame(spectra.line.table, slope.none)
+    colnames(lukas.slope.table) <- c(names(spectra.line.table), "None")
+    
+    
+    
+    lukas.intercept.table.tc <- data.frame(rowSums(lukas.intercept.table.x[,c(intercept.element.lines, "None")]))/total.counts$CPS
+    colnames(lukas.intercept.table.tc) <- c("first")
+    
+    
+    
+    
+    lukas.intercept.tc <- lukas.intercept.table.tc$first
+    lukas.slope.tc <- data.frame(lukas.slope.table[,slope.element.lines])/total.counts$CPS
+    colnames(lukas.slope.tc) <- slope.element.lines
+    
+    
+    predict.frame.luk.tc <- data.frame((intensity/total.counts$CPS*lukas.intercept.tc),lukas.slope.tc)
+    colnames(predict.frame.luk.tc) <- c("Intensity", names(lukas.slope.tc))
+    
+    
+    
+    predict.intensity.luk.tc <- data.frame(predict.frame.luk.tc$Intensity, lukas.slope.tc)
+    colnames(predict.intensity.luk.tc) <- c("Intensity", names(lukas.slope.tc))
+    
+    predict.intensity.luk.tc
+}
+
+
+lukas.comp.prep.net <- function(data, spectra.line.table, element.line, slope.element.lines, intercept.element.lines, norm.min, norm.max) {
+    
+    
+    intensity <- spectra.line.table[,element.line]
+    
+    
+    
+    
+    compton.ag.fake.Spectrum <- data$Spectrum
+    compton.ag.fake.Compton <- rep(1, length(data$Spectrum))
+    compton.ag.fake <- data.frame(compton.ag.fake.Spectrum,compton.ag.fake.Compton)
+    colnames(compton.ag.fake) <- c("Spectrum", "Compton")
+    
+    
+    intercept.none <- rep(0, length(spectra.line.table[,1]))
+    lukas.intercept.table.x <- data.frame(spectra.line.table, intercept.none)
+    colnames(lukas.intercept.table.x) <- c(names(spectra.line.table), "None")
+    
+    
+    
+    
+    slope.none <- rep(1, length(spectra.line.table[,1]))
+    lukas.slope.table <- data.frame(spectra.line.table, slope.none)
+    colnames(lukas.slope.table) <- c(names(spectra.line.table), "None")
+    
+    
+    
+    lukas.intercept.table.comp <- data.frame(rowSums(lukas.intercept.table.x[,c(intercept.element.lines, "None")]))/compton.ag.fake$Compton
+    colnames(lukas.intercept.table.comp) <- c("first")
+    
+    
+    
+    
+    lukas.intercept.comp <- lukas.intercept.table.comp$first
+    lukas.slope.comp <- data.frame(lukas.slope.table[,slope.element.lines])/compton.ag.fake$Compton
+    colnames(lukas.slope.comp) <- slope.element.lines
+    
+    
+    
+    predict.frame.luk.comp <- data.frame((intensity/compton.ag.fake$Compton*lukas.intercept.comp),lukas.slope.comp)
+    colnames(predict.frame.luk.comp) <- c("Intensity", names(lukas.slope.comp))
+    
+    
+    
+    predict.intensity.luk.comp <- data.frame(predict.frame.luk.comp$Intensity, lukas.slope.comp)
+    colnames(predict.intensity.luk.comp) <- c("Intensity", names(lukas.slope.comp))
+    
+    
+    predict.intensity.luk.comp
+}

@@ -1,8 +1,10 @@
+library(shiny)
 library(pbapply)
 library(reshape2)
 library(TTR)
 library(dplyr)
 library(data.table)
+library(DT)
 library(ggtern)
 library(ggplot2)
 library(shiny)
@@ -13,53 +15,67 @@ library(scales)
 
 
 
+options(shiny.maxRequestSize=30*1024^2)
 
 
 
 
 shinyServer(function(input, output, session) {
     
+    rawSpectra <- reactive({
+        
+        withProgress(message = 'Processing Data', value = 0, {
+            
+            inFile <- input$file1
+            if (is.null(inFile)) return(NULL)
+            temp = inFile$name
+            temp <- gsub(".csv", "", temp)
+            id.seq <- seq(1, 2048,1)
+            
+            n <- length(temp)*id.seq
+            
+            myfiles.x = pblapply(inFile$datapath, read_csv_filename_x)
+            
+            myfiles.y = pblapply(inFile$datapath, read_csv_filename_y)
+            
+            xrf.x <- data.frame(id.seq, myfiles.x)
+            colnames(xrf.x) <- c("ID", temp)
+            xrf.y <- data.frame(id.seq, myfiles.y)
+            colnames(xrf.y) <- c("ID", temp)
+            
+            
+            xrf.x <- data.table(xrf.x)
+            xrf.y <- data.table(xrf.y)
+            
+            
+            energy.m <- xrf.x[, list(variable = names(.SD), value = unlist(.SD, use.names = F)), by = ID]
+            cps.m <- xrf.y[, list(variable = names(.SD), value = unlist(.SD, use.names = F)), by = ID]
+            
+            
+            spectra.frame <- data.frame(energy.m$value, cps.m$value, cps.m$variable)
+            colnames(spectra.frame) <- c("Energy", "CPS", "Spectrum")
+            
+            
+            
+            incProgress(1/n)
+            Sys.sleep(0.1)
+        })
+        spectra.frame
+
+        
+    })
+    
     
     fullSpectra <- reactive({
         
-          withProgress(message = 'Processing Data', value = 0, {
-        
-        inFile <- input$file1
-        if (is.null(inFile)) return(NULL)
-        temp = inFile$name
-        temp <- gsub(".csv", "", temp)
-        id.seq <- seq(1, 2048,1)
-        
-        n <- length(temp)*id.seq
-        
-        myfiles.x = pblapply(inFile$datapath, read_csv_filename_x)
-        
-        myfiles.y = pblapply(inFile$datapath, read_csv_filename_y)
-        
-        xrf.x <- data.frame(id.seq, myfiles.x)
-        colnames(xrf.x) <- c("ID", temp)
-        xrf.y <- data.frame(id.seq, myfiles.y)
-        colnames(xrf.y) <- c("ID", temp)
         
         
-        xrf.x <- data.table(xrf.x)
-        xrf.y <- data.table(xrf.y)
-        
-        
-        energy.m <- xrf.x[, list(variable = names(.SD), value = unlist(.SD, use.names = F)), by = ID]
-        cps.m <- xrf.y[, list(variable = names(.SD), value = unlist(.SD, use.names = F)), by = ID]
-        
-        
-        spectra.frame <- data.frame(energy.m$value, cps.m$value, cps.m$variable)
-        colnames(spectra.frame) <- c("Energy", "CPS", "Spectrum")
+        spectra.frame <- rawSpectra()
         
         spectra.table <- spectra.line.fn(spectra.frame)
 
         
-        incProgress(1/n)
-        Sys.sleep(0.1)
-          })
-          
+
           spectra.table
     })
     
@@ -345,35 +361,333 @@ shinyServer(function(input, output, session) {
             
         })
         
+        myValData <- reactive({
+            myData()
+        })
+        
+        calFileContents2 <- reactive({
+            
+            existingCalFile <- input$calfileinput
+            
+            if (is.null(existingCalFile)) return(NULL)
+
+
+            Calibration <- readRDS(existingCalFile$datapath)
+            
+            Calibration
+            
+        })
+        
+        
+
+
+        calValHold <- reactive({
+    
+                calFileContents2()[[6]]
+    
+        })
+
+        calVariables <- reactive({
+
+            calFileContents2()$Intensities
+
+        })
+
+        calValElements <- reactive({
+                calList <- calValHold()
+                valelements <- ls(calList)
+                valelements
+        })
+
+        calVariableElements <- reactive({
+            variables <- calVariables()
+            variableelements <- ls(variables)
+            variableelements
+        })
+
+
+
+
+
+
+
+
+
+        fullInputValCounts <- reactive({
+            valelements <- calValElements()
+            variableelements <- calVariableElements()
+            val.data <- myValData()
+            
+            
+            if(input$filetype=="Spectra"){spectra.line.list <- lapply(variableelements, function(x) elementGrab(element.line=x, data=rawSpectra()))}
+            if(input$filetype=="Spectra"){element.count.list <- lapply(spectra.line.list, `[`, 2)}
+            
+            
+            if(input$filetype=="Spectra"){spectra.line.vector <- as.numeric(unlist(element.count.list))}
+            
+            if(input$filetype=="Spectra"){dim(spectra.line.vector) <- c(length(val.data$Spectrum), length(variableelements))}
+            
+            if(input$filetype=="Spectra"){spectra.line.frame <- data.frame(val.data$Spectrum, spectra.line.vector)}
+            
+            if(input$filetype=="Spectra"){colnames(spectra.line.frame) <- c("Spectrum", variableelements)}
+            
+            if(input$filetype=="Spectra"){spectra.line.frame <- as.data.frame(spectra.line.frame)}
+            
+            if(input$filetype=="Spectra"){val.line.table <- spectra.line.frame[,c("Spectrum", variableelements)]}
+            
+            if(input$filetype=="Net"){val.line.table <- val.data}
+            
+            val.line.table
+        })
         
         
         
         
-       spectra.line.table <- myData()
         
+        
+        
+        tableInputValQuant <- reactive({
+            
+            count.table <- data.frame(fullInputValCounts())
+            the.cal <- calValHold()
+            elements <- calValElements()
+            variables <- calVariableElements()
+            valdata <- if(input$filetype=="Spectra"){
+                rawSpectra()
+            }else if(input$filetype=="Net"){
+                myData()
+            }
+            
+            
+            
+            
+            
+            predicted.list <- pblapply(elements, function (x)
+            if(input$filetype=="Spectra" && the.cal[[x]][[1]]$CalTable$CalType!=3 && the.cal[[x]][[1]]$CalTable$NormType==1){
+                predict(
+                object=the.cal[[x]][[2]],
+                newdata=general.prep(
+                spectra.line.table=as.data.frame(
+                count.table
+                ),
+                element.line=x)
+                )
+            } else if(input$filetype=="Spectra" && the.cal[[x]][[1]]$CalTable$CalType!=3 && the.cal[[x]][[1]]$CalTable$NormType==2) {
+                predict(
+                object=the.cal[[x]][[2]],
+                newdata=simple.tc.prep(
+                data=valdata,
+                spectra.line.table=as.data.frame(
+                count.table
+                ),
+                element.line=x
+                )
+                )
+            } else if(input$filetype=="Spectra" && the.cal[[x]][[1]]$CalTable$CalType!=3 && the.cal[[x]][[1]]$CalTable$NormType==3) {
+                predict(
+                object=the.cal[[x]][[2]],
+                newdata=simple.comp.prep(
+                data=valdata,
+                spectra.line.table=as.data.frame(
+                count.table
+                ),
+                element.line=x,
+                norm.min=the.cal[[x]][[1]][1]$CalTable$Min,
+                norm.max=the.cal[[x]][[1]][1]$CalTable$Max
+                )
+                )
+            } else if(input$filetype=="Spectra" && the.cal[[x]][[1]]$CalTable$CalType==3 && the.cal[[x]][[1]]$CalTable$NormType==1){
+                predict(
+                object=the.cal[[x]][[2]],
+                newdata=lukas.simp.prep(
+                spectra.line.table=as.data.frame(
+                count.table
+                ),
+                element.line=x,
+                slope.element.lines=the.cal[[x]][[1]][2]$Slope,
+                intercept.element.lines=the.cal[[x]][[1]][3]$Intercept
+                )
+                )
+            } else if(input$filetype=="Spectra" && the.cal[[x]][[1]]$CalTable$CalType==3 && the.cal[[x]][[1]]$CalTable$NormType==2){
+                predict(
+                object=the.cal[[x]][[2]],
+                newdata=lukas.tc.prep(
+                data=valdata,
+                spectra.line.table=as.data.frame(
+                count.table
+                ),
+                element.line=x,
+                slope.element.lines=the.cal[[x]][[1]][2]$Slope,
+                intercept.element.lines=the.cal[[x]][[1]][3]$Intercept
+                )
+                )
+            } else if(input$filetype=="Spectra" && the.cal[[x]][[1]]$CalTable$CalType==3 && the.cal[[x]][[1]]$CalTable$NormType==3){
+                predict(
+                object=the.cal[[x]][[2]],
+                newdata=lukas.comp.prep(
+                data=valdata,
+                spectra.line.table=as.data.frame(
+                count.table
+                ),
+                element.line=x,
+                slope.element.lines=the.cal[[x]][[1]][2]$Slope,
+                intercept.element.lines=the.cal[[x]][[1]][3]$Intercept,
+                norm.min=the.cal[[x]][[1]][1]$CalTable$Min,
+                norm.max=the.cal[[x]][[1]][1]$CalTable$Max
+                )
+                )
+            }else if(input$filetype=="Net" && the.cal[[x]][[1]]$CalTable$CalType!=3 && the.cal[[x]][[1]]$CalTable$NormType==1){
+                predict(
+                object=the.cal[[x]][[2]],
+                newdata=general.prep.net(
+                spectra.line.table=as.data.frame(
+                count.table
+                ),
+                element.line=x)
+                )
+            } else if(input$filetype=="Net" && the.cal[[x]][[1]]$CalTable$CalType!=3 && the.cal[[x]][[1]]$CalTable$NormType==2) {
+                predict(
+                object=the.cal[[x]][[2]],
+                newdata=simple.tc.prep.net(
+                data=valdata,
+                spectra.line.table=as.data.frame(
+                count.table
+                ),
+                element.line=x
+                )
+                )
+            } else if(input$filetype=="Net" && the.cal[[x]][[1]]$CalTable$CalType!=3 && the.cal[[x]][[1]]$CalTable$NormType==3) {
+                predict(
+                object=the.cal[[x]][[2]],
+                newdata=simple.comp.prep.net(
+                data=valdata,
+                spectra.line.table=as.data.frame(
+                count.table
+                ),
+                element.line=x,
+                norm.min=the.cal[[x]][[1]][1]$CalTable$Min,
+                norm.max=the.cal[[x]][[1]][1]$CalTable$Max
+                )
+                )
+            } else if(input$filetype=="Net" && the.cal[[x]][[1]]$CalTable$CalType==3 && the.cal[[x]][[1]]$CalTable$NormType==1){
+                predict(
+                object=the.cal[[x]][[2]],
+                newdata=lukas.simp.prep.net(
+                spectra.line.table=as.data.frame(
+                count.table
+                ),
+                element.line=x,
+                slope.element.lines=the.cal[[x]][[1]][2]$Slope,
+                intercept.element.lines=the.cal[[x]][[1]][3]$Intercept
+                )
+                )
+            } else if(input$filetype=="Net" && the.cal[[x]][[1]]$CalTable$CalType==3 && the.cal[[x]][[1]]$CalTable$NormType==2){
+                predict(
+                object=the.cal[[x]][[2]],
+                newdata=lukas.tc.prep.net(
+                data=valdata,
+                spectra.line.table=as.data.frame(
+                count.table
+                ),
+                element.line=x,
+                slope.element.lines=the.cal[[x]][[1]][2]$Slope,
+                intercept.element.lines=the.cal[[x]][[1]][3]$Intercept
+                )
+                )
+            } else if(input$filetype=="Net" && the.cal[[x]][[1]]$CalTable$CalType==3 && the.cal[[x]][[1]]$CalTable$NormType==3){
+                predict(
+                object=the.cal[[x]][[2]],
+                newdata=lukas.comp.prep.net(
+                data=valdata,
+                spectra.line.table=as.data.frame(
+                count.table
+                ),
+                element.line=x,
+                slope.element.lines=the.cal[[x]][[1]][2]$Slope,
+                intercept.element.lines=the.cal[[x]][[1]][3]$Intercept,
+                norm.min=the.cal[[x]][[1]][1]$CalTable$Min,
+                norm.max=the.cal[[x]][[1]][1]$CalTable$Max
+                )
+                )
+            }
+            
+            
+            
+            )
+            
+            predicted.vector <- unlist(predicted.list)
+            
+            dim(predicted.vector) <- c(length(count.table$Spectrum), length(elements))
+            
+            predicted.frame <- data.frame(count.table$Spectrum, predicted.vector)
+            
+            colnames(predicted.frame) <- c("Spectrum", elements)
+            
+            predicted.data.table <- data.table(predicted.frame)
+            #predicted.values <- t(predicted.values)
+            predicted.frame
+            
+            
+        })
+        
+        
+        
+        
+       
+       lineOptions <- reactive({
+           
+           spectra.line.table <- myData()
+           
+           standard <- if(input$usecalfile==FALSE && input$filetype=="Spectra"){
+               spectralLines
+           } else if(input$usecalfile==FALSE && input$filetype=="Net"){
+               colnames(spectra.line.table[,2:length(spectra.line.table)])
+           } else if(input$usecalfile==TRUE && input$filetype=="Spectra"){
+               ls(calFileContents2()$Intensities)
+           }else if(input$usecalfile==TRUE && input$filetype=="Net"){
+               ls(calFileContents2()$Intensities)
+           }
+           
+       })
 
 defaultLines <- reactive({
     
     spectra.line.table <- myData()
+    if(input$usecalfile){quantified <-calValElements()}
     
-    standard <- if(input$filetype=="Spectra"){
-        c("Spectrum", "Ca.K.alpha", "Ti.K.alpha", "Fe.K.alpha", "Cu.K.alpha", "Zn.K.alpha")
-    } else if(input$filetype=="Net"){
+    standard <- if(input$usecalfile==FALSE && input$filetype=="Spectra"){
+        c("Ca.K.alpha", "Ti.K.alpha", "Fe.K.alpha", "Cu.K.alpha", "Zn.K.alpha")
+    } else if(input$usecalfile==FALSE && input$filetype=="Net"){
         colnames(spectra.line.table)
+    } else if(input$usecalfile==TRUE && input$filetype=="Spectra"){
+        quantified
+    }else if(input$usecalfile==TRUE && input$filetype=="Net"){
+        quantified
     }
     
 })
 
 output$defaultlines <- renderUI({
-    spectra.line.table <- myData()
+    spectra.line.table <- if(input$usecalfile==FALSE){
+        myData()
+    }else if(input$usecalfile==TRUE){
+        tableInputValQuant()
+    }
+    
     checkboxGroupInput('show_vars', 'Elemental lines to show:',
-    names(spectra.line.table), selected = defaultLines())
+    choices=lineOptions(), selected = defaultLines())
 })
 
 
-
         tableInput <- reactive({
-          spectra.line.table[input$show_vars]
+            
+         if(input$usecalfile==FALSE){
+                myData()[,c("Spectrum", input$show_vars)]
+            }else if(input$usecalfile==TRUE){
+                tableInputValQuant()[,c("Spectrum", input$show_vars)]
+            }
+            
+
         })
         
         
@@ -388,6 +702,7 @@ output$defaultlines <- renderUI({
         hotableInput <- reactive({
             
             spectra.line.table <- myData()
+            
             
             empty.line.table <-  spectra.line.table
             empty.line.table <- empty.line.table[1:2]
@@ -455,14 +770,16 @@ output$defaultlines <- renderUI({
 
 xrfKReactive <- reactive({
     
-    spectra.line.table <- myData()
+    spectra.line.table <- tableInput()
+    
+    
 
 
 
     xrf.pca.header <- input$show_vars
-    xrf.pca.frame <- spectra.line.table[input$show_vars]
+    xrf.pca.frame <- spectra.line.table[,input$show_vars]
     xrf.pca.n <- length(xrf.pca.frame)
-    xrf.smalls <- xrf.pca.frame[2:xrf.pca.n]
+    xrf.smalls <- xrf.pca.frame
     
     xrf.k <- kmeans(xrf.smalls, input$knum, iter.max=1000, nstart=15, algorithm=c("Hartigan-Wong"))
     xrf.pca <- prcomp(xrf.smalls, scale.=FALSE)
@@ -482,8 +799,11 @@ xrfKReactive <- reactive({
 xrfPCAReactive <- reactive({
     
     
-    spectra.line.table <- myData()
-
+    spectra.line.table <- if(input$usecalfile==FALSE){
+        myData()
+    } else if(input$usecalfile==TRUE){
+        tableInput()
+    }
 
 
     xrf.clusters <- xrfKReactive()
@@ -542,8 +862,11 @@ xrfPCAReactive <- reactive({
   
   dataProcessed <- reactive({
       
-      spectra.line.table <- myData()
-
+      spectra.line.table <- if(input$usecalfile==FALSE){
+          myData()
+      } else if(input$usecalfile==TRUE){
+          tableInputValQuant()
+      }
 
       xrf.k <- xrfKReactive()
       
@@ -1037,6 +1360,14 @@ xrfPCAReactive <- reactive({
      
  })
  
+ secondDefaultSelect <- reactive({
+     
+     data.options <-defaultLines()
+     data.selected <- data.options[6]
+     data.selected
+     
+ })
+ 
  output$inelementtrend <- renderUI({
      selectInput("elementtrend", "Element:", choices=choiceLines(), selected=dataDefaultSelect())
  })
@@ -1122,10 +1453,14 @@ output$inxlimrange <- renderUI({
       colnames(spectra.timeseries.table) <- c("Interval", "Selected", "Cluster", "Qualitative", "Depth", "Climate")
       
       
-      trendy <-  if(input$elementnorm=="None" && input$filetype=="Spectra") {
+      trendy <-  if(input$elementnorm=="None" && input$filetype=="Spectra" && input$usecalfile==FALSE) {
           paste(gsub("[.]", "", c(substr(input$elementtrend, 1, 2), " Counts per Second")), sep=",", collapse="")
-      } else if(input$elementnorm=="None" && input$filetype=="Net") {
+      } else if(input$elementnorm=="None" && input$filetype=="Spectra" && input$usecalfile==TRUE) {
+          paste(gsub("[.]", "", c(substr(input$elementtrend, 1, 2), " ", calFileContents2()[[2]])), sep=",", collapse="")
+      } else if(input$elementnorm=="None" && input$filetype=="Net" && input$usecalfile==FALSE) {
               paste(gsub("[.]", "", c(substr(input$elementtrend, 1, 2), " Net Counts")), sep=",", collapse="")
+      } else if(input$elementnorm=="None" && input$filetype=="Net" && input$usecalfile==TRUE) {
+          paste(gsub("[.]", "", c(substr(input$elementtrend, 1, 2), " ", calFileContents2()[[2]])), sep=",", collapse="")
           } else if(input$elementnorm!="None"){
           paste(gsub("[.]", "", c(substr(input$elementtrend, 1, 2), "/", substr(input$elementnorm, 1, 2))), sep=",", collapse="")
           }
@@ -1525,14 +1860,17 @@ output$inxlimrange <- renderUI({
       colnames(spectra.timeseries.table) <- c("Interval", "Selected", "Cluster", "Qualitative", "Depth", "Climate")
       
       
-         trendy <-  if(input$elementnorm=="None" && input$filetype=="Spectra") {
+      trendy <-  if(input$elementnorm=="None" && input$filetype=="Spectra" && input$usecalfile==FALSE) {
           paste(gsub("[.]", "", c(substr(input$elementtrend, 1, 2), " Counts per Second")), sep=",", collapse="")
-      } else if(input$elementnorm=="None" && input$filetype=="Net") {
+      } else if(input$elementnorm=="None" && input$filetype=="Spectra" && input$usecalfile==TRUE) {
+          paste(gsub("[.]", "", c(substr(input$elementtrend, 1, 2), " ", calFileContents2()[[2]])), sep=",", collapse="")
+      } else if(input$elementnorm=="None" && input$filetype=="Net" && input$usecalfile==FALSE) {
               paste(gsub("[.]", "", c(substr(input$elementtrend, 1, 2), " Net Counts")), sep=",", collapse="")
+      } else if(input$elementnorm=="None" && input$filetype=="Net" && input$usecalfile==TRUE) {
+          paste(gsub("[.]", "", c(substr(input$elementtrend, 1, 2), " ", calFileContents2()[[2]])), sep=",", collapse="")
           } else if(input$elementnorm!="None"){
           paste(gsub("[.]", "", c(substr(input$elementtrend, 1, 2), "/", substr(input$elementnorm, 1, 2))), sep=",", collapse="")
-          }
-      
+          }      
       
       
       
@@ -1907,14 +2245,17 @@ output$inxlimrange <- renderUI({
       colnames(spectra.timeseries.table) <- c("Interval", "Selected", "Cluster", "Qualitative", "Depth", "Climate")
       
       
-         trendy <-  if(input$elementnorm=="None" && input$filetype=="Spectra") {
+      trendy <-  if(input$elementnorm=="None" && input$filetype=="Spectra" && input$usecalfile==FALSE) {
           paste(gsub("[.]", "", c(substr(input$elementtrend, 1, 2), " Counts per Second")), sep=",", collapse="")
-      } else if(input$elementnorm=="None" && input$filetype=="Net") {
+      } else if(input$elementnorm=="None" && input$filetype=="Spectra" && input$usecalfile==TRUE) {
+          paste(gsub("[.]", "", c(substr(input$elementtrend, 1, 2), " ", calFileContents2()[[2]])), sep=",", collapse="")
+      } else if(input$elementnorm=="None" && input$filetype=="Net" && input$usecalfile==FALSE) {
               paste(gsub("[.]", "", c(substr(input$elementtrend, 1, 2), " Net Counts")), sep=",", collapse="")
+      } else if(input$elementnorm=="None" && input$filetype=="Net" && input$usecalfile==TRUE) {
+          paste(gsub("[.]", "", c(substr(input$elementtrend, 1, 2), " ", calFileContents2()[[2]])), sep=",", collapse="")
           } else if(input$elementnorm!="None"){
           paste(gsub("[.]", "", c(substr(input$elementtrend, 1, 2), "/", substr(input$elementnorm, 1, 2))), sep=",", collapse="")
-          }
-      
+          }      
       
       
       
@@ -2282,14 +2623,17 @@ output$inxlimrange <- renderUI({
       colnames(spectra.timeseries.table) <- c("Interval", "Selected", "Cluster", "Qualitative", "Depth", "Climate")
       
       
-         trendy <-  if(input$elementnorm=="None" && input$filetype=="Spectra") {
+      trendy <-  if(input$elementnorm=="None" && input$filetype=="Spectra" && input$usecalfile==FALSE) {
           paste(gsub("[.]", "", c(substr(input$elementtrend, 1, 2), " Counts per Second")), sep=",", collapse="")
-      } else if(input$elementnorm=="None" && input$filetype=="Net") {
+      } else if(input$elementnorm=="None" && input$filetype=="Spectra" && input$usecalfile==TRUE) {
+          paste(gsub("[.]", "", c(substr(input$elementtrend, 1, 2), " ", calFileContents2()[[2]])), sep=",", collapse="")
+      } else if(input$elementnorm=="None" && input$filetype=="Net" && input$usecalfile==FALSE) {
               paste(gsub("[.]", "", c(substr(input$elementtrend, 1, 2), " Net Counts")), sep=",", collapse="")
+      } else if(input$elementnorm=="None" && input$filetype=="Net" && input$usecalfile==TRUE) {
+          paste(gsub("[.]", "", c(substr(input$elementtrend, 1, 2), " ", calFileContents2()[[2]])), sep=",", collapse="")
           } else if(input$elementnorm!="None"){
           paste(gsub("[.]", "", c(substr(input$elementtrend, 1, 2), "/", substr(input$elementnorm, 1, 2))), sep=",", collapse="")
-          }
-      
+          }      
       
       
       
@@ -2671,14 +3015,17 @@ output$inxlimrange <- renderUI({
       colnames(spectra.timeseries.table) <- c("Interval", "Selected", "Cluster", "Qualitative", "Depth", "Climate")
       
       
-         trendy <-  if(input$elementnorm=="None" && input$filetype=="Spectra") {
+      trendy <-  if(input$elementnorm=="None" && input$filetype=="Spectra" && input$usecalfile==FALSE) {
           paste(gsub("[.]", "", c(substr(input$elementtrend, 1, 2), " Counts per Second")), sep=",", collapse="")
-      } else if(input$elementnorm=="None" && input$filetype=="Net") {
+      } else if(input$elementnorm=="None" && input$filetype=="Spectra" && input$usecalfile==TRUE) {
+          paste(gsub("[.]", "", c(substr(input$elementtrend, 1, 2), " ", calFileContents2()[[2]])), sep=",", collapse="")
+      } else if(input$elementnorm=="None" && input$filetype=="Net" && input$usecalfile==FALSE) {
               paste(gsub("[.]", "", c(substr(input$elementtrend, 1, 2), " Net Counts")), sep=",", collapse="")
+      } else if(input$elementnorm=="None" && input$filetype=="Net" && input$usecalfile==TRUE) {
+          paste(gsub("[.]", "", c(substr(input$elementtrend, 1, 2), " ", calFileContents2()[[2]])), sep=",", collapse="")
           } else if(input$elementnorm!="None"){
           paste(gsub("[.]", "", c(substr(input$elementtrend, 1, 2), "/", substr(input$elementnorm, 1, 2))), sep=",", collapse="")
-          }
-      
+          }      
       
       
       
@@ -3025,16 +3372,11 @@ output$inxlimrange <- renderUI({
   
   
   ratioChooseA <- reactive({
-      spectra.line.table <- myData()
+      spectra.line.table <- ageData()
       spectra.line.names <- colnames(spectra.line.table)
 
 
-      standard <- if(input$filetype=="Spectra"){
-          "Fe.K.Alpha"
-      } else if(input$filetype=="Net"){
-          spectra.line.names[2]
-      }
-      
+      standard <- spectra.line.names[2]
       standard
       
   })
@@ -3042,15 +3384,12 @@ output$inxlimrange <- renderUI({
   
   
   ratioChooseB <- reactive({
-      spectra.line.table <- myData()
+      spectra.line.table <- ageData()
       spectra.line.names <- colnames(spectra.line.table)
 
 
-      standard <- if(input$filetype=="Spectra"){
-          "Ca.K.Alpha"
-      } else if(input$filetype=="Net"){
-          spectra.line.names[3]
-      }
+      standard <- spectra.line.names[3]
+      
       
       standard
       
@@ -3058,15 +3397,12 @@ output$inxlimrange <- renderUI({
   
   
   ratioChooseC <- reactive({
-      spectra.line.table <- myData()
+      spectra.line.table <- ageData()
       spectra.line.names <- colnames(spectra.line.table)
 
 
-      standard <- if(input$filetype=="Spectra"){
-          "Ti.K.Alpha"
-      } else if(input$filetype=="Net"){
-          spectra.line.names[4]
-      }
+      standard <- spectra.line.names[4]
+      
       
       standard
       
@@ -3074,14 +3410,11 @@ output$inxlimrange <- renderUI({
   
   
   ratioChooseD <- reactive({
-      spectra.line.table <- myData()
+      spectra.line.table <- ageData()
       spectra.line.names <- colnames(spectra.line.table)
       
-      standard <- if(input$filetype=="Spectra"){
-          "K.K.Alpha"
-      } else if(input$filetype=="Net"){
-          spectra.line.names[5]
-      }
+      standard <- spectra.line.names[5]
+      
       
       standard
       
@@ -3363,7 +3696,7 @@ output$inxlimrange <- renderUI({
   
   
   ternaryChooseA <- reactive({
-      spectra.line.table <- myData()
+      spectra.line.table <- ageData()
       spectra.line.names <- colnames(spectra.line.table)
 
 
@@ -3376,7 +3709,7 @@ output$inxlimrange <- renderUI({
   })
   
   ternaryChooseB <- reactive({
-      spectra.line.table <- myData()
+      spectra.line.table <- ageData()
       spectra.line.names <- colnames(spectra.line.table)
 
 
@@ -3389,7 +3722,7 @@ output$inxlimrange <- renderUI({
   })
   
   ternaryChooseC <- reactive({
-      spectra.line.table <- myData()
+      spectra.line.table <- ageData()
       spectra.line.names <- colnames(spectra.line.table)
 
 
@@ -6909,6 +7242,351 @@ scale_colour_gradientn(colours=rev(terrain.colors(length(spectra.timeseries.tabl
       ggsave(file,plotInput6e(), device="tiff", compression="lzw", type="cairo", dpi=300, width=12, height=7)
   }
   )
+  
+  
+  miniDataTransformY <- reactive({
+      
+      spectra.line.table <- ageData()
+      
+      
+      
+      data.transformation.selection <- if(input$ytransform1=="None" && input$yelementden2=="None") {
+          spectra.line.table[input$yelementden1]
+          ########Two Numerators
+      } else if(input$ytransform1=="+" && input$yelementden2!="None"){
+          spectra.line.table[input$yelementden1] + spectra.line.table[input$yelementden2]
+      } else if(input$ytransform1=="-" && input$yelementden2!="None"){
+          spectra.line.table[input$yelementden1] - spectra.line.table[input$yelementden2]
+      } else if(input$ytransform1=="*" && input$yelementden2!="None"){
+          spectra.line.table[input$yelementden1] * spectra.line.table[input$yelementden2]
+      } else if(input$ytransform1=="/" && input$yelementden2!="None"){
+          spectra.line.table[input$yelementden1] / spectra.line.table[input$yelementden2]
+          ######Addition Third Numerator
+      } else if(input$ytransform1=="+" && input$yelementden2!="None" && input$ytransform2=="+" && input$yelementden3!="None"){
+          spectra.line.table[input$yelementden1] + spectra.line.table[input$yelementden2] + spectra.line.table[input$yelementden3]
+      } else if(input$ytransform1=="-" && input$yelementden2!="None" && input$ytransform2=="+" && input$yelementden3!="None"){
+          spectra.line.table[input$yelementden1] - spectra.line.table[input$yelementden2] + spectra.line.table[input$yelementden3]
+      } else if(input$ytransform1=="*" && input$yelementden2!="None" && input$ytransform2=="+" && input$yelementden3!="None"){
+          spectra.line.table[input$yelementden1] * spectra.line.table[input$yelementden2] + spectra.line.table[input$yelementden3]
+      } else if(input$ytransform1=="/" && input$yelementden2!="None" && input$ytransform2=="+" && input$yelementden3!="None"){
+          spectra.line.table[input$yelementden1] / spectra.line.table[input$yelementden2] + spectra.line.table[input$yelementden3]
+          ######Subtraction Third Numerator
+      } else if(input$ytransform1=="+" && input$yelementden2!="None" && input$ytransform2=="-" && input$yelementden3!="None"){
+          spectra.line.table[input$yelementden1] + spectra.line.table[input$yelementden2] - spectra.line.table[input$yelementden3]
+      } else if(input$ytransform1=="-" && input$yelementden2!="None" && input$ytransform2=="-" && input$yelementden3!="None"){
+          spectra.line.table[input$yelementden1] - spectra.line.table[input$yelementden2] - spectra.line.table[input$yelementden3]
+      } else if(input$ytransform1=="*" && input$yelementden2!="None" && input$ytransform2=="-" && input$yelementden3!="None"){
+          spectra.line.table[input$yelementden1] * spectra.line.table[input$yelementden2] - spectra.line.table[input$yelementden3]
+      } else if(input$ytransform1=="/" && input$yelementden2!="None" && input$ytransform2=="-" && input$yelementden3!="None"){
+          spectra.line.table[input$yelementden1] / spectra.line.table[input$yelementden2] - spectra.line.table[input$yelementden3]
+          ######Multiplication Third Numerator
+      } else if(input$ytransform1=="+" && input$yelementden2!="None" && input$ytransform2=="*" && input$yelementden3!="None"){
+          spectra.line.table[input$yelementden1] + spectra.line.table[input$yelementden2] * spectra.line.table[input$yelementden3]
+      } else if(input$ytransform1=="-" && input$yelementden2!="None" && input$ytransform2=="*" && input$yelementden3!="None"){
+          spectra.line.table[input$yelementden1] - spectra.line.table[input$yelementden2] * spectra.line.table[input$yelementden3]
+      } else if(input$ytransform1=="*" && input$yelementden2!="None" && input$ytransform2=="*" && input$yelementden3!="None"){
+          spectra.line.table[input$yelementden1] * spectra.line.table[input$yelementden2] * spectra.line.table[input$yelementden3]
+      } else if(input$ytransform1=="/" && input$yelementden2!="None" && input$ytransform2=="*" && input$yelementden3!="None"){
+          spectra.line.table[input$yelementden1] / spectra.line.table[input$yelementden2] * spectra.line.table[input$yelementden3]
+          ######Division Third Numerator
+      } else if(input$ytransform1=="+" && input$yelementden2!="None" && input$ytransform2=="/" && input$yelementden3!="None"){
+          spectra.line.table[input$yelementden1] + spectra.line.table[input$yelementden2] / spectra.line.table[input$yelementden3]
+      } else if(input$ytransform1=="-" && input$yelementden2!="None" && input$ytransform2=="/" && input$yelementden3!="None"){
+          spectra.line.table[input$yelementden1] - spectra.line.table[input$yelementden2] / spectra.line.table[input$yelementden3]
+      } else if(input$ytransform1=="*" && input$yelementden2!="None" && input$ytransform2=="/" && input$yelementden3!="None"){
+          spectra.line.table[input$yelementden1] * spectra.line.table[input$yelementden2] / spectra.line.table[input$yelementden3]
+      } else if(input$ytransform1=="/" && input$yelementden2!="None" && input$ytransform2=="/" && input$yelementden3!="None"){
+          spectra.line.table[input$yelementden1] / spectra.line.table[input$yelementden2] / spectra.line.table[input$yelementden3]
+      }
+      
+      data.transformation.selection
+      
+  })
+  
+  miniDataTransformX <- reactive({
+      
+      spectra.line.table <- ageData()
+      
+      
+      
+      data.transformation.selection <- if(input$xtransform1=="None" && input$xelementnum2=="None") {
+          spectra.line.table[input$xelementnum1]
+          ########Two Numerators
+      } else if(input$xtransform1=="+" && input$xelementnum2!="None"){
+          spectra.line.table[input$xelementnum1] + spectra.line.table[input$xelementnum2]
+      } else if(input$xtransform1=="-" && input$xelementnum2!="None"){
+          spectra.line.table[input$xelementnum1] - spectra.line.table[input$xelementnum2]
+      } else if(input$xtransform1=="*" && input$xelementnum2!="None"){
+          spectra.line.table[input$xelementnum1] * spectra.line.table[input$xelementnum2]
+      } else if(input$xtransform1=="/" && input$xelementnum2!="None"){
+          spectra.line.table[input$xelementnum1] / spectra.line.table[input$xelementnum2]
+          ######Addition Third Numerator
+      } else if(input$xtransform1=="+" && input$xelementnum2!="None" && input$xtransform2=="+" && input$xelementnum3!="None"){
+          spectra.line.table[input$xelementnum1] + spectra.line.table[input$xelementnum2] + spectra.line.table[input$xelementnum3]
+      } else if(input$xtransform1=="-" && input$xelementnum2!="None" && input$xtransform2=="+" && input$xelementnum3!="None"){
+          spectra.line.table[input$xelementnum1] - spectra.line.table[input$xelementnum2] + spectra.line.table[input$xelementnum3]
+      } else if(input$xtransform1=="*" && input$xelementnum2!="None" && input$xtransform2=="+" && input$xelementnum3!="None"){
+          spectra.line.table[input$xelementnum1] * spectra.line.table[input$xelementnum2] + spectra.line.table[input$xelementnum3]
+      } else if(input$xtransform1=="/" && input$xelementnum2!="None" && input$xtransform2=="+" && input$xelementnum3!="None"){
+          spectra.line.table[input$xelementnum1] / spectra.line.table[input$xelementnum2] + spectra.line.table[input$xelementnum3]
+          ######Subtraction Third Numerator
+      } else if(input$xtransform1=="+" && input$xelementnum2!="None" && input$xtransform2=="-" && input$xelementnum3!="None"){
+          spectra.line.table[input$xelementnum1] + spectra.line.table[input$xelementnum2] - spectra.line.table[input$xelementnum3]
+      } else if(input$xtransform1=="-" && input$xelementnum2!="None" && input$xtransform2=="-" && input$xelementnum3!="None"){
+          spectra.line.table[input$xelementnum1] - spectra.line.table[input$xelementnum2] - spectra.line.table[input$xelementnum3]
+      } else if(input$xtransform1=="*" && input$xelementnum2!="None" && input$xtransform2=="-" && input$xelementnum3!="None"){
+          spectra.line.table[input$xelementnum1] * spectra.line.table[input$xelementnum2] - spectra.line.table[input$xelementnum3]
+      } else if(input$xtransform1=="/" && input$xelementnum2!="None" && input$xtransform2=="-" && input$xelementnum3!="None"){
+          spectra.line.table[input$xelementnum1] / spectra.line.table[input$xelementnum2] - spectra.line.table[input$xelementnum3]
+          ######Multiplication Third Numerator
+      } else if(input$xtransform1=="+" && input$xelementnum2!="None" && input$xtransform2=="*" && input$xelementnum3!="None"){
+          spectra.line.table[input$xelementnum1] + spectra.line.table[input$xelementnum2] * spectra.line.table[input$xelementnum3]
+      } else if(input$xtransform1=="-" && input$xelementnum2!="None" && input$xtransform2=="*" && input$xelementnum3!="None"){
+          spectra.line.table[input$xelementnum1] - spectra.line.table[input$xelementnum2] * spectra.line.table[input$xelementnum3]
+      } else if(input$xtransform1=="*" && input$xelementnum2!="None" && input$xtransform2=="*" && input$xelementnum3!="None"){
+          spectra.line.table[input$xelementnum1] * spectra.line.table[input$xelementnum2] * spectra.line.table[input$xelementnum3]
+      } else if(input$xtransform1=="/" && input$xelementnum2!="None" && input$xtransform2=="*" && input$xelementnum3!="None"){
+          spectra.line.table[input$xelementnum1] / spectra.line.table[input$xelementnum2] * spectra.line.table[input$xelementnum3]
+          ######Division Third Numerator
+      } else if(input$xtransform1=="+" && input$xelementnum2!="None" && input$xtransform2=="/" && input$xelementnum3!="None"){
+          spectra.line.table[input$xelementnum1] + spectra.line.table[input$xelementnum2] / spectra.line.table[input$xelementnum3]
+      } else if(input$xtransform1=="-" && input$xelementnum2!="None" && input$xtransform2=="/" && input$xelementnum3!="None"){
+          spectra.line.table[input$xelementnum1] - spectra.line.table[input$xelementnum2] / spectra.line.table[input$xelementnum3]
+      } else if(input$xtransform1=="*" && input$xelementnum2!="None" && input$xtransform2=="/" && input$xelementnum3!="None"){
+          spectra.line.table[input$xelementnum1] * spectra.line.table[input$xelementnum2] / spectra.line.table[input$xelementnum3]
+      } else if(input$xtransform1=="/" && input$xelementnum2!="None" && input$xtransform2=="/" && input$xelementnum3!="None"){
+          spectra.line.table[input$xelementnum1] / spectra.line.table[input$xelementnum2] / spectra.line.table[input$xelementnum3]
+      }
+      
+      data.transformation.selection
+      
+  })
+  
+  
+  output$inelementx1 <- renderUI({
+      selectInput("xelementnum1", "X Axis 1", choices=choiceLines(), selected=dataDefaultSelect())
+  })
+  
+  output$inelementx2 <- renderUI({
+      selectInput("xelementnum2", "X Axis 2", choices=choiceLines(), selected="None")
+  })
+  
+  output$inelementx3 <- renderUI({
+      selectInput("xelementnum3", "X Axis 3", choices=choiceLines(), selected="None")
+  })
+  
+  output$inelementy1 <- renderUI({
+      selectInput("yelementden1", "Y Axis 1", choices=choiceLines(), selected=secondDefaultSelect())
+  })
+  
+  output$inelementy2 <- renderUI({
+      selectInput("yelementden2", "Y Axis 2", choices=choiceLines(), selected="None")
+  })
+  
+  output$inelementy3 <- renderUI({
+      selectInput("yelementden3", "Y Axis 3", choices=choiceLines(), selected="None")
+  })
+  
+
+
+  
+  elementRatioEquation <- reactive({
+      
+      
+      spectra.line.table <- ageData()
+      
+      unique.spec <- seq(1, length(spectra.line.table$Spectrum), 1)
+      null <- rep(1, length(unique.spec))
+      
+      x.axis.transform <- miniDataTransformX()
+      y.axis.transform <- miniDataTransformY()
+      
+      
+      
+      ratio.frame <- data.frame(x.axis.transform, y.axis.transform, spectra.line.table$Cluster, spectra.line.table$Qualitative, spectra.line.table$Depth, spectra.line.table$Age, spectra.line.table$Climate)
+      colnames(ratio.frame) <- c(input$xaxisdef, input$yaxisdef, "Cluster", "Qualitative", "Depth", "Age", "Climate")
+      
+      
+      ratio.names.x <- input$xaxisdef
+      ratio.names.y <- input$yaxisdef
+      
+      
+      black.ratio.plot <- qplot(ratio.frame[input$xaxisdef], ratio.frame[input$yaxisdef] ) +
+      geom_point(lwd=input$spotsize3) +
+      theme_light() +
+      theme(axis.text.x = element_text(size=15)) +
+      theme(axis.text.y = element_text(size=15)) +
+      theme(axis.title.x = element_text(size=15)) +
+      theme(axis.title.y = element_text(size=15, angle=90)) +
+      theme(plot.title=element_text(size=20)) +
+      theme(legend.title=element_text(size=15)) +
+      theme(legend.text=element_text(size=15))+
+      scale_x_continuous(ratio.names.x, label=comma) +
+      scale_y_continuous(ratio.names.y, label=comma)
+      
+      cluster.ratio.plot <- qplot(ratio.frame[input$xaxisdef], ratio.frame[input$yaxisdef] ) +
+      geom_point(aes(colour=as.factor(ratio.frame$Cluster), shape=as.factor(ratio.frame$Cluster)), size=input$spotsize3+1) +
+      geom_point(colour="grey30", size=input$spotsize3-2) +
+      scale_shape_manual("Cluster", values=1:nlevels(as.factor(as.factor(ratio.frame$Cluster)))) +
+      scale_colour_discrete("Cluster") +
+      theme_light() +
+      theme(axis.text.x = element_text(size=15)) +
+      theme(axis.text.y = element_text(size=15)) +
+      theme(axis.title.x = element_text(size=15)) +
+      theme(axis.title.y = element_text(size=15, angle=90)) +
+      theme(plot.title=element_text(size=20)) +
+      theme(legend.title=element_text(size=15)) +
+      theme(legend.text=element_text(size=15))+
+      scale_x_continuous(ratio.names.x, label=comma) +
+      scale_y_continuous(ratio.names.y, label=comma)
+      
+      cluster.ratio.ellipse.plot <- qplot(ratio.frame[input$xaxisdef], ratio.frame[input$yaxisdef] ) +
+      stat_ellipse(aes(ratio.frame[input$xaxisdef], ratio.frame[input$yaxisdef], colour=as.factor(ratio.frame$Cluster))) +
+      geom_point(aes(colour=as.factor(ratio.frame$Cluster), shape=as.factor(ratio.frame$Cluster)), size=input$spotsize3+1) +
+      geom_point(colour="grey30", size=input$spotsize3-2) +
+      scale_shape_manual("Cluster", values=1:nlevels(as.factor(as.factor(ratio.frame$Cluster)))) +
+      scale_colour_discrete("Cluster") +
+      theme_light() +
+      theme(axis.text.x = element_text(size=15)) +
+      theme(axis.text.y = element_text(size=15)) +
+      theme(axis.title.x = element_text(size=15)) +
+      theme(axis.title.y = element_text(size=15, angle=90)) +
+      theme(plot.title=element_text(size=20)) +
+      theme(legend.title=element_text(size=15)) +
+      theme(legend.text=element_text(size=15))+
+      scale_x_continuous(ratio.names.x, label=comma) +
+      scale_y_continuous(ratio.names.y, label=comma)
+      
+      
+      climate.ratio.plot <- qplot(ratio.frame[input$xaxisdef], ratio.frame[input$yaxisdef] ) +
+      geom_point(aes(colour=as.factor(ratio.frame$Climate), shape=as.factor(ratio.frame$Climate)), size=input$spotsize3+1) +
+      geom_point(colour="grey30", size=input$spotsize3-2) +
+      scale_shape_manual("Climatic Period", values=1:nlevels(ratio.frame$Climate)) +
+      scale_colour_discrete("Climatic Period") +
+      theme_light() +
+      theme(axis.text.x = element_text(size=15)) +
+      theme(axis.text.y = element_text(size=15)) +
+      theme(axis.title.x = element_text(size=15)) +
+      theme(axis.title.y = element_text(size=15, angle=90)) +
+      theme(plot.title=element_text(size=20)) +
+      theme(legend.title=element_text(size=15)) +
+      theme(legend.text=element_text(size=15))+
+      scale_x_continuous(ratio.names.x, label=comma) +
+      scale_y_continuous(ratio.names.y, label=comma)
+      
+      climate.ratio.ellipse.plot <- qplot(ratio.frame[input$xaxisdef], ratio.frame[input$yaxisdef] ) +
+      stat_ellipse(aes(ratio.frame[input$xaxisdef], ratio.frame[input$yaxisdef], colour=as.factor(ratio.frame$Climate))) +
+      geom_point(aes(colour=as.factor(ratio.frame$Climate), shape=as.factor(ratio.frame$Climate)), size=input$spotsize3+1) +
+      geom_point(colour="grey30", size=input$spotsize3-2) +
+      scale_shape_manual("Climatic Period", values=1:nlevels(ratio.frame$Climate)) +
+      scale_colour_discrete("Climatic Period") +
+      theme_light() +
+      theme(axis.text.x = element_text(size=15)) +
+      theme(axis.text.y = element_text(size=15)) +
+      theme(axis.title.x = element_text(size=15)) +
+      theme(axis.title.y = element_text(size=15, angle=90)) +
+      theme(plot.title=element_text(size=20)) +
+      theme(legend.title=element_text(size=15)) +
+      theme(legend.text=element_text(size=15))+
+      scale_x_continuous(ratio.names.x, label=comma) +
+      scale_y_continuous(ratio.names.y, label=comma)
+      
+      
+      qualitative.ratio.plot <- qplot(ratio.frame[input$xaxisdef], ratio.frame[input$yaxisdef] ) +
+      geom_point(aes(colour=as.factor(ratio.frame$Qualitative), shape=as.factor(ratio.frame$Qualitative)), size=input$spotsize3+1) +
+      geom_point(colour="grey30", size=input$spotsize3-2) +
+      scale_shape_manual("Qualitative", values=1:nlevels(ratio.frame$Qualitative)) +
+      scale_colour_discrete("Qualitative") +
+      theme_light() +
+      theme(axis.text.x = element_text(size=15)) +
+      theme(axis.text.y = element_text(size=15)) +
+      theme(axis.title.x = element_text(size=15)) +
+      theme(axis.title.y = element_text(size=15, angle=90)) +
+      theme(plot.title=element_text(size=20)) +
+      theme(legend.title=element_text(size=15)) +
+      theme(legend.text=element_text(size=15))+
+      scale_x_continuous(ratio.names.x, label=comma) +
+      scale_y_continuous(ratio.names.y, label=comma)
+      
+      qualitative.ratio.ellipse.plot <- qplot(ratio.frame[input$xaxisdef], ratio.frame[input$yaxisdef] ) +
+      stat_ellipse(aes(ratio.frame[input$xaxisdef], ratio.frame[input$yaxisdef], colour=as.factor(ratio.frame$Qualitative))) +
+      geom_point(aes(colour=as.factor(ratio.frame$Qualitative), shape=as.factor(ratio.frame$Qualitative)), size=input$spotsize3+1) +
+      geom_point(colour="grey30", size=input$spotsize3-2) +
+      scale_shape_manual("Qualitative", values=1:nlevels(ratio.frame$Qualitative)) +
+      scale_colour_discrete("Qualitative") +
+      theme_light() +
+      theme(axis.text.x = element_text(size=15)) +
+      theme(axis.text.y = element_text(size=15)) +
+      theme(axis.title.x = element_text(size=15)) +
+      theme(axis.title.y = element_text(size=15, angle=90)) +
+      theme(plot.title=element_text(size=20)) +
+      theme(legend.title=element_text(size=15)) +
+      theme(legend.text=element_text(size=15))+
+      scale_x_continuous(ratio.names.x, label=comma) +
+      scale_y_continuous(ratio.names.y, label=comma)
+      
+      depth.ratio.plot <- qplot(ratio.frame[input$xaxisdef], ratio.frame[input$yaxisdef] ) +
+      geom_point(aes(colour = ratio.frame$Depth), size=input$spotsize3+1) +
+      geom_point(size=input$spotsize3-2) +
+      scale_colour_gradientn("Depth", colours=rev(terrain.colors(length(ratio.frame$Depth)))) +
+      theme_light() +
+      theme(axis.text.x = element_text(size=15)) +
+      theme(axis.text.y = element_text(size=15)) +
+      theme(axis.title.x = element_text(size=15)) +
+      theme(axis.title.y = element_text(size=15, angle=90)) +
+      theme(plot.title=element_text(size=20)) +
+      theme(legend.title=element_text(size=15)) +
+      theme(legend.text=element_text(size=15))+
+      scale_x_continuous(ratio.names.x, label=comma) +
+      scale_y_continuous(ratio.names.y, label=comma)
+      
+      age.ratio.plot <- qplot(ratio.frame[input$xaxisdef], ratio.frame[input$yaxisdef] ) +
+      geom_point(aes(colour = ratio.frame$Age), size=input$spotsize3+1) +
+      geom_point(size=input$spotsize3-2) +
+      scale_colour_gradientn("Age", colours=terrain.colors(length(ratio.frame$Age))) +
+      theme_light() +
+      theme(axis.text.x = element_text(size=15)) +
+      theme(axis.text.y = element_text(size=15)) +
+      theme(axis.title.x = element_text(size=15)) +
+      theme(axis.title.y = element_text(size=15, angle=90)) +
+      theme(plot.title=element_text(size=20)) +
+      theme(legend.title=element_text(size=15)) +
+      theme(legend.text=element_text(size=15)) +
+      scale_x_continuous(ratio.names.x, label=comma) +
+      scale_y_continuous(ratio.names.y, label=comma)
+      
+      
+      
+      
+      
+      
+      if (input$ratiocolour == "Black" && input$elipseplot3==FALSE) {
+          black.ratio.plot
+      } else if (input$ratiocolour == "Cluster" && input$elipseplot3==FALSE) {
+          cluster.ratio.plot
+      } else if (input$ratiocolour == "Cluster" && input$elipseplot3==TRUE) {
+          cluster.ratio.ellipse.plot
+      } else if (input$ratiocolour == "Climate" && input$elipseplot3==FALSE) {
+          climate.ratio.plot
+      } else if (input$ratiocolour == "Climate" && input$elipseplot3==TRUE ) {
+          climate.ratio.ellipse.plot
+      } else if (input$ratiocolour == "Qualitative" && input$elipseplot3==FALSE) {
+          qualitative.ratio.plot
+      } else if (input$ratiocolour == "Qualitative" && input$elipseplot3==TRUE ) {
+          qualitative.ratio.ellipse.plot
+      } else if (input$ratiocolour == "Depth") {
+          depth.ratio.plot
+      } else if (input$ratiocolour == "Age") {
+          age.ratio.plot
+      }
+      
+  })
+  
+  output$elementratiotequation <- renderPlot({
+      print(elementRatioEquation())
+      
+      
+  })
   
   
   
