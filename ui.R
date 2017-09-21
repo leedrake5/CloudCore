@@ -16,19 +16,26 @@ sidebarPanel(
 
 
 actionButton("actionprocess", label = "Process Data"),
+actionButton("actionprocessdepth", label = "Enter Depths"),
 actionButton("actionplot", label = "Plot Spectrum"),
 downloadButton('downloadPlot', "Plot"),
 
 
 tags$hr(),
 
-fileInput('file1', 'Choose Spectra', multiple=TRUE,
+fileInput('file1', 'Light Element Spectra', multiple=TRUE,
+accept=c('text/csv',
+'text/comma-separated-values,text/plain',
+'.csv')),
+
+fileInput('file2', 'Trace Element Spectra', multiple=TRUE,
 accept=c('text/csv',
 'text/comma-separated-values,text/plain',
 '.csv')),
 
 radioButtons("filetype", label=NULL, c("Spectra", "Net"), selected="Spectra"),
 
+numericInput("aggregationfactor", label="Aggregation", value=5, min=1, max=100),
 
 tags$hr(),
 
@@ -135,7 +142,9 @@ tags$hr(),
 tags$hr(),
 
 
-fileInput('calfileinput', 'Load Cal File', accept='.quant', multiple=FALSE),
+fileInput('calfileinput1', 'Load Light Element Cal File', accept='.quant', multiple=FALSE),
+fileInput('calfileinput2', 'Load Trace Element Cal File', accept='.quant', multiple=FALSE),
+
 checkboxInput('usecalfile', "Use Cal File")
 
 
@@ -146,14 +155,23 @@ checkboxInput('usecalfile', "Use Cal File")
 
 
 mainPanel(
-fluidRow(
+tabsetPanel(
+tabPanel('Light Depth',
+rHandsontableOutput('depthtablelight')),
+tabPanel('Trace Depth',
+rHandsontableOutput('depthtabletrace')),
+tabPanel('Spectrum',
 column(width = 11, class = "well",
-plotOutput("distPlot", height = 455,
+plotOutput("distPlot", width = 400, height = 455,
 dblclick = "plot1_dblclick",
 brush = brushOpts(
 id = "plot1_brush",
 resetOnNew = TRUE
-)))))
+))))
+
+
+
+))
 ))
 ),
 
@@ -218,7 +236,7 @@ checkboxInput("constrainage", label="Constrain Chronology", TRUE)
 mainPanel(
 tabsetPanel(
 tabPanel('Age Input', rHandsontableOutput('hotage')),
-tabPanel('Age Curve', plotOutput('agemodcurve'), height = 700, width= 1200),
+tabPanel('Age Curve', plotOutput('agemodcurve'), height = 1200, width= 1200),
 tabPanel('Age Table', tableOutput('allagemodel'))
 ))
 
@@ -343,9 +361,12 @@ textInput("customxaxis", label="Custom X Axis"),
 
 radioButtons("lengthunit", label=NULL, c("mm", "cm", "m", "inches", "feet"), selected="mm"),
 numericInput("startmm", label = "Start Point (mm)", value=0),
-radioButtons("timetype", label=NULL, c("AD", "BC", "BC/AD", "BP"), selected="BP")
+radioButtons("timetype", label=NULL, c("AD", "BC", "BC/AD", "BP"), selected="BP"),
 
-
+tags$hr(),
+checkboxInput("usecustumyaxis", label="Use Custom Y Axis", value=FALSE),
+textInput("customyaxis", label="Custom Y Axis"),
+numericInput("ymultiply", label="Y Axis Unit Shift", min=.000001, max=1000000, value=1)
 
 
 
