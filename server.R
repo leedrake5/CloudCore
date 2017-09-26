@@ -2327,8 +2327,7 @@ output$inxlimrange <- renderUI({
   
   output$timeseriesplot1 <- renderPlot({
       input$timeseriesact1
-      isolate(print(plotInput3a()))
-      
+      isolate(plotInput3a())      
   })
   
   trendPlot <- reactive({
@@ -2729,8 +2728,7 @@ output$inxlimrange <- renderUI({
   })
   output$timeseriesplot2 <- renderPlot({
       input$timeseriesact2
-      isolate(print(plotInput3b()))
-      
+      isolate(plotInput3b())      
   })
   
   
@@ -3113,8 +3111,7 @@ output$inxlimrange <- renderUI({
   output$timeseriesplot3 <- renderPlot({
       input$timeseriesact3
       
-      isolate(print(plotInput3c()))
-      
+      isolate(plotInput3c())      
       
   })
   
@@ -3500,8 +3497,7 @@ output$inxlimrange <- renderUI({
   
   output$timeseriesplot4 <- renderPlot({
       input$timeseriesact4
-      isolate(print(plotInput3d()))
-      
+      isolate(plotInput3d())      
   })
   
   output$downloadPlot3d <- downloadHandler(
@@ -3895,8 +3891,7 @@ output$inxlimrange <- renderUI({
       
       
       
-      isolate(print(plotInput3e()))
-      
+      isolate(plotInput3e())      
   })
   
   
@@ -4731,7 +4726,7 @@ output$inxlimrange <- renderUI({
       
       
       
-      data.transformation.selection <- if(input$transform1=="None" && input$elementnum2=="None" && input$elementden1=="None") {
+      spectra.line.table$Selected <- if(input$transform1=="None" && input$elementnum2=="None" && input$elementden1=="None") {
           spectra.line.table[input$elementnum1]
           ########Two Numerators
       } else if(input$transform1=="+" && input$elementnum2!="None" && input$elementden1=="None"){
@@ -5837,28 +5832,20 @@ output$inxlimrange <- renderUI({
           (spectra.line.table[input$elementnum1] / spectra.line.table[input$elementnum2] / spectra.line.table[input$elementnum3])/(spectra.line.table[input$elementden1] / spectra.line.table[input$elementden2] / spectra.line.table[input$elementden3])
       }
       
-      data.transformation.selection.norm <- t(t(data.transformation.selection)/rowSums(t(data.transformation.selection)))
+      #spectra.line.table$SelectedNorm <- t(t(spectra.line.table$Selected)/rowSums(t(spectra.line.table$Selected)))
       
       
-      data.transformation <- if(input$transformnorm==FALSE){
-          data.transformation.selection
-      } else if(input$transformnorm==TRUE){
-          data.transformation.selection.norm
-      }
-      
-      
-      data.transformation
+      spectra.line.table
   })  
   
   
   
   xmindataeq <- reactive({
       
-      spectra.line.table <- ageData()
-      spectra.line.table$Selected <- dataTransform()
+      spectra.line.table <- dataTransform()
 
       
-      x.data <- spectra.line.table[input$xaxistype]
+      x.data <- spectra.line.table[input$xaxistypeeq]
       xmindata <- min(x.data)
       
       xmindata
@@ -5867,11 +5854,10 @@ output$inxlimrange <- renderUI({
   })
   
   xmaxdataeq <- reactive({
-      spectra.line.table <- ageData()
-      spectra.line.table$Selected <- dataTransform()
+      spectra.line.table <- dataTransform()
 
       
-      x.data <- spectra.line.table[input$xaxistype]
+      x.data <- spectra.line.table[input$xaxistypeeq]
       xmaxdata <- max(x.data)
       xmaxdata
       
@@ -5933,9 +5919,8 @@ output$inxlimrange <- renderUI({
       }
       
       
-      spectra.line.table <- ageData()
+      spectra.line.table <- dataTransform()
       
-      spectra.line.table$Selected <- dataTransform()
       spectra.line.table <- subset(spectra.line.table, !(spectra.line.table[input$xaxistypeeq] < input$xlimrangeeq[1] | spectra.line.table[input$xaxistypeeq] > input$xlimrangeeq[2]))
       
 
@@ -6269,8 +6254,7 @@ scale_colour_gradientn(colours=rev(terrain.colors(length(spectra.timeseries.tabl
   
   output$timeserieseqplot1 <- renderPlot({
       input$timeserieseq1
-      isolate(print(plotInput6a()))
-      
+      isolate(plotInput6a())      
   })
   
   
@@ -6305,8 +6289,7 @@ scale_colour_gradientn(colours=rev(terrain.colors(length(spectra.timeseries.tabl
       
       
       
-      spectra.line.table <- ageData()
-      data.transformation <- dataTransform()
+      spectra.line.table <- dataTransform()
       spectra.line.table <- subset(spectra.line.table, !(spectra.line.table[input$xaxistypeeq] < input$xlimrangeeq[1] | spectra.line.table[input$xaxistypeeq] > input$xlimrangeeq[2]))
 
 
@@ -6321,7 +6304,7 @@ scale_colour_gradientn(colours=rev(terrain.colors(length(spectra.timeseries.tabl
       #spectra.timeseries.table <- data.frame(interval, spectra.line.table[c(input$elementtrend)]/spectra.line.table.norm[c(input$elementnorm)], spectra.line.table$Cluster, spectra.line.table$Qualitative, spectra.line.table$Depth)
       #colnames(spectra.timeseries.table) <- c("Interval", "Selected", "Cluster", "Qualitative", "Depth")
       
-      spectra.timeseries.table <- data.frame(spectra.line.table[c(input$xaxistypeeq)], data.transformation, spectra.line.table$Cluster, spectra.line.table$Qualitative, spectra.line.table$Depth, spectra.line.table$Climate)
+      spectra.timeseries.table <- data.frame(spectra.line.table[c(input$xaxistypeeq)], spectra.line.table$Selected, spectra.line.table$Cluster, spectra.line.table$Qualitative, spectra.line.table$Depth, spectra.line.table$Climate)
       colnames(spectra.timeseries.table) <- c("Interval", "Selected", "Cluster", "Qualitative", "Depth", "Climate")
       
       
@@ -6649,8 +6632,7 @@ scale_colour_gradientn(colours=rev(terrain.colors(length(spectra.timeseries.tabl
   })
   output$timeserieseqplot2 <- renderPlot({
       input$timeserieseq2
-      isolate(print(plotInput6b()))
-      
+      isolate(plotInput6b())      
   })
   
   
@@ -6687,8 +6669,7 @@ scale_colour_gradientn(colours=rev(terrain.colors(length(spectra.timeseries.tabl
       
       
       
-      spectra.line.table <- ageData()
-      data.transformation <- dataTransform()
+      spectra.line.table <- dataTransform()
       spectra.line.table <- subset(spectra.line.table, !(spectra.line.table[input$xaxistypeeq] < input$xlimrangeeq[1] | spectra.line.table[input$xaxistypeeq] > input$xlimrangeeq[2]))
 
 
@@ -6702,7 +6683,7 @@ scale_colour_gradientn(colours=rev(terrain.colors(length(spectra.timeseries.tabl
       #spectra.timeseries.table <- data.frame(interval, spectra.line.table[c(input$elementtrend)]/spectra.line.table.norm[c(input$elementnorm)], spectra.line.table$Cluster, spectra.line.table$Qualitative, spectra.line.table$Depth)
       #colnames(spectra.timeseries.table) <- c("Interval", "Selected", "Cluster", "Qualitative", "Depth")
       
-      spectra.timeseries.table <- data.frame(spectra.line.table[c(input$xaxistypeeq)], data.transformation, spectra.line.table$Cluster, spectra.line.table$Qualitative, spectra.line.table$Depth, spectra.line.table$Climate)
+      spectra.timeseries.table <- data.frame(spectra.line.table[c(input$xaxistypeeq)], spectra.line.table$Selected, spectra.line.table$Cluster, spectra.line.table$Qualitative, spectra.line.table$Depth, spectra.line.table$Climate)
       colnames(spectra.timeseries.table) <- c("Interval", "Selected", "Cluster", "Qualitative", "Depth", "Climate")
       
       
@@ -7031,8 +7012,7 @@ scale_colour_gradientn(colours=rev(terrain.colors(length(spectra.timeseries.tabl
   output$timeserieseqplot3 <- renderPlot({
       input$timeserieseq3
       
-      isolate(print(plotInput6c()))
-      
+      isolate(plotInput6c())      
       
   })
   
@@ -7066,8 +7046,7 @@ scale_colour_gradientn(colours=rev(terrain.colors(length(spectra.timeseries.tabl
       
       
       
-      spectra.line.table <- ageData()
-      data.transformation <- dataTransform()
+      spectra.line.table <- dataTransform()
       spectra.line.table <- subset(spectra.line.table, !(spectra.line.table[input$xaxistypeeq] < input$xlimrangeeq[1] | spectra.line.table[input$xaxistypeeq] > input$xlimrangeeq[2]))
 
 
@@ -7082,7 +7061,7 @@ scale_colour_gradientn(colours=rev(terrain.colors(length(spectra.timeseries.tabl
       #spectra.timeseries.table <- data.frame(interval, spectra.line.table[c(input$elementtrend)]/spectra.line.table.norm[c(input$elementnorm)], spectra.line.table$Cluster, spectra.line.table$Qualitative, spectra.line.table$Depth)
       #colnames(spectra.timeseries.table) <- c("Interval", "Selected", "Cluster", "Qualitative", "Depth")
       
-      spectra.timeseries.table <- data.frame(spectra.line.table[c(input$xaxistypeeq)], data.transformation, spectra.line.table$Cluster, spectra.line.table$Qualitative, spectra.line.table$Depth, spectra.line.table$Climate)
+      spectra.timeseries.table <- data.frame(spectra.line.table[c(input$xaxistypeeq)], spectra.line.table$Selected, spectra.line.table$Cluster, spectra.line.table$Qualitative, spectra.line.table$Depth, spectra.line.table$Climate)
       colnames(spectra.timeseries.table) <- c("Interval", "Selected", "Cluster", "Qualitative", "Depth", "Climate")
       
       
@@ -7411,8 +7390,7 @@ scale_colour_gradientn(colours=rev(terrain.colors(length(spectra.timeseries.tabl
   
   output$timeserieseqplot4 <- renderPlot({
       input$timeserieseq4
-      isolate(print(plotInput6d()))
-      
+      isolate(plotInput6d())      
   })
   
   output$downloadPlot6d <- downloadHandler(
@@ -7450,8 +7428,7 @@ scale_colour_gradientn(colours=rev(terrain.colors(length(spectra.timeseries.tabl
       
       
       
-      spectra.line.table <- ageData()
-      data.transformation <- dataTransform()
+      spectra.line.table <- dataTransform()
       spectra.line.table <- subset(spectra.line.table, !(spectra.line.table[input$xaxistypeeq] < input$xlimrangeeq[1] | spectra.line.table[input$xaxistypeeq] > input$xlimrangeeq[2]))
 
 
@@ -7465,7 +7442,7 @@ scale_colour_gradientn(colours=rev(terrain.colors(length(spectra.timeseries.tabl
       #spectra.timeseries.table <- data.frame(interval, spectra.line.table[c(input$elementtrend)]/spectra.line.table.norm[c(input$elementnorm)], spectra.line.table$Cluster, spectra.line.table$Qualitative, spectra.line.table$Depth)
       #colnames(spectra.timeseries.table) <- c("Interval", "Selected", "Cluster", "Qualitative", "Depth")
       
-      spectra.timeseries.table <- data.frame(spectra.line.table[c(input$xaxistypeeq)], data.transformation, spectra.line.table$Cluster, spectra.line.table$Qualitative, spectra.line.table$Depth, spectra.line.table$Climate)
+      spectra.timeseries.table <- data.frame(spectra.line.table[c(input$xaxistypeeq)], spectra.line.table$Selected, spectra.line.table$Cluster, spectra.line.table$Qualitative, spectra.line.table$Depth, spectra.line.table$Climate)
       colnames(spectra.timeseries.table) <- c("Interval", "Selected", "Cluster", "Qualitative", "Depth", "Climate")
       
       
@@ -7797,8 +7774,7 @@ scale_colour_gradientn(colours=rev(terrain.colors(length(spectra.timeseries.tabl
       
       
       
-      isolate(print(plotInput6e()))
-      
+      isolate(plotInput6e())      
   })
   
   
@@ -7878,7 +7854,7 @@ scale_colour_gradientn(colours=rev(terrain.colors(length(spectra.timeseries.tabl
       
       
       
-      data.transformation.selection <- if(input$xtransform1=="None" && input$xelementnum2=="None") {
+      spectra.line.table$Selected <- if(input$xtransform1=="None" && input$xelementnum2=="None") {
           spectra.line.table[input$xelementnum1]
           ########Two Numerators
       } else if(input$xtransform1=="+" && input$xelementnum2!="None"){
