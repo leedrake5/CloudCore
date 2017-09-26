@@ -375,40 +375,55 @@ numericInput("ymultiply", label="Y Axis Unit Shift", min=.000001, max=1000000, v
 mainPanel(
 tabsetPanel(
 id = 'dataset',
-tabPanel('Time Series 1', plotOutput('timeseriesplot1',
-dblclick = "plot1_dblclick", height = 700, width= 1200,
-brush = brushOpts(
-id = "plot1_brush",
-resetOnNew = TRUE
-))),
+tabPanel('Time Series 1',
+div(
+style = "position:relative",
+plotOutput('timeseriesplot1',
+hover = hoverOpts("plot_hover3a", delay = 100, delayType = "debounce"),
+height = 700, width= 1200),
+uiOutput("hover_info3a")
+)
+),
 
-tabPanel('Time Series 2', plotOutput('timeseriesplot2',
-dblclick = "plot1_dblclick", height = 700, width= 1200,
-brush = brushOpts(
-id = "plot1_brush",
-resetOnNew = TRUE
-))),
+tabPanel('Time Series 2',
+div(
+style = "position:relative",
+plotOutput('timeseriesplot2',
+hover = hoverOpts("plot_hover3b", delay = 100, delayType = "debounce"),
+height = 700, width= 1200),
+uiOutput("hover_info3b")
+)
+),
 
-tabPanel('Time Series 3', plotOutput('timeseriesplot3',
-dblclick = "plot1_dblclick", height = 700, width= 1200,
-brush = brushOpts(
-id = "plot1_brush",
-resetOnNew = TRUE
-))),
+tabPanel('Time Series 3',
+div(
+style = "position:relative",
+plotOutput('timeseriesplot3',
+hover = hoverOpts("plot_hover3c", delay = 100, delayType = "debounce"),
+height = 700, width= 1200),
+uiOutput("hover_info3c")
+)
+),
 
-tabPanel('Time Series 4', plotOutput('timeseriesplot4',
-dblclick = "plot1_dblclick", height = 700, width= 1200,
-brush = brushOpts(
-id = "plot1_brush",
-resetOnNew = TRUE
-))),
+tabPanel('Time Series 4',
+div(
+style = "position:relative",
+plotOutput('timeseriesplot4',
+hover = hoverOpts("plot_hover3d", delay = 100, delayType = "debounce"),
+height = 700, width= 1200),
+uiOutput("hover_info3d")
+)
+),
 
-tabPanel('Time Series 5', plotOutput('timeseriesplot5',
-dblclick = "plot1_dblclick", height = 700, width= 1200,
-brush = brushOpts(
-id = "plot1_brush",
-resetOnNew = TRUE
-)))
+tabPanel('Time Series 5',
+div(
+style = "position:relative",
+plotOutput('timeseriesplot5',
+hover = hoverOpts("plot_hover3e", delay = 100, delayType = "debounce"),
+height = 700, width= 1200),
+uiOutput("hover_info3e")
+)
+)
 
 
 
@@ -630,40 +645,56 @@ checkboxInput("transformnorm", label="Normalize", FALSE)
 mainPanel(
 tabsetPanel(
 id = 'dataset',
-tabPanel('Time Series 1', plotOutput('timeserieseqplot1',
-dblclick = "plot1_dblclick", height = 700, width= 1200,
-brush = brushOpts(
-id = "plot1_brush",
-resetOnNew = TRUE
-))),
+tabPanel('Time Series 1',
+div(
+style = "position:relative",
+plotOutput('timeserieseqplot1',
+hover = hoverOpts("plot_hover6a", delay = 100, delayType = "debounce"),
+height = 700, width= 1200
+),
+uiOutput("hover_info6a")
+)
+),
 
-tabPanel('Time Series 2', plotOutput('timeserieseqplot2',
-dblclick = "plot1_dblclick", height = 700, width= 1200,
-brush = brushOpts(
-id = "plot1_brush",
-resetOnNew = TRUE
-))),
+tabPanel('Time Series 2',
+div(
+style = "position:relative",
+plotOutput('timeserieseqplot2',
+hover = hoverOpts("plot_hover6b", delay = 100, delayType = "debounce"),
+height = 700, width= 1200),
+uiOutput("hover_info6b")
+)
+),
 
-tabPanel('Time Series 3', plotOutput('timeserieseqplot3',
-dblclick = "plot1_dblclick", height = 700, width= 1200,
-brush = brushOpts(
-id = "plot1_brush",
-resetOnNew = TRUE
-))),
+tabPanel('Time Series 3',
+div(
+style = "position:relative",
+plotOutput('timeserieseqplot3',
+hover = hoverOpts("plot_hover6c", delay = 100, delayType = "debounce"),
+height = 700, width= 1200),
+uiOutput("hover_info6c")
+)
+),
 
-tabPanel('Time Series 4', plotOutput('timeserieseqplot4',
-dblclick = "plot1_dblclick", height = 700, width= 1200,
-brush = brushOpts(
-id = "plot1_brush",
-resetOnNew = TRUE
-))),
+tabPanel('Time Series 4',
+div(
+style = "position:relative",
+plotOutput('timeserieseqplot4',
+hover = hoverOpts("plot_hover6d", delay = 100, delayType = "debounce"),
+height = 700, width= 1200),
+uiOutput("hover_info6d")
+)
+),
 
-tabPanel('Time Series 5', plotOutput('timeserieseqplot5',
-dblclick = "plot1_dblclick", height = 700, width= 1200,
-brush = brushOpts(
-id = "plot1_brush",
-resetOnNew = TRUE
-)))
+tabPanel('Time Series 5',
+div(
+style = "position:relative",
+plotOutput('timeserieseqplot5',
+hover = hoverOpts("plot_hover6e", delay = 100, delayType = "debounce"),
+height = 700, width= 1200),
+uiOutput("hover_info6e")
+)
+)
 
 
 

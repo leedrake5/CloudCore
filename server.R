@@ -13,6 +13,7 @@ library(rhandsontable)
 library(Bchron)
 library(scales)
 library(zoo)
+library(Cairo)
 
 
 
@@ -2330,6 +2331,65 @@ output$inxlimrange <- renderUI({
       isolate(plotInput3a())      
   })
   
+  hoverHold3a <- reactive({
+      input$timeseriesact1
+      
+      spectra.line.table <- ageData()
+      
+      spectra.line.table <- subset(spectra.line.table, !(spectra.line.table[input$xaxistypeeq] < input$xlimrangeeq[1] | spectra.line.table[input$xaxistypeeq] > input$xlimrangeeq[2]))
+      
+      if(is.null(spectra.line.table$Age)==TRUE){
+          spectra.line.table$Age <- rep(1, length(spectra.line.table$Spectrum))
+      }
+      
+      spectra.timeseries.table <- data.frame(spectra.line.table[c(input$xaxistypeeq)], spectra.line.table$Selected, spectra.line.table$Cluster, spectra.line.table$Qualitative, spectra.line.table$Depth, spectra.line.table$Climate, spectra.line.table$Age)
+      colnames(spectra.timeseries.table) <- c("Interval", "Selected", "Cluster", "Qualitative", "Depth", "Climate", "Age")
+      
+      isolate(spectra.timeseries.table)
+      
+  })
+  
+  
+  
+  output$hover_info3a <- renderUI({
+      
+      point.table <- hoverHold3a()
+      
+      hover <- input$plot_hover3a
+      point <- nearPoints(point.table,  xvar="Interval", yvar="Selected", coordinfo=hover,   threshold = 10, maxpoints = 1)
+      
+      #if (nrow(point) == 0) return(NULL)
+      
+      
+      
+      
+      # calculate point position INSIDE the image as percent of total dimensions
+      # from left (horizontal) and from top (vertical)
+      left_pct <- (hover$x - hover$domain$left) / (hover$domain$right - hover$domain$left)
+      top_pct <- (hover$domain$top - hover$y) / (hover$domain$top - hover$domain$bottom)
+      
+      # calculate distance from left and bottom side of the picture in pixels
+      left_px <- hover$range$left + left_pct * (hover$range$right - hover$range$left)
+      top_px <- hover$range$top + top_pct * (hover$range$bottom - hover$range$top)
+      
+      
+      # create style property fot tooltip
+      # background color is set so tooltip is a bit transparent
+      # z-index is set so we are sure are tooltip will be on top
+      style <- paste0("position:absolute; z-index:100; background-color: rgba(245, 245, 245, 0.85); ",
+      "left:", left_px + 2, "px; top:", top_px + 2, "px;")
+      
+      # actual tooltip created as wellPanel
+      wellPanel(
+      style = style,
+      p(HTML(paste0("<b> Spectrum: </b>", point$Spectrum, "<br/>",
+      "<b> Depth: </b>", point$Depth, "<br/>",
+      "<b> Age: </b>", point$Age, "<br/>"
+      
+      )))
+      )
+  })
+  
   trendPlot <- reactive({
       trendy <-  if(input$elementnorm=="None" && input$filetype=="Spectra") {
           paste(gsub("[.]", "", c(substr(input$elementtrend, 1, 2), " CPS")), sep=",", collapse="")
@@ -2732,6 +2792,65 @@ output$inxlimrange <- renderUI({
   })
   
   
+  hoverHold3b <- reactive({
+      input$timeseriesact2
+      
+      spectra.line.table <- ageData()
+      
+      spectra.line.table <- subset(spectra.line.table, !(spectra.line.table[input$xaxistypeeq] < input$xlimrangeeq[1] | spectra.line.table[input$xaxistypeeq] > input$xlimrangeeq[2]))
+      
+      if(is.null(spectra.line.table$Age)==TRUE){
+          spectra.line.table$Age <- rep(1, length(spectra.line.table$Spectrum))
+      }
+      
+      spectra.timeseries.table <- data.frame(spectra.line.table[c(input$xaxistypeeq)], spectra.line.table$Selected, spectra.line.table$Cluster, spectra.line.table$Qualitative, spectra.line.table$Depth, spectra.line.table$Climate, spectra.line.table$Age)
+      colnames(spectra.timeseries.table) <- c("Interval", "Selected", "Cluster", "Qualitative", "Depth", "Climate", "Age")
+      
+      isolate(spectra.timeseries.table)
+      
+  })
+  
+  
+  
+  output$hover_info3b <- renderUI({
+      
+      point.table <- hoverHold3b()
+      
+      hover <- input$plot_hover3b
+      point <- nearPoints(point.table,  xvar="Interval", yvar="Selected", coordinfo=hover,   threshold = 10, maxpoints = 1)
+      
+      #if (nrow(point) == 0) return(NULL)
+      
+      
+      
+      
+      # calculate point position INSIDE the image as percent of total dimensions
+      # from left (horizontal) and from top (vertical)
+      left_pct <- (hover$x - hover$domain$left) / (hover$domain$right - hover$domain$left)
+      top_pct <- (hover$domain$top - hover$y) / (hover$domain$top - hover$domain$bottom)
+      
+      # calculate distance from left and bottom side of the picture in pixels
+      left_px <- hover$range$left + left_pct * (hover$range$right - hover$range$left)
+      top_px <- hover$range$top + top_pct * (hover$range$bottom - hover$range$top)
+      
+      
+      # create style property fot tooltip
+      # background color is set so tooltip is a bit transparent
+      # z-index is set so we are sure are tooltip will be on top
+      style <- paste0("position:absolute; z-index:100; background-color: rgba(245, 245, 245, 0.85); ",
+      "left:", left_px + 2, "px; top:", top_px + 2, "px;")
+      
+      # actual tooltip created as wellPanel
+      wellPanel(
+      style = style,
+      p(HTML(paste0("<b> Spectrum: </b>", point$Spectrum, "<br/>",
+      "<b> Depth: </b>", point$Depth, "<br/>",
+      "<b> Age: </b>", point$Age, "<br/>"
+      
+      )))
+      )
+  })
+  
   output$downloadPlot3b <- downloadHandler(
   
   
@@ -3113,6 +3232,65 @@ output$inxlimrange <- renderUI({
       
       isolate(plotInput3c())      
       
+  })
+  
+  hoverHold3c <- reactive({
+      input$timeseriesact3
+      
+      spectra.line.table <- ageData()
+      
+      spectra.line.table <- subset(spectra.line.table, !(spectra.line.table[input$xaxistypeeq] < input$xlimrangeeq[1] | spectra.line.table[input$xaxistypeeq] > input$xlimrangeeq[2]))
+      
+      if(is.null(spectra.line.table$Age)==TRUE){
+          spectra.line.table$Age <- rep(1, length(spectra.line.table$Spectrum))
+      }
+      
+      spectra.timeseries.table <- data.frame(spectra.line.table[c(input$xaxistypeeq)], spectra.line.table$Selected, spectra.line.table$Cluster, spectra.line.table$Qualitative, spectra.line.table$Depth, spectra.line.table$Climate, spectra.line.table$Age)
+      colnames(spectra.timeseries.table) <- c("Interval", "Selected", "Cluster", "Qualitative", "Depth", "Climate", "Age")
+      
+      isolate(spectra.timeseries.table)
+      
+  })
+  
+  
+  
+  output$hover_info3c <- renderUI({
+      
+      point.table <- hoverHold3c()
+      
+      hover <- input$plot_hover3c
+      point <- nearPoints(point.table,  xvar="Interval", yvar="Selected", coordinfo=hover,   threshold = 10, maxpoints = 1)
+      
+      #if (nrow(point) == 0) return(NULL)
+      
+      
+      
+      
+      # calculate point position INSIDE the image as percent of total dimensions
+      # from left (horizontal) and from top (vertical)
+      left_pct <- (hover$x - hover$domain$left) / (hover$domain$right - hover$domain$left)
+      top_pct <- (hover$domain$top - hover$y) / (hover$domain$top - hover$domain$bottom)
+      
+      # calculate distance from left and bottom side of the picture in pixels
+      left_px <- hover$range$left + left_pct * (hover$range$right - hover$range$left)
+      top_px <- hover$range$top + top_pct * (hover$range$bottom - hover$range$top)
+      
+      
+      # create style property fot tooltip
+      # background color is set so tooltip is a bit transparent
+      # z-index is set so we are sure are tooltip will be on top
+      style <- paste0("position:absolute; z-index:100; background-color: rgba(245, 245, 245, 0.85); ",
+      "left:", left_px + 2, "px; top:", top_px + 2, "px;")
+      
+      # actual tooltip created as wellPanel
+      wellPanel(
+      style = style,
+      p(HTML(paste0("<b> Spectrum: </b>", point$Spectrum, "<br/>",
+      "<b> Depth: </b>", point$Depth, "<br/>",
+      "<b> Age: </b>", point$Age, "<br/>"
+      
+      )))
+      )
   })
   
   output$downloadPlot3c <- downloadHandler(
@@ -3498,6 +3676,65 @@ output$inxlimrange <- renderUI({
   output$timeseriesplot4 <- renderPlot({
       input$timeseriesact4
       isolate(plotInput3d())      
+  })
+  
+  hoverHold3d <- reactive({
+      input$timeseriesact4
+      
+      spectra.line.table <- ageData()
+      
+      spectra.line.table <- subset(spectra.line.table, !(spectra.line.table[input$xaxistypeeq] < input$xlimrangeeq[1] | spectra.line.table[input$xaxistypeeq] > input$xlimrangeeq[2]))
+      
+      if(is.null(spectra.line.table$Age)==TRUE){
+          spectra.line.table$Age <- rep(1, length(spectra.line.table$Spectrum))
+      }
+      
+      spectra.timeseries.table <- data.frame(spectra.line.table[c(input$xaxistypeeq)], spectra.line.table$Selected, spectra.line.table$Cluster, spectra.line.table$Qualitative, spectra.line.table$Depth, spectra.line.table$Climate, spectra.line.table$Age)
+      colnames(spectra.timeseries.table) <- c("Interval", "Selected", "Cluster", "Qualitative", "Depth", "Climate", "Age")
+      
+      isolate(spectra.timeseries.table)
+      
+  })
+  
+  
+  
+  output$hover_info3d <- renderUI({
+      
+      point.table <- hoverHold3d()
+      
+      hover <- input$plot_hover3d
+      point <- nearPoints(point.table,  xvar="Interval", yvar="Selected", coordinfo=hover,   threshold = 10, maxpoints = 1)
+      
+      #if (nrow(point) == 0) return(NULL)
+      
+      
+      
+      
+      # calculate point position INSIDE the image as percent of total dimensions
+      # from left (horizontal) and from top (vertical)
+      left_pct <- (hover$x - hover$domain$left) / (hover$domain$right - hover$domain$left)
+      top_pct <- (hover$domain$top - hover$y) / (hover$domain$top - hover$domain$bottom)
+      
+      # calculate distance from left and bottom side of the picture in pixels
+      left_px <- hover$range$left + left_pct * (hover$range$right - hover$range$left)
+      top_px <- hover$range$top + top_pct * (hover$range$bottom - hover$range$top)
+      
+      
+      # create style property fot tooltip
+      # background color is set so tooltip is a bit transparent
+      # z-index is set so we are sure are tooltip will be on top
+      style <- paste0("position:absolute; z-index:100; background-color: rgba(245, 245, 245, 0.85); ",
+      "left:", left_px + 2, "px; top:", top_px + 2, "px;")
+      
+      # actual tooltip created as wellPanel
+      wellPanel(
+      style = style,
+      p(HTML(paste0("<b> Spectrum: </b>", point$Spectrum, "<br/>",
+      "<b> Depth: </b>", point$Depth, "<br/>",
+      "<b> Age: </b>", point$Age, "<br/>"
+      
+      )))
+      )
   })
   
   output$downloadPlot3d <- downloadHandler(
@@ -3892,6 +4129,65 @@ output$inxlimrange <- renderUI({
       
       
       isolate(plotInput3e())      
+  })
+  
+  hoverHold3e <- reactive({
+      input$timeseriesact5
+      
+      spectra.line.table <- ageData()
+      
+      spectra.line.table <- subset(spectra.line.table, !(spectra.line.table[input$xaxistypeeq] < input$xlimrangeeq[1] | spectra.line.table[input$xaxistypeeq] > input$xlimrangeeq[2]))
+      
+      if(is.null(spectra.line.table$Age)==TRUE){
+          spectra.line.table$Age <- rep(1, length(spectra.line.table$Spectrum))
+      }
+      
+      spectra.timeseries.table <- data.frame(spectra.line.table[c(input$xaxistypeeq)], spectra.line.table$Selected, spectra.line.table$Cluster, spectra.line.table$Qualitative, spectra.line.table$Depth, spectra.line.table$Climate, spectra.line.table$Age)
+      colnames(spectra.timeseries.table) <- c("Interval", "Selected", "Cluster", "Qualitative", "Depth", "Climate", "Age")
+      
+      isolate(spectra.timeseries.table)
+      
+  })
+  
+  
+  
+  output$hover_info3e <- renderUI({
+      
+      point.table <- hoverHold3e()
+      
+      hover <- input$plot_hover3e
+      point <- nearPoints(point.table,  xvar="Interval", yvar="Selected", coordinfo=hover,   threshold = 10, maxpoints = 1)
+      
+      #if (nrow(point) == 0) return(NULL)
+      
+      
+      
+      
+      # calculate point position INSIDE the image as percent of total dimensions
+      # from left (horizontal) and from top (vertical)
+      left_pct <- (hover$x - hover$domain$left) / (hover$domain$right - hover$domain$left)
+      top_pct <- (hover$domain$top - hover$y) / (hover$domain$top - hover$domain$bottom)
+      
+      # calculate distance from left and bottom side of the picture in pixels
+      left_px <- hover$range$left + left_pct * (hover$range$right - hover$range$left)
+      top_px <- hover$range$top + top_pct * (hover$range$bottom - hover$range$top)
+      
+      
+      # create style property fot tooltip
+      # background color is set so tooltip is a bit transparent
+      # z-index is set so we are sure are tooltip will be on top
+      style <- paste0("position:absolute; z-index:100; background-color: rgba(245, 245, 245, 0.85); ",
+      "left:", left_px + 2, "px; top:", top_px + 2, "px;")
+      
+      # actual tooltip created as wellPanel
+      wellPanel(
+      style = style,
+      p(HTML(paste0("<b> Spectrum: </b>", point$Spectrum, "<br/>",
+      "<b> Depth: </b>", point$Depth, "<br/>",
+      "<b> Age: </b>", point$Age, "<br/>"
+      
+      )))
+      )
   })
   
   
@@ -5900,6 +6196,10 @@ output$inxlimrange <- renderUI({
   
   
   
+
+
+  
+  
   plotInput6a <- reactive({
       
 
@@ -6248,15 +6548,71 @@ scale_colour_gradientn(colours=rev(terrain.colors(length(spectra.timeseries.tabl
   })
   
   
-  observeEvent(input$timeserieseq1, {
-      
-  })
+
   
   output$timeserieseqplot1 <- renderPlot({
       input$timeserieseq1
-      isolate(plotInput6a())      
+
+      isolate(plotInput6a())
   })
   
+  hoverHold6a <- reactive({
+      input$timeserieseq1
+      
+      spectra.line.table <- dataTransform()
+      
+      spectra.line.table <- subset(spectra.line.table, !(spectra.line.table[input$xaxistypeeq] < input$xlimrangeeq[1] | spectra.line.table[input$xaxistypeeq] > input$xlimrangeeq[2]))
+      
+      if(is.null(spectra.line.table$Age)==TRUE){
+          spectra.line.table$Age <- rep(1, length(spectra.line.table$Spectrum))
+      }
+      
+      spectra.timeseries.table <- data.frame(spectra.line.table[c(input$xaxistypeeq)], spectra.line.table$Selected, spectra.line.table$Cluster, spectra.line.table$Qualitative, spectra.line.table$Depth, spectra.line.table$Climate, spectra.line.table$Age)
+      colnames(spectra.timeseries.table) <- c("Interval", "Selected", "Cluster", "Qualitative", "Depth", "Climate", "Age")
+      
+      isolate(spectra.timeseries.table)
+      
+  })
+  
+  
+  output$hover_info6a <- renderUI({
+      
+      point.table <- hoverHold6a()
+      
+      hover <- input$plot_hover6a
+      point <- nearPoints(point.table,  xvar="Interval", yvar="Selected", coordinfo=hover,   threshold = 10, maxpoints = 1)
+      
+      #if (nrow(point) == 0) return(NULL)
+      
+      
+      
+      
+      # calculate point position INSIDE the image as percent of total dimensions
+      # from left (horizontal) and from top (vertical)
+      left_pct <- (hover$x - hover$domain$left) / (hover$domain$right - hover$domain$left)
+      top_pct <- (hover$domain$top - hover$y) / (hover$domain$top - hover$domain$bottom)
+      
+      # calculate distance from left and bottom side of the picture in pixels
+      left_px <- hover$range$left + left_pct * (hover$range$right - hover$range$left)
+      top_px <- hover$range$top + top_pct * (hover$range$bottom - hover$range$top)
+      
+      
+      # create style property fot tooltip
+      # background color is set so tooltip is a bit transparent
+      # z-index is set so we are sure are tooltip will be on top
+      style <- paste0("position:absolute; z-index:100; background-color: rgba(245, 245, 245, 0.85); ",
+      "left:", left_px + 2, "px; top:", top_px + 2, "px;")
+      
+      # actual tooltip created as wellPanel
+      wellPanel(
+      style = style,
+      p(HTML(paste0("<b> Spectrum: </b>", point$Spectrum, "<br/>",
+      "<b> Depth: </b>", point$Depth, "<br/>",
+      "<b> Age: </b>", point$Age, "<br/>"
+      
+      )))
+      )
+  })
   
   
   output$downloadPlot6a <- downloadHandler(
@@ -6633,6 +6989,65 @@ scale_colour_gradientn(colours=rev(terrain.colors(length(spectra.timeseries.tabl
   output$timeserieseqplot2 <- renderPlot({
       input$timeserieseq2
       isolate(plotInput6b())      
+  })
+  
+  hoverHold6b <- reactive({
+      input$timeserieseq2
+      
+      spectra.line.table <- dataTransform()
+      
+      spectra.line.table <- subset(spectra.line.table, !(spectra.line.table[input$xaxistypeeq] < input$xlimrangeeq[1] | spectra.line.table[input$xaxistypeeq] > input$xlimrangeeq[2]))
+      
+      if(is.null(spectra.line.table$Age)==TRUE){
+          spectra.line.table$Age <- rep(1, length(spectra.line.table$Spectrum))
+      }
+      
+      spectra.timeseries.table <- data.frame(spectra.line.table[c(input$xaxistypeeq)], spectra.line.table$Selected, spectra.line.table$Cluster, spectra.line.table$Qualitative, spectra.line.table$Depth, spectra.line.table$Climate, spectra.line.table$Age)
+      colnames(spectra.timeseries.table) <- c("Interval", "Selected", "Cluster", "Qualitative", "Depth", "Climate", "Age")
+      
+      isolate(spectra.timeseries.table)
+      
+  })
+  
+  
+  
+  output$hover_info6b <- renderUI({
+      
+      point.table <- hoverHold6b()
+      
+      hover <- input$plot_hover6b
+      point <- nearPoints(point.table,  xvar="Interval", yvar="Selected", coordinfo=hover,   threshold = 10, maxpoints = 1)
+      
+      #if (nrow(point) == 0) return(NULL)
+      
+      
+      
+      
+      # calculate point position INSIDE the image as percent of total dimensions
+      # from left (horizontal) and from top (vertical)
+      left_pct <- (hover$x - hover$domain$left) / (hover$domain$right - hover$domain$left)
+      top_pct <- (hover$domain$top - hover$y) / (hover$domain$top - hover$domain$bottom)
+      
+      # calculate distance from left and bottom side of the picture in pixels
+      left_px <- hover$range$left + left_pct * (hover$range$right - hover$range$left)
+      top_px <- hover$range$top + top_pct * (hover$range$bottom - hover$range$top)
+      
+      
+      # create style property fot tooltip
+      # background color is set so tooltip is a bit transparent
+      # z-index is set so we are sure are tooltip will be on top
+      style <- paste0("position:absolute; z-index:100; background-color: rgba(245, 245, 245, 0.85); ",
+      "left:", left_px + 2, "px; top:", top_px + 2, "px;")
+      
+      # actual tooltip created as wellPanel
+      wellPanel(
+      style = style,
+      p(HTML(paste0("<b> Spectrum: </b>", point$Spectrum, "<br/>",
+      "<b> Depth: </b>", point$Depth, "<br/>",
+      "<b> Age: </b>", point$Age, "<br/>"
+      
+      )))
+      )
   })
   
   
@@ -7016,6 +7431,64 @@ scale_colour_gradientn(colours=rev(terrain.colors(length(spectra.timeseries.tabl
       
   })
   
+  hoverHold6c <- reactive({
+      input$timeserieseq3
+      
+      spectra.line.table <- dataTransform()
+      
+      spectra.line.table <- subset(spectra.line.table, !(spectra.line.table[input$xaxistypeeq] < input$xlimrangeeq[1] | spectra.line.table[input$xaxistypeeq] > input$xlimrangeeq[2]))
+      
+      if(is.null(spectra.line.table$Age)==TRUE){
+          spectra.line.table$Age <- rep(1, length(spectra.line.table$Spectrum))
+      }
+      
+      spectra.timeseries.table <- data.frame(spectra.line.table[c(input$xaxistypeeq)], spectra.line.table$Selected, spectra.line.table$Cluster, spectra.line.table$Qualitative, spectra.line.table$Depth, spectra.line.table$Climate, spectra.line.table$Age)
+      colnames(spectra.timeseries.table) <- c("Interval", "Selected", "Cluster", "Qualitative", "Depth", "Climate", "Age")
+      
+      isolate(spectra.timeseries.table)
+      
+  })
+  
+  
+  output$hover_info6c <- renderUI({
+      
+      point.table <- hoverHold6c()
+      
+      hover <- input$plot_hover6c
+      point <- nearPoints(point.table,  xvar="Interval", yvar="Selected", coordinfo=hover,   threshold = 10, maxpoints = 1)
+      
+      #if (nrow(point) == 0) return(NULL)
+      
+      
+      
+      
+      # calculate point position INSIDE the image as percent of total dimensions
+      # from left (horizontal) and from top (vertical)
+      left_pct <- (hover$x - hover$domain$left) / (hover$domain$right - hover$domain$left)
+      top_pct <- (hover$domain$top - hover$y) / (hover$domain$top - hover$domain$bottom)
+      
+      # calculate distance from left and bottom side of the picture in pixels
+      left_px <- hover$range$left + left_pct * (hover$range$right - hover$range$left)
+      top_px <- hover$range$top + top_pct * (hover$range$bottom - hover$range$top)
+      
+      
+      # create style property fot tooltip
+      # background color is set so tooltip is a bit transparent
+      # z-index is set so we are sure are tooltip will be on top
+      style <- paste0("position:absolute; z-index:100; background-color: rgba(245, 245, 245, 0.85); ",
+      "left:", left_px + 2, "px; top:", top_px + 2, "px;")
+      
+      # actual tooltip created as wellPanel
+      wellPanel(
+      style = style,
+      p(HTML(paste0("<b> Spectrum: </b>", point$Spectrum, "<br/>",
+      "<b> Depth: </b>", point$Depth, "<br/>",
+      "<b> Age: </b>", point$Age, "<br/>"
+      
+      )))
+      )
+  })
+  
   output$downloadPlot6c <- downloadHandler(
   
   
@@ -7391,6 +7864,66 @@ scale_colour_gradientn(colours=rev(terrain.colors(length(spectra.timeseries.tabl
   output$timeserieseqplot4 <- renderPlot({
       input$timeserieseq4
       isolate(plotInput6d())      
+  })
+  
+  
+  hoverHold6d <- reactive({
+      input$timeserieseq4
+      
+      spectra.line.table <- dataTransform()
+      
+      spectra.line.table <- subset(spectra.line.table, !(spectra.line.table[input$xaxistypeeq] < input$xlimrangeeq[1] | spectra.line.table[input$xaxistypeeq] > input$xlimrangeeq[2]))
+      
+      if(is.null(spectra.line.table$Age)==TRUE){
+          spectra.line.table$Age <- rep(1, length(spectra.line.table$Spectrum))
+      }
+      
+      spectra.timeseries.table <- data.frame(spectra.line.table[c(input$xaxistypeeq)], spectra.line.table$Selected, spectra.line.table$Cluster, spectra.line.table$Qualitative, spectra.line.table$Depth, spectra.line.table$Climate, spectra.line.table$Age)
+      colnames(spectra.timeseries.table) <- c("Interval", "Selected", "Cluster", "Qualitative", "Depth", "Climate", "Age")
+      
+      isolate(spectra.timeseries.table)
+      
+  })
+  
+  
+  
+  output$hover_info6d <- renderUI({
+      
+      point.table <- hoverHold6d()
+      
+      hover <- input$plot_hover6d
+      point <- nearPoints(point.table,  xvar="Interval", yvar="Selected", coordinfo=hover,   threshold = 10, maxpoints = 1)
+      
+      #if (nrow(point) == 0) return(NULL)
+      
+      
+      
+      
+      # calculate point position INSIDE the image as percent of total dimensions
+      # from left (horizontal) and from top (vertical)
+      left_pct <- (hover$x - hover$domain$left) / (hover$domain$right - hover$domain$left)
+      top_pct <- (hover$domain$top - hover$y) / (hover$domain$top - hover$domain$bottom)
+      
+      # calculate distance from left and bottom side of the picture in pixels
+      left_px <- hover$range$left + left_pct * (hover$range$right - hover$range$left)
+      top_px <- hover$range$top + top_pct * (hover$range$bottom - hover$range$top)
+      
+      
+      # create style property fot tooltip
+      # background color is set so tooltip is a bit transparent
+      # z-index is set so we are sure are tooltip will be on top
+      style <- paste0("position:absolute; z-index:100; background-color: rgba(245, 245, 245, 0.85); ",
+      "left:", left_px + 2, "px; top:", top_px + 2, "px;")
+      
+      # actual tooltip created as wellPanel
+      wellPanel(
+      style = style,
+      p(HTML(paste0("<b> Spectrum: </b>", point$Spectrum, "<br/>",
+      "<b> Depth: </b>", point$Depth, "<br/>",
+      "<b> Age: </b>", point$Age, "<br/>"
+      
+      )))
+      )
   })
   
   output$downloadPlot6d <- downloadHandler(
@@ -7775,6 +8308,66 @@ scale_colour_gradientn(colours=rev(terrain.colors(length(spectra.timeseries.tabl
       
       
       isolate(plotInput6e())      
+  })
+  
+  
+  hoverHold6e <- reactive({
+      input$timeserieseq5
+      
+      spectra.line.table <- dataTransform()
+      
+      spectra.line.table <- subset(spectra.line.table, !(spectra.line.table[input$xaxistypeeq] < input$xlimrangeeq[1] | spectra.line.table[input$xaxistypeeq] > input$xlimrangeeq[2]))
+      
+      if(is.null(spectra.line.table$Age)==TRUE){
+          spectra.line.table$Age <- rep(1, length(spectra.line.table$Spectrum))
+      }
+      
+      spectra.timeseries.table <- data.frame(spectra.line.table[c(input$xaxistypeeq)], spectra.line.table$Selected, spectra.line.table$Cluster, spectra.line.table$Qualitative, spectra.line.table$Depth, spectra.line.table$Climate, spectra.line.table$Age)
+      colnames(spectra.timeseries.table) <- c("Interval", "Selected", "Cluster", "Qualitative", "Depth", "Climate", "Age")
+      
+      isolate(spectra.timeseries.table)
+      
+  })
+  
+  
+  
+  output$hover_info6e <- renderUI({
+      
+      point.table <- hoverHold6e()
+      
+      hover <- input$plot_hover6e
+      point <- nearPoints(point.table,  xvar="Interval", yvar="Selected", coordinfo=hover,   threshold = 10, maxpoints = 1)
+      
+      #if (nrow(point) == 0) return(NULL)
+      
+      
+      
+      
+      # calculate point position INSIDE the image as percent of total dimensions
+      # from left (horizontal) and from top (vertical)
+      left_pct <- (hover$x - hover$domain$left) / (hover$domain$right - hover$domain$left)
+      top_pct <- (hover$domain$top - hover$y) / (hover$domain$top - hover$domain$bottom)
+      
+      # calculate distance from left and bottom side of the picture in pixels
+      left_px <- hover$range$left + left_pct * (hover$range$right - hover$range$left)
+      top_px <- hover$range$top + top_pct * (hover$range$bottom - hover$range$top)
+      
+      
+      # create style property fot tooltip
+      # background color is set so tooltip is a bit transparent
+      # z-index is set so we are sure are tooltip will be on top
+      style <- paste0("position:absolute; z-index:100; background-color: rgba(245, 245, 245, 0.85); ",
+      "left:", left_px + 2, "px; top:", top_px + 2, "px;")
+      
+      # actual tooltip created as wellPanel
+      wellPanel(
+      style = style,
+      p(HTML(paste0("<b> Spectrum: </b>", point$Spectrum, "<br/>",
+      "<b> Depth: </b>", point$Depth, "<br/>",
+      "<b> Age: </b>", point$Age, "<br/>"
+      
+      )))
+      )
   })
   
   
