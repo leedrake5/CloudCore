@@ -5852,10 +5852,37 @@ output$inxlimrange <- renderUI({
   
   
   
+  xmindataeq <- reactive({
+      
+      spectra.line.table <- ageData()
+      spectra.line.table$Selected <- dataTransform()
+
+      
+      x.data <- spectra.line.table[input$xaxistype]
+      xmindata <- min(x.data)
+      
+      xmindata
+      
+      
+  })
+  
+  xmaxdataeq <- reactive({
+      spectra.line.table <- ageData()
+      spectra.line.table$Selected <- dataTransform()
+
+      
+      x.data <- spectra.line.table[input$xaxistype]
+      xmaxdata <- max(x.data)
+      xmaxdata
+      
+  })
   
   
-  
-  
+  output$inxlimrangeeq <- renderUI({
+      
+      
+      sliderInput("xlimrangeeq", "X axis", min=xmindataeq(), max=xmaxdataeq(), value=c(xmindataeq(), xmaxdataeq()), round=FALSE)
+  })
   
   #############Mathematical Transformations
   
@@ -5907,8 +5934,9 @@ output$inxlimrange <- renderUI({
       
       
       spectra.line.table <- ageData()
-      data.transformation <- dataTransform()
-      spectra.line.table <- subset(spectra.line.table, !(spectra.line.table[input$xaxistype] < input$xlimrange[1] | spectra.line.table[input$xaxistype] > input$xlimrange[2]))
+      
+      spectra.line.table$Selected <- dataTransform()
+      spectra.line.table <- subset(spectra.line.table, !(spectra.line.table[input$xaxistypeeq] < input$xlimrangeeq[1] | spectra.line.table[input$xaxistypeeq] > input$xlimrangeeq[2]))
       
 
       
@@ -5922,7 +5950,7 @@ output$inxlimrange <- renderUI({
       #spectra.timeseries.table <- data.frame(interval, spectra.line.table[c(input$elementtrend)]/spectra.line.table.norm[c(input$elementnorm)], spectra.line.table$Cluster, spectra.line.table$Qualitative, spectra.line.table$Depth)
       #colnames(spectra.timeseries.table) <- c("Interval", "Selected", "Cluster", "Qualitative", "Depth")
       
-      spectra.timeseries.table <- data.frame(spectra.line.table[c(input$xaxistypeeq)], data.transformation, spectra.line.table$Cluster, spectra.line.table$Qualitative, spectra.line.table$Depth, spectra.line.table$Climate)
+      spectra.timeseries.table <- data.frame(spectra.line.table[c(input$xaxistypeeq)], spectra.line.table$Selected, spectra.line.table$Cluster, spectra.line.table$Qualitative, spectra.line.table$Depth, spectra.line.table$Climate)
       colnames(spectra.timeseries.table) <- c("Interval", "Selected", "Cluster", "Qualitative", "Depth", "Climate")
       
       
@@ -6279,8 +6307,8 @@ scale_colour_gradientn(colours=rev(terrain.colors(length(spectra.timeseries.tabl
       
       spectra.line.table <- ageData()
       data.transformation <- dataTransform()
-      spectra.line.table <- subset(spectra.line.table, !(spectra.line.table[input$xaxistype] < input$xlimrange[1] | spectra.line.table[input$xaxistype] > input$xlimrange[2]))
-      
+      spectra.line.table <- subset(spectra.line.table, !(spectra.line.table[input$xaxistypeeq] < input$xlimrangeeq[1] | spectra.line.table[input$xaxistypeeq] > input$xlimrangeeq[2]))
+
 
       
       
@@ -6661,8 +6689,8 @@ scale_colour_gradientn(colours=rev(terrain.colors(length(spectra.timeseries.tabl
       
       spectra.line.table <- ageData()
       data.transformation <- dataTransform()
-      spectra.line.table <- subset(spectra.line.table, !(spectra.line.table[input$xaxistype] < input$xlimrange[1] | spectra.line.table[input$xaxistype] > input$xlimrange[2]))
-      
+      spectra.line.table <- subset(spectra.line.table, !(spectra.line.table[input$xaxistypeeq] < input$xlimrangeeq[1] | spectra.line.table[input$xaxistypeeq] > input$xlimrangeeq[2]))
+
 
       
       spectra.line.table.norm <- data.frame(spectra.line.table, null)
@@ -7040,8 +7068,8 @@ scale_colour_gradientn(colours=rev(terrain.colors(length(spectra.timeseries.tabl
       
       spectra.line.table <- ageData()
       data.transformation <- dataTransform()
-      spectra.line.table <- subset(spectra.line.table, !(spectra.line.table[input$xaxistype] < input$xlimrange[1] | spectra.line.table[input$xaxistype] > input$xlimrange[2]))
-      
+      spectra.line.table <- subset(spectra.line.table, !(spectra.line.table[input$xaxistypeeq] < input$xlimrangeeq[1] | spectra.line.table[input$xaxistypeeq] > input$xlimrangeeq[2]))
+
 
 
       
@@ -7424,8 +7452,8 @@ scale_colour_gradientn(colours=rev(terrain.colors(length(spectra.timeseries.tabl
       
       spectra.line.table <- ageData()
       data.transformation <- dataTransform()
-      spectra.line.table <- subset(spectra.line.table, !(spectra.line.table[input$xaxistype] < input$xlimrange[1] | spectra.line.table[input$xaxistype] > input$xlimrange[2]))
-      
+      spectra.line.table <- subset(spectra.line.table, !(spectra.line.table[input$xaxistypeeq] < input$xlimrangeeq[1] | spectra.line.table[input$xaxistypeeq] > input$xlimrangeeq[2]))
+
 
       
       spectra.line.table.norm <- data.frame(spectra.line.table, null)

@@ -598,6 +598,9 @@ c(
 
 tags$hr(),
 
+uiOutput('inxlimrangeeq'),
+
+
 
 sliderInput("smoothingeq", label = "Smoothed Mean Average", value=1, min=1, max=50),
 
