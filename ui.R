@@ -175,6 +175,44 @@ resetOnNew = TRUE
 ))
 ),
 
+
+tabPanel("Age Model",
+div(class="outer",
+
+fluidRow(
+sidebarLayout(
+sidebarPanel(
+
+actionButton('hotableprocess2', "Enter Dates"),
+actionButton('hotableprocess3', "Run Age Model"),
+downloadButton('ageresults', "Age Results Table"),
+
+tags$hr(),
+checkboxInput("ageon", label="Age Model On", TRUE),
+
+checkboxInput("constrainage", label="Constrain Chronology", TRUE)
+
+
+
+
+),
+
+mainPanel(
+tabsetPanel(
+tabPanel('Age Input', rHandsontableOutput('hotage')),
+tabPanel('Age Curve', plotOutput('agemodcurve'), height = 1200),
+tabPanel('Age Table', tableOutput('allagemodel'))
+))
+
+
+))
+
+
+
+)),
+
+
+
 tabPanel("Counts",
 div(class="outer",
 
@@ -207,41 +245,6 @@ tabPanel('Add Categories', rHandsontableOutput('hot'))
 )
 
 )
-
-
-
-)),
-
-tabPanel("Age Model",
-div(class="outer",
-
-fluidRow(
-sidebarLayout(
-sidebarPanel(
-
-actionButton('hotableprocess2', "Enter Dates"),
-actionButton('hotableprocess3', "Run Age Model"),
-downloadButton('ageresults', "Age Results Table"),
-
-tags$hr(),
-checkboxInput("ageon", label="Age Model On", TRUE),
-
-checkboxInput("constrainage", label="Constrain Chronology", TRUE)
-
-
-
-
-),
-
-mainPanel(
-tabsetPanel(
-tabPanel('Age Input', rHandsontableOutput('hotage')),
-tabPanel('Age Curve', plotOutput('agemodcurve'), height = 1200, width= 1200),
-tabPanel('Age Table', tableOutput('allagemodel'))
-))
-
-
-))
 
 
 
@@ -282,12 +285,19 @@ downloadButton('xrfpcatablefull', "Results")
 mainPanel(
 tabsetPanel(
 id = 'dataset',
-tabPanel('Selected XRF Lines', plotOutput('xrfpcaplot',
-dblclick = "plot1_dblclick", height = 700, width= 1200,
-brush = brushOpts(
-id = "plot1_brush",
-resetOnNew = TRUE
-))),
+tabPanel('PCA Plot',
+
+# this is an extra div used ONLY to create positioned ancestor for tooltip
+# we don't change its position
+div(
+style = "position:relative",
+plotOutput("xrfpcaplot", height = 700,
+hover = hoverOpts("plot_hoverpca", delay = 100, delayType = "debounce")),
+uiOutput("hover_infopca")
+)
+
+
+),
 tabPanel("Table", DT::dataTableOutput('xrfpcatable'))
 
 
@@ -380,7 +390,7 @@ div(
 style = "position:relative",
 plotOutput('timeseriesplot1',
 hover = hoverOpts("plot_hover3a", delay = 100, delayType = "debounce"),
-height = 700, width= 1200),
+height = 700),
 uiOutput("hover_info3a")
 )
 ),
@@ -390,7 +400,7 @@ div(
 style = "position:relative",
 plotOutput('timeseriesplot2',
 hover = hoverOpts("plot_hover3b", delay = 100, delayType = "debounce"),
-height = 700, width= 1200),
+height = 700),
 uiOutput("hover_info3b")
 )
 ),
@@ -400,7 +410,7 @@ div(
 style = "position:relative",
 plotOutput('timeseriesplot3',
 hover = hoverOpts("plot_hover3c", delay = 100, delayType = "debounce"),
-height = 700, width= 1200),
+height = 700),
 uiOutput("hover_info3c")
 )
 ),
@@ -410,7 +420,7 @@ div(
 style = "position:relative",
 plotOutput('timeseriesplot4',
 hover = hoverOpts("plot_hover3d", delay = 100, delayType = "debounce"),
-height = 700, width= 1200),
+height = 700),
 uiOutput("hover_info3d")
 )
 ),
@@ -420,7 +430,7 @@ div(
 style = "position:relative",
 plotOutput('timeseriesplot5',
 hover = hoverOpts("plot_hover3e", delay = 100, delayType = "debounce"),
-height = 700, width= 1200),
+height = 700),
 uiOutput("hover_info3e")
 )
 )
@@ -476,7 +486,7 @@ downloadButton('downloadPlot5', "Plot")
 
 mainPanel(
 tabPanel('Ternary Plot', plotOutput('ternaryplot',
-dblclick = "plot1_dblclick", height = 700, width= 1200,
+dblclick = "plot1_dblclick", height = 700,
 brush = brushOpts(
 id = "plot1_brush",
 resetOnNew = TRUE
@@ -535,14 +545,17 @@ downloadButton('downloadPlot4', "Plot")
 ),
 
 mainPanel(
-tabPanel('Element Ratios', plotOutput('elementratiotimeseries',
-dblclick = "plot1_dblclick", height = 700, width= 1200,
-brush = brushOpts(
-id = "plot1_brush",
-resetOnNew = TRUE
-)))
+tabPanel("Element Ratios",
+div(
+style = "position:relative",
+plotOutput("elementratiotimeseries", height = 700,
+hover = hoverOpts("plot_hoverratio", delay = 100, delayType = "debounce")),
+uiOutput("hover_inforatio")
+)
+)
 
-))
+)
+)
 
 ))
 
@@ -650,7 +663,7 @@ div(
 style = "position:relative",
 plotOutput('timeserieseqplot1',
 hover = hoverOpts("plot_hover6a", delay = 100, delayType = "debounce"),
-height = 700, width= 1200
+height = 700
 ),
 uiOutput("hover_info6a")
 )
@@ -661,7 +674,7 @@ div(
 style = "position:relative",
 plotOutput('timeserieseqplot2',
 hover = hoverOpts("plot_hover6b", delay = 100, delayType = "debounce"),
-height = 700, width= 1200),
+height = 700),
 uiOutput("hover_info6b")
 )
 ),
@@ -671,7 +684,7 @@ div(
 style = "position:relative",
 plotOutput('timeserieseqplot3',
 hover = hoverOpts("plot_hover6c", delay = 100, delayType = "debounce"),
-height = 700, width= 1200),
+height = 700),
 uiOutput("hover_info6c")
 )
 ),
@@ -681,7 +694,7 @@ div(
 style = "position:relative",
 plotOutput('timeserieseqplot4',
 hover = hoverOpts("plot_hover6d", delay = 100, delayType = "debounce"),
-height = 700, width= 1200),
+height = 700),
 uiOutput("hover_info6d")
 )
 ),
@@ -691,7 +704,7 @@ div(
 style = "position:relative",
 plotOutput('timeserieseqplot5',
 hover = hoverOpts("plot_hover6e", delay = 100, delayType = "debounce"),
-height = 700, width= 1200),
+height = 700),
 uiOutput("hover_info6e")
 )
 )
@@ -765,7 +778,7 @@ downloadButton('downloadPlot7', "Plot")
 
 mainPanel(
 tabPanel('Element Ratios', plotOutput('elementratiotequation',
-dblclick = "plot1_dblclick", height = 700, width= 1200,
+dblclick = "plot1_dblclick", height = 700,
 brush = brushOpts(
 id = "plot1_brush",
 resetOnNew = TRUE

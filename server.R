@@ -1209,145 +1209,6 @@ output$defaultlines <- renderUI({
 })
 
 
-        tableInput <- reactive({
-            
-         if(input$usecalfile==FALSE){
-                myData()[,c("Depth", input$show_vars)]
-            }else if(input$usecalfile==TRUE){
-                tableInputValQuant()[,c("Depth", input$show_vars)]
-            }
-            
-
-        })
-        
-        
-        output$mytable1 <- renderDataTable({
-            
-            tableInput()
-            
-        })
-        
-    
-        
-        hotableInput <- reactive({
-            
-            spectra.line.table <- myData()
-            depths <- spectra.line.table$Depth
-            
-            empty.line.table <-  spectra.line.table
-            empty.line.table <- empty.line.table[1:2]
-            colnames(empty.line.table) <- c("Qualitative", "Depth")
-            empty.line.table$Depth <- empty.line.table$Depth*0
-            empty.line.table$Custom <- empty.line.table$Depth*0
-            empty.line.table$Quantitative1 <- empty.line.table$Depth*0
-            empty.line.table$Quantitative2 <- empty.line.table$Depth*0
-            empty.line.table$Quantitative3 <- empty.line.table$Depth*0
-            empty.line.table$Spectrum <- spectra.line.table$Spectrum
-            na.vector <- rep("NULL", length(empty.line.table$Qualitative))
-            na.matrix <- as.matrix(na.vector)
-            na.matrix[1,1] <- "a"
-            na.matrix[2,1] <- "b"
-            na.matrix[3,1] <- "c"
-            na.input <- as.vector(na.matrix[,1])
-            
-        
-            line.table <- data.frame(depths, na.input, empty.line.table$Custom, empty.line.table$Quantitative1, empty.line.table$Quantitative2, empty.line.table$Quantitative3)
-            colnames(line.table) <- c("Depth", "Qualitative", "Custom", "Quantitative1", "Quantitative2", "Quantitative3")
-            
-            
-            
-            line.table
-            
-        })
-        
-        values <- reactiveValues()
-        
-        observe({
-            if (!is.null(input$hot)) {
-                DF = hot_to_r(input$hot)
-            } else {
-                if (is.null(values[["DF"]]))
-                DF <- hotableInput()
-                else
-                DF <- values[["DF"]]
-            }
-            values[["DF"]] <- DF
-        })
-        
-        
-        ## Handsontable
-        
-        output$hot <- renderRHandsontable({
-            DF <- values[["DF"]]
-            if (!is.null(DF))
-            rhandsontable(DF, useTypes = FALSE, stretchH = "all")
-        })
-        
-        
-        
-        
-        
-        
-        
-        output$downloadData <- downloadHandler(
-        filename = function() { paste(paste(c(input$projectname, "_", "CountTable"), collapse=''), '.csv', sep=',') },
-        content = function(file
-        ) {
-            write.csv(tableInput(), file)
-        }
-        )
-
-
-
-xrfKReactive <- reactive({
-    
-    spectra.line.table <- tableInput()
-    
-    
-
-
-
-    xrf.pca.header <- input$show_vars
-    xrf.pca.frame <- spectra.line.table[,input$show_vars]
-    xrf.pca.n <- length(xrf.pca.frame)
-    xrf.smalls <- xrf.pca.frame
-    
-    xrf.k <- kmeans(xrf.smalls, input$knum, iter.max=1000, nstart=15, algorithm=c("Hartigan-Wong"))
-    xrf.pca <- prcomp(xrf.smalls, scale.=FALSE)
-    
-    xrf.scores <- as.data.frame(xrf.pca$x)
-    
-    cluster.frame <- data.frame(spectra.line.table$Depth, xrf.k$cluster, xrf.scores)
-    
-    colnames(cluster.frame) <- c("Assay", "Cluster", names(xrf.scores))
-    
-    cluster.frame
-    
-    
-    
-})
-
-xrfPCAReactive <- reactive({
-    
-    
-    spectra.line.table <- if(input$usecalfile==FALSE){
-        myData()
-    } else if(input$usecalfile==TRUE){
-        tableInput()
-    }
-
-
-    xrf.clusters <- xrfKReactive()
-    
-    element.counts <- spectra.line.table[input$show_vars]
-    
-    
-    
-    xrf.pca.results <- data.frame(xrf.clusters, element.counts)
-    
-    xrf.pca.results
-})
-
 
 
 
@@ -1391,6 +1252,274 @@ xrfPCAReactive <- reactive({
   })
   
   
+  ageResults <- reactive({
+      
+      input$hotableprocess3
+      
+      
+      
+      DF3 <- values[["DF2"]]
+      DF4 <- subset(DF3, !DF3$Sigma==0)
+      DF5 <- as.data.frame(DF4)
+      
+      isolate(
+       if(input$ageon==TRUE){
+          Bchronology(ages=as.numeric(as.vector(DF5[,2])), ageSds=as.numeric(as.vector(DF5[,3])), positions=as.numeric(as.vector(DF5[,1])), positionThickness=rep(0.5, length(DF5$Sigma)), calCurves=DF5[,4], burn=2000, jitterPositions=TRUE)
+      }else if(input$ageon==FALSE){
+          NULL
+      }
+      
+      
+      
+      )
+      
+  })
+  
+  
+  
+  
+  
+  
+  agePredict <- reactive({
+      
+      age.math <- ageResults()
+      
+      spectra.line.table <- myData()
+      
+      age.results <- if(input$ageon==TRUE){
+          predict(age.math, newPositions=spectra.line.table$Depth, newPositionThicknesses=rep(0.0, length(spectra.line.table$Depth)))
+      }else if(input$ageon==FALSE) {
+          NULL
+      }
+      
+      age.medians <- if(input$ageon==TRUE){
+          apply(age.results, 2, median)
+      }else if(input$ageon==FALSE) {
+          spectra.line.table$Depth
+      }
+      
+      
+      age.sd <-  if(input$ageon==TRUE){
+          apply(age.results, 2, sd)
+      }else if(input$ageon==FALSE) {
+          rep(0, length(spectra.line.table$Depth))
+      }
+      
+      
+      age.min.sd1 <- age.medians - age.sd
+      age.min.sd2 <- age.medians - age.sd*2
+      
+      age.max.sd1 <- age.medians + age.sd
+      age.max.sd2 <- age.medians + age.sd*2
+      
+      spectra.line.table$Age <- age.medians
+      spectra.line.table$Sd <- age.sd
+      spectra.line.table$MinSd2 <-age.min.sd2
+      spectra.line.table$MinSd1 <-age.min.sd1
+      spectra.line.table$MaxSd1 <-age.max.sd1
+      spectra.line.table$MaxSd2 <-age.max.sd2
+      
+      spectra.line.table$None <- rep(1, length(spectra.line.table$Depth))
+      
+      spectra.line.table
+      
+      
+      
+  })
+  
+  ageTable <- reactive({
+      
+      age.results <- agePredict()
+      
+      age.frame <- data.frame(age.results$Depth, age.results$Age, age.results$Sd, age.results$MinSd2, age.results$MinSd1, age.results$MaxSd1, age.results$MaxSd2)
+      colnames(age.frame) <- c("Depth", "Age", "Sd", "MinSd2", "MinSd1", "MaxSd1", "MaxSd2")
+      
+      age.frame
+      
+  })
+  
+  agePlot <- reactive({
+      
+      age.math <- ageResults()
+      
+      age.plot <- plot(age.math, xlab="Age cal year BP", ylab = "Depth (cm)", las=1)
+      
+      age.plot
+  })
+  
+  output$allagemodel <- renderTable({
+      
+      ageTable()
+      
+      
+  })
+  
+  output$agemodcurve <- renderPlot({
+      
+      print(agePlot())
+      
+      
+  })
+  
+  
+  
+  
+  
+  
+  output$ageresults <- downloadHandler(
+  filename = function() { paste(input$projectname, "_AgeTable", '.csv', sep=',') },
+  content = function(file
+  ) {
+      write.csv(ageTable(), file)
+  }
+  )
+  
+  
+  
+  
+  tableInput <- reactive({
+      
+      if(input$usecalfile==FALSE){
+          myData()[,c("Depth", input$show_vars)]
+      }else if(input$usecalfile==TRUE){
+          tableInputValQuant()[,c("Depth", input$show_vars)]
+      }
+      
+      
+  })
+  
+  
+  output$mytable1 <- renderDataTable({
+      
+      tableInput()
+      
+  })
+  
+  
+  
+  
+  output$downloadData <- downloadHandler(
+  filename = function() { paste(paste(c(input$projectname, "_", "CountTable"), collapse=''), '.csv', sep=',') },
+  content = function(file
+  ) {
+      write.csv(tableInput(), file)
+  }
+  )
+  
+  
+  
+  
+  
+  hotableInput <- reactive({
+      
+      spectra.line.table <- myData()
+      depths <- spectra.line.table$Depth
+      
+      empty.line.table <-  spectra.line.table
+      empty.line.table <- empty.line.table[1:2]
+      colnames(empty.line.table) <- c("Qualitative", "Depth")
+      empty.line.table$Depth <- empty.line.table$Depth*0
+      empty.line.table$Custom <- empty.line.table$Depth*0
+      empty.line.table$Quantitative1 <- empty.line.table$Depth*0
+      empty.line.table$Quantitative2 <- empty.line.table$Depth*0
+      empty.line.table$Quantitative3 <- empty.line.table$Depth*0
+      empty.line.table$Spectrum <- spectra.line.table$Spectrum
+      na.vector <- rep("NULL", length(empty.line.table$Qualitative))
+      na.matrix <- as.matrix(na.vector)
+      na.matrix[1,1] <- "a"
+      na.matrix[2,1] <- "b"
+      na.matrix[3,1] <- "c"
+      na.input <- as.vector(na.matrix[,1])
+      
+      
+      line.table <- data.frame(depths, na.input, empty.line.table$Custom, empty.line.table$Quantitative1, empty.line.table$Quantitative2, empty.line.table$Quantitative3)
+      colnames(line.table) <- c("Depth", "Qualitative", "Custom", "Quantitative1", "Quantitative2", "Quantitative3")
+      
+      
+      
+      line.table
+      
+  })
+  
+  values <- reactiveValues()
+  
+  observe({
+      if (!is.null(input$hot)) {
+          DF = hot_to_r(input$hot)
+      } else {
+          if (is.null(values[["DF"]]))
+          DF <- hotableInput()
+          else
+          DF <- values[["DF"]]
+      }
+      values[["DF"]] <- DF
+  })
+  
+  
+  ## Handsontable
+  
+  output$hot <- renderRHandsontable({
+      DF <- values[["DF"]]
+      if (!is.null(DF))
+      rhandsontable(DF, useTypes = FALSE, stretchH = "all")
+  })
+  
+  
+
+  
+  
+  
+  xrfKReactive <- reactive({
+      
+      spectra.line.table <- tableInput()
+      
+      
+      
+      
+      
+      xrf.pca.header <- input$show_vars
+      xrf.pca.frame <- spectra.line.table[,input$show_vars]
+      xrf.pca.n <- length(xrf.pca.frame)
+      xrf.smalls <- xrf.pca.frame
+      
+      xrf.k <- kmeans(xrf.smalls, input$knum, iter.max=1000, nstart=15, algorithm=c("Hartigan-Wong"))
+      xrf.pca <- prcomp(xrf.smalls, scale.=FALSE)
+      
+      xrf.scores <- as.data.frame(xrf.pca$x)
+      
+      cluster.frame <- data.frame(spectra.line.table$Depth, xrf.k$cluster, xrf.scores)
+      
+      colnames(cluster.frame) <- c("Assay", "Cluster", names(xrf.scores))
+      
+      cluster.frame
+      
+      
+      
+  })
+  
+  xrfPCAReactive <- reactive({
+      
+      
+      spectra.line.table <- if(input$usecalfile==FALSE){
+          myData()
+      } else if(input$usecalfile==TRUE){
+          tableInput()
+      }
+      
+      
+      xrf.clusters <- xrfKReactive()
+      
+      element.counts <- spectra.line.table[input$show_vars]
+      
+      
+      
+      xrf.pca.results <- data.frame(xrf.clusters, element.counts)
+      
+      xrf.pca.results
+  })
+
+  
+  
   dataProcessed <- reactive({
       
       spectra.line.table <- if(input$usecalfile==FALSE){
@@ -1424,121 +1553,7 @@ xrfPCAReactive <- reactive({
       spectra.line.table
   })
   
-  
-  ageResults <- reactive({
-      
-    
-      
 
-      
-      DF3 <- values[["DF2"]]
-      DF4 <- subset(DF3, !DF3$Sigma==0)
-      DF5 <- as.data.frame(DF4)
-      
-      age.math <- if(input$ageon==TRUE){
-          Bchronology(ages=as.numeric(as.vector(DF5[,2])), ageSds=as.numeric(as.vector(DF5[,3])), positions=as.numeric(as.vector(DF5[,1])), positionThickness=rep(0.5, length(DF5$Sigma)), calCurves=DF5[,4], burn=2000, jitterPositions=TRUE)
-      }else if(input$ageon==FALSE){
-          NULL
-      }
-  
-  
-      age.math
-
-  })
-  
-  agePredict <- reactive({
-      
-      age.math <- ageResults()
-      
-      spectra.line.table <- dataProcessed()
-      
-      age.results <- if(input$ageon==TRUE){
-          predict(age.math, newPositions=spectra.line.table$Depth, newPositionThicknesses=rep(0.0, length(spectra.line.table$Depth)))
-      }else if(input$ageon==FALSE) {
-          NULL
-      }
-      
-      age.medians <- if(input$ageon==TRUE){
-          apply(age.results, 2, median)
-      }else if(input$ageon==FALSE) {
-          spectra.line.table$Depth
-      }
-
-
-      age.sd <-  if(input$ageon==TRUE){
-          apply(age.results, 2, sd)
-      }else if(input$ageon==FALSE) {
-          rep(0, length(spectra.line.table$Depth))
-      }
-
-
-      age.min.sd1 <- age.medians - age.sd
-      age.min.sd2 <- age.medians - age.sd*2
-      
-      age.max.sd1 <- age.medians + age.sd
-      age.max.sd2 <- age.medians + age.sd*2
-      
-      spectra.line.table$Age <- age.medians
-      spectra.line.table$Sd <- age.sd
-      spectra.line.table$MinSd2 <-age.min.sd2
-      spectra.line.table$MinSd1 <-age.min.sd1
-      spectra.line.table$MaxSd1 <-age.max.sd1
-      spectra.line.table$MaxSd2 <-age.max.sd2
-      
-      spectra.line.table$None <- rep(1, length(spectra.line.table$Depth))
-      
-      spectra.line.table
-
-
-
-  })
-  
-  ageTable <- reactive({
-      
-      age.results <- agePredict()
-      
-      age.frame <- data.frame(age.results$Depth, age.results$Age, age.results$Sd, age.results$MinSd2, age.results$MinSd1, age.results$MaxSd1, age.results$MaxSd2)
-      colnames(age.frame) <- c("Depth", "Age", "Sd", "MinSd2", "MinSd1", "MaxSd1", "MaxSd2")
-      
-      age.frame
-      
-  })
-  
-  agePlot <- reactive({
-      
-      age.math <- ageResults()
-      
-      age.plot <- plot(age.math, xlab="Age cal year BP", ylab = "Depth (cm)", las=1)
-
-      age.plot
-  })
-  
-  output$allagemodel <- renderTable({
-      
-      ageTable()
-      
-      
-  })
-  
-  output$agemodcurve <- renderPlot({
-      
-    print(agePlot())
-      
-      
-  })
-  
-  
-  
-  
-  
-  
-  output$ageresults <- downloadHandler(
-  filename = function() { paste(input$projectname, "_AgeTable", '.csv', sep=',') },
-  content = function(file
-  ) {
-      write.csv(ageTable(), file)
-  }
-  )
   
   
   
@@ -1552,9 +1567,12 @@ xrfPCAReactive <- reactive({
       c14min <- min(c14ages$Depth)
       c14max <- max(c14ages$Depth)
       
+      ages <- agePredict()
       
-      spectra.line.table.age.unconstrained <- agePredict()
-      
+
+
+      spectra.line.table.age.unconstrained <- dataProcessed()
+      spectra.line.table.age.unconstrained$Age <- ages$Age
       
       
       lateholocene <- subset(spectra.line.table.age.unconstrained$Age, spectra.line.table.age.unconstrained$Age <= 5000 & spectra.line.table.age.unconstrained$Age > -1000)
@@ -1583,6 +1601,7 @@ xrfPCAReactive <- reactive({
       rep("7. Last Glacial Maximum", length(lastglacialmax)),
       rep("8. Glacial", length(glacial))
       )
+      
       
       spectra.line.table.age.unconstrained$Climate <- climateperiods
       
@@ -1786,10 +1805,57 @@ xrfPCAReactive <- reactive({
   
   
   output$xrfpcaplot <- renderPlot({
-      print(plotInput2())
+      plotInput2()
       
   })
   
+  
+  
+
+  
+  
+  
+  
+  output$hover_infopca <- renderUI({
+      
+      point.table <- ageData()
+      
+      if(is.null(point.table$Age)==TRUE){
+          point.table$Age <- rep(1, length(point.table$Spectrum))
+      }
+      
+      hover <- input$plot_hoverpca
+      point <- nearPoints(point.table,  coordinfo=hover,   threshold = 5, maxpoints = 1, addDist = TRUE)
+      #if (nrow(point) == 0) return(NULL)
+      
+      
+      
+      
+      # calculate point position INSIDE the image as percent of total dimensions
+      # from left (horizontal) and from top (vertical)
+      left_pct <- (hover$x - hover$domain$left) / (hover$domain$right - hover$domain$left)
+      top_pct <- (hover$domain$top - hover$y) / (hover$domain$top - hover$domain$bottom)
+      
+      # calculate distance from left and bottom side of the picture in pixels
+      left_px <- hover$range$left + left_pct * (hover$range$right - hover$range$left)
+      top_px <- hover$range$top + top_pct * (hover$range$bottom - hover$range$top)
+      
+      
+      # create style property fot tooltip
+      # background color is set so tooltip is a bit transparent
+      # z-index is set so we are sure are tooltip will be on top
+      style <- paste0("position:absolute; z-index:100; background-color: rgba(245, 245, 245, 0.85); ",
+      "left:", left_px + 2, "px; top:", top_px + 2, "px;")
+      
+      # actual tooltip created as wellPanel
+      wellPanel(
+      style = style,
+      p(HTML(paste0("<b> Depth: </b>", point$Depth, "<br/>",
+      "<b> Age: </b>", point$Age, "<br/>"
+      
+      )))
+      )
+  })
   
   output$downloadPlot2 <- downloadHandler(
   filename = function() { paste(paste(c(input$projectname, "_", "PCAPlot"), collapse=''), '.tiff',  sep='') },
@@ -2336,14 +2402,23 @@ output$inxlimrange <- renderUI({
       
       spectra.line.table <- ageData()
       
-      spectra.line.table <- subset(spectra.line.table, !(spectra.line.table[input$xaxistypeeq] < input$xlimrangeeq[1] | spectra.line.table[input$xaxistypeeq] > input$xlimrangeeq[2]))
+      spectra.line.table <- subset(spectra.line.table, !(spectra.line.table[input$xaxistype] < input$xlimrange[1] | spectra.line.table[input$xaxistype] > input$xlimrange[2]))
       
       if(is.null(spectra.line.table$Age)==TRUE){
           spectra.line.table$Age <- rep(1, length(spectra.line.table$Spectrum))
       }
       
-      spectra.timeseries.table <- data.frame(spectra.line.table[c(input$xaxistypeeq)], spectra.line.table$Selected, spectra.line.table$Cluster, spectra.line.table$Qualitative, spectra.line.table$Depth, spectra.line.table$Climate, spectra.line.table$Age)
-      colnames(spectra.timeseries.table) <- c("Interval", "Selected", "Cluster", "Qualitative", "Depth", "Climate", "Age")
+      spectra.line.table.norm <- data.frame(spectra.line.table, null)
+      colnames(spectra.line.table.norm) <- c(names(spectra.line.table), "None")
+      spectra.line.table.norm
+      
+      #interval <- unique.spec*as.numeric(input$intervalmm)+as.numeric(input$startmm)
+      
+      #spectra.timeseries.table <- data.frame(interval, spectra.line.table[c(input$elementtrend)]/spectra.line.table.norm[c(input$elementnorm)], spectra.line.table$Cluster, spectra.line.table$Qualitative, spectra.line.table$Depth)
+      #colnames(spectra.timeseries.table) <- c("Interval", "Selected", "Cluster", "Qualitative", "Depth")
+      
+      spectra.timeseries.table <- data.frame(spectra.line.table[c(input$xaxistype)], (spectra.line.table[c(input$elementtrend)]/spectra.line.table.norm[c(input$elementnorm)]*input$ymultiply), spectra.line.table$Cluster, spectra.line.table$Qualitative, spectra.line.table$Depth, spectra.line.table$Climate)
+      colnames(spectra.timeseries.table) <- c("Interval", "Selected", "Cluster", "Qualitative", "Depth", "Climate")
       
       isolate(spectra.timeseries.table)
       
@@ -2797,14 +2872,23 @@ output$inxlimrange <- renderUI({
       
       spectra.line.table <- ageData()
       
-      spectra.line.table <- subset(spectra.line.table, !(spectra.line.table[input$xaxistypeeq] < input$xlimrangeeq[1] | spectra.line.table[input$xaxistypeeq] > input$xlimrangeeq[2]))
+      spectra.line.table <- subset(spectra.line.table, !(spectra.line.table[input$xaxistype] < input$xlimrange[1] | spectra.line.table[input$xaxistype] > input$xlimrange[2]))
       
       if(is.null(spectra.line.table$Age)==TRUE){
           spectra.line.table$Age <- rep(1, length(spectra.line.table$Spectrum))
       }
       
-      spectra.timeseries.table <- data.frame(spectra.line.table[c(input$xaxistypeeq)], spectra.line.table$Selected, spectra.line.table$Cluster, spectra.line.table$Qualitative, spectra.line.table$Depth, spectra.line.table$Climate, spectra.line.table$Age)
-      colnames(spectra.timeseries.table) <- c("Interval", "Selected", "Cluster", "Qualitative", "Depth", "Climate", "Age")
+      spectra.line.table.norm <- data.frame(spectra.line.table, null)
+      colnames(spectra.line.table.norm) <- c(names(spectra.line.table), "None")
+      spectra.line.table.norm
+      
+      #interval <- unique.spec*as.numeric(input$intervalmm)+as.numeric(input$startmm)
+      
+      #spectra.timeseries.table <- data.frame(interval, spectra.line.table[c(input$elementtrend)]/spectra.line.table.norm[c(input$elementnorm)], spectra.line.table$Cluster, spectra.line.table$Qualitative, spectra.line.table$Depth)
+      #colnames(spectra.timeseries.table) <- c("Interval", "Selected", "Cluster", "Qualitative", "Depth")
+      
+      spectra.timeseries.table <- data.frame(spectra.line.table[c(input$xaxistype)], (spectra.line.table[c(input$elementtrend)]/spectra.line.table.norm[c(input$elementnorm)]*input$ymultiply), spectra.line.table$Cluster, spectra.line.table$Qualitative, spectra.line.table$Depth, spectra.line.table$Climate)
+      colnames(spectra.timeseries.table) <- c("Interval", "Selected", "Cluster", "Qualitative", "Depth", "Climate")
       
       isolate(spectra.timeseries.table)
       
@@ -3239,14 +3323,23 @@ output$inxlimrange <- renderUI({
       
       spectra.line.table <- ageData()
       
-      spectra.line.table <- subset(spectra.line.table, !(spectra.line.table[input$xaxistypeeq] < input$xlimrangeeq[1] | spectra.line.table[input$xaxistypeeq] > input$xlimrangeeq[2]))
+      spectra.line.table <- subset(spectra.line.table, !(spectra.line.table[input$xaxistype] < input$xlimrange[1] | spectra.line.table[input$xaxistype] > input$xlimrange[2]))
       
       if(is.null(spectra.line.table$Age)==TRUE){
           spectra.line.table$Age <- rep(1, length(spectra.line.table$Spectrum))
       }
       
-      spectra.timeseries.table <- data.frame(spectra.line.table[c(input$xaxistypeeq)], spectra.line.table$Selected, spectra.line.table$Cluster, spectra.line.table$Qualitative, spectra.line.table$Depth, spectra.line.table$Climate, spectra.line.table$Age)
-      colnames(spectra.timeseries.table) <- c("Interval", "Selected", "Cluster", "Qualitative", "Depth", "Climate", "Age")
+      spectra.line.table.norm <- data.frame(spectra.line.table, null)
+      colnames(spectra.line.table.norm) <- c(names(spectra.line.table), "None")
+      spectra.line.table.norm
+      
+      #interval <- unique.spec*as.numeric(input$intervalmm)+as.numeric(input$startmm)
+      
+      #spectra.timeseries.table <- data.frame(interval, spectra.line.table[c(input$elementtrend)]/spectra.line.table.norm[c(input$elementnorm)], spectra.line.table$Cluster, spectra.line.table$Qualitative, spectra.line.table$Depth)
+      #colnames(spectra.timeseries.table) <- c("Interval", "Selected", "Cluster", "Qualitative", "Depth")
+      
+      spectra.timeseries.table <- data.frame(spectra.line.table[c(input$xaxistype)], (spectra.line.table[c(input$elementtrend)]/spectra.line.table.norm[c(input$elementnorm)]*input$ymultiply), spectra.line.table$Cluster, spectra.line.table$Qualitative, spectra.line.table$Depth, spectra.line.table$Climate)
+      colnames(spectra.timeseries.table) <- c("Interval", "Selected", "Cluster", "Qualitative", "Depth", "Climate")
       
       isolate(spectra.timeseries.table)
       
@@ -3683,14 +3776,23 @@ output$inxlimrange <- renderUI({
       
       spectra.line.table <- ageData()
       
-      spectra.line.table <- subset(spectra.line.table, !(spectra.line.table[input$xaxistypeeq] < input$xlimrangeeq[1] | spectra.line.table[input$xaxistypeeq] > input$xlimrangeeq[2]))
+      spectra.line.table <- subset(spectra.line.table, !(spectra.line.table[input$xaxistype] < input$xlimrange[1] | spectra.line.table[input$xaxistype] > input$xlimrange[2]))
       
       if(is.null(spectra.line.table$Age)==TRUE){
           spectra.line.table$Age <- rep(1, length(spectra.line.table$Spectrum))
       }
       
-      spectra.timeseries.table <- data.frame(spectra.line.table[c(input$xaxistypeeq)], spectra.line.table$Selected, spectra.line.table$Cluster, spectra.line.table$Qualitative, spectra.line.table$Depth, spectra.line.table$Climate, spectra.line.table$Age)
-      colnames(spectra.timeseries.table) <- c("Interval", "Selected", "Cluster", "Qualitative", "Depth", "Climate", "Age")
+      spectra.line.table.norm <- data.frame(spectra.line.table, null)
+      colnames(spectra.line.table.norm) <- c(names(spectra.line.table), "None")
+      spectra.line.table.norm
+      
+      #interval <- unique.spec*as.numeric(input$intervalmm)+as.numeric(input$startmm)
+      
+      #spectra.timeseries.table <- data.frame(interval, spectra.line.table[c(input$elementtrend)]/spectra.line.table.norm[c(input$elementnorm)], spectra.line.table$Cluster, spectra.line.table$Qualitative, spectra.line.table$Depth)
+      #colnames(spectra.timeseries.table) <- c("Interval", "Selected", "Cluster", "Qualitative", "Depth")
+      
+      spectra.timeseries.table <- data.frame(spectra.line.table[c(input$xaxistype)], (spectra.line.table[c(input$elementtrend)]/spectra.line.table.norm[c(input$elementnorm)]*input$ymultiply), spectra.line.table$Cluster, spectra.line.table$Qualitative, spectra.line.table$Depth, spectra.line.table$Climate)
+      colnames(spectra.timeseries.table) <- c("Interval", "Selected", "Cluster", "Qualitative", "Depth", "Climate")
       
       isolate(spectra.timeseries.table)
       
@@ -4136,14 +4238,23 @@ output$inxlimrange <- renderUI({
       
       spectra.line.table <- ageData()
       
-      spectra.line.table <- subset(spectra.line.table, !(spectra.line.table[input$xaxistypeeq] < input$xlimrangeeq[1] | spectra.line.table[input$xaxistypeeq] > input$xlimrangeeq[2]))
+      spectra.line.table <- subset(spectra.line.table, !(spectra.line.table[input$xaxistype] < input$xlimrange[1] | spectra.line.table[input$xaxistype] > input$xlimrange[2]))
       
       if(is.null(spectra.line.table$Age)==TRUE){
           spectra.line.table$Age <- rep(1, length(spectra.line.table$Spectrum))
       }
       
-      spectra.timeseries.table <- data.frame(spectra.line.table[c(input$xaxistypeeq)], spectra.line.table$Selected, spectra.line.table$Cluster, spectra.line.table$Qualitative, spectra.line.table$Depth, spectra.line.table$Climate, spectra.line.table$Age)
-      colnames(spectra.timeseries.table) <- c("Interval", "Selected", "Cluster", "Qualitative", "Depth", "Climate", "Age")
+      spectra.line.table.norm <- data.frame(spectra.line.table, null)
+      colnames(spectra.line.table.norm) <- c(names(spectra.line.table), "None")
+      spectra.line.table.norm
+      
+      #interval <- unique.spec*as.numeric(input$intervalmm)+as.numeric(input$startmm)
+      
+      #spectra.timeseries.table <- data.frame(interval, spectra.line.table[c(input$elementtrend)]/spectra.line.table.norm[c(input$elementnorm)], spectra.line.table$Cluster, spectra.line.table$Qualitative, spectra.line.table$Depth)
+      #colnames(spectra.timeseries.table) <- c("Interval", "Selected", "Cluster", "Qualitative", "Depth")
+      
+      spectra.timeseries.table <- data.frame(spectra.line.table[c(input$xaxistype)], (spectra.line.table[c(input$elementtrend)]/spectra.line.table.norm[c(input$elementnorm)]*input$ymultiply), spectra.line.table$Cluster, spectra.line.table$Qualitative, spectra.line.table$Depth, spectra.line.table$Climate)
+      colnames(spectra.timeseries.table) <- c("Interval", "Selected", "Cluster", "Qualitative", "Depth", "Climate")
       
       isolate(spectra.timeseries.table)
       
@@ -4309,10 +4420,11 @@ output$inxlimrange <- renderUI({
       ratio.names.x <- paste(ratio.names.x, sep=",", collapse="")
       ratio.names.y <- paste(ratio.names.y, sep=",", collapse="")
       
+      ratio.frame$X <- ratio.frame[,1]/ratio.frame[,2]
+      ratio.frame$Y <- ratio.frame[,3]/ratio.frame[,4]
       
       
-      
-      black.ratio.plot <- qplot(ratio.frame[,1]/ratio.frame[,2], ratio.frame[,3]/ratio.frame[,4] ) +
+      black.ratio.plot <- qplot(X, Y, data=ratio.frame, xlab = ratio.names.x, ylab = ratio.names.y  ) +
       geom_point(lwd=input$spotsize2) +
       theme_light() +
       theme(axis.text.x = element_text(size=15)) +
@@ -4325,7 +4437,7 @@ output$inxlimrange <- renderUI({
       scale_x_continuous(ratio.names.x, label=comma) +
       scale_y_continuous(ratio.names.y, label=comma)
       
-      cluster.ratio.plot <- qplot(ratio.frame[,1]/ratio.frame[,2], ratio.frame[,3]/ratio.frame[,4] ) +
+      cluster.ratio.plot <- qplot(X, Y, data=ratio.frame, xlab = ratio.names.x, ylab = ratio.names.y ) +
       geom_point(aes(colour=as.factor(ratio.frame$Cluster), shape=as.factor(ratio.frame$Cluster)), size=input$spotsize2+1) +
       geom_point(colour="grey30", size=input$spotsize2-2) +
       scale_shape_manual("Cluster", values=1:nlevels(as.factor(as.factor(ratio.frame$Cluster)))) +
@@ -4341,8 +4453,8 @@ output$inxlimrange <- renderUI({
       scale_x_continuous(ratio.names.x, label=comma) +
       scale_y_continuous(ratio.names.y, label=comma)
       
-      cluster.ratio.ellipse.plot <- qplot(ratio.frame[,1]/ratio.frame[,2], ratio.frame[,3]/ratio.frame[,4] ) +
-      stat_ellipse(aes(ratio.frame[,1]/ratio.frame[,2], ratio.frame[,3]/ratio.frame[,4], colour=as.factor(ratio.frame$Cluster))) +
+      cluster.ratio.ellipse.plot <- qplot(X, Y, data=ratio.frame, xlab = ratio.names.x, ylab = ratio.names.y  ) +
+      stat_ellipse(aes(ratio.frame$X, ratio.frame$Y, colour=as.factor(ratio.frame$Cluster))) +
       geom_point(aes(colour=as.factor(ratio.frame$Cluster), shape=as.factor(ratio.frame$Cluster)), size=input$spotsize2+1) +
       geom_point(colour="grey30", size=input$spotsize2-2) +
       scale_shape_manual("Cluster", values=1:nlevels(as.factor(as.factor(ratio.frame$Cluster)))) +
@@ -4359,7 +4471,7 @@ output$inxlimrange <- renderUI({
       scale_y_continuous(ratio.names.y, label=comma)
       
       
-      climate.ratio.plot <- qplot(ratio.frame[,1]/ratio.frame[,2], ratio.frame[,3]/ratio.frame[,4] ) +
+      climate.ratio.plot <- qplot(X, Y, data=ratio.frame, xlab = ratio.names.x, ylab = ratio.names.y  ) +
       geom_point(aes(colour=as.factor(ratio.frame$Climate), shape=as.factor(ratio.frame$Climate)), size=input$spotsize2+1) +
       geom_point(colour="grey30", size=input$spotsize2-2) +
       scale_shape_manual("Climatic Period", values=1:nlevels(ratio.frame$Climate)) +
@@ -4375,8 +4487,8 @@ output$inxlimrange <- renderUI({
       scale_x_continuous(ratio.names.x, label=comma) +
       scale_y_continuous(ratio.names.y, label=comma)
       
-      climate.ratio.ellipse.plot <- qplot(ratio.frame[,1]/ratio.frame[,2], ratio.frame[,3]/ratio.frame[,4] ) +
-      stat_ellipse(aes(ratio.frame[,1]/ratio.frame[,2], ratio.frame[,3]/ratio.frame[,4], colour=as.factor(ratio.frame$Climate))) +
+      climate.ratio.ellipse.plot <- qplot(X, Y, data=ratio.frame, xlab = ratio.names.x, ylab = ratio.names.y  ) +
+      stat_ellipse(aes(ratio.frame$X, ratio.frame$Y, colour=as.factor(ratio.frame$Climate))) +
       geom_point(aes(colour=as.factor(ratio.frame$Climate), shape=as.factor(ratio.frame$Climate)), size=input$spotsize2+1) +
       geom_point(colour="grey30", size=input$spotsize2-2) +
       scale_shape_manual("Climatic Period", values=1:nlevels(ratio.frame$Climate)) +
@@ -4393,7 +4505,7 @@ output$inxlimrange <- renderUI({
       scale_y_continuous(ratio.names.y, label=comma)
 
       
-      qualitative.ratio.plot <- qplot(ratio.frame[,1]/ratio.frame[,2], ratio.frame[,3]/ratio.frame[,4] ) +
+      qualitative.ratio.plot <- qplot(X, Y, data=ratio.frame, xlab = ratio.names.x, ylab = ratio.names.y  ) +
       geom_point(aes(colour=as.factor(ratio.frame$Qualitative), shape=as.factor(ratio.frame$Qualitative)), size=input$spotsize2+1) +
       geom_point(colour="grey30", size=input$spotsize2-2) +
       scale_shape_manual("Qualitative", values=1:nlevels(ratio.frame$Qualitative)) +
@@ -4409,8 +4521,8 @@ output$inxlimrange <- renderUI({
       scale_x_continuous(ratio.names.x, label=comma) +
       scale_y_continuous(ratio.names.y, label=comma)
       
-      qualitative.ratio.ellipse.plot <- qplot(ratio.frame[,1]/ratio.frame[,2], ratio.frame[,3]/ratio.frame[,4] ) +
-      stat_ellipse(aes(ratio.frame[,1]/ratio.frame[,2], ratio.frame[,3]/ratio.frame[,4], colour=as.factor(ratio.frame$Qualitative))) +
+      qualitative.ratio.ellipse.plot <- qplot(X, Y, data=ratio.frame, xlab = ratio.names.x, ylab = ratio.names.y  ) +
+      stat_ellipse(aes(ratio.frame$X, ratio.frame$Y, colour=as.factor(ratio.frame$Qualitative))) +
       geom_point(aes(colour=as.factor(ratio.frame$Qualitative), shape=as.factor(ratio.frame$Qualitative)), size=input$spotsize2+1) +
       geom_point(colour="grey30", size=input$spotsize2-2) +
       scale_shape_manual("Qualitative", values=1:nlevels(ratio.frame$Qualitative)) +
@@ -4426,7 +4538,7 @@ output$inxlimrange <- renderUI({
       scale_x_continuous(ratio.names.x, label=comma) +
       scale_y_continuous(ratio.names.y, label=comma)
       
-      depth.ratio.plot <- qplot(ratio.frame[,1]/ratio.frame[,2], ratio.frame[,3]/ratio.frame[,4] ) +
+      depth.ratio.plot <- qplot(X, Y, data=ratio.frame, xlab = ratio.names.x, ylab = ratio.names.y  ) +
       geom_point(aes(colour = ratio.frame$Depth), size=input$spotsize2+1) +
       geom_point(size=input$spotsize2-2) +
       scale_colour_gradientn("Depth", colours=rev(terrain.colors(length(ratio.frame$Depth)))) +
@@ -4441,7 +4553,7 @@ output$inxlimrange <- renderUI({
       scale_x_continuous(ratio.names.x, label=comma) +
       scale_y_continuous(ratio.names.y, label=comma)
       
-      age.ratio.plot <- qplot(ratio.frame[,1]/ratio.frame[,2], ratio.frame[,3]/ratio.frame[,4] ) +
+      age.ratio.plot <- qplot(X, Y, data=ratio.frame, xlab = ratio.names.x, ylab = ratio.names.y  ) +
       geom_point(aes(colour = ratio.frame$Age), size=input$spotsize2+1) +
       geom_point(size=input$spotsize2-2) +
       scale_colour_gradientn("Age", colours=terrain.colors(length(ratio.frame$Age))) +
@@ -4486,9 +4598,89 @@ output$inxlimrange <- renderUI({
   
   
   output$elementratiotimeseries <- renderPlot({
-      print(plotInput4())
+      plotInput4()
       
       
+  })
+  
+  
+  hoverHoldRatio <- reactive({
+      
+      spectra.line.table <- ageData()
+      
+      if(is.null(spectra.line.table$Age)==TRUE){
+          spectra.line.table$Age <- rep(1, length(spectra.line.table$Depth))
+      }
+  
+      first.ratio <-spectra.line.table[input$elementratioa]
+      second.ratio <- spectra.line.table[input$elementratiob]
+      third.ratio <- spectra.line.table[input$elementratioc]
+      fourth.ratio <- spectra.line.table[input$elementratiod]
+      
+      first.ratio.norm <- first.ratio/sum(first.ratio)
+      second.ratio.norm <- second.ratio/sum(second.ratio)
+      third.ratio.norm <- third.ratio/sum(third.ratio)
+      fourth.ratio.norm <- fourth.ratio/sum(fourth.ratio)
+      
+      
+      ratio.frame <- data.frame(first.ratio, second.ratio, third.ratio, fourth.ratio, spectra.line.table$Depth, spectra.line.table$Age)
+      colnames(ratio.frame) <- gsub("[.]", "", c(substr(input$elementratioa, 1, 2), substr(input$elementratiob, 1, 2), substr(input$elementratioc, 1, 2), substr(input$elementratiod, 1, 2), "Depth", "Age"))
+      
+      
+      ratio.names.x <- c(names(ratio.frame[1]), "/", names(ratio.frame[2]))
+      ratio.names.y <- c(names(ratio.frame[3]), "/", names(ratio.frame[4]))
+      
+      ratio.names.x <- paste(ratio.names.x, sep=",", collapse="")
+      ratio.names.y <- paste(ratio.names.y, sep=",", collapse="")
+      
+
+      ratio.frame$X <- ratio.frame[,1]/ratio.frame[,2]
+      ratio.frame$Y <- ratio.frame[,3]/ratio.frame[,4]
+      
+      ratio.frame
+      
+  })
+  
+  
+  
+  
+  output$hover_inforatio <- renderUI({
+      
+      point.table <- hoverHoldRatio()
+      
+      hover <- input$plot_hoverratio
+      point <- nearPoints(point.table,  coordinfo=hover,   threshold = 5, maxpoints = 1, addDist = TRUE)
+      #if (nrow(point) == 0) return(NULL)
+      
+      
+      # calculate point position INSIDE the image as percent of total dimensions
+      # from left (horizontal) and from top (vertical)
+      left_pct <- (hover$x - hover$domain$left) / (hover$domain$right - hover$domain$left)
+      top_pct <- (hover$domain$top - hover$y) / (hover$domain$top - hover$domain$bottom)
+      
+      # calculate distance from left and bottom side of the picture in pixels
+      left_px <- hover$range$left + left_pct * (hover$range$right - hover$range$left)
+      top_px <- hover$range$top + top_pct * (hover$range$bottom - hover$range$top)
+      
+      
+      
+      
+      
+      # create style property fot tooltip
+      # background color is set so tooltip is a bit transparent
+      # z-index is set so we are sure are tooltip will be on top
+      style <- paste0("position:absolute; z-index:100; background-color: rgba(245, 245, 245, 0.85); ",
+      "left:", left_px + 2, "px; top:", top_px + 2, "px;")
+      
+      # actual tooltip created as wellPanel
+      wellPanel(
+      style = style,
+      p(HTML(paste0("<b> Depth: </b>", point$Depth, "<br/>",
+      "<b> Age: </b>", point$Age, "<br/>"
+      
+      
+      )))
+      )
   })
   
   ratioTerm <- reactive({
