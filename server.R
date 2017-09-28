@@ -1,8 +1,10 @@
+library(shiny)
 library(pbapply)
 library(reshape2)
 library(TTR)
 library(dplyr)
 library(data.table)
+library(DT)
 library(ggtern)
 library(ggplot2)
 library(shiny)
@@ -10,68 +12,933 @@ library(random)
 library(rhandsontable)
 library(Bchron)
 library(scales)
+library(zoo)
+library(Cairo)
 
 
 
+options(shiny.maxRequestSize=180000*1024^2)
 
 
 
 
 shinyServer(function(input, output, session) {
     
+    rawSpectra <- reactive({
+        
+        withProgress(message = 'Processing Data', value = 0, {
+            
+            inFile <- input$file1
+            if (is.null(inFile)) return(NULL)
+            temp = inFile$name
+            temp <- gsub(".csv", "", temp)
+            id.seq <- seq(1, 2048,1)
+            
+            n <- length(temp)*id.seq
+            
+            myfiles.x = pblapply(inFile$datapath, read_csv_filename_x)
+            
+            myfiles.y = pblapply(inFile$datapath, read_csv_filename_y)
+            
+            xrf.x <- data.frame(id.seq, myfiles.x)
+            colnames(xrf.x) <- c("ID", temp)
+            xrf.y <- data.frame(id.seq, myfiles.y)
+            colnames(xrf.y) <- c("ID", temp)
+            
+            
+            xrf.x <- data.table(xrf.x)
+            xrf.y <- data.table(xrf.y)
+            
+            
+            energy.m <- xrf.x[, list(variable = names(.SD), value = unlist(.SD, use.names = F)), by = ID]
+            cps.m <- xrf.y[, list(variable = names(.SD), value = unlist(.SD, use.names = F)), by = ID]
+            
+            
+            spectra.frame <- data.frame(energy.m$value, cps.m$value, cps.m$variable)
+            colnames(spectra.frame) <- c("Energy", "CPS", "Spectrum")
+            
+            
+            
+            incProgress(1/n)
+            Sys.sleep(0.1)
+        })
+        spectra.frame
+
+        
+    })
     
     
     
+    rawSpectraSecond <- reactive({
+        
+        withProgress(message = 'Processing Data', value = 0, {
+            
+            inFile <- input$file2
+            if (is.null(inFile)) return(NULL)
+            temp = inFile$name
+            temp <- gsub(".csv", "", temp)
+            id.seq <- seq(1, 2048,1)
+            
+            n <- length(temp)*id.seq
+            
+            myfiles.x = pblapply(inFile$datapath, read_csv_filename_x)
+            
+            myfiles.y = pblapply(inFile$datapath, read_csv_filename_y)
+            
+            xrf.x <- data.frame(id.seq, myfiles.x)
+            colnames(xrf.x) <- c("ID", temp)
+            xrf.y <- data.frame(id.seq, myfiles.y)
+            colnames(xrf.y) <- c("ID", temp)
+            
+            
+            xrf.x <- data.table(xrf.x)
+            xrf.y <- data.table(xrf.y)
+            
+            
+            energy.m <- xrf.x[, list(variable = names(.SD), value = unlist(.SD, use.names = F)), by = ID]
+            cps.m <- xrf.y[, list(variable = names(.SD), value = unlist(.SD, use.names = F)), by = ID]
+            
+            
+            spectra.frame <- data.frame(energy.m$value, cps.m$value, cps.m$variable)
+            colnames(spectra.frame) <- c("Energy", "CPS", "Spectrum")
+            
+            
+            
+            incProgress(1/n)
+            Sys.sleep(0.1)
+        })
+        spectra.frame
+        
+        
+    })
+    
+    
+    fullSpectra <- reactive({
+        
+        
+        
+        spectra.frame <- rawSpectra()
+        
+        spectra.table <- if(is.null(input$file2)==TRUE){
+            spectra.line.fn(spectra.frame)
+        } else if(is.null(input$file2)==FALSE) {
+            spectra.light.fn(spectra.frame)
+        }
+
+        
+
+          spectra.table
+    })
+    
+    fullSpectraSecond <- reactive({
+        
+        
+        
+        spectra.frame <- rawSpectraSecond()
+        
+        spectra.table <- spectra.trace.fn(spectra.frame)
+        
+        
+        
+        spectra.table
+    })
+    
+    
+    netCounts <- reactive({
+        
+        withProgress(message = 'Processing Data', value = 0, {
+
+
+        inFile <- input$file1
+        if (is.null(inFile)) return(NULL)
+        
+        #inName <- inFile$name
+        #inPath <- inFile$datapath
+        
+        #inList <- list(inName, inPath)
+        #names(inList) <- c("inName", "inPath")
+        
+        
+        n <- length(inFile$name)
+        net.names <- gsub("\\@.*","",inFile$name)
+        
+        myfiles = pblapply(inFile$datapath,  read_csv_net)
+        
+    
+        myfiles.frame.list <- pblapply(myfiles, data.frame, stringsAsFactors=FALSE)
+        nms = unique(unlist(pblapply(myfiles.frame.list, names)))
+        myfiles.frame <- as.data.frame(do.call(rbind, lapply(myfiles.frame.list, "[", nms)))
+        myfiles.frame <- as.data.frame(sapply(myfiles.frame, as.numeric))
+
+
+#myfiles.frame$Spectrum <- net.names
+        
+        united.frame <- data.frame(net.names, myfiles.frame)
+        colnames(united.frame) <- c("Spectrum", names(myfiles.frame))
+        united.frame$None <- rep(1, length(united.frame$Spectrum))
+        
+        
+        incProgress(1/n)
+        Sys.sleep(0.1)
+    })
+        
+        united.frame <- as.data.frame(united.frame)
+        united.frame
+
+    })
+    
+    netCountsSecond <- reactive({
+        
+        withProgress(message = 'Processing Data', value = 0, {
+            
+            
+            inFile <- input$file2
+            if (is.null(inFile)) return(NULL)
+            
+            #inName <- inFile$name
+            #inPath <- inFile$datapath
+            
+            #inList <- list(inName, inPath)
+            #names(inList) <- c("inName", "inPath")
+            
+            
+            n <- length(inFile$name)
+            net.names <- gsub("\\@.*","",inFile$name)
+            
+            myfiles = pblapply(inFile$datapath,  read_csv_net)
+            
+            
+            myfiles.frame.list <- pblapply(myfiles, data.frame, stringsAsFactors=FALSE)
+            nms = unique(unlist(pblapply(myfiles.frame.list, names)))
+            myfiles.frame <- as.data.frame(do.call(rbind, lapply(myfiles.frame.list, "[", nms)))
+            myfiles.frame <- as.data.frame(sapply(myfiles.frame, as.numeric))
+            
+            
+            #myfiles.frame$Spectrum <- net.names
+            
+            united.frame <- data.frame(net.names, myfiles.frame)
+            colnames(united.frame) <- c("Spectrum", names(myfiles.frame))
+            united.frame$None <- rep(1, length(united.frame$Spectrum))
+            
+            
+            incProgress(1/n)
+            Sys.sleep(0.1)
+        })
+        
+        united.frame <- as.data.frame(united.frame)
+        united.frame
+        
+    })
+    
+    myDataFirst <- reactive({
+        if(input$filetype=="Spectra"){
+            fullSpectra()
+        } else if(input$filetype=="Net"){
+            netCounts()
+        }
+        
+    })
+    
+
+    
+    myDataSecond <- reactive({
+        if(input$filetype=="Spectra"){
+            fullSpectraSecond()
+        } else if(input$filetype=="Net"){
+            netCountsSecond()
+        }
+        
+    })
     
     observeEvent(input$actionprocess, {
+
+    
+    myValDataFirst <- reactive({
+        myDataFirst()
+    })
+    
+    calFileContentsFirst <- reactive({
         
+        existingCalFile <- input$calfileinput1
+        
+        if (is.null(existingCalFile)) return(NULL)
+        
+        
+        Calibration <- readRDS(existingCalFile$datapath)
+        
+        Calibration
+        
+    })
+    
+    
+    
+    
+    calValHoldFirst <- reactive({
+        
+        calFileContentsFirst()[[6]]
+        
+    })
+    
+    calVariablesFirst <- reactive({
+        
+        calFileContentsFirst()$Intensities
+        
+    })
+    
+    calValElementsFirst <- reactive({
+        calList <- calValHoldFirst()
+        valelements <- ls(calList)
+        valelements
+    })
+    
+    calVariableElementsFirst <- reactive({
+        variables <- calVariablesFirst()
+        variableelements <- ls(variables)
+        variableelements
+    })
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    fullInputValCountsFirst <- reactive({
+        valelements <- calValElementsFirst()
+        variableelements <- calVariableElementsFirst()
+        val.data <- myValDataFirst()
+        
+        
+        if(input$filetype=="Spectra"){spectra.line.list <- lapply(variableelements, function(x) elementGrab(element.line=x, data=rawSpectra()))}
+        if(input$filetype=="Spectra"){element.count.list <- lapply(spectra.line.list, `[`, 2)}
+        
+        
+        if(input$filetype=="Spectra"){spectra.line.vector <- as.numeric(unlist(element.count.list))}
+        
+        if(input$filetype=="Spectra"){dim(spectra.line.vector) <- c(length(val.data$Spectrum), length(variableelements))}
+        
+        if(input$filetype=="Spectra"){spectra.line.frame <- data.frame(val.data$Spectrum, spectra.line.vector)}
+        
+        if(input$filetype=="Spectra"){colnames(spectra.line.frame) <- c("Spectrum", variableelements)}
+        
+        if(input$filetype=="Spectra"){spectra.line.frame <- as.data.frame(spectra.line.frame)}
+        
+        if(input$filetype=="Spectra"){val.line.table <- spectra.line.frame[,c("Spectrum", variableelements)]}
+        
+        if(input$filetype=="Net"){val.line.table <- val.data}
+        
+        val.line.table
+    })
+    
+    
+    
+    
+    
+    
+    
+    tableInputValQuantFirst <- reactive({
+        
+        count.table <- data.frame(fullInputValCountsFirst())
+        the.cal <- calValHoldFirst()
+        elements <- calValElementsFirst()
+        variables <- calVariableElementsFirst()
+        valdata <- if(input$filetype=="Spectra"){
+            rawSpectra()
+        }else if(input$filetype=="Net"){
+            myDataFirst()
+        }
+        
+        
+        
+        
+        
+        predicted.list <- pblapply(elements, function (x)
+        if(input$filetype=="Spectra" && the.cal[[x]][[1]]$CalTable$CalType!=3 && the.cal[[x]][[1]]$CalTable$NormType==1){
+            predict(
+            object=the.cal[[x]][[2]],
+            newdata=general.prep(
+            spectra.line.table=as.data.frame(
+            count.table
+            ),
+            element.line=x)
+            )
+        } else if(input$filetype=="Spectra" && the.cal[[x]][[1]]$CalTable$CalType!=3 && the.cal[[x]][[1]]$CalTable$NormType==2) {
+            predict(
+            object=the.cal[[x]][[2]],
+            newdata=simple.tc.prep(
+            data=valdata,
+            spectra.line.table=as.data.frame(
+            count.table
+            ),
+            element.line=x
+            )
+            )
+        } else if(input$filetype=="Spectra" && the.cal[[x]][[1]]$CalTable$CalType!=3 && the.cal[[x]][[1]]$CalTable$NormType==3) {
+            predict(
+            object=the.cal[[x]][[2]],
+            newdata=simple.comp.prep(
+            data=valdata,
+            spectra.line.table=as.data.frame(
+            count.table
+            ),
+            element.line=x,
+            norm.min=the.cal[[x]][[1]][1]$CalTable$Min,
+            norm.max=the.cal[[x]][[1]][1]$CalTable$Max
+            )
+            )
+        } else if(input$filetype=="Spectra" && the.cal[[x]][[1]]$CalTable$CalType==3 && the.cal[[x]][[1]]$CalTable$NormType==1){
+            predict(
+            object=the.cal[[x]][[2]],
+            newdata=lukas.simp.prep(
+            spectra.line.table=as.data.frame(
+            count.table
+            ),
+            element.line=x,
+            slope.element.lines=the.cal[[x]][[1]][2]$Slope,
+            intercept.element.lines=the.cal[[x]][[1]][3]$Intercept
+            )
+            )
+        } else if(input$filetype=="Spectra" && the.cal[[x]][[1]]$CalTable$CalType==3 && the.cal[[x]][[1]]$CalTable$NormType==2){
+            predict(
+            object=the.cal[[x]][[2]],
+            newdata=lukas.tc.prep(
+            data=valdata,
+            spectra.line.table=as.data.frame(
+            count.table
+            ),
+            element.line=x,
+            slope.element.lines=the.cal[[x]][[1]][2]$Slope,
+            intercept.element.lines=the.cal[[x]][[1]][3]$Intercept
+            )
+            )
+        } else if(input$filetype=="Spectra" && the.cal[[x]][[1]]$CalTable$CalType==3 && the.cal[[x]][[1]]$CalTable$NormType==3){
+            predict(
+            object=the.cal[[x]][[2]],
+            newdata=lukas.comp.prep(
+            data=valdata,
+            spectra.line.table=as.data.frame(
+            count.table
+            ),
+            element.line=x,
+            slope.element.lines=the.cal[[x]][[1]][2]$Slope,
+            intercept.element.lines=the.cal[[x]][[1]][3]$Intercept,
+            norm.min=the.cal[[x]][[1]][1]$CalTable$Min,
+            norm.max=the.cal[[x]][[1]][1]$CalTable$Max
+            )
+            )
+        }else if(input$filetype=="Net" && the.cal[[x]][[1]]$CalTable$CalType!=3 && the.cal[[x]][[1]]$CalTable$NormType==1){
+            predict(
+            object=the.cal[[x]][[2]],
+            newdata=general.prep.net(
+            spectra.line.table=as.data.frame(
+            count.table
+            ),
+            element.line=x)
+            )
+        } else if(input$filetype=="Net" && the.cal[[x]][[1]]$CalTable$CalType!=3 && the.cal[[x]][[1]]$CalTable$NormType==2) {
+            predict(
+            object=the.cal[[x]][[2]],
+            newdata=simple.tc.prep.net(
+            data=valdata,
+            spectra.line.table=as.data.frame(
+            count.table
+            ),
+            element.line=x
+            )
+            )
+        } else if(input$filetype=="Net" && the.cal[[x]][[1]]$CalTable$CalType!=3 && the.cal[[x]][[1]]$CalTable$NormType==3) {
+            predict(
+            object=the.cal[[x]][[2]],
+            newdata=simple.comp.prep.net(
+            data=valdata,
+            spectra.line.table=as.data.frame(
+            count.table
+            ),
+            element.line=x,
+            norm.min=the.cal[[x]][[1]][1]$CalTable$Min,
+            norm.max=the.cal[[x]][[1]][1]$CalTable$Max
+            )
+            )
+        } else if(input$filetype=="Net" && the.cal[[x]][[1]]$CalTable$CalType==3 && the.cal[[x]][[1]]$CalTable$NormType==1){
+            predict(
+            object=the.cal[[x]][[2]],
+            newdata=lukas.simp.prep.net(
+            spectra.line.table=as.data.frame(
+            count.table
+            ),
+            element.line=x,
+            slope.element.lines=the.cal[[x]][[1]][2]$Slope,
+            intercept.element.lines=the.cal[[x]][[1]][3]$Intercept
+            )
+            )
+        } else if(input$filetype=="Net" && the.cal[[x]][[1]]$CalTable$CalType==3 && the.cal[[x]][[1]]$CalTable$NormType==2){
+            predict(
+            object=the.cal[[x]][[2]],
+            newdata=lukas.tc.prep.net(
+            data=valdata,
+            spectra.line.table=as.data.frame(
+            count.table
+            ),
+            element.line=x,
+            slope.element.lines=the.cal[[x]][[1]][2]$Slope,
+            intercept.element.lines=the.cal[[x]][[1]][3]$Intercept
+            )
+            )
+        } else if(input$filetype=="Net" && the.cal[[x]][[1]]$CalTable$CalType==3 && the.cal[[x]][[1]]$CalTable$NormType==3){
+            predict(
+            object=the.cal[[x]][[2]],
+            newdata=lukas.comp.prep.net(
+            data=valdata,
+            spectra.line.table=as.data.frame(
+            count.table
+            ),
+            element.line=x,
+            slope.element.lines=the.cal[[x]][[1]][2]$Slope,
+            intercept.element.lines=the.cal[[x]][[1]][3]$Intercept,
+            norm.min=the.cal[[x]][[1]][1]$CalTable$Min,
+            norm.max=the.cal[[x]][[1]][1]$CalTable$Max
+            )
+            )
+        }
+        
+        
+        
+        )
+        
+        predicted.vector <- unlist(predicted.list)
+        
+        dim(predicted.vector) <- c(length(count.table$Spectrum), length(elements))
+        
+        predicted.frame <- data.frame(count.table$Spectrum, predicted.vector)
+        
+        colnames(predicted.frame) <- c("Spectrum", elements)
+        
+        #predicted.data.table <- data.table(predicted.frame)
+        #predicted.values <- t(predicted.values)
+        #predicted.data.table
+        predicted.frame
+        
+    })
+    
+    
+    
+    
+    myValDataSecond <- reactive({
+        myDataSecond()
+    })
+    
+    calFileContentsSecond <- reactive({
+        
+        existingCalFile <- input$calfileinput2
+        
+        if (is.null(existingCalFile)) return(NULL)
+        
+        
+        Calibration <- readRDS(existingCalFile$datapath)
+        
+        Calibration
+        
+    })
+    
+    
+    
+    
+    calValHoldSecond <- reactive({
+        
+        calFileContentsSecond()[[6]]
+        
+    })
+    
+    calVariablesSecond <- reactive({
+        
+        calFileContentsSecond()$Intensities
+        
+    })
+    
+    calValElementsSecond <- reactive({
+        calList <- calValHoldSecond()
+        valelements <- ls(calList)
+        valelements
+    })
+    
+    calVariableElementsSecond <- reactive({
+        variables <- calVariablesSecond()
+        variableelements <- ls(variables)
+        variableelements
+    })
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    fullInputValCountsSecond <- reactive({
+        valelements <- calValElementsSecond()
+        variableelements <- calVariableElementsSecond()
+        val.data <- myValDataSecond()
+        
+        
+        if(input$filetype=="Spectra"){spectra.line.list <- lapply(variableelements, function(x) elementGrab(element.line=x, data=rawSpectraSecond()))}
+        if(input$filetype=="Spectra"){element.count.list <- lapply(spectra.line.list, `[`, 2)}
+        
+        
+        if(input$filetype=="Spectra"){spectra.line.vector <- as.numeric(unlist(element.count.list))}
+        
+        if(input$filetype=="Spectra"){dim(spectra.line.vector) <- c(length(val.data$Spectrum), length(variableelements))}
+        
+        if(input$filetype=="Spectra"){spectra.line.frame <- data.frame(val.data$Spectrum, spectra.line.vector)}
+        
+        if(input$filetype=="Spectra"){colnames(spectra.line.frame) <- c("Spectrum", variableelements)}
+        
+        if(input$filetype=="Spectra"){spectra.line.frame <- as.data.frame(spectra.line.frame)}
+        
+        if(input$filetype=="Spectra"){val.line.table <- spectra.line.frame[,c("Spectrum", variableelements)]}
+        
+        if(input$filetype=="Net"){val.line.table <- val.data}
+        
+        val.line.table
+    })
+    
+    
+    
+    
+    
+    
+    
+    tableInputValQuantSecond <- reactive({
+        
+        count.table <- data.frame(fullInputValCountsSecond())
+        the.cal <- calValHoldSecond()
+        elements <- calValElementsSecond()
+        variables <- calVariableElementsSecond()
+        valdata <- if(input$filetype=="Spectra"){
+            rawSpectraSecond()
+        }else if(input$filetype=="Net"){
+            myDataSecond()
+        }
+        
+        
+        
+        
+        
+        predicted.list <- pblapply(elements, function (x)
+        if(input$filetype=="Spectra" && the.cal[[x]][[1]]$CalTable$CalType!=3 && the.cal[[x]][[1]]$CalTable$NormType==1){
+            predict(
+            object=the.cal[[x]][[2]],
+            newdata=general.prep(
+            spectra.line.table=as.data.frame(
+            count.table
+            ),
+            element.line=x)
+            )
+        } else if(input$filetype=="Spectra" && the.cal[[x]][[1]]$CalTable$CalType!=3 && the.cal[[x]][[1]]$CalTable$NormType==2) {
+            predict(
+            object=the.cal[[x]][[2]],
+            newdata=simple.tc.prep(
+            data=valdata,
+            spectra.line.table=as.data.frame(
+            count.table
+            ),
+            element.line=x
+            )
+            )
+        } else if(input$filetype=="Spectra" && the.cal[[x]][[1]]$CalTable$CalType!=3 && the.cal[[x]][[1]]$CalTable$NormType==3) {
+            predict(
+            object=the.cal[[x]][[2]],
+            newdata=simple.comp.prep(
+            data=valdata,
+            spectra.line.table=as.data.frame(
+            count.table
+            ),
+            element.line=x,
+            norm.min=the.cal[[x]][[1]][1]$CalTable$Min,
+            norm.max=the.cal[[x]][[1]][1]$CalTable$Max
+            )
+            )
+        } else if(input$filetype=="Spectra" && the.cal[[x]][[1]]$CalTable$CalType==3 && the.cal[[x]][[1]]$CalTable$NormType==1){
+            predict(
+            object=the.cal[[x]][[2]],
+            newdata=lukas.simp.prep(
+            spectra.line.table=as.data.frame(
+            count.table
+            ),
+            element.line=x,
+            slope.element.lines=the.cal[[x]][[1]][2]$Slope,
+            intercept.element.lines=the.cal[[x]][[1]][3]$Intercept
+            )
+            )
+        } else if(input$filetype=="Spectra" && the.cal[[x]][[1]]$CalTable$CalType==3 && the.cal[[x]][[1]]$CalTable$NormType==2){
+            predict(
+            object=the.cal[[x]][[2]],
+            newdata=lukas.tc.prep(
+            data=valdata,
+            spectra.line.table=as.data.frame(
+            count.table
+            ),
+            element.line=x,
+            slope.element.lines=the.cal[[x]][[1]][2]$Slope,
+            intercept.element.lines=the.cal[[x]][[1]][3]$Intercept
+            )
+            )
+        } else if(input$filetype=="Spectra" && the.cal[[x]][[1]]$CalTable$CalType==3 && the.cal[[x]][[1]]$CalTable$NormType==3){
+            predict(
+            object=the.cal[[x]][[2]],
+            newdata=lukas.comp.prep(
+            data=valdata,
+            spectra.line.table=as.data.frame(
+            count.table
+            ),
+            element.line=x,
+            slope.element.lines=the.cal[[x]][[1]][2]$Slope,
+            intercept.element.lines=the.cal[[x]][[1]][3]$Intercept,
+            norm.min=the.cal[[x]][[1]][1]$CalTable$Min,
+            norm.max=the.cal[[x]][[1]][1]$CalTable$Max
+            )
+            )
+        }else if(input$filetype=="Net" && the.cal[[x]][[1]]$CalTable$CalType!=3 && the.cal[[x]][[1]]$CalTable$NormType==1){
+            predict(
+            object=the.cal[[x]][[2]],
+            newdata=general.prep.net(
+            spectra.line.table=as.data.frame(
+            count.table
+            ),
+            element.line=x)
+            )
+        } else if(input$filetype=="Net" && the.cal[[x]][[1]]$CalTable$CalType!=3 && the.cal[[x]][[1]]$CalTable$NormType==2) {
+            predict(
+            object=the.cal[[x]][[2]],
+            newdata=simple.tc.prep.net(
+            data=valdata,
+            spectra.line.table=as.data.frame(
+            count.table
+            ),
+            element.line=x
+            )
+            )
+        } else if(input$filetype=="Net" && the.cal[[x]][[1]]$CalTable$CalType!=3 && the.cal[[x]][[1]]$CalTable$NormType==3) {
+            predict(
+            object=the.cal[[x]][[2]],
+            newdata=simple.comp.prep.net(
+            data=valdata,
+            spectra.line.table=as.data.frame(
+            count.table
+            ),
+            element.line=x,
+            norm.min=the.cal[[x]][[1]][1]$CalTable$Min,
+            norm.max=the.cal[[x]][[1]][1]$CalTable$Max
+            )
+            )
+        } else if(input$filetype=="Net" && the.cal[[x]][[1]]$CalTable$CalType==3 && the.cal[[x]][[1]]$CalTable$NormType==1){
+            predict(
+            object=the.cal[[x]][[2]],
+            newdata=lukas.simp.prep.net(
+            spectra.line.table=as.data.frame(
+            count.table
+            ),
+            element.line=x,
+            slope.element.lines=the.cal[[x]][[1]][2]$Slope,
+            intercept.element.lines=the.cal[[x]][[1]][3]$Intercept
+            )
+            )
+        } else if(input$filetype=="Net" && the.cal[[x]][[1]]$CalTable$CalType==3 && the.cal[[x]][[1]]$CalTable$NormType==2){
+            predict(
+            object=the.cal[[x]][[2]],
+            newdata=lukas.tc.prep.net(
+            data=valdata,
+            spectra.line.table=as.data.frame(
+            count.table
+            ),
+            element.line=x,
+            slope.element.lines=the.cal[[x]][[1]][2]$Slope,
+            intercept.element.lines=the.cal[[x]][[1]][3]$Intercept
+            )
+            )
+        } else if(input$filetype=="Net" && the.cal[[x]][[1]]$CalTable$CalType==3 && the.cal[[x]][[1]]$CalTable$NormType==3){
+            predict(
+            object=the.cal[[x]][[2]],
+            newdata=lukas.comp.prep.net(
+            data=valdata,
+            spectra.line.table=as.data.frame(
+            count.table
+            ),
+            element.line=x,
+            slope.element.lines=the.cal[[x]][[1]][2]$Slope,
+            intercept.element.lines=the.cal[[x]][[1]][3]$Intercept,
+            norm.min=the.cal[[x]][[1]][1]$CalTable$Min,
+            norm.max=the.cal[[x]][[1]][1]$CalTable$Max
+            )
+            )
+        }
+        
+        
+        
+        )
+        
+        predicted.vector <- unlist(predicted.list)
+        
+        dim(predicted.vector) <- c(length(count.table$Spectrum), length(elements))
+        
+        predicted.frame <- data.frame(count.table$Spectrum, predicted.vector)
+        
+        colnames(predicted.frame) <- c("Spectrum", elements)
+        
+        #predicted.data.table <- data.table(predicted.frame)
+        #predicted.values <- t(predicted.values)
+        #predicted.data.table
+        predicted.frame
+        
+    })
+    
+    
+    
+    hotableInputDepthLight <- reactive({
+        
+        light.table <- data.frame(myDataFirst()$Spectrum)
+        light.table$Spectrum <- myDataFirst()$Spectrum
+        light.table$LightDepth <- myDataFirst()[,2]*0
+        
+        light.table <- light.table[2:3]
+
+    })
+    
+    valuesLight <- reactiveValues()
+    
+    observe({
+        if (!is.null(input$depthtablelight)) {
+            DPL = hot_to_r(input$depthtablelight)
+        } else {
+            if (is.null(valuesLight[["DPL"]]))
+            DPL <- hotableInputDepthLight()
+            else
+            DPL <- valuesLight[["DPL"]]
+        }
+        valuesLight[["DPL"]] <- DPL
+    })
+    
+    
+    ## Handsontable
+    
+    output$depthtablelight <- renderRHandsontable({
+        DPL <- valuesLight[["DPL"]]
+        if (!is.null(DPL))
+        rhandsontable(DPL, useTypes = FALSE, stretchH = "all")
+    })
+    
+    
+    hotableInputDepthTrace <- reactive({
+        
+        if(is.null(input$file2)==FALSE){
+        
+        trace.table <- data.frame(myDataSecond()$Spectrum)
+        trace.table$Spectrum <- myDataSecond()$Spectrum
+        trace.table$TraceDepth <- myDataSecond()[,2]*0
+        
+        trace.table <- trace.table[2:3]
+        
+        colnames(trace.table) <- c("TraceSpectrum", "TraceDepth")
+        } else if(is.null(input$file2)==TRUE){
+            trace.table <- data.frame(0, 0)
+            colnames(trace.table) <- c("TraceSpectrum", "TraceDepth")
+        }
+        
+        trace.table
+        
+        
+    })
+    
+    valuesTrace <- reactiveValues()
+    
+    observe({
+        if (!is.null(input$depthtabletrace)) {
+            DPT = hot_to_r(input$depthtabletrace)
+        } else {
+            if (is.null(valuesTrace[["DPT"]]))
+            DPT <- hotableInputDepthTrace()
+            else
+            DPT <- valuesTrace[["DPT"]]
+        }
+        valuesTrace[["DPT"]] <- DPT
+    })
+    
+    
+    ## Handsontable
+    
+    output$depthtabletrace <- renderRHandsontable({
+        DPT <- valuesTrace[["DPT"]]
+        if (!is.null(DPT))
+        rhandsontable(DPT, useTypes = FALSE, stretchH = "all")
+    })
+    
+    
+    
+    lightFrame <- reactive({
+        
+        light.frame <- data.frame(myDataFirst(), valuesLight[["DPL"]]$LightDepth)
+        colnames(light.frame) <- c(names(myDataFirst()), "Depth")
+        light.frame[ ,!(colnames(light.frame) == "Spectrum")]
+        
+    })
+    
+    traceFrame <- reactive({
+        
+        trace.frame <- data.frame(myDataSecond(), valuesTrace[["DPT"]]$TraceDepth)
+        colnames(trace.frame) <- c(names(myDataSecond()), "Depth")
+        trace.frame[ ,!(colnames(trace.frame) == "Spectrum")]
+        
+    })
+    
+    lightQuantFrame <- reactive({
+        
+        light.frame <- data.frame(tableInputValQuantFirst(), valuesLight[["DPL"]]$LightDepth)
+        colnames(light.frame) <- c(names(tableInputValQuantFirst()), "Depth")
+        light.frame[ ,!(colnames(light.frame) == "Spectrum")]
+        
+    })
+    
+    traceQuantFrame <- reactive({
+        
+        trace.frame <- data.frame(tableInputValQuantSecond(), valuesTrace[["DPT"]]$TraceDepth)
+        colnames(trace.frame) <- c(names(tableInputValQuantSecond()), "Depth")
+        trace.frame[ ,!(colnames(trace.frame) == "Spectrum")]
+        
+    })
+    
+    
+    observeEvent(input$actionprocessdepth, {
+
+    
+    
+    
         myData <- reactive({
-            
-            withProgress(message = 'Processing Data', value = 0, {
                 
-                inFile <- input$file1
-                if (is.null(inFile)) return(NULL)
-                temp = inFile$name
-                temp <- gsub(".csv", "", temp)
-                id.seq <- seq(1, 2048,1)
-                
-                n <- length(temp)*id.seq
-                
-                myfiles.x = pblapply(inFile$datapath, read_csv_filename_x)
-                
-                
-                
-                myfiles.y = pblapply(inFile$datapath, read_csv_filename_y)
-                
-                
-                
-                
-                xrf.x <- data.frame(id.seq, myfiles.x)
-                colnames(xrf.x) <- c("ID", temp)
-                xrf.y <- data.frame(id.seq, myfiles.y)
-                colnames(xrf.y) <- c("ID", temp)
-                
-                
-                xrf.x <- data.table(xrf.x)
-                xrf.y <- data.table(xrf.y)
-                
-                
-                energy.m <- xrf.x[, list(variable = names(.SD), value = unlist(.SD, use.names = F)), by = ID]
-                cps.m <- xrf.y[, list(variable = names(.SD), value = unlist(.SD, use.names = F)), by = ID]
-                
-                
-                spectra.frame <- data.frame(energy.m$value, cps.m$value, cps.m$variable)
-                colnames(spectra.frame) <- c("Energy", "CPS", "Spectrum")
-                data <- spectra.frame
-                
-                
-                incProgress(1/n)
-                Sys.sleep(0.1)
-            })
-            
-            data
+                if(is.null(input$file2)==TRUE){
+                    lightFrame()
+                } else if(is.null(input$file2)==FALSE){
+                    merged.frame <- merge(lightFrame(), traceFrame(), by = "Depth", all=TRUE)
+                    merged.frame[complete.cases(merged.frame), ]
+                }
             
         })
+        
+        tableInputValQuant <- reactive({
+            
+            if(is.null(input$file2)==TRUE){
+                lightQuantFrame()
+            } else if(is.null(input$file2)==FALSE){
+                merged.frame <- merge(lightQuantFrame(), traceQuantFrame(), by = "Depth", all=TRUE)
+                merged.frame[complete.cases(merged.frame), ]
+            }
+            
+        })
+        
+        
+        
+    
         
         
         output$contents <- renderTable({
@@ -277,7 +1144,7 @@ shinyServer(function(input, output, session) {
             
             filename = function() { paste(paste(c(input$projectname, "-", plotname), collapse=''), '.tiff', sep='') },
             content = function(file) {
-                ggsave(file,plotInput(), device="tiff", dpi=300, width=12, height=7)
+                ggplot2::ccsave(file,plotInput(), compression="lzw", dpi=300, width=12, height=7)
             }
             )
             
@@ -290,135 +1157,57 @@ shinyServer(function(input, output, session) {
             
         })
         
-        
-        data <- myData()
-        
-        
-        spectra.line.table <- spectra.line.fn(data)
-        select.line.table <- datatable(spectra.line.table[, input$show_vars, drop = FALSE])
-        select.line.table
-        
-        
-        fordownload <- spectra.line.table[input$show_vars]
-        
-        tableInput <- reactive({
-            spectra.line.table <- spectra.line.fn(data)
-            select.line.table <- datatable(spectra.line.table[, input$show_vars, drop = FALSE])
-            select.line.table
-        })
-        
-        
-        output$mytable1 <- renderDataTable({
-            
-            tableInput()
-            
-        })
-        
-        fullTable <- reactive({
-            
-            
-        })
-        
-        
-        hotableInput <- reactive({
-            empty.line.table <-  spectra.line.table[input$show_vars] * 0
-            empty.line.table <- empty.line.table[1:2]
-            colnames(empty.line.table) <- c("Qualitative", "Depth")
-            empty.line.table$Spectrum <- spectra.line.table$Spectrum
-            na.vector <- rep("NULL", length(empty.line.table$Qualitative))
-            na.matrix <- as.matrix(na.vector)
-            na.matrix[1,1] <- "a"
-            na.matrix[2,1] <- "b"
-            na.matrix[3,1] <- "c"
-            na.input <- as.vector(na.matrix[,1])
-            
-            
-            empty.line.table <- data.frame(empty.line.table$Spectrum, na.input, empty.line.table$Depth)
-            colnames(empty.line.table) <- c("Spectrum", "Qualitative", "Depth")
-            
-            
-            empty.line.table
-            
-        })
-        
-        values <- reactiveValues()
-        
-        observe({
-            if (!is.null(input$hot)) {
-                DF = hot_to_r(input$hot)
-            } else {
-                if (is.null(values[["DF"]]))
-                DF <- hotableInput()
-                else
-                DF <- values[["DF"]]
-            }
-            values[["DF"]] <- DF
-        })
-        
-        
-        ## Handsontable
-        
-        output$hot <- renderRHandsontable({
-            DF <- values[["DF"]]
-            if (!is.null(DF))
-            rhandsontable(DF, useTypes = FALSE, stretchH = "all")
-        })
+       
         
         
         
         
-        
-        
-        
-        output$downloadData <- downloadHandler(
-        filename = function() { paste(paste(c(input$projectname, "_", "CountTable"), collapse=''), '.csv', sep=',') },
-        content = function(file
-        ) {
-            write.csv(tableInput(), file)
-        }
-        )
+       
+       lineOptions <- reactive({
+           
+           spectra.line.table <- myData()[ ,!(colnames(myData()) == "Depth")]
+           if(input$usecalfile==TRUE){
+               quant.frame <- tableInputValQuant()[ ,!(colnames(tableInputValQuant()) =="Depth")]
+           quantified <- colnames(quant.frame)
+           }
+           
+           standard <- if(input$usecalfile==FALSE && input$filetype=="Spectra"){
+               spectralLines
+           } else if(input$usecalfile==FALSE && input$filetype=="Net"){
+               colnames(spectra.line.table)
+           } else if(input$usecalfile==TRUE && input$filetype=="Spectra"){
+               quantified
+           }else if(input$usecalfile==TRUE && input$filetype=="Net"){
+              quantified
+           }
+           
+       })
 
-
-
-xrfKReactive <- reactive({
+defaultLines <- reactive({
     
+    spectra.line.table <- myData()
+    if(input$usecalfile==TRUE){quantified <- colnames(tableInputValQuant()[ ,!(colnames(tableInputValQuant()) =="Depth")])
+}
     
-    xrf.pca.header <- input$show_vars
-    xrf.pca.frame <- spectra.line.table[input$show_vars]
-    xrf.pca.n <- length(xrf.pca.frame)
-    xrf.smalls <- xrf.pca.frame[2:xrf.pca.n]
-    
-    xrf.k <- kmeans(xrf.smalls, input$knum, iter.max=1000, nstart=15, algorithm=c("Hartigan-Wong"))
-    xrf.pca <- prcomp(xrf.smalls, scale.=FALSE)
-    
-    xrf.scores <- as.data.frame(xrf.pca$x)
-    
-    cluster.frame <- data.frame(spectra.line.table$Spectrum, xrf.k$cluster, xrf.scores)
-    
-    colnames(cluster.frame) <- c("Assay", "Cluster", names(xrf.scores))
-    
-    cluster.frame
-    
-    
+    standard <- if(input$usecalfile==FALSE && input$filetype=="Spectra"){
+        c("Ca.K.alpha", "Ti.K.alpha", "Fe.K.alpha", "Cu.K.alpha", "Zn.K.alpha")
+    } else if(input$usecalfile==FALSE && input$filetype=="Net"){
+        colnames(spectra.line.table)
+    } else if(input$usecalfile==TRUE && input$filetype=="Spectra"){
+        quantified
+    }else if(input$usecalfile==TRUE && input$filetype=="Net"){
+        quantified
+    }
     
 })
 
-xrfPCAReactive <- reactive({
+output$defaultlines <- renderUI({
+
     
-    
-    
-    
-    
-    xrf.clusters <- xrfKReactive()
-    
-    element.counts <- spectra.line.table[input$show_vars]
-    
-    
-    
-    xrf.pca.results <- data.frame(xrf.clusters, element.counts)
-    
-    xrf.pca.results
+    checkboxGroupInput('show_vars', 'Elemental lines to show:',
+    choices=lineOptions(), selected = defaultLines())
 })
+
 
 
 
@@ -463,57 +1252,59 @@ xrfPCAReactive <- reactive({
   })
   
   
-  dataProcessed <- reactive({
-      
-      xrf.k <- xrfKReactive()
-      
-      quality.table <- values[["DF"]]
-      
-      colour.table <- data.frame(xrf.k, quality.table)
-      colnames(colour.table) <- c(names(xrf.k), names(quality.table))
-      
-      
-      
-      
-      unique.spec <- seq(1, length(colour.table$Spectrum), 1)
-      null <- rep(1, length(unique.spec))
-      
-      spectra.line.table$Cluster <- xrf.k$Cluster
-      spectra.line.table$Qualitative <- quality.table$Qualitative
-      spectra.line.table$Depth <- as.numeric(as.vector(quality.table$Depth))
-      spectra.line.table$PC1 <- xrf.k$PC1
-      spectra.line.table$PC2 <- xrf.k$PC2
-      spectra.line.table
-  })
-  
-  
   ageResults <- reactive({
       
-    
+      input$hotableprocess3
       
-
+      
       
       DF3 <- values[["DF2"]]
       DF4 <- subset(DF3, !DF3$Sigma==0)
       DF5 <- as.data.frame(DF4)
       
-      age.math <- Bchronology(ages=as.numeric(as.vector(DF5[,2])), ageSds=as.numeric(as.vector(DF5[,3])), positions=as.numeric(as.vector(DF5[,1])), positionThickness=rep(0.5, length(DF5$Sigma)), calCurves=DF5[,4], burn=2000, jitterPositions=TRUE)
+      isolate(
+       if(input$ageon==TRUE){
+          Bchronology(ages=as.numeric(as.vector(DF5[,2])), ageSds=as.numeric(as.vector(DF5[,3])), positions=as.numeric(as.vector(DF5[,1])), positionThickness=rep(0.5, length(DF5$Sigma)), calCurves=DF5[,4], burn=2000, jitterPositions=TRUE)
+      }else if(input$ageon==FALSE){
+          NULL
+      }
       
-      age.math
-
+      
+      
+      )
+      
   })
+  
+  
+  
+  
+  
   
   agePredict <- reactive({
       
       age.math <- ageResults()
       
-      spectra.line.table <- dataProcessed()
-
-      age.results <- predict(age.math, newPositions=spectra.line.table$Depth, newPositionThicknesses=rep(0.0, length(spectra.line.table$Depth)))
+      spectra.line.table <- myData()
       
-      age.medians <- apply(age.results, 2, median)
+      age.results <- if(input$ageon==TRUE){
+          predict(age.math, newPositions=spectra.line.table$Depth, newPositionThicknesses=rep(0.0, length(spectra.line.table$Depth)))
+      }else if(input$ageon==FALSE) {
+          NULL
+      }
       
-      age.sd <- apply(age.results, 2, sd)
+      age.medians <- if(input$ageon==TRUE){
+          apply(age.results, 2, median)
+      }else if(input$ageon==FALSE) {
+          spectra.line.table$Depth
+      }
+      
+      
+      age.sd <-  if(input$ageon==TRUE){
+          apply(age.results, 2, sd)
+      }else if(input$ageon==FALSE) {
+          rep(0, length(spectra.line.table$Depth))
+      }
+      
       
       age.min.sd1 <- age.medians - age.sd
       age.min.sd2 <- age.medians - age.sd*2
@@ -528,10 +1319,12 @@ xrfPCAReactive <- reactive({
       spectra.line.table$MaxSd1 <-age.max.sd1
       spectra.line.table$MaxSd2 <-age.max.sd2
       
+      spectra.line.table$None <- rep(1, length(spectra.line.table$Depth))
+      
       spectra.line.table
-
-
-
+      
+      
+      
   })
   
   ageTable <- reactive({
@@ -550,7 +1343,7 @@ xrfPCAReactive <- reactive({
       age.math <- ageResults()
       
       age.plot <- plot(age.math, xlab="Age cal year BP", ylab = "Depth (cm)", las=1)
-
+      
       age.plot
   })
   
@@ -563,7 +1356,7 @@ xrfPCAReactive <- reactive({
   
   output$agemodcurve <- renderPlot({
       
-    print(agePlot())
+      print(agePlot())
       
       
   })
@@ -584,6 +1377,187 @@ xrfPCAReactive <- reactive({
   
   
   
+  tableInput <- reactive({
+      
+      if(input$usecalfile==FALSE){
+          myData()[,c("Depth", input$show_vars)]
+      }else if(input$usecalfile==TRUE){
+          tableInputValQuant()[,c("Depth", input$show_vars)]
+      }
+      
+      
+  })
+  
+  
+  output$mytable1 <- renderDataTable({
+      
+      tableInput()
+      
+  })
+  
+  
+  
+  
+  output$downloadData <- downloadHandler(
+  filename = function() { paste(paste(c(input$projectname, "_", "CountTable"), collapse=''), '.csv', sep=',') },
+  content = function(file
+  ) {
+      write.csv(tableInput(), file)
+  }
+  )
+  
+  
+  
+  
+  
+  hotableInput <- reactive({
+      
+      spectra.line.table <- myData()
+      depths <- spectra.line.table$Depth
+      
+      empty.line.table <-  spectra.line.table
+      empty.line.table <- empty.line.table[1:2]
+      colnames(empty.line.table) <- c("Qualitative", "Depth")
+      empty.line.table$Depth <- empty.line.table$Depth*0
+      empty.line.table$Custom <- empty.line.table$Depth*0
+      empty.line.table$Quantitative1 <- empty.line.table$Depth*0
+      empty.line.table$Quantitative2 <- empty.line.table$Depth*0
+      empty.line.table$Quantitative3 <- empty.line.table$Depth*0
+      empty.line.table$Spectrum <- spectra.line.table$Spectrum
+      na.vector <- rep("NULL", length(empty.line.table$Qualitative))
+      na.matrix <- as.matrix(na.vector)
+      na.matrix[1,1] <- "a"
+      na.matrix[2,1] <- "b"
+      na.matrix[3,1] <- "c"
+      na.input <- as.vector(na.matrix[,1])
+      
+      
+      line.table <- data.frame(depths, na.input, empty.line.table$Custom, empty.line.table$Quantitative1, empty.line.table$Quantitative2, empty.line.table$Quantitative3)
+      colnames(line.table) <- c("Depth", "Qualitative", "Custom", "Quantitative1", "Quantitative2", "Quantitative3")
+      
+      
+      
+      line.table
+      
+  })
+  
+  values <- reactiveValues()
+  
+  observe({
+      if (!is.null(input$hot)) {
+          DF = hot_to_r(input$hot)
+      } else {
+          if (is.null(values[["DF"]]))
+          DF <- hotableInput()
+          else
+          DF <- values[["DF"]]
+      }
+      values[["DF"]] <- DF
+  })
+  
+  
+  ## Handsontable
+  
+  output$hot <- renderRHandsontable({
+      DF <- values[["DF"]]
+      if (!is.null(DF))
+      rhandsontable(DF, useTypes = FALSE, stretchH = "all")
+  })
+  
+  
+
+  
+  
+  
+  xrfKReactive <- reactive({
+      
+      spectra.line.table <- tableInput()
+      
+      
+      
+      
+      
+      xrf.pca.header <- input$show_vars
+      xrf.pca.frame <- spectra.line.table[,input$show_vars]
+      xrf.pca.n <- length(xrf.pca.frame)
+      xrf.smalls <- xrf.pca.frame
+      
+      xrf.k <- kmeans(xrf.smalls, input$knum, iter.max=1000, nstart=15, algorithm=c("Hartigan-Wong"))
+      xrf.pca <- prcomp(xrf.smalls, scale.=FALSE)
+      
+      xrf.scores <- as.data.frame(xrf.pca$x)
+      
+      cluster.frame <- data.frame(spectra.line.table$Depth, xrf.k$cluster, xrf.scores)
+      
+      colnames(cluster.frame) <- c("Assay", "Cluster", names(xrf.scores))
+      
+      cluster.frame
+      
+      
+      
+  })
+  
+  xrfPCAReactive <- reactive({
+      
+      
+      spectra.line.table <- if(input$usecalfile==FALSE){
+          myData()
+      } else if(input$usecalfile==TRUE){
+          tableInput()
+      }
+      
+      
+      xrf.clusters <- xrfKReactive()
+      
+      element.counts <- spectra.line.table[input$show_vars]
+      
+      
+      
+      xrf.pca.results <- data.frame(xrf.clusters, element.counts)
+      
+      xrf.pca.results
+  })
+
+  
+  
+  dataProcessed <- reactive({
+      
+      spectra.line.table <- if(input$usecalfile==FALSE){
+          myData()
+      } else if(input$usecalfile==TRUE){
+          tableInputValQuant()
+      }
+
+      xrf.k <- xrfKReactive()
+      
+      quality.table <- values[["DF"]]
+      
+      colour.table <- data.frame(xrf.k, quality.table)
+      colnames(colour.table) <- c(names(xrf.k), names(quality.table))
+      
+      
+      
+      
+      unique.spec <- seq(1, length(colour.table$Depth), 1)
+      null <- rep(1, length(unique.spec))
+      
+      spectra.line.table$Cluster <- xrf.k$Cluster
+      spectra.line.table$Qualitative <- quality.table$Qualitative
+      spectra.line.table$Depth <- as.numeric(as.vector(quality.table$Depth))
+      spectra.line.table$Custom <- as.numeric(as.vector(quality.table$Custom))
+      spectra.line.table$Quantitative1 <- as.numeric(as.vector(quality.table$Quantitative1))
+      spectra.line.table$Quantitative2 <- as.numeric(as.vector(quality.table$Quantitative2))
+      spectra.line.table$Quantitative3 <- as.numeric(as.vector(quality.table$Quantitative3))
+      spectra.line.table$PC1 <- xrf.k$PC1
+      spectra.line.table$PC2 <- xrf.k$PC2
+      spectra.line.table
+  })
+  
+
+  
+  
+  
+  
   ageData <- reactive({
       
       c14ages <- values[["DF2"]]
@@ -593,9 +1567,12 @@ xrfPCAReactive <- reactive({
       c14min <- min(c14ages$Depth)
       c14max <- max(c14ages$Depth)
       
+      ages <- agePredict()
       
-      spectra.line.table.age.unconstrained <- agePredict()
-      
+
+
+      spectra.line.table.age.unconstrained <- dataProcessed()
+      spectra.line.table.age.unconstrained$Age <- ages$Age
       
       
       lateholocene <- subset(spectra.line.table.age.unconstrained$Age, spectra.line.table.age.unconstrained$Age <= 5000 & spectra.line.table.age.unconstrained$Age > -1000)
@@ -624,6 +1601,7 @@ xrfPCAReactive <- reactive({
       rep("7. Last Glacial Maximum", length(lastglacialmax)),
       rep("8. Glacial", length(glacial))
       )
+      
       
       spectra.line.table.age.unconstrained$Climate <- climateperiods
       
@@ -655,11 +1633,12 @@ xrfPCAReactive <- reactive({
       
       
       spectra.line.table <- ageData()
+    
       
       
       
       
-      unique.spec <- seq(1, length(spectra.line.table$Spectrum), 1)
+      unique.spec <- seq(1, length(spectra.line.table$Depth), 1)
       null <- rep(1, length(unique.spec))
       
       
@@ -826,15 +1805,62 @@ xrfPCAReactive <- reactive({
   
   
   output$xrfpcaplot <- renderPlot({
-      print(plotInput2())
+      plotInput2()
       
   })
   
   
+  
+
+  
+  
+  
+  
+  output$hover_infopca <- renderUI({
+      
+      point.table <- ageData()
+      
+      if(is.null(point.table$Age)==TRUE){
+          point.table$Age <- rep(1, length(point.table$Spectrum))
+      }
+      
+      hover <- input$plot_hoverpca
+      point <- nearPoints(point.table,  coordinfo=hover,   threshold = 5, maxpoints = 1, addDist = TRUE)
+      #if (nrow(point) == 0) return(NULL)
+      
+      
+      
+      
+      # calculate point position INSIDE the image as percent of total dimensions
+      # from left (horizontal) and from top (vertical)
+      left_pct <- (hover$x - hover$domain$left) / (hover$domain$right - hover$domain$left)
+      top_pct <- (hover$domain$top - hover$y) / (hover$domain$top - hover$domain$bottom)
+      
+      # calculate distance from left and bottom side of the picture in pixels
+      left_px <- hover$range$left + left_pct * (hover$range$right - hover$range$left)
+      top_px <- hover$range$top + top_pct * (hover$range$bottom - hover$range$top)
+      
+      
+      # create style property fot tooltip
+      # background color is set so tooltip is a bit transparent
+      # z-index is set so we are sure are tooltip will be on top
+      style <- paste0("position:absolute; z-index:100; background-color: rgba(245, 245, 245, 0.85); ",
+      "left:", left_px + 2, "px; top:", top_px + 2, "px;")
+      
+      # actual tooltip created as wellPanel
+      wellPanel(
+      style = style,
+      p(HTML(paste0("<b> Depth: </b>", point$Depth, "<br/>",
+      "<b> Age: </b>", point$Age, "<br/>"
+      
+      )))
+      )
+  })
+  
   output$downloadPlot2 <- downloadHandler(
   filename = function() { paste(paste(c(input$projectname, "_", "PCAPlot"), collapse=''), '.tiff',  sep='') },
   content = function(file) {
-      ggsave(file,plotInput2(), device="tiff", dpi=300, width=12, height=7)
+      ggsave(file,plotInput2(), device="tiff", compression="lzw", type="cairo", dpi=300, width=12, height=7)
   }
   )
   
@@ -910,10 +1936,86 @@ xrfPCAReactive <- reactive({
   
   
   
+  choiceLines <- reactive({
+      
+      spectra.line.table <- ageData()
+      
+      standard <- if(input$filetype=="Spectra"){
+          colnames(spectra.line.table)
+      } else if(input$filetype=="Net"){
+          colnames(spectra.line.table)
+      }
+      
+  })
+  
+ 
+ dataDefaultSelect <- reactive({
+     
+     data.options <-defaultLines()
+     data.selected <- data.options[5]
+     data.selected
+     
+ })
+ 
+ secondDefaultSelect <- reactive({
+     
+     data.options <-defaultLines()
+     data.selected <- data.options[6]
+     data.selected
+     
+ })
+ 
+ output$inelementtrend <- renderUI({
+     selectInput("elementtrend", "Element:", choices=choiceLines(), selected=dataDefaultSelect())
+ })
+ 
+ output$inelementnorm <- renderUI({
+     selectInput("elementnorm", "Ratio:", choices=choiceLines(), selected="None")
+ })
+ 
+
+ 
+ 
+ xmindata <- reactive({
+     
+     spectra.line.table <- ageData()
+     
+     x.data <- spectra.line.table[input$xaxistype]
+     xmindata <- min(x.data)
+     
+         xmindata
+     
+
+ })
+ 
+ xmaxdata <- reactive({
+     spectra.line.table <- ageData()
+     
+     x.data <- spectra.line.table[input$xaxistype]
+     xmaxdata <- max(x.data)
+     xmaxdata
+
+ })
+ 
+ 
+
+
+output$inxlimrange <- renderUI({
+
+
+    sliderInput("xlimrange", "X axis", min=xmindata(), max=xmaxdata(), value=c(xmindata(), xmaxdata()), round=FALSE)
+})
+
+
+
+
+
+
+ 
   
   plotInput3a <- reactive({
       
-      spectra.line.table <- ageData()
+
       
       
       x.axis <- if (input$xaxistype=="Depth") {
@@ -922,11 +2024,17 @@ xrfPCAReactive <- reactive({
           paste("cal year BP")
       } else if (input$xaxistype=="Age" && input$timetype=="BC") {
           paste("cal year BC")
-      } else if (input$axistype=="Age" && input$timetype=="AD") {
+      } else if (input$xaxistype=="Age" && input$timetype=="AD") {
           paste("cal year AD")
-      } else if (input$axistype=="Age" && input$timetype=="BC/AD") {
+      } else if (input$xaxistype=="Age" && input$timetype=="BC/AD") {
        paste("cal year BC/AD")
+      } else if (input$xaxistype=="Custom") {
+          input$customxaxis
       }
+      
+      
+      spectra.line.table <- ageData()
+      spectra.line.table <- subset(spectra.line.table, !(spectra.line.table[input$xaxistype] < input$xlimrange[1] | spectra.line.table[input$xaxistype] > input$xlimrange[2]))
       
       
       spectra.line.table.norm <- data.frame(spectra.line.table, null)
@@ -938,15 +2046,24 @@ xrfPCAReactive <- reactive({
       #spectra.timeseries.table <- data.frame(interval, spectra.line.table[c(input$elementtrend)]/spectra.line.table.norm[c(input$elementnorm)], spectra.line.table$Cluster, spectra.line.table$Qualitative, spectra.line.table$Depth)
       #colnames(spectra.timeseries.table) <- c("Interval", "Selected", "Cluster", "Qualitative", "Depth")
       
-      spectra.timeseries.table <- data.frame(spectra.line.table[c(input$xaxistype)], spectra.line.table[c(input$elementtrend)]/spectra.line.table.norm[c(input$elementnorm)], spectra.line.table$Cluster, spectra.line.table$Qualitative, spectra.line.table$Depth, spectra.line.table$Climate)
+      spectra.timeseries.table <- data.frame(spectra.line.table[c(input$xaxistype)], (spectra.line.table[c(input$elementtrend)]/spectra.line.table.norm[c(input$elementnorm)]*input$ymultiply), spectra.line.table$Cluster, spectra.line.table$Qualitative, spectra.line.table$Depth, spectra.line.table$Climate)
       colnames(spectra.timeseries.table) <- c("Interval", "Selected", "Cluster", "Qualitative", "Depth", "Climate")
       
       
-      trendy <-  as.vector((if(input$elementnorm=="None") {
+      
+      trendy <-  if(input$elementnorm=="None" && input$filetype=="Spectra" && input$usecalfile==FALSE && input$usecustumyaxis==FALSE) {
           paste(gsub("[.]", "", c(substr(input$elementtrend, 1, 2), " Counts per Second")), sep=",", collapse="")
-      } else {
+      } else if(input$elementnorm=="None" && input$filetype=="Spectra" && input$usecalfile==TRUE && input$usecustumyaxis==FALSE) {
+          paste(gsub("[.]", "", c(substr(input$elementtrend, 1, 2), " ", calFileContentsFirst()[[2]])), sep=",", collapse="")
+      } else if(input$elementnorm=="None" && input$filetype=="Net" && input$usecalfile==FALSE && input$usecustumyaxis==FALSE) {
+          paste(gsub("[.]", "", c(substr(input$elementtrend, 1, 2), " Net Counts")), sep=",", collapse="")
+      } else if(input$elementnorm=="None" && input$filetype=="Net" && input$usecalfile==TRUE && input$usecustumyaxis==FALSE) {
+          paste(gsub("[.]", "", c(substr(input$elementtrend, 1, 2), " ", calFileContentsFirst()[[2]])), sep=",", collapse="")
+      } else if(input$elementnorm!="None" && input$usecustumyaxis==FALSE){
           paste(gsub("[.]", "", c(substr(input$elementtrend, 1, 2), "/", substr(input$elementnorm, 1, 2))), sep=",", collapse="")
-      }))
+      } else if(input$usecustumyaxis==TRUE) {
+          paste(input$customyaxis)
+      }
       
       
       
@@ -960,7 +2077,7 @@ xrfPCAReactive <- reactive({
       
       
       
-      black.time.series <- qplot(Interval, SMA(Selected, input$smoothing), input$xaxistype, ylab = trendy, geom="line", data = spectra.timeseries.table) +
+      black.time.series <- qplot(Interval, SMA(Selected, input$smoothing), geom="line", data = spectra.timeseries.table) +
       geom_line(colour = "black", lwd=input$linesize) +
       theme_light() +
       theme(axis.text.x = element_text(size=15)) +
@@ -970,9 +2087,11 @@ xrfPCAReactive <- reactive({
       theme(plot.title=element_text(size=20)) +
       theme(legend.title=element_text(size=15)) +
       theme(legend.text=element_text(size=15)) +
-      scale_x_continuous(paste(x.axis), label=comma)
+        scale_x_continuous(paste(x.axis), label=comma) +
+        scale_y_continuous(paste(trendy), label=comma)
+
       
-      smooth.time.series <- qplot(spectra.timeseries.table$Interval, SMA(spectra.timeseries.table$Selected, input$smoothing), xlab = input$xaxistype, ylab = trendy, geom="point") +
+      smooth.time.series <- qplot(spectra.timeseries.table$Interval, SMA(spectra.timeseries.table$Selected, input$smoothing), geom="point") +
       theme_light() +
       stat_smooth() +
       theme(axis.text.x = element_text(size=15)) +
@@ -982,10 +2101,12 @@ xrfPCAReactive <- reactive({
       theme(plot.title=element_text(size=20)) +
       theme(legend.title=element_text(size=15)) +
       theme(legend.text=element_text(size=15)) +
-      scale_x_continuous(paste(x.axis), label=comma)
+       scale_x_continuous(paste(x.axis), label=comma) +
+        scale_y_continuous(paste(trendy), label=comma)
 
 
-      ramp.time.series <- qplot(Interval, SMA(Selected, input$smoothing), xlab = input$xaxistype, ylab = trendy, geom="line", data = spectra.timeseries.table) +
+
+      ramp.time.series <- qplot(Interval, SMA(Selected, input$smoothing),  geom="line", data = spectra.timeseries.table) +
       geom_line(aes(colour = Selected), lwd=input$linesize) +
       theme_light() +
       scale_colour_gradientn(colours=rainbow(7)) +
@@ -996,14 +2117,14 @@ xrfPCAReactive <- reactive({
       theme(plot.title=element_text(size=20)) +
       theme(legend.title=element_text(size=15)) +
       theme(legend.text=element_text(size=15)) +
-      scale_x_continuous(paste(x.axis), label=comma)
+       scale_x_continuous(paste(x.axis), label=comma) +
+           scale_y_continuous(paste(trendy), label=comma)
+
 
 
       area.time.series <- ggplot(spectra.timeseries.table, aes(Interval)) +
       theme_classic() +
       geom_area(aes(y=Selected, colour="grey60", fill="grey60"), alpha=0.6) +
-      scale_x_continuous(input$xaxistype) +
-      scale_y_continuous(trendy) +
       theme(axis.text.x = element_text(size=15)) +
       theme(axis.text.y = element_text(size=15)) +
       theme(axis.title.x = element_text(size=15)) +
@@ -1011,11 +2132,13 @@ xrfPCAReactive <- reactive({
       theme(plot.title=element_text(size=20)) +
       theme(legend.title=element_text(size=15)) +
       theme(legend.text=element_text(size=15)) +
-      scale_x_continuous(paste(x.axis), label=comma)
+       scale_x_continuous(paste(x.axis), label=comma) +
+           scale_y_continuous(paste(trendy), label=comma)
+
 
 
       
-      cluster.time.series <- qplot(Interval, SMA(Selected, input$smoothing), xlab = input$xaxistype, ylab = trendy, geom="line", data = spectra.timeseries.table) +
+      cluster.time.series <- qplot(Interval, SMA(Selected, input$smoothing),  geom="line", data = spectra.timeseries.table) +
       geom_point(aes(colour = as.factor(Cluster)), size=input$pointsize) +
       scale_colour_discrete("Cluster") +
       theme_light() +
@@ -1026,9 +2149,11 @@ xrfPCAReactive <- reactive({
       theme(plot.title=element_text(size=20)) +
       theme(legend.title=element_text(size=15)) +
       theme(legend.text=element_text(size=15)) +
-      scale_x_continuous(paste(x.axis), label=comma)
+       scale_x_continuous(paste(x.axis), label=comma) +
+           scale_y_continuous(paste(trendy), label=comma)
+
       
-      climate.time.series.line <- qplot(Interval, SMA(Selected, input$smoothing), xlab = input$xaxistype, ylab = trendy, geom="line", data = spectra.timeseries.table, colour = as.factor(Climate)) +
+      climate.time.series.line <- qplot(Interval, SMA(Selected, input$smoothing), geom="line", data = spectra.timeseries.table, colour = as.factor(Climate)) +
       scale_colour_discrete("Climatic Period") +
       theme_light() +
       theme(axis.text.x = element_text(size=15)) +
@@ -1038,10 +2163,11 @@ xrfPCAReactive <- reactive({
       theme(plot.title=element_text(size=20)) +
       theme(legend.title=element_text(size=15)) +
       theme(legend.text=element_text(size=15)) +
-      scale_x_continuous(paste(x.axis), label=comma)
+       scale_x_continuous(paste(x.axis), label=comma) +
+      scale_y_continuous(paste(trendy), label=comma)
 
 
-      qualitative.time.series.line <- qplot(Interval, SMA(Selected, input$smoothing), xlab = input$xaxistype, ylab = trendy, geom="line", data = spectra.timeseries.table, colour = as.factor(Qualitative)) +
+      qualitative.time.series.line <- qplot(Interval, SMA(Selected, input$smoothing), geom="line", data = spectra.timeseries.table, colour = as.factor(Qualitative)) +
       scale_colour_discrete("Qualitative") +
       theme_light() +
       theme(axis.text.x = element_text(size=15)) +
@@ -1051,9 +2177,10 @@ xrfPCAReactive <- reactive({
       theme(plot.title=element_text(size=20)) +
       theme(legend.title=element_text(size=15)) +
       theme(legend.text=element_text(size=15)) +
-      scale_x_continuous(paste(x.axis), label=comma)
+       scale_x_continuous(paste(x.axis), label=comma) +
+      scale_y_continuous(paste(trendy), label=comma)
       
-      qualitative.time.series.point <- qplot(Interval, SMA(Selected, input$smoothing), xlab = input$xaxistype, ylab = trendy, geom="line", data = spectra.timeseries.table) +
+      qualitative.time.series.point <- qplot(Interval, SMA(Selected, input$smoothing),  geom="line", data = spectra.timeseries.table) +
       geom_point(aes(colour = as.factor(Qualitative)), lwd=input$pointsize) +
       scale_colour_discrete("Qualitative") +
       theme_light() +
@@ -1064,12 +2191,14 @@ xrfPCAReactive <- reactive({
       theme(plot.title=element_text(size=20)) +
       theme(legend.title=element_text(size=15)) +
       theme(legend.text=element_text(size=15)) +
-      scale_x_continuous(paste(x.axis), label=comma)
+       scale_x_continuous(paste(x.axis), label=comma) +
+      scale_y_continuous(paste(trendy), label=comma)
 
 
-      Depth.time.series <- qplot(Interval, SMA(Selected, input$smoothing), xlab = input$xaxistype, ylab = trendy, geom="line", data = spectra.timeseries.table) +
-      geom_point(aes(colour = Depth), lwd=input$pointsize) +
-      scale_colour_gradientn("Depth", colours=rainbow(length(spectra.line.table$Depth))) +
+      depth.time.series <- qplot(Interval, SMA(Selected, input$smoothing),  geom="line", data = spectra.timeseries.table) +
+      geom_line(aes(colour = Depth), lwd=input$linesize+0.5) +
+      geom_line(lwd=input$linesize-0.5) +
+      scale_colour_gradientn("Depth", colours=rev(terrain.colors(length(spectra.line.table$Depth)))) +
       theme_light() +
       theme(axis.text.x = element_text(size=15)) +
       theme(axis.text.y = element_text(size=15)) +
@@ -1078,28 +2207,179 @@ xrfPCAReactive <- reactive({
       theme(plot.title=element_text(size=20)) +
       theme(legend.title=element_text(size=15)) +
       theme(legend.text=element_text(size=15)) +
-      scale_x_continuous(paste(x.axis), label=comma)
-
-
+       scale_x_continuous(paste(x.axis), label=comma) +
+      scale_y_continuous(paste(trendy), label=comma)
       
-      if (input$timecolour == "Black") {
+      
+      ####Flipped X Axis
+      
+      black.time.series.reverse <- qplot(Interval, SMA(Selected, input$smoothing), geom="line", data = spectra.timeseries.table) +
+      geom_line(colour = "black", lwd=input$linesize) +
+      theme_light() +
+      theme(axis.text.x = element_text(size=15)) +
+      theme(axis.text.y = element_text(size=15)) +
+      theme(axis.title.x = element_text(size=15)) +
+      theme(axis.title.y = element_text(size=15, angle=90)) +
+      theme(plot.title=element_text(size=20)) +
+      theme(legend.title=element_text(size=15)) +
+      theme(legend.text=element_text(size=15)) +
+      scale_x_reverse(paste(x.axis), label=comma) +
+      scale_y_continuous(paste(trendy), label=comma)
+      
+      smooth.time.series.reverse <- qplot(spectra.timeseries.table$Interval, SMA(spectra.timeseries.table$Selected, input$smoothing), geom="point") +
+      theme_light() +
+      stat_smooth() +
+      theme(axis.text.x = element_text(size=15)) +
+      theme(axis.text.y = element_text(size=15)) +
+      theme(axis.title.x = element_text(size=15)) +
+      theme(axis.title.y = element_text(size=15, angle=90)) +
+      theme(plot.title=element_text(size=20)) +
+      theme(legend.title=element_text(size=15)) +
+      theme(legend.text=element_text(size=15)) +
+      scale_x_reverse(paste(x.axis), label=comma) +
+      scale_y_continuous(paste(trendy), label=comma)
+      
+      
+      ramp.time.series.reverse <- qplot(Interval, SMA(Selected, input$smoothing), geom="line", data = spectra.timeseries.table) +
+      geom_line(aes(colour = Selected), lwd=input$linesize) +
+      theme_light() +
+      scale_colour_gradientn(colours=rainbow(7)) +
+      theme(axis.text.x = element_text(size=15)) +
+      theme(axis.text.y = element_text(size=15)) +
+      theme(axis.title.x = element_text(size=15)) +
+      theme(axis.title.y = element_text(size=15, angle=90)) +
+      theme(plot.title=element_text(size=20)) +
+      theme(legend.title=element_text(size=15)) +
+      theme(legend.text=element_text(size=15)) +
+      scale_x_reverse(paste(x.axis), label=comma) +
+      scale_y_continuous(paste(trendy), label=comma)
+      
+      
+      area.time.series.reverse <- ggplot(spectra.timeseries.table, aes(Interval)) +
+      theme_classic() +
+      geom_area(aes(y=Selected, colour="grey60", fill="grey60"), alpha=0.6) +
+      theme(axis.text.x = element_text(size=15)) +
+      theme(axis.text.y = element_text(size=15)) +
+      theme(axis.title.x = element_text(size=15)) +
+      theme(axis.title.y = element_text(size=15, angle=90)) +
+      theme(plot.title=element_text(size=20)) +
+      theme(legend.title=element_text(size=15)) +
+      theme(legend.text=element_text(size=15)) +
+      scale_x_reverse(paste(x.axis), label=comma) +
+      scale_y_continuous(paste(trendy), label=comma)
+      
+      
+      
+      cluster.time.series.reverse <- qplot(Interval, SMA(Selected, input$smoothing),  geom="line", data = spectra.timeseries.table) +
+      geom_point(aes(colour = as.factor(Cluster)), size=input$pointsize) +
+      scale_colour_discrete("Cluster") +
+      theme_light() +
+      theme(axis.text.x = element_text(size=15)) +
+      theme(axis.text.y = element_text(size=15)) +
+      theme(axis.title.x = element_text(size=15)) +
+      theme(axis.title.y = element_text(size=15, angle=90)) +
+      theme(plot.title=element_text(size=20)) +
+      theme(legend.title=element_text(size=15)) +
+      theme(legend.text=element_text(size=15)) +
+      scale_x_reverse(paste(x.axis), label=comma) +
+      scale_y_continuous(paste(trendy), label=comma)
+      
+      climate.time.series.line.reverse <- qplot(Interval, SMA(Selected, input$smoothing), geom="line", data = spectra.timeseries.table, colour = as.factor(Climate)) +
+      scale_colour_discrete("Climatic Period") +
+      theme_light() +
+      theme(axis.text.x = element_text(size=15)) +
+      theme(axis.text.y = element_text(size=15)) +
+      theme(axis.title.x = element_text(size=15)) +
+      theme(axis.title.y = element_text(size=15, angle=90)) +
+      theme(plot.title=element_text(size=20)) +
+      theme(legend.title=element_text(size=15)) +
+      theme(legend.text=element_text(size=15)) +
+      scale_x_reverse(paste(x.axis), label=comma) +
+      scale_y_continuous(paste(trendy), label=comma)
+      
+      
+      qualitative.time.series.line.reverse <- qplot(Interval, SMA(Selected, input$smoothing), geom="line", data = spectra.timeseries.table, colour = as.factor(Qualitative)) +
+      scale_colour_discrete("Qualitative") +
+      theme_light() +
+      theme(axis.text.x = element_text(size=15)) +
+      theme(axis.text.y = element_text(size=15)) +
+      theme(axis.title.x = element_text(size=15)) +
+      theme(axis.title.y = element_text(size=15, angle=90)) +
+      theme(plot.title=element_text(size=20)) +
+      theme(legend.title=element_text(size=15)) +
+      theme(legend.text=element_text(size=15)) +
+      scale_x_reverse(paste(x.axis), label=comma) +
+      scale_y_continuous(paste(trendy), label=comma)
+      
+      qualitative.time.series.point.reverse <- qplot(Interval, SMA(Selected, input$smoothing),  geom="line", data = spectra.timeseries.table) +
+      geom_point(aes(colour = as.factor(Qualitative)), lwd=input$pointsize) +
+      scale_colour_discrete("Qualitative") +
+      theme_light() +
+      theme(axis.text.x = element_text(size=15)) +
+      theme(axis.text.y = element_text(size=15)) +
+      theme(axis.title.x = element_text(size=15)) +
+      theme(axis.title.y = element_text(size=15, angle=90)) +
+      theme(plot.title=element_text(size=20)) +
+      theme(legend.title=element_text(size=15)) +
+      theme(legend.text=element_text(size=15)) +
+      scale_x_reverse(paste(x.axis), label=comma) +
+      scale_y_continuous(paste(trendy), label=comma)
+      
+      
+      depth.time.series.reverse <- qplot(Interval, SMA(Selected, input$smoothing),  geom="line", data = spectra.timeseries.table) +
+      geom_line(aes(colour = Depth), lwd=input$linesize+0.5) +
+      geom_line(lwd=input$linesize-0.5) +
+      scale_colour_gradientn("Depth", colours=rev(terrain.colors(length(spectra.line.table$Depth)))) +
+      theme_light() +
+      theme(axis.text.x = element_text(size=15)) +
+      theme(axis.text.y = element_text(size=15)) +
+      theme(axis.title.x = element_text(size=15)) +
+      theme(axis.title.y = element_text(size=15, angle=90)) +
+      theme(plot.title=element_text(size=20)) +
+      theme(legend.title=element_text(size=15)) +
+      theme(legend.text=element_text(size=15)) +
+      scale_x_reverse(paste(x.axis), label=comma) +
+      scale_y_continuous(paste(trendy), label=comma)
+
+
+
+
+      if (input$timecolour == "Black" && input$xaxistype!="Depth") {
           black.time.series
-      } else if (input$timecolour == "Smooth") {
+      } else if (input$timecolour == "Smooth" && input$xaxistype!="Depth") {
           smooth.time.series
-      } else if (input$timecolour == "Selected") {
+      } else if (input$timecolour == "Selected" && input$xaxistype!="Depth") {
           ramp.time.series
-      } else if (input$timecolour == "Cluster") {
+      } else if (input$timecolour == "Cluster" && input$xaxistype!="Depth") {
           cluster.time.series
-      } else if (input$timecolour == "Climate") {
+      } else if (input$timecolour == "Climate" && input$xaxistype!="Depth") {
           climate.time.series.line
-      } else if (input$timecolour == "QualitativePoint") {
+      } else if (input$timecolour == "QualitativePoint" && input$xaxistype!="Depth") {
           qualitative.time.series.point
-      } else if (input$timecolour == "QualitativeLine") {
+      } else if (input$timecolour == "QualitativeLine" && input$xaxistype!="Depth") {
           qualitative.time.series.line
-      } else if (input$timecolour == "Depth") {
+      } else if (input$timecolour == "Depth" && input$xaxistype!="Depth") {
           Depth.time.series
-      } else if (input$timecolour == "Area") {
+      } else if (input$timecolour == "Area" && input$xaxistype=="Depth") {
           area.time.series
+      } else if (input$timecolour == "Black" && input$xaxistype=="Depth") {
+          black.time.series.reverse
+      } else if (input$timecolour == "Smooth" && input$xaxistype=="Depth") {
+          smooth.time.series.reverse
+      } else if (input$timecolour == "Selected" && input$xaxistype=="Depth") {
+          ramp.time.series.reverse
+      } else if (input$timecolour == "Cluster" && input$xaxistype=="Depth") {
+          cluster.time.series.reverse
+      } else if (input$timecolour == "Climate" && input$xaxistype=="Depth") {
+          climate.time.series.line.reverse
+      } else if (input$timecolour == "QualitativePoint" && input$xaxistype=="Depth") {
+          qualitative.time.series.point.reverse
+      } else if (input$timecolour == "QualitativeLine" && input$xaxistype=="Depth") {
+          qualitative.time.series.line.reverse
+      } else if (input$timecolour == "Depth" && input$xaxistype=="Depth") {
+          depth.time.series.reverse
+      } else if (input$timecolour == "Area" && input$xaxistype=="Depth") {
+          area.time.series.reverse
       }
       
       
@@ -1114,16 +2394,86 @@ xrfPCAReactive <- reactive({
   
   output$timeseriesplot1 <- renderPlot({
       input$timeseriesact1
-      isolate(print(plotInput3a()))
+      isolate(plotInput3a())      
+  })
+  
+  hoverHold3a <- reactive({
+      input$timeseriesact1
+      
+      spectra.line.table <- ageData()
+      
+      spectra.line.table <- subset(spectra.line.table, !(spectra.line.table[input$xaxistype] < input$xlimrange[1] | spectra.line.table[input$xaxistype] > input$xlimrange[2]))
+      
+      if(is.null(spectra.line.table$Age)==TRUE){
+          spectra.line.table$Age <- rep(1, length(spectra.line.table$Spectrum))
+      }
+      
+      spectra.line.table.norm <- data.frame(spectra.line.table, null)
+      colnames(spectra.line.table.norm) <- c(names(spectra.line.table), "None")
+      spectra.line.table.norm
+      
+      #interval <- unique.spec*as.numeric(input$intervalmm)+as.numeric(input$startmm)
+      
+      #spectra.timeseries.table <- data.frame(interval, spectra.line.table[c(input$elementtrend)]/spectra.line.table.norm[c(input$elementnorm)], spectra.line.table$Cluster, spectra.line.table$Qualitative, spectra.line.table$Depth)
+      #colnames(spectra.timeseries.table) <- c("Interval", "Selected", "Cluster", "Qualitative", "Depth")
+      
+      spectra.timeseries.table <- data.frame(spectra.line.table[c(input$xaxistype)], (spectra.line.table[c(input$elementtrend)]/spectra.line.table.norm[c(input$elementnorm)]*input$ymultiply), spectra.line.table$Cluster, spectra.line.table$Qualitative, spectra.line.table$Depth, spectra.line.table$Climate)
+      colnames(spectra.timeseries.table) <- c("Interval", "Selected", "Cluster", "Qualitative", "Depth", "Climate")
+      
+      isolate(spectra.timeseries.table)
       
   })
   
+  
+  
+  output$hover_info3a <- renderUI({
+      
+      point.table <- hoverHold3a()
+      
+      hover <- input$plot_hover3a
+      point <- nearPoints(point.table,  xvar="Interval", yvar="Selected", coordinfo=hover,   threshold = 10, maxpoints = 1)
+      
+      #if (nrow(point) == 0) return(NULL)
+      
+      
+      
+      
+      # calculate point position INSIDE the image as percent of total dimensions
+      # from left (horizontal) and from top (vertical)
+      left_pct <- (hover$x - hover$domain$left) / (hover$domain$right - hover$domain$left)
+      top_pct <- (hover$domain$top - hover$y) / (hover$domain$top - hover$domain$bottom)
+      
+      # calculate distance from left and bottom side of the picture in pixels
+      left_px <- hover$range$left + left_pct * (hover$range$right - hover$range$left)
+      top_px <- hover$range$top + top_pct * (hover$range$bottom - hover$range$top)
+      
+      
+      # create style property fot tooltip
+      # background color is set so tooltip is a bit transparent
+      # z-index is set so we are sure are tooltip will be on top
+      style <- paste0("position:absolute; z-index:100; background-color: rgba(245, 245, 245, 0.85); ",
+      "left:", left_px + 2, "px; top:", top_px + 2, "px;")
+      
+      # actual tooltip created as wellPanel
+      wellPanel(
+      style = style,
+      p(HTML(paste0("<b> Spectrum: </b>", point$Spectrum, "<br/>",
+      "<b> Depth: </b>", point$Depth, "<br/>",
+      "<b> Age: </b>", point$Age, "<br/>"
+      
+      )))
+      )
+  })
+  
   trendPlot <- reactive({
-      trendy <-  as.vector((if(input$elementnorm=="None") {
+      trendy <-  if(input$elementnorm=="None" && input$filetype=="Spectra") {
           paste(gsub("[.]", "", c(substr(input$elementtrend, 1, 2), " CPS")), sep=",", collapse="")
-      } else {
+      } else
+        if(input$elementnorm=="None" && input$filetype=="Net") {
+              paste(gsub("[.]", "", c(substr(input$elementtrend, 1, 2), " NetCounts")), sep=",", collapse="")
+          } else if(input$elementnorm!="None"){
           paste(gsub("[.]", "", c(substr(input$elementtrend, 1, 2), "/", substr(input$elementnorm, 1, 2))), sep=",", collapse="")
-      }))
+      }
       
       trendy.label <- paste(c(input$projectname, "_", trendy), collapse='')
       trendy.label
@@ -1135,14 +2485,16 @@ xrfPCAReactive <- reactive({
   
   filename = function() { paste(trendPlot(), '.tiff', sep='') },
   content = function(file) {
-      ggsave(file,plotInput3a(), device="tiff", dpi=300, width=12, height=7)
+  ggsave(file,plotInput3a(), device="tiff", compression="lzw", type="cairo", dpi=300, width=12, height=7)
+  
+
   }
   )
   
   
   
   plotInput3b <- reactive({
-      spectra.line.table <- ageData()
+      
       
       x.axis <- if (input$xaxistype=="Depth") {
           paste("Depth (", input$lengthunit, ")", sep="", collapse="")
@@ -1150,11 +2502,16 @@ xrfPCAReactive <- reactive({
           paste("cal year BP")
       } else if (input$xaxistype=="Age" && input$timetype=="BC") {
           paste("cal year BC")
-      } else if (input$axistype=="Age" && input$timetype=="AD") {
+      } else if (input$xaxistype=="Age" && input$timetype=="AD") {
           paste("cal year AD")
-      } else if (input$axistype=="Age" && input$timetype=="BC/AD") {
+      } else if (input$xaxistype=="Age" && input$timetype=="BC/AD") {
           paste("cal year BC/AD")
+      } else if (input$xaxistype=="Custom") {
+          input$customxaxis
       }
+      
+      spectra.line.table <- ageData()
+      spectra.line.table <- subset(spectra.line.table, !(spectra.line.table[input$xaxistype] < input$xlimrange[1] | spectra.line.table[input$xaxistype] > input$xlimrange[2]))
       
       
       spectra.line.table.norm <- data.frame(spectra.line.table, null)
@@ -1166,15 +2523,23 @@ xrfPCAReactive <- reactive({
       #spectra.timeseries.table <- data.frame(interval, spectra.line.table[c(input$elementtrend)]/spectra.line.table.norm[c(input$elementnorm)], spectra.line.table$Cluster, spectra.line.table$Qualitative, spectra.line.table$Depth)
       #colnames(spectra.timeseries.table) <- c("Interval", "Selected", "Cluster", "Qualitative", "Depth")
       
-      spectra.timeseries.table <- data.frame(spectra.line.table[c(input$xaxistype)], spectra.line.table[c(input$elementtrend)]/spectra.line.table.norm[c(input$elementnorm)], spectra.line.table$Cluster, spectra.line.table$Qualitative, spectra.line.table$Depth, spectra.line.table$Climate)
+      spectra.timeseries.table <- data.frame(spectra.line.table[c(input$xaxistype)], (spectra.line.table[c(input$elementtrend)]/spectra.line.table.norm[c(input$elementnorm)]*input$ymultiply), spectra.line.table$Cluster, spectra.line.table$Qualitative, spectra.line.table$Depth, spectra.line.table$Climate)
       colnames(spectra.timeseries.table) <- c("Interval", "Selected", "Cluster", "Qualitative", "Depth", "Climate")
       
       
-      trendy <-  as.vector((if(input$elementnorm=="None") {
+      trendy <-  if(input$elementnorm=="None" && input$filetype=="Spectra" && input$usecalfile==FALSE && input$usecustumyaxis==FALSE) {
           paste(gsub("[.]", "", c(substr(input$elementtrend, 1, 2), " Counts per Second")), sep=",", collapse="")
-      } else {
+      } else if(input$elementnorm=="None" && input$filetype=="Spectra" && input$usecalfile==TRUE && input$usecustumyaxis==FALSE) {
+          paste(gsub("[.]", "", c(substr(input$elementtrend, 1, 2), " ", calFileContentsFirst()[[2]])), sep=",", collapse="")
+      } else if(input$elementnorm=="None" && input$filetype=="Net" && input$usecalfile==FALSE && input$usecustumyaxis==FALSE) {
+              paste(gsub("[.]", "", c(substr(input$elementtrend, 1, 2), " Net Counts")), sep=",", collapse="")
+      } else if(input$elementnorm=="None" && input$filetype=="Net" && input$usecalfile==TRUE && input$usecustumyaxis==FALSE) {
+          paste(gsub("[.]", "", c(substr(input$elementtrend, 1, 2), " ", calFileContentsFirst()[[2]])), sep=",", collapse="")
+          } else if(input$elementnorm!="None" && input$usecustumyaxis==FALSE){
           paste(gsub("[.]", "", c(substr(input$elementtrend, 1, 2), "/", substr(input$elementnorm, 1, 2))), sep=",", collapse="")
-      }))
+          } else if(input$usecustumyaxis==TRUE) {
+              paste(input$customyaxis)
+          }
       
       
       
@@ -1188,7 +2553,8 @@ xrfPCAReactive <- reactive({
       
       
       
-      black.time.series <- qplot(Interval, SMA(Selected, input$smoothing), input$xaxistype, ylab = trendy, geom="line", data = spectra.timeseries.table) +
+      
+      black.time.series <- qplot(Interval, SMA(Selected, input$smoothing), geom="line", data = spectra.timeseries.table) +
       geom_line(colour = "black", lwd=input$linesize) +
       theme_light() +
       theme(axis.text.x = element_text(size=15)) +
@@ -1198,9 +2564,10 @@ xrfPCAReactive <- reactive({
       theme(plot.title=element_text(size=20)) +
       theme(legend.title=element_text(size=15)) +
       theme(legend.text=element_text(size=15)) +
-      scale_x_continuous(paste(x.axis), label=comma)
+       scale_x_continuous(paste(x.axis), label=comma) +
+      scale_y_continuous(paste(trendy), label=comma)
       
-      smooth.time.series <- qplot(spectra.timeseries.table$Interval, SMA(spectra.timeseries.table$Selected, input$smoothing), xlab = input$xaxistype, ylab = trendy, geom="point") +
+      smooth.time.series <- qplot(spectra.timeseries.table$Interval, SMA(spectra.timeseries.table$Selected, input$smoothing), geom="point") +
       theme_light() +
       stat_smooth() +
       theme(axis.text.x = element_text(size=15)) +
@@ -1210,10 +2577,11 @@ xrfPCAReactive <- reactive({
       theme(plot.title=element_text(size=20)) +
       theme(legend.title=element_text(size=15)) +
       theme(legend.text=element_text(size=15)) +
-      scale_x_continuous(paste(x.axis), label=comma)
+       scale_x_continuous(paste(x.axis), label=comma) +
+      scale_y_continuous(paste(trendy), label=comma)
       
       
-      ramp.time.series <- qplot(Interval, SMA(Selected, input$smoothing), xlab = input$xaxistype, ylab = trendy, geom="line", data = spectra.timeseries.table) +
+      ramp.time.series <- qplot(Interval, SMA(Selected, input$smoothing),  geom="line", data = spectra.timeseries.table) +
       geom_line(aes(colour = Selected), lwd=input$linesize) +
       theme_light() +
       scale_colour_gradientn(colours=rainbow(7)) +
@@ -1224,14 +2592,14 @@ xrfPCAReactive <- reactive({
       theme(plot.title=element_text(size=20)) +
       theme(legend.title=element_text(size=15)) +
       theme(legend.text=element_text(size=15)) +
-      scale_x_continuous(paste(x.axis), label=comma)
+       scale_x_continuous(paste(x.axis), label=comma) +
+      scale_y_continuous(paste(trendy), label=comma)
       
       
       area.time.series <- ggplot(spectra.timeseries.table, aes(Interval)) +
       theme_classic() +
       geom_area(aes(y=Selected, colour="grey60", fill="grey60"), alpha=0.6) +
-      scale_x_continuous(input$xaxistype) +
-      scale_y_continuous(trendy) +
+
       theme(axis.text.x = element_text(size=15)) +
       theme(axis.text.y = element_text(size=15)) +
       theme(axis.title.x = element_text(size=15)) +
@@ -1239,11 +2607,12 @@ xrfPCAReactive <- reactive({
       theme(plot.title=element_text(size=20)) +
       theme(legend.title=element_text(size=15)) +
       theme(legend.text=element_text(size=15)) +
-      scale_x_continuous(paste(x.axis), label=comma)
+       scale_x_continuous(paste(x.axis), label=comma) +
+      scale_y_continuous(paste(trendy), label=comma)
       
       
       
-      cluster.time.series <- qplot(Interval, SMA(Selected, input$smoothing), xlab = input$xaxistype, ylab = trendy, geom="line", data = spectra.timeseries.table) +
+      cluster.time.series <- qplot(Interval, SMA(Selected, input$smoothing),  geom="line", data = spectra.timeseries.table) +
       geom_point(aes(colour = as.factor(Cluster)), size=input$pointsize) +
       scale_colour_discrete("Cluster") +
       theme_light() +
@@ -1254,9 +2623,10 @@ xrfPCAReactive <- reactive({
       theme(plot.title=element_text(size=20)) +
       theme(legend.title=element_text(size=15)) +
       theme(legend.text=element_text(size=15)) +
-      scale_x_continuous(paste(x.axis), label=comma)
+       scale_x_continuous(paste(x.axis), label=comma) +
+      scale_y_continuous(paste(trendy), label=comma)
       
-      climate.time.series.line <- qplot(Interval, SMA(Selected, input$smoothing), xlab = input$xaxistype, ylab = trendy, geom="line", data = spectra.timeseries.table, colour = as.factor(Climate)) +
+      climate.time.series.line <- qplot(Interval, SMA(Selected, input$smoothing), geom="line", data = spectra.timeseries.table, colour = as.factor(Climate)) +
       scale_colour_discrete("Climatic Period") +
       theme_light() +
       theme(axis.text.x = element_text(size=15)) +
@@ -1266,10 +2636,11 @@ xrfPCAReactive <- reactive({
       theme(plot.title=element_text(size=20)) +
       theme(legend.title=element_text(size=15)) +
       theme(legend.text=element_text(size=15)) +
-      scale_x_continuous(paste(x.axis), label=comma)
+       scale_x_continuous(paste(x.axis), label=comma) +
+      scale_y_continuous(paste(trendy), label=comma)
       
       
-      qualitative.time.series.line <- qplot(Interval, SMA(Selected, input$smoothing), xlab = input$xaxistype, ylab = trendy, geom="line", data = spectra.timeseries.table, colour = as.factor(Qualitative)) +
+      qualitative.time.series.line <- qplot(Interval, SMA(Selected, input$smoothing), geom="line", data = spectra.timeseries.table, colour = as.factor(Qualitative)) +
       scale_colour_discrete("Qualitative") +
       theme_light() +
       theme(axis.text.x = element_text(size=15)) +
@@ -1279,9 +2650,10 @@ xrfPCAReactive <- reactive({
       theme(plot.title=element_text(size=20)) +
       theme(legend.title=element_text(size=15)) +
       theme(legend.text=element_text(size=15)) +
-      scale_x_continuous(paste(x.axis), label=comma)
+       scale_x_continuous(paste(x.axis), label=comma) +
+      scale_y_continuous(paste(trendy), label=comma)
       
-      qualitative.time.series.point <- qplot(Interval, SMA(Selected, input$smoothing), xlab = input$xaxistype, ylab = trendy, geom="line", data = spectra.timeseries.table) +
+      qualitative.time.series.point <- qplot(Interval, SMA(Selected, input$smoothing),  geom="line", data = spectra.timeseries.table) +
       geom_point(aes(colour = as.factor(Qualitative)), lwd=input$pointsize) +
       scale_colour_discrete("Qualitative") +
       theme_light() +
@@ -1292,12 +2664,14 @@ xrfPCAReactive <- reactive({
       theme(plot.title=element_text(size=20)) +
       theme(legend.title=element_text(size=15)) +
       theme(legend.text=element_text(size=15)) +
-      scale_x_continuous(paste(x.axis), label=comma)
+       scale_x_continuous(paste(x.axis), label=comma) +
+      scale_y_continuous(paste(trendy), label=comma)
       
       
-      Depth.time.series <- qplot(Interval, SMA(Selected, input$smoothing), xlab = input$xaxistype, ylab = trendy, geom="line", data = spectra.timeseries.table) +
-      geom_point(aes(colour = Depth), lwd=input$pointsize) +
-      scale_colour_gradientn("Depth", colours=rainbow(length(spectra.line.table$Depth))) +
+      depth.time.series <- qplot(Interval, SMA(Selected, input$smoothing),  geom="line", data = spectra.timeseries.table) +
+      geom_line(aes(colour = Depth), lwd=input$linesize+0.5) +
+      geom_line(lwd=input$linesize-0.5) +
+      scale_colour_gradientn("Depth", colours=rev(terrain.colors(length(spectra.line.table$Depth)))) +
       theme_light() +
       theme(axis.text.x = element_text(size=15)) +
       theme(axis.text.y = element_text(size=15)) +
@@ -1306,27 +2680,176 @@ xrfPCAReactive <- reactive({
       theme(plot.title=element_text(size=20)) +
       theme(legend.title=element_text(size=15)) +
       theme(legend.text=element_text(size=15)) +
-      scale_x_continuous(paste(x.axis), label=comma)
+       scale_x_continuous(paste(x.axis), label=comma) +
+      scale_y_continuous(paste(trendy), label=comma)
       
       
-      if (input$timecolour == "Black") {
+      ####Flipped X Axis
+      
+      black.time.series.reverse <- qplot(Interval, SMA(Selected, input$smoothing), geom="line", data = spectra.timeseries.table) +
+      geom_line(colour = "black", lwd=input$linesize) +
+      theme_light() +
+      theme(axis.text.x = element_text(size=15)) +
+      theme(axis.text.y = element_text(size=15)) +
+      theme(axis.title.x = element_text(size=15)) +
+      theme(axis.title.y = element_text(size=15, angle=90)) +
+      theme(plot.title=element_text(size=20)) +
+      theme(legend.title=element_text(size=15)) +
+      theme(legend.text=element_text(size=15)) +
+      scale_x_reverse(paste(x.axis), label=comma) +
+      scale_y_continuous(paste(trendy), label=comma)
+      
+      smooth.time.series.reverse <- qplot(spectra.timeseries.table$Interval, SMA(spectra.timeseries.table$Selected, input$smoothing), geom="point") +
+      theme_light() +
+      stat_smooth() +
+      theme(axis.text.x = element_text(size=15)) +
+      theme(axis.text.y = element_text(size=15)) +
+      theme(axis.title.x = element_text(size=15)) +
+      theme(axis.title.y = element_text(size=15, angle=90)) +
+      theme(plot.title=element_text(size=20)) +
+      theme(legend.title=element_text(size=15)) +
+      theme(legend.text=element_text(size=15)) +
+      scale_x_reverse(paste(x.axis), label=comma) +
+      scale_y_continuous(paste(trendy), label=comma)
+      
+      
+      ramp.time.series.reverse <- qplot(Interval, SMA(Selected, input$smoothing), geom="line", data = spectra.timeseries.table) +
+      geom_line(aes(colour = Selected), lwd=input$linesize) +
+      theme_light() +
+      scale_colour_gradientn(colours=rainbow(7)) +
+      theme(axis.text.x = element_text(size=15)) +
+      theme(axis.text.y = element_text(size=15)) +
+      theme(axis.title.x = element_text(size=15)) +
+      theme(axis.title.y = element_text(size=15, angle=90)) +
+      theme(plot.title=element_text(size=20)) +
+      theme(legend.title=element_text(size=15)) +
+      theme(legend.text=element_text(size=15)) +
+      scale_x_reverse(paste(x.axis), label=comma) +
+      scale_y_continuous(paste(trendy), label=comma)
+      
+      
+      area.time.series.reverse <- ggplot(spectra.timeseries.table, aes(Interval)) +
+      theme_classic() +
+      geom_area(aes(y=Selected, colour="grey60", fill="grey60"), alpha=0.6) +
+      theme(axis.text.x = element_text(size=15)) +
+      theme(axis.text.y = element_text(size=15)) +
+      theme(axis.title.x = element_text(size=15)) +
+      theme(axis.title.y = element_text(size=15, angle=90)) +
+      theme(plot.title=element_text(size=20)) +
+      theme(legend.title=element_text(size=15)) +
+      theme(legend.text=element_text(size=15)) +
+      scale_x_reverse(paste(x.axis), label=comma) +
+      scale_y_continuous(paste(trendy), label=comma)
+      
+      
+      
+      cluster.time.series.reverse <- qplot(Interval, SMA(Selected, input$smoothing),  geom="line", data = spectra.timeseries.table) +
+      geom_point(aes(colour = as.factor(Cluster)), size=input$pointsize) +
+      scale_colour_discrete("Cluster") +
+      theme_light() +
+      theme(axis.text.x = element_text(size=15)) +
+      theme(axis.text.y = element_text(size=15)) +
+      theme(axis.title.x = element_text(size=15)) +
+      theme(axis.title.y = element_text(size=15, angle=90)) +
+      theme(plot.title=element_text(size=20)) +
+      theme(legend.title=element_text(size=15)) +
+      theme(legend.text=element_text(size=15)) +
+      scale_x_reverse(paste(x.axis), label=comma) +
+      scale_y_continuous(paste(trendy), label=comma)
+      
+      climate.time.series.line.reverse <- qplot(Interval, SMA(Selected, input$smoothing), geom="line", data = spectra.timeseries.table, colour = as.factor(Climate)) +
+      scale_colour_discrete("Climatic Period") +
+      theme_light() +
+      theme(axis.text.x = element_text(size=15)) +
+      theme(axis.text.y = element_text(size=15)) +
+      theme(axis.title.x = element_text(size=15)) +
+      theme(axis.title.y = element_text(size=15, angle=90)) +
+      theme(plot.title=element_text(size=20)) +
+      theme(legend.title=element_text(size=15)) +
+      theme(legend.text=element_text(size=15)) +
+      scale_x_reverse(paste(x.axis), label=comma) +
+      scale_y_continuous(paste(trendy), label=comma)
+      
+      
+      qualitative.time.series.line.reverse <- qplot(Interval, SMA(Selected, input$smoothing), geom="line", data = spectra.timeseries.table, colour = as.factor(Qualitative)) +
+      scale_colour_discrete("Qualitative") +
+      theme_light() +
+      theme(axis.text.x = element_text(size=15)) +
+      theme(axis.text.y = element_text(size=15)) +
+      theme(axis.title.x = element_text(size=15)) +
+      theme(axis.title.y = element_text(size=15, angle=90)) +
+      theme(plot.title=element_text(size=20)) +
+      theme(legend.title=element_text(size=15)) +
+      theme(legend.text=element_text(size=15)) +
+      scale_x_reverse(paste(x.axis), label=comma) +
+      scale_y_continuous(paste(trendy), label=comma)
+      
+      qualitative.time.series.point.reverse <- qplot(Interval, SMA(Selected, input$smoothing),  geom="line", data = spectra.timeseries.table) +
+      geom_point(aes(colour = as.factor(Qualitative)), lwd=input$pointsize) +
+      scale_colour_discrete("Qualitative") +
+      theme_light() +
+      theme(axis.text.x = element_text(size=15)) +
+      theme(axis.text.y = element_text(size=15)) +
+      theme(axis.title.x = element_text(size=15)) +
+      theme(axis.title.y = element_text(size=15, angle=90)) +
+      theme(plot.title=element_text(size=20)) +
+      theme(legend.title=element_text(size=15)) +
+      theme(legend.text=element_text(size=15)) +
+      scale_x_reverse(paste(x.axis), label=comma) +
+      scale_y_continuous(paste(trendy), label=comma)
+      
+      
+      depth.time.series.reverse <- qplot(Interval, SMA(Selected, input$smoothing),  geom="line", data = spectra.timeseries.table) +
+      geom_line(aes(colour = Depth), lwd=input$linesize+0.5) +
+      geom_line(lwd=input$linesize-0.5) +
+      scale_colour_gradientn("Depth", colours=rev(terrain.colors(length(spectra.line.table$Depth)))) +
+      theme_light() +
+      theme(axis.text.x = element_text(size=15)) +
+      theme(axis.text.y = element_text(size=15)) +
+      theme(axis.title.x = element_text(size=15)) +
+      theme(axis.title.y = element_text(size=15, angle=90)) +
+      theme(plot.title=element_text(size=20)) +
+      theme(legend.title=element_text(size=15)) +
+      theme(legend.text=element_text(size=15)) +
+      scale_x_reverse(paste(x.axis), label=comma) +
+      scale_y_continuous(paste(trendy), label=comma)
+      
+      
+     
+      if (input$timecolour == "Black" && input$xaxistype!="Depth") {
           black.time.series
-      } else if (input$timecolour == "Smooth") {
+      } else if (input$timecolour == "Smooth" && input$xaxistype!="Depth") {
           smooth.time.series
-      } else if (input$timecolour == "Selected") {
+      } else if (input$timecolour == "Selected" && input$xaxistype!="Depth") {
           ramp.time.series
-      } else if (input$timecolour == "Cluster") {
+      } else if (input$timecolour == "Cluster" && input$xaxistype!="Depth") {
           cluster.time.series
-      } else if (input$timecolour == "Climate") {
+      } else if (input$timecolour == "Climate" && input$xaxistype!="Depth") {
           climate.time.series.line
-      } else if (input$timecolour == "QualitativePoint") {
+      } else if (input$timecolour == "QualitativePoint" && input$xaxistype!="Depth") {
           qualitative.time.series.point
-      } else if (input$timecolour == "QualitativeLine") {
+      } else if (input$timecolour == "QualitativeLine" && input$xaxistype!="Depth") {
           qualitative.time.series.line
-      } else if (input$timecolour == "Depth") {
+      } else if (input$timecolour == "Depth" && input$xaxistype!="Depth") {
           Depth.time.series
-      } else if (input$timecolour == "Area") {
-          area.time.series
+      } else if (input$timecolour == "Black" && input$xaxistype=="Depth") {
+          black.time.series.reverse
+      } else if (input$timecolour == "Smooth" && input$xaxistype=="Depth") {
+          smooth.time.series.reverse
+      } else if (input$timecolour == "Selected" && input$xaxistype=="Depth") {
+          ramp.time.series.reverse
+      } else if (input$timecolour == "Cluster" && input$xaxistype=="Depth") {
+          cluster.time.series.reverse
+      } else if (input$timecolour == "Climate" && input$xaxistype=="Depth") {
+          climate.time.series.line.reverse
+      } else if (input$timecolour == "QualitativePoint" && input$xaxistype=="Depth") {
+          qualitative.time.series.point.reverse
+      } else if (input$timecolour == "QualitativeLine" && input$xaxistype=="Depth") {
+          qualitative.time.series.line.reverse
+      } else if (input$timecolour == "Depth" && input$xaxistype=="Depth") {
+          depth.time.series.reverse
+      } else if (input$timecolour == "Area" && input$xaxistype=="Depth") {
+          area.time.series.reverse
       }
       
       
@@ -1340,37 +2863,19 @@ xrfPCAReactive <- reactive({
   })
   output$timeseriesplot2 <- renderPlot({
       input$timeseriesact2
-      isolate(print(plotInput3b()))
-      
+      isolate(plotInput3b())      
   })
   
   
-  output$downloadPlot3b <- downloadHandler(
-  
-  
-  
-  filename = function() { paste(trendPlot(), '.tiff', sep='') },
-  content = function(file) {
-      ggsave(file,plotInput3b(), device="tiff", dpi=300, width=12, height=7)
-  }
-  )
-  
-  
-  
-  plotInput3c <- reactive({
+  hoverHold3b <- reactive({
+      input$timeseriesact2
       
       spectra.line.table <- ageData()
       
-      x.axis <- if (input$xaxistype=="Depth") {
-          paste("Depth (", input$lengthunit, ")", sep="", collapse="")
-      } else if (input$xaxistype=="Age" && input$timetype=="BP"){
-          paste("cal year BP")
-      } else if (input$xaxistype=="Age" && input$timetype=="BC") {
-          paste("cal year BC")
-      } else if (input$axistype=="Age" && input$timetype=="AD") {
-          paste("cal year AD")
-      } else if (input$axistype=="Age" && input$timetype=="BC/AD") {
-          paste("cal year BC/AD")
+      spectra.line.table <- subset(spectra.line.table, !(spectra.line.table[input$xaxistype] < input$xlimrange[1] | spectra.line.table[input$xaxistype] > input$xlimrange[2]))
+      
+      if(is.null(spectra.line.table$Age)==TRUE){
+          spectra.line.table$Age <- rep(1, length(spectra.line.table$Spectrum))
       }
       
       spectra.line.table.norm <- data.frame(spectra.line.table, null)
@@ -1382,15 +2887,113 @@ xrfPCAReactive <- reactive({
       #spectra.timeseries.table <- data.frame(interval, spectra.line.table[c(input$elementtrend)]/spectra.line.table.norm[c(input$elementnorm)], spectra.line.table$Cluster, spectra.line.table$Qualitative, spectra.line.table$Depth)
       #colnames(spectra.timeseries.table) <- c("Interval", "Selected", "Cluster", "Qualitative", "Depth")
       
-      spectra.timeseries.table <- data.frame(spectra.line.table[c(input$xaxistype)], spectra.line.table[c(input$elementtrend)]/spectra.line.table.norm[c(input$elementnorm)], spectra.line.table$Cluster, spectra.line.table$Qualitative, spectra.line.table$Depth, spectra.line.table$Climate)
+      spectra.timeseries.table <- data.frame(spectra.line.table[c(input$xaxistype)], (spectra.line.table[c(input$elementtrend)]/spectra.line.table.norm[c(input$elementnorm)]*input$ymultiply), spectra.line.table$Cluster, spectra.line.table$Qualitative, spectra.line.table$Depth, spectra.line.table$Climate)
+      colnames(spectra.timeseries.table) <- c("Interval", "Selected", "Cluster", "Qualitative", "Depth", "Climate")
+      
+      isolate(spectra.timeseries.table)
+      
+  })
+  
+  
+  
+  output$hover_info3b <- renderUI({
+      
+      point.table <- hoverHold3b()
+      
+      hover <- input$plot_hover3b
+      point <- nearPoints(point.table,  xvar="Interval", yvar="Selected", coordinfo=hover,   threshold = 10, maxpoints = 1)
+      
+      #if (nrow(point) == 0) return(NULL)
+      
+      
+      
+      
+      # calculate point position INSIDE the image as percent of total dimensions
+      # from left (horizontal) and from top (vertical)
+      left_pct <- (hover$x - hover$domain$left) / (hover$domain$right - hover$domain$left)
+      top_pct <- (hover$domain$top - hover$y) / (hover$domain$top - hover$domain$bottom)
+      
+      # calculate distance from left and bottom side of the picture in pixels
+      left_px <- hover$range$left + left_pct * (hover$range$right - hover$range$left)
+      top_px <- hover$range$top + top_pct * (hover$range$bottom - hover$range$top)
+      
+      
+      # create style property fot tooltip
+      # background color is set so tooltip is a bit transparent
+      # z-index is set so we are sure are tooltip will be on top
+      style <- paste0("position:absolute; z-index:100; background-color: rgba(245, 245, 245, 0.85); ",
+      "left:", left_px + 2, "px; top:", top_px + 2, "px;")
+      
+      # actual tooltip created as wellPanel
+      wellPanel(
+      style = style,
+      p(HTML(paste0("<b> Spectrum: </b>", point$Spectrum, "<br/>",
+      "<b> Depth: </b>", point$Depth, "<br/>",
+      "<b> Age: </b>", point$Age, "<br/>"
+      
+      )))
+      )
+  })
+  
+  output$downloadPlot3b <- downloadHandler(
+  
+  
+  
+  filename = function() { paste(trendPlot(), '.tiff', sep='') },
+  content = function(file) {
+      ggsave(file,plotInput3b(), device="tiff", compression="lzw", type="cairo", type="cairo", dpi=300, width=12, height=7)
+  }
+  )
+  
+  
+  
+  plotInput3c <- reactive({
+      
+      
+      x.axis <- if (input$xaxistype=="Depth") {
+          paste("Depth (", input$lengthunit, ")", sep="", collapse="")
+      } else if (input$xaxistype=="Age" && input$timetype=="BP"){
+          paste("cal year BP")
+      } else if (input$xaxistype=="Age" && input$timetype=="BC") {
+          paste("cal year BC")
+      } else if (input$xaxistype=="Age" && input$timetype=="AD") {
+          paste("cal year AD")
+      } else if (input$xaxistype=="Age" && input$timetype=="BC/AD") {
+          paste("cal year BC/AD")
+      } else if (input$xaxistype=="Custom") {
+          input$customxaxis
+      }
+      
+      
+      spectra.line.table <- ageData()
+      spectra.line.table <- subset(spectra.line.table, !(spectra.line.table[input$xaxistype] < input$xlimrange[1] | spectra.line.table[input$xaxistype] > input$xlimrange[2]))
+      
+      spectra.line.table.norm <- data.frame(spectra.line.table, null)
+      colnames(spectra.line.table.norm) <- c(names(spectra.line.table), "None")
+      spectra.line.table.norm
+      
+      #interval <- unique.spec*as.numeric(input$intervalmm)+as.numeric(input$startmm)
+      
+      #spectra.timeseries.table <- data.frame(interval, spectra.line.table[c(input$elementtrend)]/spectra.line.table.norm[c(input$elementnorm)], spectra.line.table$Cluster, spectra.line.table$Qualitative, spectra.line.table$Depth)
+      #colnames(spectra.timeseries.table) <- c("Interval", "Selected", "Cluster", "Qualitative", "Depth")
+      
+      spectra.timeseries.table <- data.frame(spectra.line.table[c(input$xaxistype)], (spectra.line.table[c(input$elementtrend)]/spectra.line.table.norm[c(input$elementnorm)]*input$ymultiply), spectra.line.table$Cluster, spectra.line.table$Qualitative, spectra.line.table$Depth, spectra.line.table$Climate)
       colnames(spectra.timeseries.table) <- c("Interval", "Selected", "Cluster", "Qualitative", "Depth", "Climate")
       
       
-      trendy <-  as.vector((if(input$elementnorm=="None") {
+      trendy <-  if(input$elementnorm=="None" && input$filetype=="Spectra" && input$usecalfile==FALSE && input$usecustumyaxis==FALSE) {
           paste(gsub("[.]", "", c(substr(input$elementtrend, 1, 2), " Counts per Second")), sep=",", collapse="")
-      } else {
+      } else if(input$elementnorm=="None" && input$filetype=="Spectra" && input$usecalfile==TRUE && input$usecustumyaxis==FALSE) {
+          paste(gsub("[.]", "", c(substr(input$elementtrend, 1, 2), " ", calFileContentsFirst()[[2]])), sep=",", collapse="")
+      } else if(input$elementnorm=="None" && input$filetype=="Net" && input$usecalfile==FALSE && input$usecustumyaxis==FALSE) {
+              paste(gsub("[.]", "", c(substr(input$elementtrend, 1, 2), " Net Counts")), sep=",", collapse="")
+      } else if(input$elementnorm=="None" && input$filetype=="Net" && input$usecalfile==TRUE && input$usecustumyaxis==FALSE) {
+          paste(gsub("[.]", "", c(substr(input$elementtrend, 1, 2), " ", calFileContentsFirst()[[2]])), sep=",", collapse="")
+          } else if(input$elementnorm!="None" && input$usecustumyaxis==FALSE){
           paste(gsub("[.]", "", c(substr(input$elementtrend, 1, 2), "/", substr(input$elementnorm, 1, 2))), sep=",", collapse="")
-      }))
+          } else if(input$usecustumyaxis==TRUE) {
+              paste(input$customyaxis)
+          }
       
       
       
@@ -1404,7 +3007,8 @@ xrfPCAReactive <- reactive({
       
       
       
-      black.time.series <- qplot(Interval, SMA(Selected, input$smoothing), input$xaxistype, ylab = trendy, geom="line", data = spectra.timeseries.table) +
+      
+      black.time.series <- qplot(Interval, SMA(Selected, input$smoothing), geom="line", data = spectra.timeseries.table) +
       geom_line(colour = "black", lwd=input$linesize) +
       theme_light() +
       theme(axis.text.x = element_text(size=15)) +
@@ -1414,9 +3018,10 @@ xrfPCAReactive <- reactive({
       theme(plot.title=element_text(size=20)) +
       theme(legend.title=element_text(size=15)) +
       theme(legend.text=element_text(size=15)) +
-      scale_x_continuous(paste(x.axis), label=comma)
+       scale_x_continuous(paste(x.axis), label=comma) +
+      scale_y_continuous(paste(trendy), label=comma)
       
-      smooth.time.series <- qplot(spectra.timeseries.table$Interval, SMA(spectra.timeseries.table$Selected, input$smoothing), xlab = input$xaxistype, ylab = trendy, geom="point") +
+      smooth.time.series <- qplot(spectra.timeseries.table$Interval, SMA(spectra.timeseries.table$Selected, input$smoothing), geom="point") +
       theme_light() +
       stat_smooth() +
       theme(axis.text.x = element_text(size=15)) +
@@ -1426,10 +3031,11 @@ xrfPCAReactive <- reactive({
       theme(plot.title=element_text(size=20)) +
       theme(legend.title=element_text(size=15)) +
       theme(legend.text=element_text(size=15)) +
-      scale_x_continuous(paste(x.axis), label=comma)
+       scale_x_continuous(paste(x.axis), label=comma) +
+      scale_y_continuous(paste(trendy), label=comma)
       
       
-      ramp.time.series <- qplot(Interval, SMA(Selected, input$smoothing), xlab = input$xaxistype, ylab = trendy, geom="line", data = spectra.timeseries.table) +
+      ramp.time.series <- qplot(Interval, SMA(Selected, input$smoothing),  geom="line", data = spectra.timeseries.table) +
       geom_line(aes(colour = Selected), lwd=input$linesize) +
       theme_light() +
       scale_colour_gradientn(colours=rainbow(7)) +
@@ -1440,14 +3046,14 @@ xrfPCAReactive <- reactive({
       theme(plot.title=element_text(size=20)) +
       theme(legend.title=element_text(size=15)) +
       theme(legend.text=element_text(size=15)) +
-      scale_x_continuous(paste(x.axis), label=comma)
+       scale_x_continuous(paste(x.axis), label=comma) +
+      scale_y_continuous(paste(trendy), label=comma)
       
       
       area.time.series <- ggplot(spectra.timeseries.table, aes(Interval)) +
       theme_classic() +
       geom_area(aes(y=Selected, colour="grey60", fill="grey60"), alpha=0.6) +
-      scale_x_continuous(input$xaxistype) +
-      scale_y_continuous(trendy) +
+
       theme(axis.text.x = element_text(size=15)) +
       theme(axis.text.y = element_text(size=15)) +
       theme(axis.title.x = element_text(size=15)) +
@@ -1455,11 +3061,12 @@ xrfPCAReactive <- reactive({
       theme(plot.title=element_text(size=20)) +
       theme(legend.title=element_text(size=15)) +
       theme(legend.text=element_text(size=15)) +
-      scale_x_continuous(paste(x.axis), label=comma)
+       scale_x_continuous(paste(x.axis), label=comma) +
+      scale_y_continuous(paste(trendy), label=comma)
       
       
       
-      cluster.time.series <- qplot(Interval, SMA(Selected, input$smoothing), xlab = input$xaxistype, ylab = trendy, geom="line", data = spectra.timeseries.table) +
+      cluster.time.series <- qplot(Interval, SMA(Selected, input$smoothing),  geom="line", data = spectra.timeseries.table) +
       geom_point(aes(colour = as.factor(Cluster)), size=input$pointsize) +
       scale_colour_discrete("Cluster") +
       theme_light() +
@@ -1470,9 +3077,10 @@ xrfPCAReactive <- reactive({
       theme(plot.title=element_text(size=20)) +
       theme(legend.title=element_text(size=15)) +
       theme(legend.text=element_text(size=15)) +
-      scale_x_continuous(paste(x.axis), label=comma)
+       scale_x_continuous(paste(x.axis), label=comma) +
+      scale_y_continuous(paste(trendy), label=comma)
       
-      climate.time.series.line <- qplot(Interval, SMA(Selected, input$smoothing), xlab = input$xaxistype, ylab = trendy, geom="line", data = spectra.timeseries.table, colour = as.factor(Climate)) +
+      climate.time.series.line <- qplot(Interval, SMA(Selected, input$smoothing), geom="line", data = spectra.timeseries.table, colour = as.factor(Climate)) +
       scale_colour_discrete("Climatic Period") +
       theme_light() +
       theme(axis.text.x = element_text(size=15)) +
@@ -1482,10 +3090,11 @@ xrfPCAReactive <- reactive({
       theme(plot.title=element_text(size=20)) +
       theme(legend.title=element_text(size=15)) +
       theme(legend.text=element_text(size=15)) +
-      scale_x_continuous(paste(x.axis), label=comma)
+       scale_x_continuous(paste(x.axis), label=comma) +
+      scale_y_continuous(paste(trendy), label=comma)
       
       
-      qualitative.time.series.line <- qplot(Interval, SMA(Selected, input$smoothing), xlab = input$xaxistype, ylab = trendy, geom="line", data = spectra.timeseries.table, colour = as.factor(Qualitative)) +
+      qualitative.time.series.line <- qplot(Interval, SMA(Selected, input$smoothing), geom="line", data = spectra.timeseries.table, colour = as.factor(Qualitative)) +
       scale_colour_discrete("Qualitative") +
       theme_light() +
       theme(axis.text.x = element_text(size=15)) +
@@ -1495,9 +3104,10 @@ xrfPCAReactive <- reactive({
       theme(plot.title=element_text(size=20)) +
       theme(legend.title=element_text(size=15)) +
       theme(legend.text=element_text(size=15)) +
-      scale_x_continuous(paste(x.axis), label=comma)
+       scale_x_continuous(paste(x.axis), label=comma) +
+      scale_y_continuous(paste(trendy), label=comma)
       
-      qualitative.time.series.point <- qplot(Interval, SMA(Selected, input$smoothing), xlab = input$xaxistype, ylab = trendy, geom="line", data = spectra.timeseries.table) +
+      qualitative.time.series.point <- qplot(Interval, SMA(Selected, input$smoothing),  geom="line", data = spectra.timeseries.table) +
       geom_point(aes(colour = as.factor(Qualitative)), lwd=input$pointsize) +
       scale_colour_discrete("Qualitative") +
       theme_light() +
@@ -1508,12 +3118,13 @@ xrfPCAReactive <- reactive({
       theme(plot.title=element_text(size=20)) +
       theme(legend.title=element_text(size=15)) +
       theme(legend.text=element_text(size=15)) +
-      scale_x_continuous(paste(x.axis), label=comma)
+       scale_x_continuous(paste(x.axis), label=comma) +
+      scale_y_continuous(paste(trendy), label=comma)
       
       
-      Depth.time.series <- qplot(Interval, SMA(Selected, input$smoothing), xlab = input$xaxistype, ylab = trendy, geom="line", data = spectra.timeseries.table) +
-      geom_point(aes(colour = Depth), lwd=input$pointsize) +
-      scale_colour_gradientn("Depth", colours=rainbow(length(spectra.line.table$Depth))) +
+      depth.time.series <- qplot(Interval, SMA(Selected, input$smoothing),  geom="line", data = spectra.timeseries.table) +
+      geom_line(aes(colour = Depth), lwd=input$linesize+0.5) +
+      geom_line(lwd=input$linesize-0.5) +      scale_colour_gradientn("Depth", colours=rev(terrain.colors(length(spectra.line.table$Depth)))) +
       theme_light() +
       theme(axis.text.x = element_text(size=15)) +
       theme(axis.text.y = element_text(size=15)) +
@@ -1522,27 +3133,174 @@ xrfPCAReactive <- reactive({
       theme(plot.title=element_text(size=20)) +
       theme(legend.title=element_text(size=15)) +
       theme(legend.text=element_text(size=15)) +
-      scale_x_continuous(paste(x.axis), label=comma)
+       scale_x_continuous(paste(x.axis), label=comma) +
+      scale_y_continuous(paste(trendy), label=comma)
+      
+      ####Flipped X Axis
+      
+      black.time.series.reverse <- qplot(Interval, SMA(Selected, input$smoothing), geom="line", data = spectra.timeseries.table) +
+      geom_line(colour = "black", lwd=input$linesize) +
+      theme_light() +
+      theme(axis.text.x = element_text(size=15)) +
+      theme(axis.text.y = element_text(size=15)) +
+      theme(axis.title.x = element_text(size=15)) +
+      theme(axis.title.y = element_text(size=15, angle=90)) +
+      theme(plot.title=element_text(size=20)) +
+      theme(legend.title=element_text(size=15)) +
+      theme(legend.text=element_text(size=15)) +
+      scale_x_reverse(paste(x.axis), label=comma) +
+      scale_y_continuous(paste(trendy), label=comma)
+      
+      smooth.time.series.reverse <- qplot(spectra.timeseries.table$Interval, SMA(spectra.timeseries.table$Selected, input$smoothing), geom="point") +
+      theme_light() +
+      stat_smooth() +
+      theme(axis.text.x = element_text(size=15)) +
+      theme(axis.text.y = element_text(size=15)) +
+      theme(axis.title.x = element_text(size=15)) +
+      theme(axis.title.y = element_text(size=15, angle=90)) +
+      theme(plot.title=element_text(size=20)) +
+      theme(legend.title=element_text(size=15)) +
+      theme(legend.text=element_text(size=15)) +
+      scale_x_reverse(paste(x.axis), label=comma) +
+      scale_y_continuous(paste(trendy), label=comma)
       
       
-      if (input$timecolour == "Black") {
+      ramp.time.series.reverse <- qplot(Interval, SMA(Selected, input$smoothing), geom="line", data = spectra.timeseries.table) +
+      geom_line(aes(colour = Selected), lwd=input$linesize) +
+      theme_light() +
+      scale_colour_gradientn(colours=rainbow(7)) +
+      theme(axis.text.x = element_text(size=15)) +
+      theme(axis.text.y = element_text(size=15)) +
+      theme(axis.title.x = element_text(size=15)) +
+      theme(axis.title.y = element_text(size=15, angle=90)) +
+      theme(plot.title=element_text(size=20)) +
+      theme(legend.title=element_text(size=15)) +
+      theme(legend.text=element_text(size=15)) +
+      scale_x_reverse(paste(x.axis), label=comma) +
+      scale_y_continuous(paste(trendy), label=comma)
+      
+      
+      area.time.series.reverse <- ggplot(spectra.timeseries.table, aes(Interval)) +
+      theme_classic() +
+      geom_area(aes(y=Selected, colour="grey60", fill="grey60"), alpha=0.6) +
+      theme(axis.text.x = element_text(size=15)) +
+      theme(axis.text.y = element_text(size=15)) +
+      theme(axis.title.x = element_text(size=15)) +
+      theme(axis.title.y = element_text(size=15, angle=90)) +
+      theme(plot.title=element_text(size=20)) +
+      theme(legend.title=element_text(size=15)) +
+      theme(legend.text=element_text(size=15)) +
+      scale_x_reverse(paste(x.axis), label=comma) +
+      scale_y_continuous(paste(trendy), label=comma)
+      
+      
+      
+      cluster.time.series.reverse <- qplot(Interval, SMA(Selected, input$smoothing),  geom="line", data = spectra.timeseries.table) +
+      geom_point(aes(colour = as.factor(Cluster)), size=input$pointsize) +
+      scale_colour_discrete("Cluster") +
+      theme_light() +
+      theme(axis.text.x = element_text(size=15)) +
+      theme(axis.text.y = element_text(size=15)) +
+      theme(axis.title.x = element_text(size=15)) +
+      theme(axis.title.y = element_text(size=15, angle=90)) +
+      theme(plot.title=element_text(size=20)) +
+      theme(legend.title=element_text(size=15)) +
+      theme(legend.text=element_text(size=15)) +
+      scale_x_reverse(paste(x.axis), label=comma) +
+      scale_y_continuous(paste(trendy), label=comma)
+      
+      
+      climate.time.series.line.reverse <- qplot(Interval, SMA(Selected, input$smoothing), geom="line", data = spectra.timeseries.table, colour = as.factor(Climate)) +
+      scale_colour_discrete("Climatic Period") +
+      theme_light() +
+      theme(axis.text.x = element_text(size=15)) +
+      theme(axis.text.y = element_text(size=15)) +
+      theme(axis.title.x = element_text(size=15)) +
+      theme(axis.title.y = element_text(size=15, angle=90)) +
+      theme(plot.title=element_text(size=20)) +
+      theme(legend.title=element_text(size=15)) +
+      theme(legend.text=element_text(size=15)) +
+      scale_x_reverse(paste(x.axis), label=comma) +
+      scale_y_continuous(paste(trendy), label=comma)
+      
+      
+      qualitative.time.series.line.reverse <- qplot(Interval, SMA(Selected, input$smoothing), geom="line", data = spectra.timeseries.table, colour = as.factor(Qualitative)) +
+      scale_colour_discrete("Qualitative") +
+      theme_light() +
+      theme(axis.text.x = element_text(size=15)) +
+      theme(axis.text.y = element_text(size=15)) +
+      theme(axis.title.x = element_text(size=15)) +
+      theme(axis.title.y = element_text(size=15, angle=90)) +
+      theme(plot.title=element_text(size=20)) +
+      theme(legend.title=element_text(size=15)) +
+      theme(legend.text=element_text(size=15)) +
+      scale_x_reverse(paste(x.axis), label=comma) +
+      scale_y_continuous(paste(trendy), label=comma)
+      
+      qualitative.time.series.point.reverse <- qplot(Interval, SMA(Selected, input$smoothing),  geom="line", data = spectra.timeseries.table) +
+      geom_point(aes(colour = as.factor(Qualitative)), lwd=input$pointsize) +
+      scale_colour_discrete("Qualitative") +
+      theme_light() +
+      theme(axis.text.x = element_text(size=15)) +
+      theme(axis.text.y = element_text(size=15)) +
+      theme(axis.title.x = element_text(size=15)) +
+      theme(axis.title.y = element_text(size=15, angle=90)) +
+      theme(plot.title=element_text(size=20)) +
+      theme(legend.title=element_text(size=15)) +
+      theme(legend.text=element_text(size=15)) +
+      scale_x_reverse(paste(x.axis), label=comma) +
+      scale_y_continuous(paste(trendy), label=comma)
+      
+      
+      depth.time.series.reverse <- qplot(Interval, SMA(Selected, input$smoothing),  geom="line", data = spectra.timeseries.table) +
+      geom_line(aes(colour = Depth), lwd=input$linesize+0.5) +
+      geom_line(lwd=input$linesize-0.5) +      scale_colour_gradientn("Depth", colours=rev(terrain.colors(length(spectra.line.table$Depth)))) +
+      theme_light() +
+      theme(axis.text.x = element_text(size=15)) +
+      theme(axis.text.y = element_text(size=15)) +
+      theme(axis.title.x = element_text(size=15)) +
+      theme(axis.title.y = element_text(size=15, angle=90)) +
+      theme(plot.title=element_text(size=20)) +
+      theme(legend.title=element_text(size=15)) +
+      theme(legend.text=element_text(size=15)) +
+      scale_x_reverse(paste(x.axis), label=comma) +
+      scale_y_continuous(paste(trendy), label=comma)
+      
+     
+      if (input$timecolour == "Black" && input$xaxistype!="Depth") {
           black.time.series
-      } else if (input$timecolour == "Smooth") {
+      } else if (input$timecolour == "Smooth" && input$xaxistype!="Depth") {
           smooth.time.series
-      } else if (input$timecolour == "Selected") {
+      } else if (input$timecolour == "Selected" && input$xaxistype!="Depth") {
           ramp.time.series
-      } else if (input$timecolour == "Cluster") {
+      } else if (input$timecolour == "Cluster" && input$xaxistype!="Depth") {
           cluster.time.series
-      } else if (input$timecolour == "Climate") {
+      } else if (input$timecolour == "Climate" && input$xaxistype!="Depth") {
           climate.time.series.line
-      } else if (input$timecolour == "QualitativePoint") {
+      } else if (input$timecolour == "QualitativePoint" && input$xaxistype!="Depth") {
           qualitative.time.series.point
-      } else if (input$timecolour == "QualitativeLine") {
+      } else if (input$timecolour == "QualitativeLine" && input$xaxistype!="Depth") {
           qualitative.time.series.line
-      } else if (input$timecolour == "Depth") {
+      } else if (input$timecolour == "Depth" && input$xaxistype!="Depth") {
           Depth.time.series
-      } else if (input$timecolour == "Area") {
-          area.time.series
+      } else if (input$timecolour == "Black" && input$xaxistype=="Depth") {
+          black.time.series.reverse
+      } else if (input$timecolour == "Smooth" && input$xaxistype=="Depth") {
+          smooth.time.series.reverse
+      } else if (input$timecolour == "Selected" && input$xaxistype=="Depth") {
+          ramp.time.series.reverse
+      } else if (input$timecolour == "Cluster" && input$xaxistype=="Depth") {
+          cluster.time.series.reverse
+      } else if (input$timecolour == "Climate" && input$xaxistype=="Depth") {
+          climate.time.series.line.reverse
+      } else if (input$timecolour == "QualitativePoint" && input$xaxistype=="Depth") {
+          qualitative.time.series.point.reverse
+      } else if (input$timecolour == "QualitativeLine" && input$xaxistype=="Depth") {
+          qualitative.time.series.line.reverse
+      } else if (input$timecolour == "Depth" && input$xaxistype=="Depth") {
+          depth.time.series.reverse
+      } else if (input$timecolour == "Area" && input$xaxistype=="Depth") {
+          area.time.series.reverse
       }
       
       
@@ -1556,37 +3314,20 @@ xrfPCAReactive <- reactive({
   output$timeseriesplot3 <- renderPlot({
       input$timeseriesact3
       
-      isolate(print(plotInput3c()))
-      
+      isolate(plotInput3c())      
       
   })
   
-  output$downloadPlot3c <- downloadHandler(
-  
-  
-  filename = function() { paste(trendPlot(), '.tiff', sep='') },
-  content = function(file) {
-      ggsave(file,plotInput3c(), device="tiff", dpi=300, width=12, height=7)
-  }
-  )
-  
-  
-  plotInput3d <- reactive({
+  hoverHold3c <- reactive({
+      input$timeseriesact3
       
       spectra.line.table <- ageData()
       
-      x.axis <- if (input$xaxistype=="Depth") {
-          paste("Depth (", input$lengthunit, ")", sep="", collapse="")
-      } else if (input$xaxistype=="Age" && input$timetype=="BP"){
-          paste("cal year BP")
-      } else if (input$xaxistype=="Age" && input$timetype=="BC") {
-          paste("cal year BC")
-      } else if (input$axistype=="Age" && input$timetype=="AD") {
-          paste("cal year AD")
-      } else if (input$axistype=="Age" && input$timetype=="BC/AD") {
-          paste("cal year BC/AD")
-      }
+      spectra.line.table <- subset(spectra.line.table, !(spectra.line.table[input$xaxistype] < input$xlimrange[1] | spectra.line.table[input$xaxistype] > input$xlimrange[2]))
       
+      if(is.null(spectra.line.table$Age)==TRUE){
+          spectra.line.table$Age <- rep(1, length(spectra.line.table$Spectrum))
+      }
       
       spectra.line.table.norm <- data.frame(spectra.line.table, null)
       colnames(spectra.line.table.norm) <- c(names(spectra.line.table), "None")
@@ -1597,15 +3338,109 @@ xrfPCAReactive <- reactive({
       #spectra.timeseries.table <- data.frame(interval, spectra.line.table[c(input$elementtrend)]/spectra.line.table.norm[c(input$elementnorm)], spectra.line.table$Cluster, spectra.line.table$Qualitative, spectra.line.table$Depth)
       #colnames(spectra.timeseries.table) <- c("Interval", "Selected", "Cluster", "Qualitative", "Depth")
       
-      spectra.timeseries.table <- data.frame(spectra.line.table[c(input$xaxistype)], spectra.line.table[c(input$elementtrend)]/spectra.line.table.norm[c(input$elementnorm)], spectra.line.table$Cluster, spectra.line.table$Qualitative, spectra.line.table$Depth, spectra.line.table$Climate)
+      spectra.timeseries.table <- data.frame(spectra.line.table[c(input$xaxistype)], (spectra.line.table[c(input$elementtrend)]/spectra.line.table.norm[c(input$elementnorm)]*input$ymultiply), spectra.line.table$Cluster, spectra.line.table$Qualitative, spectra.line.table$Depth, spectra.line.table$Climate)
+      colnames(spectra.timeseries.table) <- c("Interval", "Selected", "Cluster", "Qualitative", "Depth", "Climate")
+      
+      isolate(spectra.timeseries.table)
+      
+  })
+  
+  
+  
+  output$hover_info3c <- renderUI({
+      
+      point.table <- hoverHold3c()
+      
+      hover <- input$plot_hover3c
+      point <- nearPoints(point.table,  xvar="Interval", yvar="Selected", coordinfo=hover,   threshold = 10, maxpoints = 1)
+      
+      #if (nrow(point) == 0) return(NULL)
+      
+      
+      
+      
+      # calculate point position INSIDE the image as percent of total dimensions
+      # from left (horizontal) and from top (vertical)
+      left_pct <- (hover$x - hover$domain$left) / (hover$domain$right - hover$domain$left)
+      top_pct <- (hover$domain$top - hover$y) / (hover$domain$top - hover$domain$bottom)
+      
+      # calculate distance from left and bottom side of the picture in pixels
+      left_px <- hover$range$left + left_pct * (hover$range$right - hover$range$left)
+      top_px <- hover$range$top + top_pct * (hover$range$bottom - hover$range$top)
+      
+      
+      # create style property fot tooltip
+      # background color is set so tooltip is a bit transparent
+      # z-index is set so we are sure are tooltip will be on top
+      style <- paste0("position:absolute; z-index:100; background-color: rgba(245, 245, 245, 0.85); ",
+      "left:", left_px + 2, "px; top:", top_px + 2, "px;")
+      
+      # actual tooltip created as wellPanel
+      wellPanel(
+      style = style,
+      p(HTML(paste0("<b> Spectrum: </b>", point$Spectrum, "<br/>",
+      "<b> Depth: </b>", point$Depth, "<br/>",
+      "<b> Age: </b>", point$Age, "<br/>"
+      
+      )))
+      )
+  })
+  
+  output$downloadPlot3c <- downloadHandler(
+  
+  
+  filename = function() { paste(trendPlot(), '.tiff', sep='') },
+  content = function(file) {
+      ggsave(file,plotInput3c(), device="tiff", compression="lzw", type="cairo", dpi=300, width=12, height=7)
+  }
+  )
+  
+  
+  plotInput3d <- reactive({
+      
+      
+      x.axis <- if (input$xaxistype=="Depth") {
+          paste("Depth (", input$lengthunit, ")", sep="", collapse="")
+      } else if (input$xaxistype=="Age" && input$timetype=="BP"){
+          paste("cal year BP")
+      } else if (input$xaxistype=="Age" && input$timetype=="BC") {
+          paste("cal year BC")
+      } else if (input$xaxistype=="Age" && input$timetype=="AD") {
+          paste("cal year AD")
+      } else if (input$xaxistype=="Age" && input$timetype=="BC/AD") {
+          paste("cal year BC/AD")
+      }
+      
+      
+      spectra.line.table <- ageData()
+      spectra.line.table <- subset(spectra.line.table, !(spectra.line.table[input$xaxistype] < input$xlimrange[1] | spectra.line.table[input$xaxistype] > input$xlimrange[2]))
+      
+      spectra.line.table.norm <- data.frame(spectra.line.table, null)
+      colnames(spectra.line.table.norm) <- c(names(spectra.line.table), "None")
+      spectra.line.table.norm
+      
+      #interval <- unique.spec*as.numeric(input$intervalmm)+as.numeric(input$startmm)
+      
+      #spectra.timeseries.table <- data.frame(interval, spectra.line.table[c(input$elementtrend)]/spectra.line.table.norm[c(input$elementnorm)], spectra.line.table$Cluster, spectra.line.table$Qualitative, spectra.line.table$Depth)
+      #colnames(spectra.timeseries.table) <- c("Interval", "Selected", "Cluster", "Qualitative", "Depth")
+      
+      spectra.timeseries.table <- data.frame(spectra.line.table[c(input$xaxistype)], (spectra.line.table[c(input$elementtrend)]/spectra.line.table.norm[c(input$elementnorm)]*input$ymultiply), spectra.line.table$Cluster, spectra.line.table$Qualitative, spectra.line.table$Depth, spectra.line.table$Climate)
       colnames(spectra.timeseries.table) <- c("Interval", "Selected", "Cluster", "Qualitative", "Depth", "Climate")
       
       
-      trendy <-  as.vector((if(input$elementnorm=="None") {
+      trendy <-  if(input$elementnorm=="None" && input$filetype=="Spectra" && input$usecalfile==FALSE && input$usecustumyaxis==FALSE) {
           paste(gsub("[.]", "", c(substr(input$elementtrend, 1, 2), " Counts per Second")), sep=",", collapse="")
-      } else {
+      } else if(input$elementnorm=="None" && input$filetype=="Spectra" && input$usecalfile==TRUE && input$usecustumyaxis==FALSE) {
+          paste(gsub("[.]", "", c(substr(input$elementtrend, 1, 2), " ", calFileContentsFirst()[[2]])), sep=",", collapse="")
+      } else if(input$elementnorm=="None" && input$filetype=="Net" && input$usecalfile==FALSE && input$usecustumyaxis==FALSE) {
+              paste(gsub("[.]", "", c(substr(input$elementtrend, 1, 2), " Net Counts")), sep=",", collapse="")
+      } else if(input$elementnorm=="None" && input$filetype=="Net" && input$usecalfile==TRUE && input$usecustumyaxis==FALSE) {
+          paste(gsub("[.]", "", c(substr(input$elementtrend, 1, 2), " ", calFileContentsFirst()[[2]])), sep=",", collapse="")
+          } else if(input$elementnorm!="None" && input$usecustumyaxis==FALSE){
           paste(gsub("[.]", "", c(substr(input$elementtrend, 1, 2), "/", substr(input$elementnorm, 1, 2))), sep=",", collapse="")
-      }))
+          } else if(input$usecustumyaxis==TRUE) {
+              paste(input$customyaxis)
+          }
       
       
       
@@ -1619,7 +3454,8 @@ xrfPCAReactive <- reactive({
       
       
       
-      black.time.series <- qplot(Interval, SMA(Selected, input$smoothing), input$xaxistype, ylab = trendy, geom="line", data = spectra.timeseries.table) +
+      
+      black.time.series <- qplot(Interval, SMA(Selected, input$smoothing), geom="line", data = spectra.timeseries.table) +
       geom_line(colour = "black", lwd=input$linesize) +
       theme_light() +
       theme(axis.text.x = element_text(size=15)) +
@@ -1629,9 +3465,10 @@ xrfPCAReactive <- reactive({
       theme(plot.title=element_text(size=20)) +
       theme(legend.title=element_text(size=15)) +
       theme(legend.text=element_text(size=15)) +
-      scale_x_continuous(paste(x.axis), label=comma)
+       scale_x_continuous(paste(x.axis), label=comma) +
+      scale_y_continuous(paste(trendy), label=comma)
       
-      smooth.time.series <- qplot(spectra.timeseries.table$Interval, SMA(spectra.timeseries.table$Selected, input$smoothing), xlab = input$xaxistype, ylab = trendy, geom="point") +
+      smooth.time.series <- qplot(spectra.timeseries.table$Interval, SMA(spectra.timeseries.table$Selected, input$smoothing), geom="point") +
       theme_light() +
       stat_smooth() +
       theme(axis.text.x = element_text(size=15)) +
@@ -1641,10 +3478,11 @@ xrfPCAReactive <- reactive({
       theme(plot.title=element_text(size=20)) +
       theme(legend.title=element_text(size=15)) +
       theme(legend.text=element_text(size=15)) +
-      scale_x_continuous(paste(x.axis), label=comma)
+       scale_x_continuous(paste(x.axis), label=comma) +
+      scale_y_continuous(paste(trendy), label=comma)
       
       
-      ramp.time.series <- qplot(Interval, SMA(Selected, input$smoothing), xlab = input$xaxistype, ylab = trendy, geom="line", data = spectra.timeseries.table) +
+      ramp.time.series <- qplot(Interval, SMA(Selected, input$smoothing),  geom="line", data = spectra.timeseries.table) +
       geom_line(aes(colour = Selected), lwd=input$linesize) +
       theme_light() +
       scale_colour_gradientn(colours=rainbow(7)) +
@@ -1655,14 +3493,14 @@ xrfPCAReactive <- reactive({
       theme(plot.title=element_text(size=20)) +
       theme(legend.title=element_text(size=15)) +
       theme(legend.text=element_text(size=15)) +
-      scale_x_continuous(paste(x.axis), label=comma)
+       scale_x_continuous(paste(x.axis), label=comma) +
+      scale_y_continuous(paste(trendy), label=comma)
       
       
       area.time.series <- ggplot(spectra.timeseries.table, aes(Interval)) +
       theme_classic() +
       geom_area(aes(y=Selected, colour="grey60", fill="grey60"), alpha=0.6) +
-      scale_x_continuous(input$xaxistype) +
-      scale_y_continuous(trendy) +
+
       theme(axis.text.x = element_text(size=15)) +
       theme(axis.text.y = element_text(size=15)) +
       theme(axis.title.x = element_text(size=15)) +
@@ -1670,11 +3508,12 @@ xrfPCAReactive <- reactive({
       theme(plot.title=element_text(size=20)) +
       theme(legend.title=element_text(size=15)) +
       theme(legend.text=element_text(size=15)) +
-      scale_x_continuous(paste(x.axis), label=comma)
+       scale_x_continuous(paste(x.axis), label=comma) +
+      scale_y_continuous(paste(trendy), label=comma)
       
       
       
-      cluster.time.series <- qplot(Interval, SMA(Selected, input$smoothing), xlab = input$xaxistype, ylab = trendy, geom="line", data = spectra.timeseries.table) +
+      cluster.time.series <- qplot(Interval, SMA(Selected, input$smoothing),  geom="line", data = spectra.timeseries.table) +
       geom_point(aes(colour = as.factor(Cluster)), size=input$pointsize) +
       scale_colour_discrete("Cluster") +
       theme_light() +
@@ -1685,9 +3524,10 @@ xrfPCAReactive <- reactive({
       theme(plot.title=element_text(size=20)) +
       theme(legend.title=element_text(size=15)) +
       theme(legend.text=element_text(size=15)) +
-      scale_x_continuous(paste(x.axis), label=comma)
+       scale_x_continuous(paste(x.axis), label=comma) +
+      scale_y_continuous(paste(trendy), label=comma)
       
-      climate.time.series.line <- qplot(Interval, SMA(Selected, input$smoothing), xlab = input$xaxistype, ylab = trendy, geom="line", data = spectra.timeseries.table, colour = as.factor(Climate)) +
+      climate.time.series.line <- qplot(Interval, SMA(Selected, input$smoothing), geom="line", data = spectra.timeseries.table, colour = as.factor(Climate)) +
       scale_colour_discrete("Climatic Period") +
       theme_light() +
       theme(axis.text.x = element_text(size=15)) +
@@ -1697,10 +3537,11 @@ xrfPCAReactive <- reactive({
       theme(plot.title=element_text(size=20)) +
       theme(legend.title=element_text(size=15)) +
       theme(legend.text=element_text(size=15)) +
-      scale_x_continuous(paste(x.axis), label=comma)
+       scale_x_continuous(paste(x.axis), label=comma) +
+      scale_y_continuous(paste(trendy), label=comma)
       
       
-      qualitative.time.series.line <- qplot(Interval, SMA(Selected, input$smoothing), xlab = input$xaxistype, ylab = trendy, geom="line", data = spectra.timeseries.table, colour = as.factor(Qualitative)) +
+      qualitative.time.series.line <- qplot(Interval, SMA(Selected, input$smoothing), geom="line", data = spectra.timeseries.table, colour = as.factor(Qualitative)) +
       scale_colour_discrete("Qualitative") +
       theme_light() +
       theme(axis.text.x = element_text(size=15)) +
@@ -1710,9 +3551,10 @@ xrfPCAReactive <- reactive({
       theme(plot.title=element_text(size=20)) +
       theme(legend.title=element_text(size=15)) +
       theme(legend.text=element_text(size=15)) +
-      scale_x_continuous(paste(x.axis), label=comma)
+       scale_x_continuous(paste(x.axis), label=comma) +
+      scale_y_continuous(paste(trendy), label=comma)
       
-      qualitative.time.series.point <- qplot(Interval, SMA(Selected, input$smoothing), xlab = input$xaxistype, ylab = trendy, geom="line", data = spectra.timeseries.table) +
+      qualitative.time.series.point <- qplot(Interval, SMA(Selected, input$smoothing),  geom="line", data = spectra.timeseries.table) +
       geom_point(aes(colour = as.factor(Qualitative)), lwd=input$pointsize) +
       scale_colour_discrete("Qualitative") +
       theme_light() +
@@ -1723,12 +3565,13 @@ xrfPCAReactive <- reactive({
       theme(plot.title=element_text(size=20)) +
       theme(legend.title=element_text(size=15)) +
       theme(legend.text=element_text(size=15)) +
-      scale_x_continuous(paste(x.axis), label=comma)
+       scale_x_continuous(paste(x.axis), label=comma) +
+      scale_y_continuous(paste(trendy), label=comma)
       
       
-      Depth.time.series <- qplot(Interval, SMA(Selected, input$smoothing), xlab = input$xaxistype, ylab = trendy, geom="line", data = spectra.timeseries.table) +
-      geom_point(aes(colour = Depth), lwd=input$pointsize) +
-      scale_colour_gradientn("Depth", colours=rainbow(length(spectra.line.table$Depth))) +
+      depth.time.series <- qplot(Interval, SMA(Selected, input$smoothing),  geom="line", data = spectra.timeseries.table) +
+      geom_line(aes(colour = Depth), lwd=input$linesize+0.5) +
+      geom_line(lwd=input$linesize-0.5) +      scale_colour_gradientn("Depth", colours=rev(terrain.colors(length(spectra.line.table$Depth)))) +
       theme_light() +
       theme(axis.text.x = element_text(size=15)) +
       theme(axis.text.y = element_text(size=15)) +
@@ -1737,27 +3580,179 @@ xrfPCAReactive <- reactive({
       theme(plot.title=element_text(size=20)) +
       theme(legend.title=element_text(size=15)) +
       theme(legend.text=element_text(size=15)) +
-      scale_x_continuous(paste(x.axis), label=comma)
+       scale_x_continuous(paste(x.axis), label=comma) +
+      scale_y_continuous(paste(trendy), label=comma)
       
       
-      if (input$timecolour == "Black") {
+      
+      
+      ####Flipped X Axis
+      
+      black.time.series.reverse <- qplot(Interval, SMA(Selected, input$smoothing), geom="line", data = spectra.timeseries.table) +
+      geom_line(colour = "black", lwd=input$linesize) +
+      theme_light() +
+      theme(axis.text.x = element_text(size=15)) +
+      theme(axis.text.y = element_text(size=15)) +
+      theme(axis.title.x = element_text(size=15)) +
+      theme(axis.title.y = element_text(size=15, angle=90)) +
+      theme(plot.title=element_text(size=20)) +
+      theme(legend.title=element_text(size=15)) +
+      theme(legend.text=element_text(size=15)) +
+      scale_x_reverse(paste(x.axis), label=comma) +
+      scale_y_continuous(paste(trendy), label=comma)
+      
+      smooth.time.series.reverse <- qplot(spectra.timeseries.table$Interval, SMA(spectra.timeseries.table$Selected, input$smoothing), geom="point") +
+      theme_light() +
+      stat_smooth() +
+      theme(axis.text.x = element_text(size=15)) +
+      theme(axis.text.y = element_text(size=15)) +
+      theme(axis.title.x = element_text(size=15)) +
+      theme(axis.title.y = element_text(size=15, angle=90)) +
+      theme(plot.title=element_text(size=20)) +
+      theme(legend.title=element_text(size=15)) +
+      theme(legend.text=element_text(size=15)) +
+      scale_x_reverse(paste(x.axis), label=comma) +
+      scale_y_continuous(paste(trendy), label=comma)
+      
+      
+      ramp.time.series.reverse <- qplot(Interval, SMA(Selected, input$smoothing), geom="line", data = spectra.timeseries.table) +
+      geom_line(aes(colour = Selected), lwd=input$linesize) +
+      theme_light() +
+      scale_colour_gradientn(colours=rainbow(7)) +
+      theme(axis.text.x = element_text(size=15)) +
+      theme(axis.text.y = element_text(size=15)) +
+      theme(axis.title.x = element_text(size=15)) +
+      theme(axis.title.y = element_text(size=15, angle=90)) +
+      theme(plot.title=element_text(size=20)) +
+      theme(legend.title=element_text(size=15)) +
+      theme(legend.text=element_text(size=15)) +
+      scale_x_reverse(paste(x.axis), label=comma) +
+      scale_y_continuous(paste(trendy), label=comma)
+      
+      
+      area.time.series.reverse <- ggplot(spectra.timeseries.table, aes(Interval)) +
+      theme_classic() +
+      geom_area(aes(y=Selected, colour="grey60", fill="grey60"), alpha=0.6) +
+      theme(axis.text.x = element_text(size=15)) +
+      theme(axis.text.y = element_text(size=15)) +
+      theme(axis.title.x = element_text(size=15)) +
+      theme(axis.title.y = element_text(size=15, angle=90)) +
+      theme(plot.title=element_text(size=20)) +
+      theme(legend.title=element_text(size=15)) +
+      theme(legend.text=element_text(size=15)) +
+      scale_x_reverse(paste(x.axis), label=comma) +
+      scale_y_continuous(paste(trendy), label=comma)
+      
+      
+      
+      cluster.time.series.reverse <- qplot(Interval, SMA(Selected, input$smoothing),  geom="line", data = spectra.timeseries.table) +
+      geom_point(aes(colour = as.factor(Cluster)), size=input$pointsize) +
+      scale_colour_discrete("Cluster") +
+      theme_light() +
+      theme(axis.text.x = element_text(size=15)) +
+      theme(axis.text.y = element_text(size=15)) +
+      theme(axis.title.x = element_text(size=15)) +
+      theme(axis.title.y = element_text(size=15, angle=90)) +
+      theme(plot.title=element_text(size=20)) +
+      theme(legend.title=element_text(size=15)) +
+      theme(legend.text=element_text(size=15)) +
+      scale_x_reverse(paste(x.axis), label=comma) +
+      scale_y_continuous(paste(trendy), label=comma)
+      
+      
+      climate.time.series.line.reverse <- qplot(Interval, SMA(Selected, input$smoothing), geom="line", data = spectra.timeseries.table, colour = as.factor(Climate)) +
+      scale_colour_discrete("Climatic Period") +
+      theme_light() +
+      theme(axis.text.x = element_text(size=15)) +
+      theme(axis.text.y = element_text(size=15)) +
+      theme(axis.title.x = element_text(size=15)) +
+      theme(axis.title.y = element_text(size=15, angle=90)) +
+      theme(plot.title=element_text(size=20)) +
+      theme(legend.title=element_text(size=15)) +
+      theme(legend.text=element_text(size=15)) +
+      scale_x_reverse(paste(x.axis), label=comma) +
+      scale_y_continuous(paste(trendy), label=comma)
+      
+      
+      qualitative.time.series.line.reverse <- qplot(Interval, SMA(Selected, input$smoothing), geom="line", data = spectra.timeseries.table, colour = as.factor(Qualitative)) +
+      scale_colour_discrete("Qualitative") +
+      theme_light() +
+      theme(axis.text.x = element_text(size=15)) +
+      theme(axis.text.y = element_text(size=15)) +
+      theme(axis.title.x = element_text(size=15)) +
+      theme(axis.title.y = element_text(size=15, angle=90)) +
+      theme(plot.title=element_text(size=20)) +
+      theme(legend.title=element_text(size=15)) +
+      theme(legend.text=element_text(size=15)) +
+      scale_x_reverse(paste(x.axis), label=comma) +
+      scale_y_continuous(paste(trendy), label=comma)
+      
+      qualitative.time.series.point.reverse <- qplot(Interval, SMA(Selected, input$smoothing),  geom="line", data = spectra.timeseries.table) +
+      geom_point(aes(colour = as.factor(Qualitative)), lwd=input$pointsize) +
+      scale_colour_discrete("Qualitative") +
+      theme_light() +
+      theme(axis.text.x = element_text(size=15)) +
+      theme(axis.text.y = element_text(size=15)) +
+      theme(axis.title.x = element_text(size=15)) +
+      theme(axis.title.y = element_text(size=15, angle=90)) +
+      theme(plot.title=element_text(size=20)) +
+      theme(legend.title=element_text(size=15)) +
+      theme(legend.text=element_text(size=15)) +
+      scale_x_reverse(paste(x.axis), label=comma) +
+      scale_y_continuous(paste(trendy), label=comma)
+      
+      
+      depth.time.series.reverse <- qplot(Interval, SMA(Selected, input$smoothing),  geom="line", data = spectra.timeseries.table) +
+      geom_line(aes(colour = Depth), lwd=input$linesize+0.5) +
+      geom_line(lwd=input$linesize-0.5) +
+      scale_colour_gradientn("Depth", colours=rev(terrain.colors(length(spectra.line.table$Depth)))) +
+      theme_light() +
+      theme(axis.text.x = element_text(size=15)) +
+      theme(axis.text.y = element_text(size=15)) +
+      theme(axis.title.x = element_text(size=15)) +
+      theme(axis.title.y = element_text(size=15, angle=90)) +
+      theme(plot.title=element_text(size=20)) +
+      theme(legend.title=element_text(size=15)) +
+      theme(legend.text=element_text(size=15)) +
+      scale_x_reverse(paste(x.axis), label=comma) +
+      scale_y_continuous(paste(trendy), label=comma)
+      
+      
+     
+      if (input$timecolour == "Black" && input$xaxistype!="Depth") {
           black.time.series
-      } else if (input$timecolour == "Smooth") {
+      } else if (input$timecolour == "Smooth" && input$xaxistype!="Depth") {
           smooth.time.series
-      } else if (input$timecolour == "Selected") {
+      } else if (input$timecolour == "Selected" && input$xaxistype!="Depth") {
           ramp.time.series
-      } else if (input$timecolour == "Cluster") {
+      } else if (input$timecolour == "Cluster" && input$xaxistype!="Depth") {
           cluster.time.series
-      } else if (input$timecolour == "Climate") {
+      } else if (input$timecolour == "Climate" && input$xaxistype!="Depth") {
           climate.time.series.line
-      } else if (input$timecolour == "QualitativePoint") {
+      } else if (input$timecolour == "QualitativePoint" && input$xaxistype!="Depth") {
           qualitative.time.series.point
-      } else if (input$timecolour == "QualitativeLine") {
+      } else if (input$timecolour == "QualitativeLine" && input$xaxistype!="Depth") {
           qualitative.time.series.line
-      } else if (input$timecolour == "Depth") {
+      } else if (input$timecolour == "Depth" && input$xaxistype!="Depth") {
           Depth.time.series
-      } else if (input$timecolour == "Area") {
-          area.time.series
+      } else if (input$timecolour == "Black" && input$xaxistype=="Depth") {
+          black.time.series.reverse
+      } else if (input$timecolour == "Smooth" && input$xaxistype=="Depth") {
+          smooth.time.series.reverse
+      } else if (input$timecolour == "Selected" && input$xaxistype=="Depth") {
+          ramp.time.series.reverse
+      } else if (input$timecolour == "Cluster" && input$xaxistype=="Depth") {
+          cluster.time.series.reverse
+      } else if (input$timecolour == "Climate" && input$xaxistype=="Depth") {
+          climate.time.series.line.reverse
+      } else if (input$timecolour == "QualitativePoint" && input$xaxistype=="Depth") {
+          qualitative.time.series.point.reverse
+      } else if (input$timecolour == "QualitativeLine" && input$xaxistype=="Depth") {
+          qualitative.time.series.line.reverse
+      } else if (input$timecolour == "Depth" && input$xaxistype=="Depth") {
+          depth.time.series.reverse
+      } else if (input$timecolour == "Area" && input$xaxistype=="Depth") {
+          area.time.series.reverse
       }
       
       
@@ -1773,8 +3768,75 @@ xrfPCAReactive <- reactive({
   
   output$timeseriesplot4 <- renderPlot({
       input$timeseriesact4
-      isolate(print(plotInput3d()))
+      isolate(plotInput3d())      
+  })
+  
+  hoverHold3d <- reactive({
+      input$timeseriesact4
       
+      spectra.line.table <- ageData()
+      
+      spectra.line.table <- subset(spectra.line.table, !(spectra.line.table[input$xaxistype] < input$xlimrange[1] | spectra.line.table[input$xaxistype] > input$xlimrange[2]))
+      
+      if(is.null(spectra.line.table$Age)==TRUE){
+          spectra.line.table$Age <- rep(1, length(spectra.line.table$Spectrum))
+      }
+      
+      spectra.line.table.norm <- data.frame(spectra.line.table, null)
+      colnames(spectra.line.table.norm) <- c(names(spectra.line.table), "None")
+      spectra.line.table.norm
+      
+      #interval <- unique.spec*as.numeric(input$intervalmm)+as.numeric(input$startmm)
+      
+      #spectra.timeseries.table <- data.frame(interval, spectra.line.table[c(input$elementtrend)]/spectra.line.table.norm[c(input$elementnorm)], spectra.line.table$Cluster, spectra.line.table$Qualitative, spectra.line.table$Depth)
+      #colnames(spectra.timeseries.table) <- c("Interval", "Selected", "Cluster", "Qualitative", "Depth")
+      
+      spectra.timeseries.table <- data.frame(spectra.line.table[c(input$xaxistype)], (spectra.line.table[c(input$elementtrend)]/spectra.line.table.norm[c(input$elementnorm)]*input$ymultiply), spectra.line.table$Cluster, spectra.line.table$Qualitative, spectra.line.table$Depth, spectra.line.table$Climate)
+      colnames(spectra.timeseries.table) <- c("Interval", "Selected", "Cluster", "Qualitative", "Depth", "Climate")
+      
+      isolate(spectra.timeseries.table)
+      
+  })
+  
+  
+  
+  output$hover_info3d <- renderUI({
+      
+      point.table <- hoverHold3d()
+      
+      hover <- input$plot_hover3d
+      point <- nearPoints(point.table,  xvar="Interval", yvar="Selected", coordinfo=hover,   threshold = 10, maxpoints = 1)
+      
+      #if (nrow(point) == 0) return(NULL)
+      
+      
+      
+      
+      # calculate point position INSIDE the image as percent of total dimensions
+      # from left (horizontal) and from top (vertical)
+      left_pct <- (hover$x - hover$domain$left) / (hover$domain$right - hover$domain$left)
+      top_pct <- (hover$domain$top - hover$y) / (hover$domain$top - hover$domain$bottom)
+      
+      # calculate distance from left and bottom side of the picture in pixels
+      left_px <- hover$range$left + left_pct * (hover$range$right - hover$range$left)
+      top_px <- hover$range$top + top_pct * (hover$range$bottom - hover$range$top)
+      
+      
+      # create style property fot tooltip
+      # background color is set so tooltip is a bit transparent
+      # z-index is set so we are sure are tooltip will be on top
+      style <- paste0("position:absolute; z-index:100; background-color: rgba(245, 245, 245, 0.85); ",
+      "left:", left_px + 2, "px; top:", top_px + 2, "px;")
+      
+      # actual tooltip created as wellPanel
+      wellPanel(
+      style = style,
+      p(HTML(paste0("<b> Spectrum: </b>", point$Spectrum, "<br/>",
+      "<b> Depth: </b>", point$Depth, "<br/>",
+      "<b> Age: </b>", point$Age, "<br/>"
+      
+      )))
+      )
   })
   
   output$downloadPlot3d <- downloadHandler(
@@ -1783,7 +3845,7 @@ xrfPCAReactive <- reactive({
   
   filename = function() { paste(trendPlot(), '.tiff', sep='') },
   content = function(file) {
-      ggsave(file,plotInput3d(), device="tiff", dpi=300, width=12, height=7)
+      ggsave(file,plotInput3d(), device="tiff", compression="lzw", type="cairo", dpi=300, width=12, height=7)
   }
   )
   
@@ -1793,7 +3855,6 @@ xrfPCAReactive <- reactive({
   
   plotInput3e <- reactive({
       
-      spectra.line.table <- ageData()
       
       
       x.axis <- if (input$xaxistype=="Depth") {
@@ -1802,11 +3863,17 @@ xrfPCAReactive <- reactive({
           paste("cal year BP")
       } else if (input$xaxistype=="Age" && input$timetype=="BC") {
           paste("cal year BC")
-      } else if (input$axistype=="Age" && input$timetype=="AD") {
+      } else if (input$xaxistype=="Age" && input$timetype=="AD") {
           paste("cal year AD")
-      } else if (input$axistype=="Age" && input$timetype=="BC/AD") {
+      } else if (input$xaxistype=="Age" && input$timetype=="BC/AD") {
           paste("cal year BC/AD")
+      } else if (input$xaxistype=="Custom") {
+          input$customxaxis
       }
+      
+      
+      spectra.line.table <- ageData()
+      spectra.line.table <- subset(spectra.line.table, !(spectra.line.table[input$xaxistype] < input$xlimrange[1] | spectra.line.table[input$xaxistype] > input$xlimrange[2]))
       
       
       spectra.line.table.norm <- data.frame(spectra.line.table, null)
@@ -1818,15 +3885,23 @@ xrfPCAReactive <- reactive({
       #spectra.timeseries.table <- data.frame(interval, spectra.line.table[c(input$elementtrend)]/spectra.line.table.norm[c(input$elementnorm)], spectra.line.table$Cluster, spectra.line.table$Qualitative, spectra.line.table$Depth)
       #colnames(spectra.timeseries.table) <- c("Interval", "Selected", "Cluster", "Qualitative", "Depth")
       
-      spectra.timeseries.table <- data.frame(spectra.line.table[c(input$xaxistype)], spectra.line.table[c(input$elementtrend)]/spectra.line.table.norm[c(input$elementnorm)], spectra.line.table$Cluster, spectra.line.table$Qualitative, spectra.line.table$Depth, spectra.line.table$Climate)
+      spectra.timeseries.table <- data.frame(spectra.line.table[c(input$xaxistype)], (spectra.line.table[c(input$elementtrend)]/spectra.line.table.norm[c(input$elementnorm)]*input$ymultiply), spectra.line.table$Cluster, spectra.line.table$Qualitative, spectra.line.table$Depth, spectra.line.table$Climate)
       colnames(spectra.timeseries.table) <- c("Interval", "Selected", "Cluster", "Qualitative", "Depth", "Climate")
       
       
-      trendy <-  as.vector((if(input$elementnorm=="None") {
+      trendy <-  if(input$elementnorm=="None" && input$filetype=="Spectra" && input$usecalfile==FALSE && input$usecustumyaxis==FALSE) {
           paste(gsub("[.]", "", c(substr(input$elementtrend, 1, 2), " Counts per Second")), sep=",", collapse="")
-      } else {
+      } else if(input$elementnorm=="None" && input$filetype=="Spectra" && input$usecalfile==TRUE && input$usecustumyaxis==FALSE) {
+          paste(gsub("[.]", "", c(substr(input$elementtrend, 1, 2), " ", calFileContentsFirst()[[2]])), sep=",", collapse="")
+      } else if(input$elementnorm=="None" && input$filetype=="Net" && input$usecalfile==FALSE && input$usecustumyaxis==FALSE) {
+              paste(gsub("[.]", "", c(substr(input$elementtrend, 1, 2), " Net Counts")), sep=",", collapse="")
+      } else if(input$elementnorm=="None" && input$filetype=="Net" && input$usecalfile==TRUE && input$usecustumyaxis==FALSE) {
+          paste(gsub("[.]", "", c(substr(input$elementtrend, 1, 2), " ", calFileContentsFirst()[[2]])), sep=",", collapse="")
+          } else if(input$elementnorm!="None" && input$usecustumyaxis==FALSE){
           paste(gsub("[.]", "", c(substr(input$elementtrend, 1, 2), "/", substr(input$elementnorm, 1, 2))), sep=",", collapse="")
-      }))
+          } else if(input$usecustumyaxis==TRUE) {
+              paste(input$customyaxis)
+          }
       
       
       
@@ -1840,7 +3915,8 @@ xrfPCAReactive <- reactive({
       
       
       
-      black.time.series <- qplot(Interval, SMA(Selected, input$smoothing), input$xaxistype, ylab = trendy, geom="line", data = spectra.timeseries.table) +
+      
+      black.time.series <- qplot(Interval, SMA(Selected, input$smoothing), geom="line", data = spectra.timeseries.table) +
       geom_line(colour = "black", lwd=input$linesize) +
       theme_light() +
       theme(axis.text.x = element_text(size=15)) +
@@ -1850,9 +3926,10 @@ xrfPCAReactive <- reactive({
       theme(plot.title=element_text(size=20)) +
       theme(legend.title=element_text(size=15)) +
       theme(legend.text=element_text(size=15)) +
-      scale_x_continuous(paste(x.axis), label=comma)
+       scale_x_continuous(paste(x.axis), label=comma) +
+      scale_y_continuous(paste(trendy), label=comma)
       
-      smooth.time.series <- qplot(spectra.timeseries.table$Interval, SMA(spectra.timeseries.table$Selected, input$smoothing), xlab = input$xaxistype, ylab = trendy, geom="point") +
+      smooth.time.series <- qplot(spectra.timeseries.table$Interval, SMA(spectra.timeseries.table$Selected, input$smoothing), geom="point") +
       theme_light() +
       stat_smooth() +
       theme(axis.text.x = element_text(size=15)) +
@@ -1862,10 +3939,11 @@ xrfPCAReactive <- reactive({
       theme(plot.title=element_text(size=20)) +
       theme(legend.title=element_text(size=15)) +
       theme(legend.text=element_text(size=15)) +
-      scale_x_continuous(paste(x.axis), label=comma)
+       scale_x_continuous(paste(x.axis), label=comma) +
+      scale_y_continuous(paste(trendy), label=comma)
       
       
-      ramp.time.series <- qplot(Interval, SMA(Selected, input$smoothing), xlab = input$xaxistype, ylab = trendy, geom="line", data = spectra.timeseries.table) +
+      ramp.time.series <- qplot(Interval, SMA(Selected, input$smoothing),  geom="line", data = spectra.timeseries.table) +
       geom_line(aes(colour = Selected), lwd=input$linesize) +
       theme_light() +
       scale_colour_gradientn(colours=rainbow(7)) +
@@ -1876,14 +3954,14 @@ xrfPCAReactive <- reactive({
       theme(plot.title=element_text(size=20)) +
       theme(legend.title=element_text(size=15)) +
       theme(legend.text=element_text(size=15)) +
-      scale_x_continuous(paste(x.axis), label=comma)
+       scale_x_continuous(paste(x.axis), label=comma) +
+      scale_y_continuous(paste(trendy), label=comma)
       
       
       area.time.series <- ggplot(spectra.timeseries.table, aes(Interval)) +
       theme_classic() +
       geom_area(aes(y=Selected, colour="grey60", fill="grey60"), alpha=0.6) +
-      scale_x_continuous(input$xaxistype) +
-      scale_y_continuous(trendy) +
+
       theme(axis.text.x = element_text(size=15)) +
       theme(axis.text.y = element_text(size=15)) +
       theme(axis.title.x = element_text(size=15)) +
@@ -1891,11 +3969,12 @@ xrfPCAReactive <- reactive({
       theme(plot.title=element_text(size=20)) +
       theme(legend.title=element_text(size=15)) +
       theme(legend.text=element_text(size=15)) +
-      scale_x_continuous(paste(x.axis), label=comma)
+       scale_x_continuous(paste(x.axis), label=comma) +
+      scale_y_continuous(paste(trendy), label=comma)
       
       
       
-      cluster.time.series <- qplot(Interval, SMA(Selected, input$smoothing), xlab = input$xaxistype, ylab = trendy, geom="line", data = spectra.timeseries.table) +
+      cluster.time.series <- qplot(Interval, SMA(Selected, input$smoothing),  geom="line", data = spectra.timeseries.table) +
       geom_point(aes(colour = as.factor(Cluster)), size=input$pointsize) +
       scale_colour_discrete("Cluster") +
       theme_light() +
@@ -1906,9 +3985,10 @@ xrfPCAReactive <- reactive({
       theme(plot.title=element_text(size=20)) +
       theme(legend.title=element_text(size=15)) +
       theme(legend.text=element_text(size=15)) +
-      scale_x_continuous(paste(x.axis), label=comma)
+       scale_x_continuous(paste(x.axis), label=comma) +
+      scale_y_continuous(paste(trendy), label=comma)
       
-      climate.time.series.line <- qplot(Interval, SMA(Selected, input$smoothing), xlab = input$xaxistype, ylab = trendy, geom="line", data = spectra.timeseries.table, colour = as.factor(Climate)) +
+      climate.time.series.line <- qplot(Interval, SMA(Selected, input$smoothing), geom="line", data = spectra.timeseries.table, colour = as.factor(Climate)) +
       scale_colour_discrete("Climatic Period") +
       theme_light() +
       theme(axis.text.x = element_text(size=15)) +
@@ -1918,10 +3998,11 @@ xrfPCAReactive <- reactive({
       theme(plot.title=element_text(size=20)) +
       theme(legend.title=element_text(size=15)) +
       theme(legend.text=element_text(size=15)) +
-      scale_x_continuous(paste(x.axis), label=comma)
+       scale_x_continuous(paste(x.axis), label=comma) +
+      scale_y_continuous(paste(trendy), label=comma)
       
       
-      qualitative.time.series.line <- qplot(Interval, SMA(Selected, input$smoothing), xlab = input$xaxistype, ylab = trendy, geom="line", data = spectra.timeseries.table, colour = as.factor(Qualitative)) +
+      qualitative.time.series.line <- qplot(Interval, SMA(Selected, input$smoothing), geom="line", data = spectra.timeseries.table, colour = as.factor(Qualitative)) +
       scale_colour_discrete("Qualitative") +
       theme_light() +
       theme(axis.text.x = element_text(size=15)) +
@@ -1931,9 +4012,10 @@ xrfPCAReactive <- reactive({
       theme(plot.title=element_text(size=20)) +
       theme(legend.title=element_text(size=15)) +
       theme(legend.text=element_text(size=15)) +
-      scale_x_continuous(paste(x.axis), label=comma)
+       scale_x_continuous(paste(x.axis), label=comma) +
+      scale_y_continuous(paste(trendy), label=comma)
       
-      qualitative.time.series.point <- qplot(Interval, SMA(Selected, input$smoothing), xlab = input$xaxistype, ylab = trendy, geom="line", data = spectra.timeseries.table) +
+      qualitative.time.series.point <- qplot(Interval, SMA(Selected, input$smoothing),  geom="line", data = spectra.timeseries.table) +
       geom_point(aes(colour = as.factor(Qualitative)), lwd=input$pointsize) +
       scale_colour_discrete("Qualitative") +
       theme_light() +
@@ -1944,12 +4026,14 @@ xrfPCAReactive <- reactive({
       theme(plot.title=element_text(size=20)) +
       theme(legend.title=element_text(size=15)) +
       theme(legend.text=element_text(size=15)) +
-      scale_x_continuous(paste(x.axis), label=comma)
+       scale_x_continuous(paste(x.axis), label=comma) +
+      scale_y_continuous(paste(trendy), label=comma)
       
       
-      Depth.time.series <- qplot(Interval, SMA(Selected, input$smoothing), xlab = input$xaxistype, ylab = trendy, geom="line", data = spectra.timeseries.table) +
-      geom_point(aes(colour = Depth), lwd=input$pointsize) +
-      scale_colour_gradientn("Depth", colours=rainbow(length(spectra.line.table$Depth))) +
+      depth.time.series <- qplot(Interval, SMA(Selected, input$smoothing),  geom="line", data = spectra.timeseries.table) +
+      geom_line(aes(colour = Depth), lwd=input$linesize+0.5) +
+      geom_line(lwd=input$linesize-0.5) +
+      scale_colour_gradientn("Depth", colours=rev(terrain.colors(length(spectra.line.table$Depth)))) +
       theme_light() +
       theme(axis.text.x = element_text(size=15)) +
       theme(axis.text.y = element_text(size=15)) +
@@ -1958,27 +4042,177 @@ xrfPCAReactive <- reactive({
       theme(plot.title=element_text(size=20)) +
       theme(legend.title=element_text(size=15)) +
       theme(legend.text=element_text(size=15)) +
-      scale_x_continuous(paste(x.axis), label=comma)
+       scale_x_continuous(paste(x.axis), label=comma) +
+      scale_y_continuous(paste(trendy), label=comma)
       
       
-      if (input$timecolour == "Black") {
+      
+      ####X Axis Flipped
+      
+      black.time.series.reverse <- qplot(Interval, SMA(Selected, input$smoothing), geom="line", data = spectra.timeseries.table) +
+      geom_line(colour = "black", lwd=input$linesize) +
+      theme_light() +
+      theme(axis.text.x = element_text(size=15)) +
+      theme(axis.text.y = element_text(size=15)) +
+      theme(axis.title.x = element_text(size=15)) +
+      theme(axis.title.y = element_text(size=15, angle=90)) +
+      theme(plot.title=element_text(size=20)) +
+      theme(legend.title=element_text(size=15)) +
+      theme(legend.text=element_text(size=15)) +
+      scale_x_reverse(paste(x.axis), label=comma) +
+      scale_y_continuous(paste(trendy), label=comma)
+      
+      smooth.time.series.reverse <- qplot(spectra.timeseries.table$Interval, SMA(spectra.timeseries.table$Selected, input$smoothing), geom="point") +
+      theme_light() +
+      stat_smooth() +
+      theme(axis.text.x = element_text(size=15)) +
+      theme(axis.text.y = element_text(size=15)) +
+      theme(axis.title.x = element_text(size=15)) +
+      theme(axis.title.y = element_text(size=15, angle=90)) +
+      theme(plot.title=element_text(size=20)) +
+      theme(legend.title=element_text(size=15)) +
+      theme(legend.text=element_text(size=15)) +
+      scale_x_reverse(paste(x.axis), label=comma) +
+      scale_y_continuous(paste(trendy), label=comma)
+      
+      
+      ramp.time.series.reverse <- qplot(Interval, SMA(Selected, input$smoothing), geom="line", data = spectra.timeseries.table) +
+      geom_line(aes(colour = Selected), lwd=input$linesize) +
+      theme_light() +
+      scale_colour_gradientn(colours=rainbow(7)) +
+      theme(axis.text.x = element_text(size=15)) +
+      theme(axis.text.y = element_text(size=15)) +
+      theme(axis.title.x = element_text(size=15)) +
+      theme(axis.title.y = element_text(size=15, angle=90)) +
+      theme(plot.title=element_text(size=20)) +
+      theme(legend.title=element_text(size=15)) +
+      theme(legend.text=element_text(size=15)) +
+      scale_x_reverse(paste(x.axis), label=comma) +
+      scale_y_continuous(paste(trendy), label=comma)
+      
+      
+      area.time.series.reverse <- ggplot(spectra.timeseries.table, aes(Interval)) +
+      theme_classic() +
+      geom_area(aes(y=Selected, colour="grey60", fill="grey60"), alpha=0.6) +
+      theme(axis.text.x = element_text(size=15)) +
+      theme(axis.text.y = element_text(size=15)) +
+      theme(axis.title.x = element_text(size=15)) +
+      theme(axis.title.y = element_text(size=15, angle=90)) +
+      theme(plot.title=element_text(size=20)) +
+      theme(legend.title=element_text(size=15)) +
+      theme(legend.text=element_text(size=15)) +
+      scale_x_reverse(paste(x.axis), label=comma) +
+      scale_y_continuous(paste(trendy), label=comma)
+      
+      
+      
+      cluster.time.series.reverse <- qplot(Interval, SMA(Selected, input$smoothing),  geom="line", data = spectra.timeseries.table) +
+      geom_point(aes(colour = as.factor(Cluster)), size=input$pointsize) +
+      scale_colour_discrete("Cluster") +
+      theme_light() +
+      theme(axis.text.x = element_text(size=15)) +
+      theme(axis.text.y = element_text(size=15)) +
+      theme(axis.title.x = element_text(size=15)) +
+      theme(axis.title.y = element_text(size=15, angle=90)) +
+      theme(plot.title=element_text(size=20)) +
+      theme(legend.title=element_text(size=15)) +
+      theme(legend.text=element_text(size=15)) +
+      scale_x_reverse(paste(x.axis), label=comma) +
+      scale_y_continuous(paste(trendy), label=comma)
+      
+      climate.time.series.line.reverse <- qplot(Interval, SMA(Selected, input$smoothing), geom="line", data = spectra.timeseries.table, colour = as.factor(Climate)) +
+      scale_colour_discrete("Climatic Period") +
+      theme_light() +
+      theme(axis.text.x = element_text(size=15)) +
+      theme(axis.text.y = element_text(size=15)) +
+      theme(axis.title.x = element_text(size=15)) +
+      theme(axis.title.y = element_text(size=15, angle=90)) +
+      theme(plot.title=element_text(size=20)) +
+      theme(legend.title=element_text(size=15)) +
+      theme(legend.text=element_text(size=15)) +
+      scale_x_reverse(paste(x.axis), label=comma) +
+      scale_y_continuous(paste(trendy), label=comma)
+      
+      
+      qualitative.time.series.line.reverse <- qplot(Interval, SMA(Selected, input$smoothing), geom="line", data = spectra.timeseries.table, colour = as.factor(Qualitative)) +
+      scale_colour_discrete("Qualitative") +
+      theme_light() +
+      theme(axis.text.x = element_text(size=15)) +
+      theme(axis.text.y = element_text(size=15)) +
+      theme(axis.title.x = element_text(size=15)) +
+      theme(axis.title.y = element_text(size=15, angle=90)) +
+      theme(plot.title=element_text(size=20)) +
+      theme(legend.title=element_text(size=15)) +
+      theme(legend.text=element_text(size=15)) +
+      scale_x_reverse(paste(x.axis), label=comma) +
+      scale_y_continuous(paste(trendy), label=comma)
+      
+      qualitative.time.series.point.reverse <- qplot(Interval, SMA(Selected, input$smoothing),  geom="line", data = spectra.timeseries.table) +
+      geom_point(aes(colour = as.factor(Qualitative)), lwd=input$pointsize) +
+      scale_colour_discrete("Qualitative") +
+      theme_light() +
+      theme(axis.text.x = element_text(size=15)) +
+      theme(axis.text.y = element_text(size=15)) +
+      theme(axis.title.x = element_text(size=15)) +
+      theme(axis.title.y = element_text(size=15, angle=90)) +
+      theme(plot.title=element_text(size=20)) +
+      theme(legend.title=element_text(size=15)) +
+      theme(legend.text=element_text(size=15)) +
+      scale_x_reverse(paste(x.axis), label=comma) +
+      scale_y_continuous(paste(trendy), label=comma)
+      
+      
+      depth.time.series.reverse <- qplot(Interval, SMA(Selected, input$smoothing),  geom="line", data = spectra.timeseries.table) +
+      geom_line(aes(colour = Depth), lwd=input$linesize+0.5) +
+      geom_line(lwd=input$linesize-0.5) +
+      scale_colour_gradientn("Depth", colours=rev(terrain.colors(length(spectra.line.table$Depth)))) +
+      theme_light() +
+      theme(axis.text.x = element_text(size=15)) +
+      theme(axis.text.y = element_text(size=15)) +
+      theme(axis.title.x = element_text(size=15)) +
+      theme(axis.title.y = element_text(size=15, angle=90)) +
+      theme(plot.title=element_text(size=20)) +
+      theme(legend.title=element_text(size=15)) +
+      theme(legend.text=element_text(size=15)) +
+      scale_x_reverse(paste(x.axis), label=comma) +
+      scale_y_continuous(paste(trendy), label=comma)
+      
+      
+     
+      if (input$timecolour == "Black" && input$xaxistype!="Depth") {
           black.time.series
-      } else if (input$timecolour == "Smooth") {
+      } else if (input$timecolour == "Smooth" && input$xaxistype!="Depth") {
           smooth.time.series
-      } else if (input$timecolour == "Selected") {
+      } else if (input$timecolour == "Selected" && input$xaxistype!="Depth") {
           ramp.time.series
-      } else if (input$timecolour == "Cluster") {
+      } else if (input$timecolour == "Cluster" && input$xaxistype!="Depth") {
           cluster.time.series
-      } else if (input$timecolour == "Climate") {
+      } else if (input$timecolour == "Climate" && input$xaxistype!="Depth") {
           climate.time.series.line
-      } else if (input$timecolour == "QualitativePoint") {
+      } else if (input$timecolour == "QualitativePoint" && input$xaxistype!="Depth") {
           qualitative.time.series.point
-      } else if (input$timecolour == "QualitativeLine") {
+      } else if (input$timecolour == "QualitativeLine" && input$xaxistype!="Depth") {
           qualitative.time.series.line
-      } else if (input$timecolour == "Depth") {
+      } else if (input$timecolour == "Depth" && input$xaxistype!="Depth") {
           Depth.time.series
-      } else if (input$timecolour == "Area") {
-          area.time.series
+      } else if (input$timecolour == "Black" && input$xaxistype=="Depth") {
+          black.time.series.reverse
+      } else if (input$timecolour == "Smooth" && input$xaxistype=="Depth") {
+          smooth.time.series.reverse
+      } else if (input$timecolour == "Selected" && input$xaxistype=="Depth") {
+          ramp.time.series.reverse
+      } else if (input$timecolour == "Cluster" && input$xaxistype=="Depth") {
+          cluster.time.series.reverse
+      } else if (input$timecolour == "Climate" && input$xaxistype=="Depth") {
+          climate.time.series.line.reverse
+      } else if (input$timecolour == "QualitativePoint" && input$xaxistype=="Depth") {
+          qualitative.time.series.point.reverse
+      } else if (input$timecolour == "QualitativeLine" && input$xaxistype=="Depth") {
+          qualitative.time.series.line.reverse
+      } else if (input$timecolour == "Depth" && input$xaxistype=="Depth") {
+          depth.time.series.reverse
+      } else if (input$timecolour == "Area" && input$xaxistype=="Depth") {
+          area.time.series.reverse
       }
       
       
@@ -1996,8 +4230,75 @@ xrfPCAReactive <- reactive({
       
       
       
-      isolate(print(plotInput3e()))
+      isolate(plotInput3e())      
+  })
+  
+  hoverHold3e <- reactive({
+      input$timeseriesact5
       
+      spectra.line.table <- ageData()
+      
+      spectra.line.table <- subset(spectra.line.table, !(spectra.line.table[input$xaxistype] < input$xlimrange[1] | spectra.line.table[input$xaxistype] > input$xlimrange[2]))
+      
+      if(is.null(spectra.line.table$Age)==TRUE){
+          spectra.line.table$Age <- rep(1, length(spectra.line.table$Spectrum))
+      }
+      
+      spectra.line.table.norm <- data.frame(spectra.line.table, null)
+      colnames(spectra.line.table.norm) <- c(names(spectra.line.table), "None")
+      spectra.line.table.norm
+      
+      #interval <- unique.spec*as.numeric(input$intervalmm)+as.numeric(input$startmm)
+      
+      #spectra.timeseries.table <- data.frame(interval, spectra.line.table[c(input$elementtrend)]/spectra.line.table.norm[c(input$elementnorm)], spectra.line.table$Cluster, spectra.line.table$Qualitative, spectra.line.table$Depth)
+      #colnames(spectra.timeseries.table) <- c("Interval", "Selected", "Cluster", "Qualitative", "Depth")
+      
+      spectra.timeseries.table <- data.frame(spectra.line.table[c(input$xaxistype)], (spectra.line.table[c(input$elementtrend)]/spectra.line.table.norm[c(input$elementnorm)]*input$ymultiply), spectra.line.table$Cluster, spectra.line.table$Qualitative, spectra.line.table$Depth, spectra.line.table$Climate)
+      colnames(spectra.timeseries.table) <- c("Interval", "Selected", "Cluster", "Qualitative", "Depth", "Climate")
+      
+      isolate(spectra.timeseries.table)
+      
+  })
+  
+  
+  
+  output$hover_info3e <- renderUI({
+      
+      point.table <- hoverHold3e()
+      
+      hover <- input$plot_hover3e
+      point <- nearPoints(point.table,  xvar="Interval", yvar="Selected", coordinfo=hover,   threshold = 10, maxpoints = 1)
+      
+      #if (nrow(point) == 0) return(NULL)
+      
+      
+      
+      
+      # calculate point position INSIDE the image as percent of total dimensions
+      # from left (horizontal) and from top (vertical)
+      left_pct <- (hover$x - hover$domain$left) / (hover$domain$right - hover$domain$left)
+      top_pct <- (hover$domain$top - hover$y) / (hover$domain$top - hover$domain$bottom)
+      
+      # calculate distance from left and bottom side of the picture in pixels
+      left_px <- hover$range$left + left_pct * (hover$range$right - hover$range$left)
+      top_px <- hover$range$top + top_pct * (hover$range$bottom - hover$range$top)
+      
+      
+      # create style property fot tooltip
+      # background color is set so tooltip is a bit transparent
+      # z-index is set so we are sure are tooltip will be on top
+      style <- paste0("position:absolute; z-index:100; background-color: rgba(245, 245, 245, 0.85); ",
+      "left:", left_px + 2, "px; top:", top_px + 2, "px;")
+      
+      # actual tooltip created as wellPanel
+      wellPanel(
+      style = style,
+      p(HTML(paste0("<b> Spectrum: </b>", point$Spectrum, "<br/>",
+      "<b> Depth: </b>", point$Depth, "<br/>",
+      "<b> Age: </b>", point$Age, "<br/>"
+      
+      )))
+      )
   })
   
   
@@ -2007,9 +4308,78 @@ xrfPCAReactive <- reactive({
   
   filename = function() { paste(trendPlot(), '.tiff', sep='') },
   content = function(file) {
-      ggsave(file,plotInput3e(), device="tiff", dpi=300, width=12, height=7)
+      ggsave(file,plotInput3e(), device="tiff", compression="lzw", type="cairo", dpi=300, width=12, height=7)
   }
   )
+  
+  
+  
+  ratioChooseA <- reactive({
+      spectra.line.table <- ageData()
+      spectra.line.names <- colnames(spectra.line.table)
+
+
+      standard <- spectra.line.names[2]
+      standard
+      
+  })
+  
+  
+  
+  ratioChooseB <- reactive({
+      spectra.line.table <- ageData()
+      spectra.line.names <- colnames(spectra.line.table)
+
+
+      standard <- spectra.line.names[3]
+      
+      
+      standard
+      
+  })
+  
+  
+  ratioChooseC <- reactive({
+      spectra.line.table <- ageData()
+      spectra.line.names <- colnames(spectra.line.table)
+
+
+      standard <- spectra.line.names[4]
+      
+      
+      standard
+      
+  })
+  
+  
+  ratioChooseD <- reactive({
+      spectra.line.table <- ageData()
+      spectra.line.names <- colnames(spectra.line.table)
+      
+      standard <- spectra.line.names[5]
+      
+      
+      standard
+      
+  })
+  
+  
+  output$inelementratioa <- renderUI({
+      selectInput("elementratioa", "Element A", choices=choiceLines(), selected=ratioChooseA())
+  })
+  
+  output$inelementratiob <- renderUI({
+      selectInput("elementratiob", "Element B", choices=choiceLines(), selected=ratioChooseB())
+  })
+  
+  output$inelementratioc <- renderUI({
+      selectInput("elementratioc", "Element C", choices=choiceLines(), selected=ratioChooseC())
+  })
+  
+  output$inelementratiod <- renderUI({
+      selectInput("elementratiod", "Element D", choices=choiceLines(), selected=ratioChooseD())
+  })
+  
   
   
   plotInput4 <- reactive({
@@ -2017,7 +4387,7 @@ xrfPCAReactive <- reactive({
       
       spectra.line.table <- ageData()
       
-      unique.spec <- seq(1, length(spectra.line.table$Spectrum), 1)
+      unique.spec <- seq(1, length(spectra.line.table$Depth), 1)
       null <- rep(1, length(unique.spec))
      
       
@@ -2026,26 +4396,35 @@ xrfPCAReactive <- reactive({
       third.ratio <- spectra.line.table[input$elementratioc]
       fourth.ratio <- spectra.line.table[input$elementratiod]
       
-      first.ratio.norm <- first.ratio/sum(first.ratio)
-      second.ratio.norm <- second.ratio/sum(second.ratio)
-      third.ratio.norm <- third.ratio/sum(third.ratio)
-      fourth.ratio.norm <- fourth.ratio/sum(fourth.ratio)
+   
+      
+      ratio.frame <- data.frame(first.ratio, second.ratio, third.ratio, fourth.ratio, spectra.line.table$Cluster, spectra.line.table$Qualitative, spectra.line.table$Depth, spectra.line.table$Age, spectra.line.table$Climate)
+      colnames(ratio.frame) <- c(gsub("[.]", "", c(substr(input$elementratioa, 1, 2), substr(input$elementratiob, 1, 2), substr(input$elementratioc, 1, 2), substr(input$elementratiod, 1, 2), "Cluster", "Qualitative", "Depth", "Age", "Climate")))
+      
+
       
       
-      ratio.frame <- data.frame(first.ratio, second.ratio, third.ratio, fourth.ratio, spectra.line.table$Cluster, spectra.line.table$Qualitative, spectra.line.table$Depth, spectra.line.table$Climate)
-      colnames(ratio.frame) <- gsub("[.]", "", c(substr(input$elementratioa, 1, 2), substr(input$elementratiob, 1, 2), substr(input$elementratioc, 1, 2), substr(input$elementratiod, 1, 2), "Cluster", "Qualitative", "Depth", "Climate"))
+      ratio.names.x <- if(input$elementratiob!="None"){
+          paste(names(ratio.frame[1]), "/", names(ratio.frame[2]), sep="", collapse="")
+      } else if(input$elementratiob=="None"){
+          paste(names(ratio.frame[1]))
+      }
       
       
-      ratio.names.x <- c(names(ratio.frame[1]), "/", names(ratio.frame[2]))
-      ratio.names.y <- c(names(ratio.frame[3]), "/", names(ratio.frame[4]))
+      ratio.names.y <- if(input$elementratiod!="None"){
+          paste(names(ratio.frame[3]), "/", names(ratio.frame[4]), sep="", collapse="")
+      } else if(input$elementratiod=="None"){
+          paste(names(ratio.frame[3]))
+      }
       
       ratio.names.x <- paste(ratio.names.x, sep=",", collapse="")
       ratio.names.y <- paste(ratio.names.y, sep=",", collapse="")
       
+      ratio.frame$X <- ratio.frame[,1]/ratio.frame[,2]
+      ratio.frame$Y <- ratio.frame[,3]/ratio.frame[,4]
       
       
-      
-      black.ratio.plot <- qplot(ratio.frame[,1]/ratio.frame[,2], ratio.frame[,3]/ratio.frame[,4], xlab = ratio.names.x, ylab = ratio.names.y ) +
+      black.ratio.plot <- qplot(X, Y, data=ratio.frame, xlab = ratio.names.x, ylab = ratio.names.y  ) +
       geom_point(lwd=input$spotsize2) +
       theme_light() +
       theme(axis.text.x = element_text(size=15)) +
@@ -2054,9 +4433,11 @@ xrfPCAReactive <- reactive({
       theme(axis.title.y = element_text(size=15, angle=90)) +
       theme(plot.title=element_text(size=20)) +
       theme(legend.title=element_text(size=15)) +
-      theme(legend.text=element_text(size=15))
+      theme(legend.text=element_text(size=15))+
+      scale_x_continuous(ratio.names.x, label=comma) +
+      scale_y_continuous(ratio.names.y, label=comma)
       
-      cluster.ratio.plot <- qplot(ratio.frame[,1]/ratio.frame[,2], ratio.frame[,3]/ratio.frame[,4], xlab = ratio.names.x, ylab = ratio.names.y ) +
+      cluster.ratio.plot <- qplot(X, Y, data=ratio.frame, xlab = ratio.names.x, ylab = ratio.names.y ) +
       geom_point(aes(colour=as.factor(ratio.frame$Cluster), shape=as.factor(ratio.frame$Cluster)), size=input$spotsize2+1) +
       geom_point(colour="grey30", size=input$spotsize2-2) +
       scale_shape_manual("Cluster", values=1:nlevels(as.factor(as.factor(ratio.frame$Cluster)))) +
@@ -2068,10 +4449,12 @@ xrfPCAReactive <- reactive({
       theme(axis.title.y = element_text(size=15, angle=90)) +
       theme(plot.title=element_text(size=20)) +
       theme(legend.title=element_text(size=15)) +
-      theme(legend.text=element_text(size=15))
+      theme(legend.text=element_text(size=15))+
+      scale_x_continuous(ratio.names.x, label=comma) +
+      scale_y_continuous(ratio.names.y, label=comma)
       
-      cluster.ratio.ellipse.plot <- qplot(ratio.frame[,1]/ratio.frame[,2], ratio.frame[,3]/ratio.frame[,4], xlab = ratio.names.x, ylab = ratio.names.y ) +
-      stat_ellipse(aes(ratio.frame[,1]/ratio.frame[,2], ratio.frame[,3]/ratio.frame[,4], colour=as.factor(ratio.frame$Cluster))) +
+      cluster.ratio.ellipse.plot <- qplot(X, Y, data=ratio.frame, xlab = ratio.names.x, ylab = ratio.names.y  ) +
+      stat_ellipse(aes(ratio.frame$X, ratio.frame$Y, colour=as.factor(ratio.frame$Cluster))) +
       geom_point(aes(colour=as.factor(ratio.frame$Cluster), shape=as.factor(ratio.frame$Cluster)), size=input$spotsize2+1) +
       geom_point(colour="grey30", size=input$spotsize2-2) +
       scale_shape_manual("Cluster", values=1:nlevels(as.factor(as.factor(ratio.frame$Cluster)))) +
@@ -2083,10 +4466,12 @@ xrfPCAReactive <- reactive({
       theme(axis.title.y = element_text(size=15, angle=90)) +
       theme(plot.title=element_text(size=20)) +
       theme(legend.title=element_text(size=15)) +
-      theme(legend.text=element_text(size=15))
+      theme(legend.text=element_text(size=15))+
+      scale_x_continuous(ratio.names.x, label=comma) +
+      scale_y_continuous(ratio.names.y, label=comma)
       
       
-      climate.ratio.plot <- qplot(ratio.frame[,1]/ratio.frame[,2], ratio.frame[,3]/ratio.frame[,4], xlab = ratio.names.x, ylab = ratio.names.y ) +
+      climate.ratio.plot <- qplot(X, Y, data=ratio.frame, xlab = ratio.names.x, ylab = ratio.names.y  ) +
       geom_point(aes(colour=as.factor(ratio.frame$Climate), shape=as.factor(ratio.frame$Climate)), size=input$spotsize2+1) +
       geom_point(colour="grey30", size=input$spotsize2-2) +
       scale_shape_manual("Climatic Period", values=1:nlevels(ratio.frame$Climate)) +
@@ -2098,10 +4483,12 @@ xrfPCAReactive <- reactive({
       theme(axis.title.y = element_text(size=15, angle=90)) +
       theme(plot.title=element_text(size=20)) +
       theme(legend.title=element_text(size=15)) +
-      theme(legend.text=element_text(size=15))
+      theme(legend.text=element_text(size=15))+
+      scale_x_continuous(ratio.names.x, label=comma) +
+      scale_y_continuous(ratio.names.y, label=comma)
       
-      climate.ratio.ellipse.plot <- qplot(ratio.frame[,1]/ratio.frame[,2], ratio.frame[,3]/ratio.frame[,4], xlab = ratio.names.x, ylab = ratio.names.y ) +
-      stat_ellipse(aes(ratio.frame[,1]/ratio.frame[,2], ratio.frame[,3]/ratio.frame[,4], colour=as.factor(ratio.frame$Climate))) +
+      climate.ratio.ellipse.plot <- qplot(X, Y, data=ratio.frame, xlab = ratio.names.x, ylab = ratio.names.y  ) +
+      stat_ellipse(aes(ratio.frame$X, ratio.frame$Y, colour=as.factor(ratio.frame$Climate))) +
       geom_point(aes(colour=as.factor(ratio.frame$Climate), shape=as.factor(ratio.frame$Climate)), size=input$spotsize2+1) +
       geom_point(colour="grey30", size=input$spotsize2-2) +
       scale_shape_manual("Climatic Period", values=1:nlevels(ratio.frame$Climate)) +
@@ -2113,10 +4500,12 @@ xrfPCAReactive <- reactive({
       theme(axis.title.y = element_text(size=15, angle=90)) +
       theme(plot.title=element_text(size=20)) +
       theme(legend.title=element_text(size=15)) +
-      theme(legend.text=element_text(size=15))
+      theme(legend.text=element_text(size=15))+
+      scale_x_continuous(ratio.names.x, label=comma) +
+      scale_y_continuous(ratio.names.y, label=comma)
 
       
-      qualitative.ratio.plot <- qplot(ratio.frame[,1]/ratio.frame[,2], ratio.frame[,3]/ratio.frame[,4], xlab = ratio.names.x, ylab = ratio.names.y ) +
+      qualitative.ratio.plot <- qplot(X, Y, data=ratio.frame, xlab = ratio.names.x, ylab = ratio.names.y  ) +
       geom_point(aes(colour=as.factor(ratio.frame$Qualitative), shape=as.factor(ratio.frame$Qualitative)), size=input$spotsize2+1) +
       geom_point(colour="grey30", size=input$spotsize2-2) +
       scale_shape_manual("Qualitative", values=1:nlevels(ratio.frame$Qualitative)) +
@@ -2128,10 +4517,12 @@ xrfPCAReactive <- reactive({
       theme(axis.title.y = element_text(size=15, angle=90)) +
       theme(plot.title=element_text(size=20)) +
       theme(legend.title=element_text(size=15)) +
-      theme(legend.text=element_text(size=15))
+      theme(legend.text=element_text(size=15))+
+      scale_x_continuous(ratio.names.x, label=comma) +
+      scale_y_continuous(ratio.names.y, label=comma)
       
-      qualitative.ratio.ellipse.plot <- qplot(ratio.frame[,1]/ratio.frame[,2], ratio.frame[,3]/ratio.frame[,4], xlab = ratio.names.x, ylab = ratio.names.y ) +
-      stat_ellipse(aes(ratio.frame[,1]/ratio.frame[,2], ratio.frame[,3]/ratio.frame[,4], colour=as.factor(ratio.frame$Qualitative))) +
+      qualitative.ratio.ellipse.plot <- qplot(X, Y, data=ratio.frame, xlab = ratio.names.x, ylab = ratio.names.y  ) +
+      stat_ellipse(aes(ratio.frame$X, ratio.frame$Y, colour=as.factor(ratio.frame$Qualitative))) +
       geom_point(aes(colour=as.factor(ratio.frame$Qualitative), shape=as.factor(ratio.frame$Qualitative)), size=input$spotsize2+1) +
       geom_point(colour="grey30", size=input$spotsize2-2) +
       scale_shape_manual("Qualitative", values=1:nlevels(ratio.frame$Qualitative)) +
@@ -2143,11 +4534,14 @@ xrfPCAReactive <- reactive({
       theme(axis.title.y = element_text(size=15, angle=90)) +
       theme(plot.title=element_text(size=20)) +
       theme(legend.title=element_text(size=15)) +
-      theme(legend.text=element_text(size=15))
+      theme(legend.text=element_text(size=15))+
+      scale_x_continuous(ratio.names.x, label=comma) +
+      scale_y_continuous(ratio.names.y, label=comma)
       
-      quanitative.ratio.plot <- qplot(ratio.frame[,1]/ratio.frame[,2], ratio.frame[,3]/ratio.frame[,4], xlab = ratio.names.x, ylab = ratio.names.y ) +
-      geom_point(aes(colour=ratio.frame$Depth), size=input$spotsize2) +
-      scale_colour_gradientn("Depth", colours=rainbow(length(ratio.frame$Depth))) +
+      depth.ratio.plot <- qplot(X, Y, data=ratio.frame, xlab = ratio.names.x, ylab = ratio.names.y  ) +
+      geom_point(aes(colour = ratio.frame$Depth), size=input$spotsize2+1) +
+      geom_point(size=input$spotsize2-2) +
+      scale_colour_gradientn("Depth", colours=rev(terrain.colors(length(ratio.frame$Depth)))) +
       theme_light() +
       theme(axis.text.x = element_text(size=15)) +
       theme(axis.text.y = element_text(size=15)) +
@@ -2155,11 +4549,24 @@ xrfPCAReactive <- reactive({
       theme(axis.title.y = element_text(size=15, angle=90)) +
       theme(plot.title=element_text(size=20)) +
       theme(legend.title=element_text(size=15)) +
-      theme(legend.text=element_text(size=15))
+      theme(legend.text=element_text(size=15))+
+      scale_x_continuous(ratio.names.x, label=comma) +
+      scale_y_continuous(ratio.names.y, label=comma)
       
-      
-      
-      
+      age.ratio.plot <- qplot(X, Y, data=ratio.frame, xlab = ratio.names.x, ylab = ratio.names.y  ) +
+      geom_point(aes(colour = ratio.frame$Age), size=input$spotsize2+1) +
+      geom_point(size=input$spotsize2-2) +
+      scale_colour_gradientn("Age", colours=terrain.colors(length(ratio.frame$Age))) +
+      theme_light() +
+      theme(axis.text.x = element_text(size=15)) +
+      theme(axis.text.y = element_text(size=15)) +
+      theme(axis.title.x = element_text(size=15)) +
+      theme(axis.title.y = element_text(size=15, angle=90)) +
+      theme(plot.title=element_text(size=20)) +
+      theme(legend.title=element_text(size=15)) +
+      theme(legend.text=element_text(size=15)) +
+      scale_x_continuous(ratio.names.x, label=comma) +
+      scale_y_continuous(ratio.names.y, label=comma)
       
       
       
@@ -2181,25 +4588,123 @@ xrfPCAReactive <- reactive({
           qualitative.ratio.plot
       } else if (input$ratiocolour == "Qualitative" && input$elipseplot2==TRUE ) {
           qualitative.ratio.ellipse.plot
-      } else if (input$ratiocolour == "Depth" && input$elipseplot2==FALSE ) {
-          quanitative.ratio.plot
-      } else if (input$ratiocolour == "Depth" && input$elipseplot2==TRUE) {
-          quanitative.ratio.plot
+      } else if (input$ratiocolour == "Depth") {
+          depth.ratio.plot
+      } else if (input$ratiocolour == "Age") {
+          age.ratio.plot
       }
       
   })
   
   
   output$elementratiotimeseries <- renderPlot({
-      print(plotInput4())
+      plotInput4()
       
       
   })
   
+  
+  hoverHoldRatio <- reactive({
+      
+      spectra.line.table <- ageData()
+      
+      if(is.null(spectra.line.table$Age)==TRUE){
+          spectra.line.table$Age <- rep(1, length(spectra.line.table$Depth))
+      }
+  
+      first.ratio <-spectra.line.table[input$elementratioa]
+      second.ratio <- spectra.line.table[input$elementratiob]
+      third.ratio <- spectra.line.table[input$elementratioc]
+      fourth.ratio <- spectra.line.table[input$elementratiod]
+      
+      first.ratio.norm <- first.ratio/sum(first.ratio)
+      second.ratio.norm <- second.ratio/sum(second.ratio)
+      third.ratio.norm <- third.ratio/sum(third.ratio)
+      fourth.ratio.norm <- fourth.ratio/sum(fourth.ratio)
+      
+      
+      ratio.frame <- data.frame(first.ratio, second.ratio, third.ratio, fourth.ratio, spectra.line.table$Depth, spectra.line.table$Age)
+      colnames(ratio.frame) <- gsub("[.]", "", c(substr(input$elementratioa, 1, 2), substr(input$elementratiob, 1, 2), substr(input$elementratioc, 1, 2), substr(input$elementratiod, 1, 2), "Depth", "Age"))
+      
+      
+      ratio.names.x <- c(names(ratio.frame[1]), "/", names(ratio.frame[2]))
+      ratio.names.y <- c(names(ratio.frame[3]), "/", names(ratio.frame[4]))
+      
+      ratio.names.x <- paste(ratio.names.x, sep=",", collapse="")
+      ratio.names.y <- paste(ratio.names.y, sep=",", collapse="")
+      
+
+      ratio.frame$X <- ratio.frame[,1]/ratio.frame[,2]
+      ratio.frame$Y <- ratio.frame[,3]/ratio.frame[,4]
+      
+      ratio.frame
+      
+  })
+  
+  
+  
+  
+  output$hover_inforatio <- renderUI({
+      
+      point.table <- hoverHoldRatio()
+      
+      hover <- input$plot_hoverratio
+      point <- nearPoints(point.table,  coordinfo=hover,   threshold = 5, maxpoints = 1, addDist = TRUE)
+      #if (nrow(point) == 0) return(NULL)
+      
+      
+      # calculate point position INSIDE the image as percent of total dimensions
+      # from left (horizontal) and from top (vertical)
+      left_pct <- (hover$x - hover$domain$left) / (hover$domain$right - hover$domain$left)
+      top_pct <- (hover$domain$top - hover$y) / (hover$domain$top - hover$domain$bottom)
+      
+      # calculate distance from left and bottom side of the picture in pixels
+      left_px <- hover$range$left + left_pct * (hover$range$right - hover$range$left)
+      top_px <- hover$range$top + top_pct * (hover$range$bottom - hover$range$top)
+      
+      
+      
+      
+      
+      # create style property fot tooltip
+      # background color is set so tooltip is a bit transparent
+      # z-index is set so we are sure are tooltip will be on top
+      style <- paste0("position:absolute; z-index:100; background-color: rgba(245, 245, 245, 0.85); ",
+      "left:", left_px + 2, "px; top:", top_px + 2, "px;")
+      
+      # actual tooltip created as wellPanel
+      wellPanel(
+      style = style,
+      p(HTML(paste0("<b> Depth: </b>", point$Depth, "<br/>",
+      "<b> Age: </b>", point$Age, "<br/>"
+      
+      
+      )))
+      )
+  })
+  
   ratioTerm <- reactive({
       
-      ratio.names <- paste(c(c(substr(input$elementratioa, 1,2), "-", substr(input$elementratiob, 1, 2)), "_", c(substr(input$elementratioc,1,2), "-", substr(input$elementratiod,1,2), "_RatioPlot")), collapse="")
-      ratio.label <- paste(c(input$projectname, "_", ratio.names), collapse='')
+      ratio.names.x <- if(input$elementratiob!="None"){
+          paste(substr(input$elementratioa, 1, 2), "-", substr(input$elementratiob, 1, 2), sep="", collapse="")
+      } else if(input$elementratiob=="None"){
+          paste(substr(input$elementratioa, 1, 2))
+      }
+      
+      
+      ratio.names.y <- if(input$elementratiod!="None"){
+          paste(substr(input$elementratioc, 1, 2), "-", substr(input$elementratiod, 1, 2), sep="", collapse="")
+      } else if(input$elementratiod=="None"){
+          paste(substr(input$elementratioc, 1, 2))
+      }
+      
+      ratio.names.x <- paste(ratio.names.x, sep=",", collapse="")
+      ratio.names.y <- paste(ratio.names.y, sep=",", collapse="")
+      
+      ratio.names <- paste(ratio.names.x, ratio.names.y, sep= "-", collapse="")
+      
+      ratio.label <- paste(input$projectname, "_", ratio.names, collapse="")
+
       ratio.label
   })
   
@@ -2208,12 +4713,62 @@ xrfPCAReactive <- reactive({
   
   filename = function() { paste(ratioTerm(), '.tiff', sep='') },
   content = function(file) {
-      ggsave(file,plotInput4(), device="tiff", dpi=300, width=12, height=7)
+      ggsave(file,plotInput4(), device="tiff", compression="lzw", type="cairo", dpi=300, width=12, height=7)
   }
   )
   
   
   
+  ternaryChooseA <- reactive({
+      spectra.line.table <- ageData()
+      spectra.line.names <- colnames(spectra.line.table)
+
+
+      standard <- if(input$filetype=="Spectra"){
+          "Al.K.alpha"
+      } else if(input$filetype=="Net"){
+          spectra.line.names[2]
+      }
+      
+  })
+  
+  ternaryChooseB <- reactive({
+      spectra.line.table <- ageData()
+      spectra.line.names <- colnames(spectra.line.table)
+
+
+      standard <- if(input$filetype=="Spectra"){
+          "Si.K.alpha"
+      } else if(input$filetype=="Net"){
+          spectra.line.names[3]
+      }
+      
+  })
+  
+  ternaryChooseC <- reactive({
+      spectra.line.table <- ageData()
+      spectra.line.names <- colnames(spectra.line.table)
+
+
+      standard <- if(input$filetype=="Spectra"){
+          "Ca.K.alpha"
+      } else if(input$filetype=="Net"){
+          spectra.line.names[4]
+      }
+      
+  })
+  
+  output$inaxisa <- renderUI({
+      selectInput("axisa", "Axis A", choices=choiceLines(), selected=ternaryChooseA())
+  })
+  
+  output$inaxisb <- renderUI({
+      selectInput("axisb", "Axis B", choices=choiceLines(), selected=ternaryChooseB())
+  })
+  
+  output$inaxisc <- renderUI({
+      selectInput("axisc", "Axis C", choices=choiceLines(), selected=ternaryChooseC())
+  })
   
   
   
@@ -2224,7 +4779,7 @@ xrfPCAReactive <- reactive({
 
       
       
-      unique.spec <- seq(1, length(spectra.line.table$Spectrum), 1)
+      unique.spec <- seq(1, length(spectra.line.table$Depth), 1)
       null <- rep(1, length(unique.spec))
       
       first.axis <- spectra.line.table[input$axisa]
@@ -2235,11 +4790,11 @@ xrfPCAReactive <- reactive({
       second.axis.norm <- second.axis/sum(second.axis)
       third.axis.norm <- third.axis/sum(third.axis)
       
-      axis.frame <- data.frame(first.axis, second.axis, third.axis, spectra.line.table$Cluster, spectra.line.table$Qualitative, spectra.line.table$Depth, spectra.line.table$Climate)
-      colnames(axis.frame) <- gsub("[.]", "", c(substr(input$axisa, 1, 2), substr(input$axisb, 1, 2), substr(input$axisc, 1, 2), "Cluster", "Qualitative", "Depth", "Climate"))
+      axis.frame <- data.frame(first.axis, second.axis, third.axis, spectra.line.table$Cluster, spectra.line.table$Qualitative, spectra.line.table$Depth, spectra.line.table$Age, spectra.line.table$Climate)
+      colnames(axis.frame) <- gsub("[.]", "", c(substr(input$axisa, 1, 2), substr(input$axisb, 1, 2), substr(input$axisc, 1, 2), "Cluster", "Qualitative", "Depth", "Age", "Climate"))
       
-      axis.frame.norm <- data.frame(first.axis.norm, second.axis.norm, third.axis.norm, spectra.line.table$Cluster, spectra.line.table$Qualitative, spectra.line.table$Depth, spectra.line.table$Climate)
-      colnames(axis.frame.norm) <- gsub("[.]", "", c(substr(input$axisa, 1, 2), substr(input$axisb, 1, 2), substr(input$axisc, 1, 2), "Cluster", "Qualitative", "Depth", "Climate"))
+      axis.frame.norm <- data.frame(first.axis.norm, second.axis.norm, third.axis.norm, spectra.line.table$Cluster, spectra.line.table$Qualitative, spectra.line.table$Depth, spectra.line.table$Age, spectra.line.table$Climate)
+      colnames(axis.frame.norm) <- gsub("[.]", "", c(substr(input$axisa, 1, 2), substr(input$axisb, 1, 2), substr(input$axisc, 1, 2), "Cluster", "Qualitative", "Depth", "Age", "Climate"))
       
       ternaryplot1 <- ggtern(data=axis.frame, aes_string(x = colnames(axis.frame)[1], y = colnames(axis.frame)[2], z = colnames(axis.frame)[3])) +
       geom_point(size=input$ternpointsize) +
@@ -2323,6 +4878,61 @@ xrfPCAReactive <- reactive({
       theme(legend.text=element_text(size=15))
       
       
+      ternaryplotdepthellipse <- ggtern(data=axis.frame, aes_string(x = colnames(axis.frame)[1], y = colnames(axis.frame)[2], z = colnames(axis.frame)[3])) +
+      geom_point(aes(colour = Depth), size=input$ternpointsize+1) +
+      geom_point(size=input$ternpointsize-2) +
+      scale_colour_gradientn("Depth", colours=rev(terrain.colors(length(axis.frame$Depth)))) +
+      theme_light() +
+      theme(axis.text.x = element_text(size=15)) +
+      theme(axis.text.y = element_text(size=15)) +
+      theme(axis.title.x = element_text(size=15)) +
+      theme(axis.title.y = element_text(size=15, angle=90)) +
+      theme(plot.title=element_text(size=20)) +
+      theme(legend.title=element_text(size=15)) +
+      theme(legend.text=element_text(size=15))
+      
+      ternaryplotdepth <- ggtern(data=axis.frame, aes_string(x = colnames(axis.frame)[1], y = colnames(axis.frame)[2], z = colnames(axis.frame)[3])) +
+      geom_point(aes(colour = Depth), size=input$ternpointsize+1) +
+      geom_point(size=input$ternpointsize-2) +
+      scale_colour_gradientn("Depth", colours=rev(terrain.colors(length(axis.frame$Depth)))) +
+      theme_light() +
+      theme(axis.text.x = element_text(size=15)) +
+      theme(axis.text.y = element_text(size=15)) +
+      theme(axis.title.x = element_text(size=15)) +
+      theme(axis.title.y = element_text(size=15, angle=90)) +
+      theme(plot.title=element_text(size=20)) +
+      theme(legend.title=element_text(size=15)) +
+      theme(legend.text=element_text(size=15))
+      
+      ternaryplotage <- ggtern(data=axis.frame, aes_string(x = colnames(axis.frame)[1], y = colnames(axis.frame)[2], z = colnames(axis.frame)[3])) +
+      geom_point(aes(colour = Age), size=input$ternpointsize+1) +
+      geom_point(size=input$ternpointsize-2) +
+      scale_colour_gradientn("Age", colours=terrain.colors(length(axis.frame$Age))) +
+      theme_light() +
+      theme(axis.text.x = element_text(size=15)) +
+      theme(axis.text.y = element_text(size=15)) +
+      theme(axis.title.x = element_text(size=15)) +
+      theme(axis.title.y = element_text(size=15, angle=90)) +
+      theme(plot.title=element_text(size=20)) +
+      theme(legend.title=element_text(size=15)) +
+      theme(legend.text=element_text(size=15))
+      
+      ternaryplotageellipse <- ggtern(data=axis.frame, aes_string(x = colnames(axis.frame)[1], y = colnames(axis.frame)[2], z = colnames(axis.frame)[3])) +
+      geom_density_tern() +
+      geom_point(aes(colour = Age), size=input$ternpointsize+1) +
+      geom_point(size=input$ternpointsize-2) +
+      scale_colour_gradientn("Age", colours=terrain.colors(length(axis.frame$Age))) +
+      theme_light() +
+      theme(axis.text.x = element_text(size=15)) +
+      theme(axis.text.y = element_text(size=15)) +
+      theme(axis.title.x = element_text(size=15)) +
+      theme(axis.title.y = element_text(size=15, angle=90)) +
+      theme(plot.title=element_text(size=20)) +
+      theme(legend.title=element_text(size=15)) +
+      theme(legend.text=element_text(size=15))
+      
+    
+      
       ternaryplotqualitative <- ggtern(data=axis.frame, aes_string(x = colnames(axis.frame)[1], y = colnames(axis.frame)[2], z = colnames(axis.frame)[3])) +
       geom_point(aes(colour = as.factor(Qualitative), shape=as.factor(Qualitative)), size=input$ternpointsize+1) +
       geom_point(colour="grey30", size=input$ternpointsize-2) +
@@ -2352,32 +4962,7 @@ xrfPCAReactive <- reactive({
       theme(legend.title=element_text(size=15)) +
       theme(legend.text=element_text(size=15))
       
-      ternaryplotDepth <- ggtern(data=axis.frame, aes_string(x = colnames(axis.frame)[1], y = colnames(axis.frame)[2], z = colnames(axis.frame)[3])) +
-      geom_point(aes(colour = Depth), size=input$ternpointsize+1) +
-      geom_point(size=input$ternpointsize-2) +
-      scale_colour_gradientn("Depth", colours=rainbow(length(axis.frame$Depth))) +
-      theme_light() +
-      theme(axis.text.x = element_text(size=15)) +
-      theme(axis.text.y = element_text(size=15)) +
-      theme(axis.title.x = element_text(size=15)) +
-      theme(axis.title.y = element_text(size=15, angle=90)) +
-      theme(plot.title=element_text(size=20)) +
-      theme(legend.title=element_text(size=15)) +
-      theme(legend.text=element_text(size=15))
-      
-      ternaryplotquanitativeellipse <- ggtern(data=axis.frame, aes_string(x = colnames(axis.frame)[1], y = colnames(axis.frame)[2], z = colnames(axis.frame)[3])) +
-      geom_density_tern() +
-      geom_point(aes(colour = Depth), size=input$ternpointsize) +
-      scale_colour_gradientn("Depth", colours=rainbow(length(axis.frame$Depth))) +
-      theme_light() +
-      theme(axis.text.x = element_text(size=15)) +
-      theme(axis.text.y = element_text(size=15)) +
-      theme(axis.title.x = element_text(size=15)) +
-      theme(axis.title.y = element_text(size=15, angle=90)) +
-      theme(plot.title=element_text(size=20)) +
-      theme(legend.title=element_text(size=15)) +
-      theme(legend.text=element_text(size=15))
-      
+
       
       
       #####Normalization
@@ -2492,10 +5077,10 @@ xrfPCAReactive <- reactive({
       theme(legend.title=element_text(size=15)) +
       theme(legend.text=element_text(size=15))
       
-      ternaryplotDepth.norm <- ggtern(data=axis.frame.norm, aes_string(x = colnames(axis.frame.norm)[1], y = colnames(axis.frame.norm)[2], z = colnames(axis.frame.norm)[3])) +
+      ternaryplotdepth.norm <- ggtern(data=axis.frame.norm, aes_string(x = colnames(axis.frame.norm)[1], y = colnames(axis.frame.norm)[2], z = colnames(axis.frame.norm)[3])) +
       geom_point(aes(colour = Depth), size=input$ternpointsize+1) +
       geom_point(size=input$ternpointsize-2) +
-      scale_colour_gradientn("Depth", colours=rainbow(length(axis.frame$Depth))) +
+      scale_colour_gradientn("Depth", colours=rev(terrain.colors(length(axis.frame$Depth)))) +
       theme_light() +
       theme(axis.text.x = element_text(size=15)) +
       theme(axis.text.y = element_text(size=15)) +
@@ -2505,10 +5090,38 @@ xrfPCAReactive <- reactive({
       theme(legend.title=element_text(size=15)) +
       theme(legend.text=element_text(size=15))
       
-      ternaryplotquanitativeellipse.norm <- ggtern(data=axis.frame.norm, aes_string(x = colnames(axis.frame.norm)[1], y = colnames(axis.frame.norm)[2], z = colnames(axis.frame.norm)[3])) +
+      
+      ternaryplotdepthellipse.norm <- ggtern(data=axis.frame.norm, aes_string(x = colnames(axis.frame.norm)[1], y = colnames(axis.frame.norm)[2], z = colnames(axis.frame.norm)[3])) +
       geom_density_tern() +
       geom_point(aes(colour = Depth), size=input$ternpointsize) +
-      scale_colour_gradientn("Depth", colours=rainbow(length(axis.frame$Depth))) +
+      scale_colour_gradientn("Depth", colours=rev(terrain.colors(length(axis.frame$Depth)))) +
+      theme_light() +
+      theme(axis.text.x = element_text(size=15)) +
+      theme(axis.text.y = element_text(size=15)) +
+      theme(axis.title.x = element_text(size=15)) +
+      theme(axis.title.y = element_text(size=15, angle=90)) +
+      theme(plot.title=element_text(size=20)) +
+      theme(legend.title=element_text(size=15)) +
+      theme(legend.text=element_text(size=15))
+      
+      ternaryplotage.norm <- ggtern(data=axis.frame.norm, aes_string(x = colnames(axis.frame.norm)[1], y = colnames(axis.frame.norm)[2], z = colnames(axis.frame.norm)[3])) +
+      geom_point(aes(colour = Age), size=input$ternpointsize+1) +
+      geom_point(size=input$ternpointsize-2) +
+      scale_colour_gradientn("Age", colours=terrain.colors(length(axis.frame$Age))) +
+      theme_light() +
+      theme(axis.text.x = element_text(size=15)) +
+      theme(axis.text.y = element_text(size=15)) +
+      theme(axis.title.x = element_text(size=15)) +
+      theme(axis.title.y = element_text(size=15, angle=90)) +
+      theme(plot.title=element_text(size=20)) +
+      theme(legend.title=element_text(size=15)) +
+      theme(legend.text=element_text(size=15))
+      
+      ternaryplotageellipse.norm <- ggtern(data=axis.frame.norm, aes_string(x = colnames(axis.frame.norm)[1], y = colnames(axis.frame.norm)[2], z = colnames(axis.frame.norm)[3])) +
+      geom_density_tern() +
+      geom_point(aes(colour = Age), size=input$ternpointsize+1) +
+      geom_point(size=input$ternpointsize-2) +
+      scale_colour_gradientn("Age", colours=terrain.colors(length(axis.frame$Age))) +
       theme_light() +
       theme(axis.text.x = element_text(size=15)) +
       theme(axis.text.y = element_text(size=15)) +
@@ -2536,9 +5149,13 @@ xrfPCAReactive <- reactive({
       } else if (input$ternarycolour == "Climate" && input$terndensityplot==TRUE && input$ternnormplot==FALSE) {
           ternaryplotclimateellipse
       } else if (input$ternarycolour == "Depth" && input$terndensityplot==FALSE && input$ternnormplot==FALSE) {
-          ternaryplotDepth
+          ternaryplotdepth
       } else if (input$ternarycolour == "Depth" && input$terndensityplot==TRUE && input$ternnormplot==FALSE) {
-          ternaryplotquanitativeellipse
+          ternaryplotdepthellipse
+      } else if (input$ternarycolour == "Age" && input$terndensityplot==FALSE && input$ternnormplot==FALSE) {
+          ternaryplotage
+      } else if (input$ternarycolour == "Age" && input$terndensityplot==TRUE && input$ternnormplot==FALSE) {
+          ternaryplotageellipse
       } else if (input$ternarycolour == "black" && input$terndensityplot==FALSE && input$ternnormplot==TRUE) {
           ternaryplot1.norm
       } else if (input$ternarycolour == "black" && input$terndensityplot==TRUE && input$ternnormplot==TRUE) {
@@ -2556,9 +5173,13 @@ xrfPCAReactive <- reactive({
       } else if (input$ternarycolour == "Qualitative" && input$terndensityplot==TRUE && input$ternnormplot==TRUE) {
           ternaryplotqualitativeellipse.norm
       } else if (input$ternarycolour == "Depth" && input$terndensityplot==FALSE && input$ternnormplot==TRUE) {
-          ternaryplotDepth.norm
+          ternaryplotdepth.norm
       } else if (input$ternarycolour == "Depth" && input$terndensityplot==TRUE && input$ternnormplot==TRUE) {
-          ternaryplotquanitativeellipse.norm
+          ternaryplotdepthellipse.norm
+      } else if (input$ternarycolour == "Age" && input$terndensityplot==FALSE && input$ternnormplot==TRUE) {
+          ternaryplotage.norm
+      } else if (input$ternarycolour == "Age" && input$terndensityplot==TRUE && input$ternnormplot==TRUE) {
+          ternaryplotageellipse.norm
       }
       
       
@@ -2582,7 +5203,7 @@ xrfPCAReactive <- reactive({
   
   filename = function() { paste(axisTerm(), '.tiff', sep='') },
   content = function(file) {
-      ggsave(file,plotInput5(), device="tiff", dpi=300, width=12, height=7)
+      ggsave(file,plotInput5(), device="tiff", compression="lzw", type="cairo", dpi=300, width=12, height=7)
   }
   )
   
@@ -2593,7 +5214,7 @@ xrfPCAReactive <- reactive({
       
       
       
-      data.transformation.selection <- if(input$transform1=="None" && input$elementnum2=="None" && input$elementden1=="None") {
+      spectra.line.table$Selected <- if(input$transform1=="None" && input$elementnum2=="None" && input$elementden1=="None") {
           spectra.line.table[input$elementnum1]
           ########Two Numerators
       } else if(input$transform1=="+" && input$elementnum2!="None" && input$elementden1=="None"){
@@ -3699,33 +6320,943 @@ xrfPCAReactive <- reactive({
           (spectra.line.table[input$elementnum1] / spectra.line.table[input$elementnum2] / spectra.line.table[input$elementnum3])/(spectra.line.table[input$elementden1] / spectra.line.table[input$elementden2] / spectra.line.table[input$elementden3])
       }
       
-      data.transformation.selection.norm <- t(t(data.transformation.selection)/rowSums(t(data.transformation.selection)))
+      #spectra.line.table$SelectedNorm <- t(t(spectra.line.table$Selected)/rowSums(t(spectra.line.table$Selected)))
       
       
-      data.transformation <- if(input$transformnorm==FALSE){
-          data.transformation.selection
-      } else if(input$transformnorm==TRUE){
-          data.transformation.selection.norm
-      }
-      
-      
-      data.transformation
+      spectra.line.table
   })  
   
   
   
+  xmindataeq <- reactive({
+      
+      spectra.line.table <- dataTransform()
+
+      
+      x.data <- spectra.line.table[input$xaxistypeeq]
+      xmindata <- min(x.data)
+      
+      xmindata
+      
+      
+  })
+  
+  xmaxdataeq <- reactive({
+      spectra.line.table <- dataTransform()
+
+      
+      x.data <- spectra.line.table[input$xaxistypeeq]
+      xmaxdata <- max(x.data)
+      xmaxdata
+      
+  })
   
   
-  
-  
+  output$inxlimrangeeq <- renderUI({
+      
+      
+      sliderInput("xlimrangeeq", "X axis", min=xmindataeq(), max=xmaxdataeq(), value=c(xmindataeq(), xmaxdataeq()), round=FALSE)
+  })
   
   #############Mathematical Transformations
   
   
+  
+  output$inelementnum1 <- renderUI({
+      selectInput("elementnum1", "Numerator 1", choices=choiceLines(), selected=dataDefaultSelect())
+  })
+  
+  output$inelementnum2 <- renderUI({
+      selectInput("elementnum2", "Numerator 2", choices=choiceLines(), selected="None")
+  })
+  
+  output$inelementnum3 <- renderUI({
+      selectInput("elementnum3", "Numerator 3", choices=choiceLines(), selected="None")
+  })
+  
+  output$inelementden1 <- renderUI({
+      selectInput("elementden1", "Denominator 1", choices=choiceLines(), selected="None")
+  })
+  
+  output$inelementden2 <- renderUI({
+      selectInput("elementden2", "Denominator 2", choices=choiceLines(), selected="None")
+  })
+  
+  output$inelementden3 <- renderUI({
+      selectInput("elementden3", "Denominator 3", choices=choiceLines(), selected="None")
+  })
+  
+  
+  
+
+
+  
+  
   plotInput6a <- reactive({
       
-      spectra.line.table <- ageData()
-      data.transformation <- dataTransform()
+
+      
+      x.axis <- if (input$xaxistypeeq=="Depth") {
+          paste("Depth (", input$lengthuniteq, ")", sep="", collapse="")
+      } else if (input$xaxistypeeq=="Age" && input$timetypeeq=="BP"){
+          paste("cal year BP")
+      } else if (input$xaxistypeeq=="Age" && input$timetypeeq=="BC") {
+          paste("cal year BC")
+      } else if (input$xaxistypeeq=="Age" && input$timetypeeq=="AD") {
+          paste("cal year AD")
+      } else if (input$xaxistypeeq=="Age" && input$timetypeeq=="BC/AD") {
+          paste("cal year BC/AD")
+      } else if (input$xaxistypeeq=="Custom") {
+          input$customxaxiseq
+      }
+      
+      
+      spectra.line.table <- dataTransform()
+      
+      spectra.line.table <- subset(spectra.line.table, !(spectra.line.table[input$xaxistypeeq] < input$xlimrangeeq[1] | spectra.line.table[input$xaxistypeeq] > input$xlimrangeeq[2]))
+      
+
+      
+      
+      spectra.line.table.norm <- data.frame(spectra.line.table, null)
+      colnames(spectra.line.table.norm) <- c(names(spectra.line.table), "None")
+      spectra.line.table.norm
+      
+      #interval <- unique.spec*as.numeric(input$intervalmm)+as.numeric(input$startmmeq)
+      
+      #spectra.timeseries.table <- data.frame(interval, spectra.line.table[c(input$elementtrend)]/spectra.line.table.norm[c(input$elementnorm)], spectra.line.table$Cluster, spectra.line.table$Qualitative, spectra.line.table$Depth)
+      #colnames(spectra.timeseries.table) <- c("Interval", "Selected", "Cluster", "Qualitative", "Depth")
+      
+      spectra.timeseries.table <- data.frame(spectra.line.table[c(input$xaxistypeeq)], spectra.line.table$Selected, spectra.line.table$Cluster, spectra.line.table$Qualitative, spectra.line.table$Depth, spectra.line.table$Climate)
+      colnames(spectra.timeseries.table) <- c("Interval", "Selected", "Cluster", "Qualitative", "Depth", "Climate")
+      
+      
+      black.time.series <- qplot(Interval, SMA(Selected, input$smoothingeq), input$xaxistypeeq, geom="line", data = spectra.timeseries.table) +
+      geom_line(colour = "black", lwd=input$linesizeeq) +
+      theme_light() +
+      theme(axis.text.x = element_text(size=15)) +
+      theme(axis.text.y = element_text(size=15)) +
+      theme(axis.title.x = element_text(size=15)) +
+      theme(axis.title.y = element_text(size=15, angle=90)) +
+      theme(plot.title=element_text(size=20)) +
+      theme(legend.title=element_text(size=15)) +
+      theme(legend.text=element_text(size=15)) +
+      scale_x_continuous(paste(x.axis), label=comma) +
+      scale_y_continuous(input$yaxistype, label=comma)
+
+      
+      
+      smooth.time.series <- qplot(spectra.timeseries.table$Interval, SMA(spectra.timeseries.table$Selected, input$smoothingeq),  geom="point") +
+      theme_light() +
+      stat_smooth() +
+      theme(axis.text.x = element_text(size=15)) +
+      theme(axis.text.y = element_text(size=15)) +
+      theme(axis.title.x = element_text(size=15)) +
+      theme(axis.title.y = element_text(size=15, angle=90)) +
+      theme(plot.title=element_text(size=20)) +
+      theme(legend.title=element_text(size=15)) +
+      theme(legend.text=element_text(size=15)) +
+      scale_x_continuous(paste(x.axis), label=comma) +
+      scale_y_continuous(input$yaxistype, label=comma)
+      
+      
+      ramp.time.series <- qplot(Interval, SMA(Selected, input$smoothingeq),  geom="line", data = spectra.timeseries.table) +
+      geom_line(aes(colour = Selected), lwd=input$linesizeeq) +
+      theme_light() +
+      scale_colour_gradientn(colours=terrain.colors(length(spectra.timeseries.table$Depth))) +
+      theme(axis.text.x = element_text(size=15)) +
+      theme(axis.text.y = element_text(size=15)) +
+      theme(axis.title.x = element_text(size=15)) +
+      theme(axis.title.y = element_text(size=15, angle=90)) +
+      theme(plot.title=element_text(size=20)) +
+      theme(legend.title=element_text(size=15)) +
+      theme(legend.text=element_text(size=15)) +
+      scale_x_continuous(paste(x.axis), label=comma) +
+      scale_y_continuous(input$yaxistype, label=comma)
+      
+      
+      area.time.series <- ggplot(spectra.timeseries.table, aes(Interval)) +
+      theme_classic() +
+      geom_area(aes(y=Selected, colour="grey60", fill="grey60"), alpha=0.6) +
+      scale_x_continuous(input$xaxistypeeq) +
+      theme(axis.text.x = element_text(size=15)) +
+      theme(axis.text.y = element_text(size=15)) +
+      theme(axis.title.x = element_text(size=15)) +
+      theme(axis.title.y = element_text(size=15, angle=90)) +
+      theme(plot.title=element_text(size=20)) +
+      theme(legend.title=element_text(size=15)) +
+      theme(legend.text=element_text(size=15)) +
+      scale_x_continuous(paste(x.axis), label=comma) +
+      scale_y_continuous(input$yaxistype, label=comma)
+      
+      
+      
+      cluster.time.series <- qplot(Interval, SMA(Selected, input$smoothingeq),  geom="line", data = spectra.timeseries.table) +
+      geom_point(aes(colour = as.factor(Cluster)), size=input$pointsizeeq) +
+      scale_colour_discrete("Cluster") +
+      theme_light() +
+      theme(axis.text.x = element_text(size=15)) +
+      theme(axis.text.y = element_text(size=15)) +
+      theme(axis.title.x = element_text(size=15)) +
+      theme(axis.title.y = element_text(size=15, angle=90)) +
+      theme(plot.title=element_text(size=20)) +
+      theme(legend.title=element_text(size=15)) +
+      theme(legend.text=element_text(size=15)) +
+      scale_x_continuous(paste(x.axis), label=comma) +
+      scale_y_continuous(input$yaxistype, label=comma)
+      
+      climate.time.series.line <- qplot(Interval, SMA(Selected, input$smoothingeq),  geom="line", data = spectra.timeseries.table, colour = as.factor(Climate)) +
+      scale_colour_discrete("Climatic Period") +
+      theme_light() +
+      theme(axis.text.x = element_text(size=15)) +
+      theme(axis.text.y = element_text(size=15)) +
+      theme(axis.title.x = element_text(size=15)) +
+      theme(axis.title.y = element_text(size=15, angle=90)) +
+      theme(plot.title=element_text(size=20)) +
+      theme(legend.title=element_text(size=15)) +
+      theme(legend.text=element_text(size=15)) +
+      scale_x_continuous(paste(x.axis), label=comma) +
+      scale_y_continuous(input$yaxistype, label=comma)
+      
+      
+      qualitative.time.series.line <- qplot(Interval, SMA(Selected, input$smoothingeq),  geom="line", data = spectra.timeseries.table, colour = as.factor(Qualitative)) +
+      scale_colour_discrete("Qualitative") +
+      theme_light() +
+      theme(axis.text.x = element_text(size=15)) +
+      theme(axis.text.y = element_text(size=15)) +
+      theme(axis.title.x = element_text(size=15)) +
+      theme(axis.title.y = element_text(size=15, angle=90)) +
+      theme(plot.title=element_text(size=20)) +
+      theme(legend.title=element_text(size=15)) +
+      theme(legend.text=element_text(size=15)) +
+      scale_x_continuous(paste(x.axis), label=comma) +
+      scale_y_continuous(input$yaxistype, label=comma)
+      
+      qualitative.time.series.point <- qplot(Interval, SMA(Selected, input$smoothingeq),  geom="line", data = spectra.timeseries.table) +
+      geom_point(aes(colour = as.factor(Qualitative)), lwd=input$pointsizeeq) +
+      scale_colour_discrete("Qualitative") +
+      theme_light() +
+      theme(axis.text.x = element_text(size=15)) +
+      theme(axis.text.y = element_text(size=15)) +
+      theme(axis.title.x = element_text(size=15)) +
+      theme(axis.title.y = element_text(size=15, angle=90)) +
+      theme(plot.title=element_text(size=20)) +
+      theme(legend.title=element_text(size=15)) +
+      theme(legend.text=element_text(size=15)) +
+      scale_x_continuous(paste(x.axis), label=comma) +
+      scale_y_continuous(input$yaxistype, label=comma)
+      
+      
+      depth.time.series <- qplot(Interval, SMA(Selected, input$smoothingeq),  geom="line", data = spectra.timeseries.table) +
+      geom_line(aes(colour = Depth), lwd=input$linesize+0.5) +
+      geom_line(lwd=input$linesize-0.5) +
+      scale_colour_gradientn("Depth", colours=rev(terrain.colors(length(spectra.line.table$Depth)))) +
+      theme_light() +
+      theme(axis.text.x = element_text(size=15)) +
+      theme(axis.text.y = element_text(size=15)) +
+      theme(axis.title.x = element_text(size=15)) +
+      theme(axis.title.y = element_text(size=15, angle=90)) +
+      theme(plot.title=element_text(size=20)) +
+      theme(legend.title=element_text(size=15)) +
+      theme(legend.text=element_text(size=15)) +
+      scale_x_continuous(paste(x.axis), label=comma) +
+      scale_y_continuous(input$yaxistype, label=comma)
+      
+      
+      
+      #####X Axis Reverse
+      
+      
+      black.time.series.reverse <- qplot(Interval, SMA(Selected, input$smoothingeq), input$xaxistypeeq, geom="line", data = spectra.timeseries.table) +
+      geom_line(colour = "black", lwd=input$linesizeeq) +
+      theme_light() +
+      theme(axis.text.x = element_text(size=15)) +
+      theme(axis.text.y = element_text(size=15)) +
+      theme(axis.title.x = element_text(size=15)) +
+      theme(axis.title.y = element_text(size=15, angle=90)) +
+      theme(plot.title=element_text(size=20)) +
+      theme(legend.title=element_text(size=15)) +
+      theme(legend.text=element_text(size=15)) +
+      scale_x_reverse(paste(x.axis), label=comma) +
+      scale_y_continuous(input$yaxistype, label=comma)
+      
+      smooth.time.series.reverse <- qplot(spectra.timeseries.table$Interval, SMA(spectra.timeseries.table$Selected, input$smoothingeq),  geom="point") +
+      theme_light() +
+      stat_smooth() +
+      theme(axis.text.x = element_text(size=15)) +
+      theme(axis.text.y = element_text(size=15)) +
+      theme(axis.title.x = element_text(size=15)) +
+      theme(axis.title.y = element_text(size=15, angle=90)) +
+      theme(plot.title=element_text(size=20)) +
+      theme(legend.title=element_text(size=15)) +
+      theme(legend.text=element_text(size=15)) +
+      scale_x_reverse(paste(x.axis), label=comma) +
+      scale_y_continuous(input$yaxistype, label=comma)
+      
+      
+      ramp.time.series.reverse <- qplot(Interval, SMA(Selected, input$smoothingeq),  geom="line", data = spectra.timeseries.table) +
+      geom_line(aes(colour = Selected), lwd=input$linesizeeq) +
+      theme_light() +
+scale_colour_gradientn(colours=rev(terrain.colors(length(spectra.timeseries.table$Depth)))) +
+      theme(axis.text.x = element_text(size=15)) +
+      theme(axis.text.y = element_text(size=15)) +
+      theme(axis.title.x = element_text(size=15)) +
+      theme(axis.title.y = element_text(size=15, angle=90)) +
+      theme(plot.title=element_text(size=20)) +
+      theme(legend.title=element_text(size=15)) +
+      theme(legend.text=element_text(size=15)) +
+      scale_x_reverse(paste(x.axis), label=comma) +
+      scale_y_continuous(input$yaxistype, label=comma)
+      
+      
+      area.time.series.reverse <- ggplot(spectra.timeseries.table, aes(Interval)) +
+      theme_classic() +
+      geom_area(aes(y=Selected, colour="grey60", fill="grey60"), alpha=0.6) +
+      scale_x_reverse(input$xaxistypeeq) +
+      theme(axis.text.x = element_text(size=15)) +
+      theme(axis.text.y = element_text(size=15)) +
+      theme(axis.title.x = element_text(size=15)) +
+      theme(axis.title.y = element_text(size=15, angle=90)) +
+      theme(plot.title=element_text(size=20)) +
+      theme(legend.title=element_text(size=15)) +
+      theme(legend.text=element_text(size=15)) +
+      scale_x_reverse(paste(x.axis), label=comma) +
+      scale_y_continuous(input$yaxistype, label=comma)
+      
+      
+      
+      cluster.time.series.reverse <- qplot(Interval, SMA(Selected, input$smoothingeq),  geom="line", data = spectra.timeseries.table) +
+      geom_point(aes(colour = as.factor(Cluster)), size=input$pointsizeeq) +
+      scale_colour_discrete("Cluster") +
+      theme_light() +
+      theme(axis.text.x = element_text(size=15)) +
+      theme(axis.text.y = element_text(size=15)) +
+      theme(axis.title.x = element_text(size=15)) +
+      theme(axis.title.y = element_text(size=15, angle=90)) +
+      theme(plot.title=element_text(size=20)) +
+      theme(legend.title=element_text(size=15)) +
+      theme(legend.text=element_text(size=15)) +
+      scale_x_reverse(paste(x.axis), label=comma) +
+      scale_y_continuous(input$yaxistype, label=comma)
+      
+      climate.time.series.line.reverse <- qplot(Interval, SMA(Selected, input$smoothingeq),  geom="line", data = spectra.timeseries.table, colour = as.factor(Climate)) +
+      scale_colour_discrete("Climatic Period") +
+      theme_light() +
+      theme(axis.text.x = element_text(size=15)) +
+      theme(axis.text.y = element_text(size=15)) +
+      theme(axis.title.x = element_text(size=15)) +
+      theme(axis.title.y = element_text(size=15, angle=90)) +
+      theme(plot.title=element_text(size=20)) +
+      theme(legend.title=element_text(size=15)) +
+      theme(legend.text=element_text(size=15)) +
+      scale_x_reverse(paste(x.axis), label=comma) +
+      scale_y_continuous(input$yaxistype, label=comma)
+      
+      
+      qualitative.time.series.line.reverse <- qplot(Interval, SMA(Selected, input$smoothingeq),  geom="line", data = spectra.timeseries.table, colour = as.factor(Qualitative)) +
+      scale_colour_discrete("Qualitative") +
+      theme_light() +
+      theme(axis.text.x = element_text(size=15)) +
+      theme(axis.text.y = element_text(size=15)) +
+      theme(axis.title.x = element_text(size=15)) +
+      theme(axis.title.y = element_text(size=15, angle=90)) +
+      theme(plot.title=element_text(size=20)) +
+      theme(legend.title=element_text(size=15)) +
+      theme(legend.text=element_text(size=15)) +
+      scale_x_reverse(paste(x.axis), label=comma) +
+      scale_y_continuous(input$yaxistype, label=comma)
+      
+      qualitative.time.series.point.reverse <- qplot(Interval, SMA(Selected, input$smoothingeq),  geom="line", data = spectra.timeseries.table) +
+      geom_point(aes(colour = as.factor(Qualitative)), lwd=input$pointsizeeq) +
+      scale_colour_discrete("Qualitative") +
+      theme_light() +
+      theme(axis.text.x = element_text(size=15)) +
+      theme(axis.text.y = element_text(size=15)) +
+      theme(axis.title.x = element_text(size=15)) +
+      theme(axis.title.y = element_text(size=15, angle=90)) +
+      theme(plot.title=element_text(size=20)) +
+      theme(legend.title=element_text(size=15)) +
+      theme(legend.text=element_text(size=15)) +
+      scale_x_reverse(paste(x.axis), label=comma) +
+      scale_y_continuous(input$yaxistype, label=comma)
+      
+      
+      depth.time.series.reverse <- qplot(Interval, SMA(Selected, input$smoothingeq),  geom="line", data = spectra.timeseries.table) +
+      geom_line(aes(colour = Depth), lwd=input$linesize+0.5) +
+      geom_line(lwd=input$linesize-0.5) +
+      scale_colour_gradientn("Depth", colours=rev(terrain.colors(length(spectra.line.table$Depth)))) +
+      theme_light() +
+      theme(axis.text.x = element_text(size=15)) +
+      theme(axis.text.y = element_text(size=15)) +
+      theme(axis.title.x = element_text(size=15)) +
+      theme(axis.title.y = element_text(size=15, angle=90)) +
+      theme(plot.title=element_text(size=20)) +
+      theme(legend.title=element_text(size=15)) +
+      theme(legend.text=element_text(size=15)) +
+      scale_x_reverse(paste(x.axis), label=comma) +
+      scale_y_continuous(input$yaxistype, label=comma)
+      
+      
+      
+     
+      if (input$timecoloureq == "Black" && input$xaxistypeeq!="Depth") {
+          black.time.series
+      } else if (input$timecoloureq == "Smooth" && input$xaxistypeeq!="Depth") {
+          smooth.time.series
+      } else if (input$timecoloureq == "Selected" && input$xaxistypeeq!="Depth") {
+          ramp.time.series
+      } else if (input$timecoloureq == "Cluster" && input$xaxistypeeq!="Depth") {
+          cluster.time.series
+      } else if (input$timecoloureq == "Climate" && input$xaxistypeeq!="Depth") {
+          climate.time.series.line
+      } else if (input$timecoloureq == "QualitativePoint" && input$xaxistypeeq!="Depth") {
+          qualitative.time.series.point
+      } else if (input$timecoloureq == "QualitativeLine" && input$xaxistypeeq!="Depth") {
+          qualitative.time.series.line
+      } else if (input$timecoloureq == "Depth" && input$xaxistypeeq!="Depth") {
+          Depth.time.series
+      } else if (input$timecoloureq == "Black" && input$xaxistypeeq=="Depth") {
+          black.time.series.reverse
+      } else if (input$timecoloureq == "Smooth" && input$xaxistypeeq=="Depth") {
+          smooth.time.series.reverse
+      } else if (input$timecoloureq == "Selected" && input$xaxistypeeq=="Depth") {
+          ramp.time.series.reverse
+      } else if (input$timecoloureq == "Cluster" && input$xaxistypeeq=="Depth") {
+          cluster.time.series.reverse
+      } else if (input$timecoloureq == "Climate" && input$xaxistypeeq=="Depth") {
+          climate.time.series.line.reverse
+      } else if (input$timecoloureq == "QualitativePoint" && input$xaxistypeeq=="Depth") {
+          qualitative.time.series.point.reverse
+      } else if (input$timecoloureq == "QualitativeLine" && input$xaxistypeeq=="Depth") {
+          qualitative.time.series.line.reverse
+      } else if (input$timecoloureq == "Depth" && input$xaxistypeeq=="Depth") {
+          depth.time.series.reverse
+      } else if (input$timecoloureq == "Area" && input$xaxistypeeq=="Depth") {
+          area.time.series.reverse
+      }
+      
+      
+      
+  })
+  
+  
+
+  
+  output$timeserieseqplot1 <- renderPlot({
+      input$timeserieseq1
+
+      isolate(plotInput6a())
+  })
+  
+  hoverHold6a <- reactive({
+      input$timeserieseq1
+      
+      spectra.line.table <- dataTransform()
+      
+      spectra.line.table <- subset(spectra.line.table, !(spectra.line.table[input$xaxistypeeq] < input$xlimrangeeq[1] | spectra.line.table[input$xaxistypeeq] > input$xlimrangeeq[2]))
+      
+      if(is.null(spectra.line.table$Age)==TRUE){
+          spectra.line.table$Age <- rep(1, length(spectra.line.table$Spectrum))
+      }
+      
+      spectra.timeseries.table <- data.frame(spectra.line.table[c(input$xaxistypeeq)], spectra.line.table$Selected, spectra.line.table$Cluster, spectra.line.table$Qualitative, spectra.line.table$Depth, spectra.line.table$Climate, spectra.line.table$Age)
+      colnames(spectra.timeseries.table) <- c("Interval", "Selected", "Cluster", "Qualitative", "Depth", "Climate", "Age")
+      
+      isolate(spectra.timeseries.table)
+      
+  })
+  
+  
+  output$hover_info6a <- renderUI({
+      
+      point.table <- hoverHold6a()
+      
+      hover <- input$plot_hover6a
+      point <- nearPoints(point.table,  xvar="Interval", yvar="Selected", coordinfo=hover,   threshold = 10, maxpoints = 1)
+      
+      #if (nrow(point) == 0) return(NULL)
+      
+      
+      
+      
+      # calculate point position INSIDE the image as percent of total dimensions
+      # from left (horizontal) and from top (vertical)
+      left_pct <- (hover$x - hover$domain$left) / (hover$domain$right - hover$domain$left)
+      top_pct <- (hover$domain$top - hover$y) / (hover$domain$top - hover$domain$bottom)
+      
+      # calculate distance from left and bottom side of the picture in pixels
+      left_px <- hover$range$left + left_pct * (hover$range$right - hover$range$left)
+      top_px <- hover$range$top + top_pct * (hover$range$bottom - hover$range$top)
+      
+      
+      # create style property fot tooltip
+      # background color is set so tooltip is a bit transparent
+      # z-index is set so we are sure are tooltip will be on top
+      style <- paste0("position:absolute; z-index:100; background-color: rgba(245, 245, 245, 0.85); ",
+      "left:", left_px + 2, "px; top:", top_px + 2, "px;")
+      
+      # actual tooltip created as wellPanel
+      wellPanel(
+      style = style,
+      p(HTML(paste0("<b> Spectrum: </b>", point$Spectrum, "<br/>",
+      "<b> Depth: </b>", point$Depth, "<br/>",
+      "<b> Age: </b>", point$Age, "<br/>"
+      
+      )))
+      )
+  })
+  
+  
+  output$downloadPlot6a <- downloadHandler(
+  
+  
+  filename = function() { paste(input$projectname, "_", input$yaxistype, '.tiff', sep='') },
+  content = function(file) {
+      ggsave(file,plotInput6a(), device="tiff", compression="lzw", type="cairo", dpi=300, width=12, height=7)
+  }
+  )
+  
+  
+  
+  plotInput6b <- reactive({
+
+      
+      x.axis <- if (input$xaxistypeeq=="Depth") {
+          paste("Depth (", input$lengthuniteq, ")", sep="", collapse="")
+      } else if (input$xaxistypeeq=="Age" && input$timetypeeq=="BP"){
+          paste("cal year BP")
+      } else if (input$xaxistypeeq=="Age" && input$timetypeeq=="BC") {
+          paste("cal year BC")
+      } else if (input$xaxistypeeq=="Age" && input$timetypeeq=="AD") {
+          paste("cal year AD")
+      } else if (input$xaxistypeeq=="Age" && input$timetypeeq=="BC/AD") {
+          paste("cal year BC/AD")
+      } else if (input$xaxistypeeq=="Custom") {
+          input$customxaxiseq
+      }
+      
+      
+      
+      spectra.line.table <- dataTransform()
+      spectra.line.table <- subset(spectra.line.table, !(spectra.line.table[input$xaxistypeeq] < input$xlimrangeeq[1] | spectra.line.table[input$xaxistypeeq] > input$xlimrangeeq[2]))
+
+
+      
+      
+      spectra.line.table.norm <- data.frame(spectra.line.table, null)
+      colnames(spectra.line.table.norm) <- c(names(spectra.line.table), "None")
+      spectra.line.table.norm
+      
+      #interval <- unique.spec*as.numeric(input$intervalmm)+as.numeric(input$startmmeq)
+      
+      #spectra.timeseries.table <- data.frame(interval, spectra.line.table[c(input$elementtrend)]/spectra.line.table.norm[c(input$elementnorm)], spectra.line.table$Cluster, spectra.line.table$Qualitative, spectra.line.table$Depth)
+      #colnames(spectra.timeseries.table) <- c("Interval", "Selected", "Cluster", "Qualitative", "Depth")
+      
+      spectra.timeseries.table <- data.frame(spectra.line.table[c(input$xaxistypeeq)], spectra.line.table$Selected, spectra.line.table$Cluster, spectra.line.table$Qualitative, spectra.line.table$Depth, spectra.line.table$Climate)
+      colnames(spectra.timeseries.table) <- c("Interval", "Selected", "Cluster", "Qualitative", "Depth", "Climate")
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      black.time.series <- qplot(Interval, SMA(Selected, input$smoothingeq), input$xaxistypeeq, geom="line", data = spectra.timeseries.table) +
+      geom_line(colour = "black", lwd=input$linesizeeq) +
+      theme_light() +
+      theme(axis.text.x = element_text(size=15)) +
+      theme(axis.text.y = element_text(size=15)) +
+      theme(axis.title.x = element_text(size=15)) +
+      theme(axis.title.y = element_text(size=15, angle=90)) +
+      theme(plot.title=element_text(size=20)) +
+      theme(legend.title=element_text(size=15)) +
+      theme(legend.text=element_text(size=15)) +
+      scale_x_continuous(paste(x.axis), label=comma) +
+      scale_y_continuous(input$yaxistype, label=comma)
+      
+      smooth.time.series <- qplot(spectra.timeseries.table$Interval, SMA(spectra.timeseries.table$Selected, input$smoothingeq),  geom="point") +
+      theme_light() +
+      stat_smooth() +
+      theme(axis.text.x = element_text(size=15)) +
+      theme(axis.text.y = element_text(size=15)) +
+      theme(axis.title.x = element_text(size=15)) +
+      theme(axis.title.y = element_text(size=15, angle=90)) +
+      theme(plot.title=element_text(size=20)) +
+      theme(legend.title=element_text(size=15)) +
+      theme(legend.text=element_text(size=15)) +
+      scale_x_continuous(paste(x.axis), label=comma) +
+      scale_y_continuous(input$yaxistype, label=comma)
+      
+      
+      ramp.time.series <- qplot(Interval, SMA(Selected, input$smoothingeq),  geom="line", data = spectra.timeseries.table) +
+      geom_line(aes(colour = Selected), lwd=input$linesizeeq) +
+      theme_light() +
+      scale_colour_gradientn(colours=rev(terrain.colors(length(spectra.timeseries.table$Depth)))) +
+      theme(axis.text.x = element_text(size=15)) +
+      theme(axis.text.y = element_text(size=15)) +
+      theme(axis.title.x = element_text(size=15)) +
+      theme(axis.title.y = element_text(size=15, angle=90)) +
+      theme(plot.title=element_text(size=20)) +
+      theme(legend.title=element_text(size=15)) +
+      theme(legend.text=element_text(size=15)) +
+      scale_x_continuous(paste(x.axis), label=comma) +
+      scale_y_continuous(input$yaxistype, label=comma)
+      
+      
+      area.time.series <- ggplot(spectra.timeseries.table, aes(Interval)) +
+      theme_classic() +
+      geom_area(aes(y=Selected, colour="grey60", fill="grey60"), alpha=0.6) +
+      scale_x_continuous(input$xaxistypeeq) +
+      theme(axis.text.x = element_text(size=15)) +
+      theme(axis.text.y = element_text(size=15)) +
+      theme(axis.title.x = element_text(size=15)) +
+      theme(axis.title.y = element_text(size=15, angle=90)) +
+      theme(plot.title=element_text(size=20)) +
+      theme(legend.title=element_text(size=15)) +
+      theme(legend.text=element_text(size=15)) +
+      scale_x_continuous(paste(x.axis), label=comma) +
+      scale_y_continuous(input$yaxistype, label=comma)
+      
+      
+      
+      cluster.time.series <- qplot(Interval, SMA(Selected, input$smoothingeq),  geom="line", data = spectra.timeseries.table) +
+      geom_point(aes(colour = as.factor(Cluster)), size=input$pointsizeeq) +
+      scale_colour_discrete("Cluster") +
+      theme_light() +
+      theme(axis.text.x = element_text(size=15)) +
+      theme(axis.text.y = element_text(size=15)) +
+      theme(axis.title.x = element_text(size=15)) +
+      theme(axis.title.y = element_text(size=15, angle=90)) +
+      theme(plot.title=element_text(size=20)) +
+      theme(legend.title=element_text(size=15)) +
+      theme(legend.text=element_text(size=15)) +
+      scale_x_continuous(paste(x.axis), label=comma) +
+      scale_y_continuous(input$yaxistype, label=comma)
+      
+      climate.time.series.line <- qplot(Interval, SMA(Selected, input$smoothingeq),  geom="line", data = spectra.timeseries.table, colour = as.factor(Climate)) +
+      scale_colour_discrete("Climatic Period") +
+      theme_light() +
+      theme(axis.text.x = element_text(size=15)) +
+      theme(axis.text.y = element_text(size=15)) +
+      theme(axis.title.x = element_text(size=15)) +
+      theme(axis.title.y = element_text(size=15, angle=90)) +
+      theme(plot.title=element_text(size=20)) +
+      theme(legend.title=element_text(size=15)) +
+      theme(legend.text=element_text(size=15)) +
+      scale_x_continuous(paste(x.axis), label=comma) +
+      scale_y_continuous(input$yaxistype, label=comma)
+      
+      
+      qualitative.time.series.line <- qplot(Interval, SMA(Selected, input$smoothingeq),  geom="line", data = spectra.timeseries.table, colour = as.factor(Qualitative)) +
+      scale_colour_discrete("Qualitative") +
+      theme_light() +
+      theme(axis.text.x = element_text(size=15)) +
+      theme(axis.text.y = element_text(size=15)) +
+      theme(axis.title.x = element_text(size=15)) +
+      theme(axis.title.y = element_text(size=15, angle=90)) +
+      theme(plot.title=element_text(size=20)) +
+      theme(legend.title=element_text(size=15)) +
+      theme(legend.text=element_text(size=15)) +
+      scale_x_continuous(paste(x.axis), label=comma) +
+      scale_y_continuous(input$yaxistype, label=comma)
+      
+      qualitative.time.series.point <- qplot(Interval, SMA(Selected, input$smoothingeq),  geom="line", data = spectra.timeseries.table) +
+      geom_point(aes(colour = as.factor(Qualitative)), lwd=input$pointsizeeq) +
+      scale_colour_discrete("Qualitative") +
+      theme_light() +
+      theme(axis.text.x = element_text(size=15)) +
+      theme(axis.text.y = element_text(size=15)) +
+      theme(axis.title.x = element_text(size=15)) +
+      theme(axis.title.y = element_text(size=15, angle=90)) +
+      theme(plot.title=element_text(size=20)) +
+      theme(legend.title=element_text(size=15)) +
+      theme(legend.text=element_text(size=15)) +
+      scale_x_continuous(paste(x.axis), label=comma) +
+      scale_y_continuous(input$yaxistype, label=comma)
+      
+      
+      depth.time.series <- qplot(Interval, SMA(Selected, input$smoothingeq),  geom="line", data = spectra.timeseries.table) +
+      geom_line(aes(colour = Depth), lwd=input$linesize+0.5) +
+      geom_line(lwd=input$linesize-0.5) +
+      scale_colour_gradientn("Depth", colours=rev(terrain.colors(length(spectra.line.table$Depth)))) +
+      theme_light() +
+      theme(axis.text.x = element_text(size=15)) +
+      theme(axis.text.y = element_text(size=15)) +
+      theme(axis.title.x = element_text(size=15)) +
+      theme(axis.title.y = element_text(size=15, angle=90)) +
+      theme(plot.title=element_text(size=20)) +
+      theme(legend.title=element_text(size=15)) +
+      theme(legend.text=element_text(size=15)) +
+      scale_x_continuous(paste(x.axis), label=comma) +
+      scale_y_continuous(input$yaxistype, label=comma)
+      
+      
+      #####X Axis Reverse
+      
+      
+      black.time.series.reverse <- qplot(Interval, SMA(Selected, input$smoothingeq), input$xaxistypeeq, geom="line", data = spectra.timeseries.table) +
+      geom_line(colour = "black", lwd=input$linesizeeq) +
+      theme_light() +
+      theme(axis.text.x = element_text(size=15)) +
+      theme(axis.text.y = element_text(size=15)) +
+      theme(axis.title.x = element_text(size=15)) +
+      theme(axis.title.y = element_text(size=15, angle=90)) +
+      theme(plot.title=element_text(size=20)) +
+      theme(legend.title=element_text(size=15)) +
+      theme(legend.text=element_text(size=15)) +
+      scale_x_reverse(paste(x.axis), label=comma) +
+      scale_y_continuous(input$yaxistype, label=comma)
+      
+      smooth.time.series.reverse <- qplot(spectra.timeseries.table$Interval, SMA(spectra.timeseries.table$Selected, input$smoothingeq),  geom="point") +
+      theme_light() +
+      stat_smooth() +
+      theme(axis.text.x = element_text(size=15)) +
+      theme(axis.text.y = element_text(size=15)) +
+      theme(axis.title.x = element_text(size=15)) +
+      theme(axis.title.y = element_text(size=15, angle=90)) +
+      theme(plot.title=element_text(size=20)) +
+      theme(legend.title=element_text(size=15)) +
+      theme(legend.text=element_text(size=15)) +
+      scale_x_reverse(paste(x.axis), label=comma) +
+      scale_y_continuous(input$yaxistype, label=comma)
+      
+      
+      ramp.time.series.reverse <- qplot(Interval, SMA(Selected, input$smoothingeq),  geom="line", data = spectra.timeseries.table) +
+      geom_line(aes(colour = Selected), lwd=input$linesizeeq) +
+      theme_light() +
+      scale_colour_gradientn(colours=rev(terrain.colors(length(spectra.timeseries.table$Depth)))) +
+      theme(axis.text.x = element_text(size=15)) +
+      theme(axis.text.y = element_text(size=15)) +
+      theme(axis.title.x = element_text(size=15)) +
+      theme(axis.title.y = element_text(size=15, angle=90)) +
+      theme(plot.title=element_text(size=20)) +
+      theme(legend.title=element_text(size=15)) +
+      theme(legend.text=element_text(size=15)) +
+      scale_x_reverse(paste(x.axis), label=comma) +
+      scale_y_continuous(input$yaxistype, label=comma)
+      
+      
+      area.time.series.reverse <- ggplot(spectra.timeseries.table, aes(Interval)) +
+      theme_classic() +
+      geom_area(aes(y=Selected, colour="grey60", fill="grey60"), alpha=0.6) +
+      scale_x_reverse(input$xaxistypeeq) +
+      theme(axis.text.x = element_text(size=15)) +
+      theme(axis.text.y = element_text(size=15)) +
+      theme(axis.title.x = element_text(size=15)) +
+      theme(axis.title.y = element_text(size=15, angle=90)) +
+      theme(plot.title=element_text(size=20)) +
+      theme(legend.title=element_text(size=15)) +
+      theme(legend.text=element_text(size=15)) +
+      scale_x_reverse(paste(x.axis), label=comma) +
+      scale_y_continuous(input$yaxistype, label=comma)
+      
+      
+      
+      cluster.time.series.reverse <- qplot(Interval, SMA(Selected, input$smoothingeq),  geom="line", data = spectra.timeseries.table) +
+      geom_point(aes(colour = as.factor(Cluster)), size=input$pointsizeeq) +
+      scale_colour_discrete("Cluster") +
+      theme_light() +
+      theme(axis.text.x = element_text(size=15)) +
+      theme(axis.text.y = element_text(size=15)) +
+      theme(axis.title.x = element_text(size=15)) +
+      theme(axis.title.y = element_text(size=15, angle=90)) +
+      theme(plot.title=element_text(size=20)) +
+      theme(legend.title=element_text(size=15)) +
+      theme(legend.text=element_text(size=15)) +
+      scale_x_reverse(paste(x.axis), label=comma) +
+      scale_y_continuous(input$yaxistype, label=comma)
+      
+      climate.time.series.line.reverse <- qplot(Interval, SMA(Selected, input$smoothingeq),  geom="line", data = spectra.timeseries.table, colour = as.factor(Climate)) +
+      scale_colour_discrete("Climatic Period") +
+      theme_light() +
+      theme(axis.text.x = element_text(size=15)) +
+      theme(axis.text.y = element_text(size=15)) +
+      theme(axis.title.x = element_text(size=15)) +
+      theme(axis.title.y = element_text(size=15, angle=90)) +
+      theme(plot.title=element_text(size=20)) +
+      theme(legend.title=element_text(size=15)) +
+      theme(legend.text=element_text(size=15)) +
+      scale_x_reverse(paste(x.axis), label=comma) +
+      scale_y_continuous(input$yaxistype, label=comma)
+      
+      
+      qualitative.time.series.line.reverse <- qplot(Interval, SMA(Selected, input$smoothingeq),  geom="line", data = spectra.timeseries.table, colour = as.factor(Qualitative)) +
+      scale_colour_discrete("Qualitative") +
+      theme_light() +
+      theme(axis.text.x = element_text(size=15)) +
+      theme(axis.text.y = element_text(size=15)) +
+      theme(axis.title.x = element_text(size=15)) +
+      theme(axis.title.y = element_text(size=15, angle=90)) +
+      theme(plot.title=element_text(size=20)) +
+      theme(legend.title=element_text(size=15)) +
+      theme(legend.text=element_text(size=15)) +
+      scale_x_reverse(paste(x.axis), label=comma) +
+      scale_y_continuous(input$yaxistype, label=comma)
+      
+      qualitative.time.series.point.reverse <- qplot(Interval, SMA(Selected, input$smoothingeq),  geom="line", data = spectra.timeseries.table) +
+      geom_point(aes(colour = as.factor(Qualitative)), lwd=input$pointsizeeq) +
+      scale_colour_discrete("Qualitative") +
+      theme_light() +
+      theme(axis.text.x = element_text(size=15)) +
+      theme(axis.text.y = element_text(size=15)) +
+      theme(axis.title.x = element_text(size=15)) +
+      theme(axis.title.y = element_text(size=15, angle=90)) +
+      theme(plot.title=element_text(size=20)) +
+      theme(legend.title=element_text(size=15)) +
+      theme(legend.text=element_text(size=15)) +
+      scale_x_reverse(paste(x.axis), label=comma) +
+      scale_y_continuous(input$yaxistype, label=comma)
+      
+      
+      depth.time.series.reverse <- qplot(Interval, SMA(Selected, input$smoothingeq),  geom="line", data = spectra.timeseries.table) +
+      geom_line(aes(colour = Depth), lwd=input$linesize+0.5) +
+      geom_line(lwd=input$linesize-0.5) +
+      scale_colour_gradientn("Depth", colours=rev(terrain.colors(length(spectra.line.table$Depth)))) +
+      theme_light() +
+      theme(axis.text.x = element_text(size=15)) +
+      theme(axis.text.y = element_text(size=15)) +
+      theme(axis.title.x = element_text(size=15)) +
+      theme(axis.title.y = element_text(size=15, angle=90)) +
+      theme(plot.title=element_text(size=20)) +
+      theme(legend.title=element_text(size=15)) +
+      theme(legend.text=element_text(size=15)) +
+      scale_x_reverse(paste(x.axis), label=comma) +
+      scale_y_continuous(input$yaxistype, label=comma)
+      
+      
+     
+      if (input$timecoloureq == "Black" && input$xaxistypeeq!="Depth") {
+          black.time.series
+      } else if (input$timecoloureq == "Smooth" && input$xaxistypeeq!="Depth") {
+          smooth.time.series
+      } else if (input$timecoloureq == "Selected" && input$xaxistypeeq!="Depth") {
+          ramp.time.series
+      } else if (input$timecoloureq == "Cluster" && input$xaxistypeeq!="Depth") {
+          cluster.time.series
+      } else if (input$timecoloureq == "Climate" && input$xaxistypeeq!="Depth") {
+          climate.time.series.line
+      } else if (input$timecoloureq == "QualitativePoint" && input$xaxistypeeq!="Depth") {
+          qualitative.time.series.point
+      } else if (input$timecoloureq == "QualitativeLine" && input$xaxistypeeq!="Depth") {
+          qualitative.time.series.line
+      } else if (input$timecoloureq == "Depth" && input$xaxistypeeq!="Depth") {
+          Depth.time.series
+      } else if (input$timecoloureq == "Black" && input$xaxistypeeq=="Depth") {
+          black.time.series.reverse
+      } else if (input$timecoloureq == "Smooth" && input$xaxistypeeq=="Depth") {
+          smooth.time.series.reverse
+      } else if (input$timecoloureq == "Selected" && input$xaxistypeeq=="Depth") {
+          ramp.time.series.reverse
+      } else if (input$timecoloureq == "Cluster" && input$xaxistypeeq=="Depth") {
+          cluster.time.series.reverse
+      } else if (input$timecoloureq == "Climate" && input$xaxistypeeq=="Depth") {
+          climate.time.series.line.reverse
+      } else if (input$timecoloureq == "QualitativePoint" && input$xaxistypeeq=="Depth") {
+          qualitative.time.series.point.reverse
+      } else if (input$timecoloureq == "QualitativeLine" && input$xaxistypeeq=="Depth") {
+          qualitative.time.series.line.reverse
+      } else if (input$timecoloureq == "Depth" && input$xaxistypeeq=="Depth") {
+          depth.time.series.reverse
+      } else if (input$timecoloureq == "Area" && input$xaxistypeeq=="Depth") {
+          area.time.series.reverse
+      }
+      
+      
+  })
+  
+  
+  observeEvent(input$timeserieseq2, {
+      
+      
+  })
+  output$timeserieseqplot2 <- renderPlot({
+      input$timeserieseq2
+      isolate(plotInput6b())      
+  })
+  
+  hoverHold6b <- reactive({
+      input$timeserieseq2
+      
+      spectra.line.table <- dataTransform()
+      
+      spectra.line.table <- subset(spectra.line.table, !(spectra.line.table[input$xaxistypeeq] < input$xlimrangeeq[1] | spectra.line.table[input$xaxistypeeq] > input$xlimrangeeq[2]))
+      
+      if(is.null(spectra.line.table$Age)==TRUE){
+          spectra.line.table$Age <- rep(1, length(spectra.line.table$Spectrum))
+      }
+      
+      spectra.timeseries.table <- data.frame(spectra.line.table[c(input$xaxistypeeq)], spectra.line.table$Selected, spectra.line.table$Cluster, spectra.line.table$Qualitative, spectra.line.table$Depth, spectra.line.table$Climate, spectra.line.table$Age)
+      colnames(spectra.timeseries.table) <- c("Interval", "Selected", "Cluster", "Qualitative", "Depth", "Climate", "Age")
+      
+      isolate(spectra.timeseries.table)
+      
+  })
+  
+  
+  
+  output$hover_info6b <- renderUI({
+      
+      point.table <- hoverHold6b()
+      
+      hover <- input$plot_hover6b
+      point <- nearPoints(point.table,  xvar="Interval", yvar="Selected", coordinfo=hover,   threshold = 10, maxpoints = 1)
+      
+      #if (nrow(point) == 0) return(NULL)
+      
+      
+      
+      
+      # calculate point position INSIDE the image as percent of total dimensions
+      # from left (horizontal) and from top (vertical)
+      left_pct <- (hover$x - hover$domain$left) / (hover$domain$right - hover$domain$left)
+      top_pct <- (hover$domain$top - hover$y) / (hover$domain$top - hover$domain$bottom)
+      
+      # calculate distance from left and bottom side of the picture in pixels
+      left_px <- hover$range$left + left_pct * (hover$range$right - hover$range$left)
+      top_px <- hover$range$top + top_pct * (hover$range$bottom - hover$range$top)
+      
+      
+      # create style property fot tooltip
+      # background color is set so tooltip is a bit transparent
+      # z-index is set so we are sure are tooltip will be on top
+      style <- paste0("position:absolute; z-index:100; background-color: rgba(245, 245, 245, 0.85); ",
+      "left:", left_px + 2, "px; top:", top_px + 2, "px;")
+      
+      # actual tooltip created as wellPanel
+      wellPanel(
+      style = style,
+      p(HTML(paste0("<b> Spectrum: </b>", point$Spectrum, "<br/>",
+      "<b> Depth: </b>", point$Depth, "<br/>",
+      "<b> Age: </b>", point$Age, "<br/>"
+      
+      )))
+      )
+  })
+  
+  
+  output$downloadPlot6b <- downloadHandler(
+  
+  
+  
+  filename = function() { paste(input$projectname, "_", input$yaxistype, '.tiff', sep='') },
+  content = function(file) {
+      ggsave(file,plotInput6b(), device="tiff", compression="lzw", type="cairo", dpi=300, width=12, height=7)
+  }
+  )
+  
+  
+  
+  plotInput6c <- reactive({
+
       
       
       x.axis <- if (input$xaxistypeeq=="Depth") {
@@ -3734,1121 +7265,1666 @@ xrfPCAReactive <- reactive({
           paste("cal year BP")
       } else if (input$xaxistypeeq=="Age" && input$timetypeeq=="BC") {
           paste("cal year BC")
-      } else if (input$axistype=="Age" && input$timetypeeq=="AD") {
+      } else if (input$xaxistypeeq=="Age" && input$timetypeeq=="AD") {
           paste("cal year AD")
-      } else if (input$axistype=="Age" && input$timetypeeq=="BC/AD") {
+      } else if (input$xaxistypeeq=="Age" && input$timetypeeq=="BC/AD") {
           paste("cal year BC/AD")
+      } else if (input$xaxistypeeq=="Custom") {
+          input$customxaxiseq
       }
       
-          
-          spectra.line.table.norm <- data.frame(spectra.line.table, null)
-          colnames(spectra.line.table.norm) <- c(names(spectra.line.table), "None")
-          spectra.line.table.norm
-          
-          #interval <- unique.spec*as.numeric(input$intervalmm)+as.numeric(input$startmmeq)
-          
-          #spectra.timeseries.table <- data.frame(interval, spectra.line.table[c(input$elementtrend)]/spectra.line.table.norm[c(input$elementnorm)], spectra.line.table$Cluster, spectra.line.table$Qualitative, spectra.line.table$Depth)
-          #colnames(spectra.timeseries.table) <- c("Interval", "Selected", "Cluster", "Qualitative", "Depth")
-          
-          spectra.timeseries.table <- data.frame(spectra.line.table[c(input$xaxistypeeq)], data.transformation, spectra.line.table$Cluster, spectra.line.table$Qualitative, spectra.line.table$Depth, spectra.line.table$Climate)
-          colnames(spectra.timeseries.table) <- c("Interval", "Selected", "Cluster", "Qualitative", "Depth", "Climate")
-          
-          
-          
-          
-          
-          
-          
-          
-          
-          
-          
-          
-          
-          
-          
-          black.time.series <- qplot(Interval, SMA(Selected, input$smoothingeq), input$xaxistypeeq, geom="line", data = spectra.timeseries.table) +
-          geom_line(colour = "black", lwd=input$linesizeeq) +
-          theme_light() +
-          theme(axis.text.x = element_text(size=15)) +
-          theme(axis.text.y = element_text(size=15)) +
-          theme(axis.title.x = element_text(size=15)) +
-          theme(axis.title.y = element_text(size=15, angle=90)) +
-          theme(plot.title=element_text(size=20)) +
-          theme(legend.title=element_text(size=15)) +
-          theme(legend.text=element_text(size=15)) +
-          scale_x_continuous(paste(x.axis), label=comma) +
-          scale_y_continuous(paste(input$yaxistype))
-          
-          
-          smooth.time.series <- qplot(spectra.timeseries.table$Interval, SMA(spectra.timeseries.table$Selected, input$smoothingeq), xlab = input$xaxistypeeq, geom="point") +
-          theme_light() +
-          stat_smooth() +
-          theme(axis.text.x = element_text(size=15)) +
-          theme(axis.text.y = element_text(size=15)) +
-          theme(axis.title.x = element_text(size=15)) +
-          theme(axis.title.y = element_text(size=15, angle=90)) +
-          theme(plot.title=element_text(size=20)) +
-          theme(legend.title=element_text(size=15)) +
-          theme(legend.text=element_text(size=15)) +
-          scale_x_continuous(paste(x.axis), label=comma) +
-          scale_y_continuous(paste(input$yaxistype))
-          
-          
-          ramp.time.series <- qplot(Interval, SMA(Selected, input$smoothingeq), xlab = input$xaxistypeeq, geom="line", data = spectra.timeseries.table) +
-          geom_line(aes(colour = Selected), lwd=input$linesizeeq) +
-          theme_light() +
-          scale_colour_gradientn(colours=rainbow(7)) +
-          theme(axis.text.x = element_text(size=15)) +
-          theme(axis.text.y = element_text(size=15)) +
-          theme(axis.title.x = element_text(size=15)) +
-          theme(axis.title.y = element_text(size=15, angle=90)) +
-          theme(plot.title=element_text(size=20)) +
-          theme(legend.title=element_text(size=15)) +
-          theme(legend.text=element_text(size=15)) +
-          scale_x_continuous(paste(x.axis), label=comma) +
-          scale_y_continuous(paste(input$yaxistype))
-          
-          
-          area.time.series <- ggplot(spectra.timeseries.table, aes(Interval)) +
-          theme_classic() +
-          geom_area(aes(y=Selected, colour="grey60", fill="grey60"), alpha=0.6) +
-          scale_x_continuous(input$xaxistypeeq) +
-          theme(axis.text.x = element_text(size=15)) +
-          theme(axis.text.y = element_text(size=15)) +
-          theme(axis.title.x = element_text(size=15)) +
-          theme(axis.title.y = element_text(size=15, angle=90)) +
-          theme(plot.title=element_text(size=20)) +
-          theme(legend.title=element_text(size=15)) +
-          theme(legend.text=element_text(size=15)) +
-          scale_x_continuous(paste(x.axis), label=comma) +
-          scale_y_continuous(paste(input$yaxistype))
-          
-          
-          
-          cluster.time.series <- qplot(Interval, SMA(Selected, input$smoothingeq), xlab = input$xaxistypeeq, geom="line", data = spectra.timeseries.table) +
-          geom_point(aes(colour = as.factor(Cluster)), size=input$pointsizeeq) +
-          scale_colour_discrete("Cluster") +
-          theme_light() +
-          theme(axis.text.x = element_text(size=15)) +
-          theme(axis.text.y = element_text(size=15)) +
-          theme(axis.title.x = element_text(size=15)) +
-          theme(axis.title.y = element_text(size=15, angle=90)) +
-          theme(plot.title=element_text(size=20)) +
-          theme(legend.title=element_text(size=15)) +
-          theme(legend.text=element_text(size=15)) +
-          scale_x_continuous(paste(x.axis), label=comma) +
-          scale_y_continuous(paste(input$yaxistype))
-          
-          climate.time.series.line <- qplot(Interval, SMA(Selected, input$smoothingeq), xlab = input$xaxistypeeq, geom="line", data = spectra.timeseries.table, colour = as.factor(Climate)) +
-          scale_colour_discrete("Climatic Period") +
-          theme_light() +
-          theme(axis.text.x = element_text(size=15)) +
-          theme(axis.text.y = element_text(size=15)) +
-          theme(axis.title.x = element_text(size=15)) +
-          theme(axis.title.y = element_text(size=15, angle=90)) +
-          theme(plot.title=element_text(size=20)) +
-          theme(legend.title=element_text(size=15)) +
-          theme(legend.text=element_text(size=15)) +
-          scale_x_continuous(paste(x.axis), label=comma) +
-          scale_y_continuous(paste(input$yaxistype))
-          
-          
-          qualitative.time.series.line <- qplot(Interval, SMA(Selected, input$smoothingeq), xlab = input$xaxistypeeq, geom="line", data = spectra.timeseries.table, colour = as.factor(Qualitative)) +
-          scale_colour_discrete("Qualitative") +
-          theme_light() +
-          theme(axis.text.x = element_text(size=15)) +
-          theme(axis.text.y = element_text(size=15)) +
-          theme(axis.title.x = element_text(size=15)) +
-          theme(axis.title.y = element_text(size=15, angle=90)) +
-          theme(plot.title=element_text(size=20)) +
-          theme(legend.title=element_text(size=15)) +
-          theme(legend.text=element_text(size=15)) +
-          scale_x_continuous(paste(x.axis), label=comma) +
-          scale_y_continuous(paste(input$yaxistype))
-          
-          qualitative.time.series.point <- qplot(Interval, SMA(Selected, input$smoothingeq), xlab = input$xaxistypeeq, geom="line", data = spectra.timeseries.table) +
-          geom_point(aes(colour = as.factor(Qualitative)), lwd=input$pointsizeeq) +
-          scale_colour_discrete("Qualitative") +
-          theme_light() +
-          theme(axis.text.x = element_text(size=15)) +
-          theme(axis.text.y = element_text(size=15)) +
-          theme(axis.title.x = element_text(size=15)) +
-          theme(axis.title.y = element_text(size=15, angle=90)) +
-          theme(plot.title=element_text(size=20)) +
-          theme(legend.title=element_text(size=15)) +
-          theme(legend.text=element_text(size=15)) +
-          scale_x_continuous(paste(x.axis), label=comma) +
-          scale_y_continuous(paste(input$yaxistype))
-          
-          
-          Depth.time.series <- qplot(Interval, SMA(Selected, input$smoothingeq), xlab = input$xaxistypeeq, geom="line", data = spectra.timeseries.table) +
-          geom_point(aes(colour = Depth), lwd=input$pointsizeeq) +
-          scale_colour_gradientn("Depth", colours=rainbow(length(spectra.line.table$Depth))) +
-          theme_light() +
-          theme(axis.text.x = element_text(size=15)) +
-          theme(axis.text.y = element_text(size=15)) +
-          theme(axis.title.x = element_text(size=15)) +
-          theme(axis.title.y = element_text(size=15, angle=90)) +
-          theme(plot.title=element_text(size=20)) +
-          theme(legend.title=element_text(size=15)) +
-          theme(legend.text=element_text(size=15)) +
-          scale_x_continuous(paste(x.axis), label=comma) +
-          scale_y_continuous(paste(input$yaxistype))
-          
-          
-          
-          if (input$timecoloureq == "Black") {
-              black.time.series
-          } else if (input$timecoloureq == "Smooth") {
-              smooth.time.series
-          } else if (input$timecoloureq == "Selected") {
-              ramp.time.series
-          } else if (input$timecoloureq == "Cluster") {
-              cluster.time.series
-          } else if (input$timecoloureq == "Climate") {
-              climate.time.series.line
-          } else if (input$timecoloureq == "QualitativePoint") {
-              qualitative.time.series.point
-          } else if (input$timecoloureq == "QualitativeLine") {
-              qualitative.time.series.line
-          } else if (input$timecoloureq == "Depth") {
-              Depth.time.series
-          } else if (input$timecoloureq == "Area") {
-              area.time.series
-          }
-          
-          
-          
-          
-      })
       
       
-      observeEvent(input$timeserieseq1, {
-          
-      })
       
-      output$timeserieseqplot1 <- renderPlot({
-          input$timeserieseq1
-          isolate(print(plotInput6a()))
-          
-      })
+      spectra.line.table <- dataTransform()
+      spectra.line.table <- subset(spectra.line.table, !(spectra.line.table[input$xaxistypeeq] < input$xlimrangeeq[1] | spectra.line.table[input$xaxistypeeq] > input$xlimrangeeq[2]))
+
+
+      
+      spectra.line.table.norm <- data.frame(spectra.line.table, null)
+      colnames(spectra.line.table.norm) <- c(names(spectra.line.table), "None")
+      spectra.line.table.norm
+      
+      #interval <- unique.spec*as.numeric(input$intervalmm)+as.numeric(input$startmmeq)
+      
+      #spectra.timeseries.table <- data.frame(interval, spectra.line.table[c(input$elementtrend)]/spectra.line.table.norm[c(input$elementnorm)], spectra.line.table$Cluster, spectra.line.table$Qualitative, spectra.line.table$Depth)
+      #colnames(spectra.timeseries.table) <- c("Interval", "Selected", "Cluster", "Qualitative", "Depth")
+      
+      spectra.timeseries.table <- data.frame(spectra.line.table[c(input$xaxistypeeq)], spectra.line.table$Selected, spectra.line.table$Cluster, spectra.line.table$Qualitative, spectra.line.table$Depth, spectra.line.table$Climate)
+      colnames(spectra.timeseries.table) <- c("Interval", "Selected", "Cluster", "Qualitative", "Depth", "Climate")
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      black.time.series <- qplot(Interval, SMA(Selected, input$smoothingeq), input$xaxistypeeq, geom="line", data = spectra.timeseries.table) +
+      geom_line(colour = "black", lwd=input$linesizeeq) +
+      theme_light() +
+      theme(axis.text.x = element_text(size=15)) +
+      theme(axis.text.y = element_text(size=15)) +
+      theme(axis.title.x = element_text(size=15)) +
+      theme(axis.title.y = element_text(size=15, angle=90)) +
+      theme(plot.title=element_text(size=20)) +
+      theme(legend.title=element_text(size=15)) +
+      theme(legend.text=element_text(size=15)) +
+      scale_x_continuous(paste(x.axis), label=comma) +
+      scale_y_continuous(input$yaxistype, label=comma)
+      
+      smooth.time.series <- qplot(spectra.timeseries.table$Interval, SMA(spectra.timeseries.table$Selected, input$smoothingeq),  geom="point") +
+      theme_light() +
+      stat_smooth() +
+      theme(axis.text.x = element_text(size=15)) +
+      theme(axis.text.y = element_text(size=15)) +
+      theme(axis.title.x = element_text(size=15)) +
+      theme(axis.title.y = element_text(size=15, angle=90)) +
+      theme(plot.title=element_text(size=20)) +
+      theme(legend.title=element_text(size=15)) +
+      theme(legend.text=element_text(size=15)) +
+      scale_x_continuous(paste(x.axis), label=comma) +
+      scale_y_continuous(input$yaxistype, label=comma)
+      
+      
+      ramp.time.series <- qplot(Interval, SMA(Selected, input$smoothingeq),  geom="line", data = spectra.timeseries.table) +
+      geom_line(aes(colour = Selected), lwd=input$linesizeeq) +
+      theme_light() +
+      scale_colour_gradientn(colours=rev(terrain.colors(length(spectra.timeseries.table$Depth)))) +
+      theme(axis.text.x = element_text(size=15)) +
+      theme(axis.text.y = element_text(size=15)) +
+      theme(axis.title.x = element_text(size=15)) +
+      theme(axis.title.y = element_text(size=15, angle=90)) +
+      theme(plot.title=element_text(size=20)) +
+      theme(legend.title=element_text(size=15)) +
+      theme(legend.text=element_text(size=15)) +
+      scale_x_continuous(paste(x.axis), label=comma) +
+      scale_y_continuous(input$yaxistype, label=comma)
+      
+      
+      area.time.series <- ggplot(spectra.timeseries.table, aes(Interval)) +
+      theme_classic() +
+      geom_area(aes(y=Selected, colour="grey60", fill="grey60"), alpha=0.6) +
+      scale_x_continuous(input$xaxistypeeq) +
+      theme(axis.text.x = element_text(size=15)) +
+      theme(axis.text.y = element_text(size=15)) +
+      theme(axis.title.x = element_text(size=15)) +
+      theme(axis.title.y = element_text(size=15, angle=90)) +
+      theme(plot.title=element_text(size=20)) +
+      theme(legend.title=element_text(size=15)) +
+      theme(legend.text=element_text(size=15)) +
+      scale_x_continuous(paste(x.axis), label=comma) +
+      scale_y_continuous(input$yaxistype, label=comma)
+      
+      
+      
+      cluster.time.series <- qplot(Interval, SMA(Selected, input$smoothingeq),  geom="line", data = spectra.timeseries.table) +
+      geom_point(aes(colour = as.factor(Cluster)), size=input$pointsizeeq) +
+      scale_colour_discrete("Cluster") +
+      theme_light() +
+      theme(axis.text.x = element_text(size=15)) +
+      theme(axis.text.y = element_text(size=15)) +
+      theme(axis.title.x = element_text(size=15)) +
+      theme(axis.title.y = element_text(size=15, angle=90)) +
+      theme(plot.title=element_text(size=20)) +
+      theme(legend.title=element_text(size=15)) +
+      theme(legend.text=element_text(size=15)) +
+      scale_x_continuous(paste(x.axis), label=comma) +
+      scale_y_continuous(input$yaxistype, label=comma)
+      
+      climate.time.series.line <- qplot(Interval, SMA(Selected, input$smoothingeq),  geom="line", data = spectra.timeseries.table, colour = as.factor(Climate)) +
+      scale_colour_discrete("Climatic Period") +
+      theme_light() +
+      theme(axis.text.x = element_text(size=15)) +
+      theme(axis.text.y = element_text(size=15)) +
+      theme(axis.title.x = element_text(size=15)) +
+      theme(axis.title.y = element_text(size=15, angle=90)) +
+      theme(plot.title=element_text(size=20)) +
+      theme(legend.title=element_text(size=15)) +
+      theme(legend.text=element_text(size=15)) +
+      scale_x_continuous(paste(x.axis), label=comma) +
+      scale_y_continuous(input$yaxistype, label=comma)
+      
+      
+      qualitative.time.series.line <- qplot(Interval, SMA(Selected, input$smoothingeq),  geom="line", data = spectra.timeseries.table, colour = as.factor(Qualitative)) +
+      scale_colour_discrete("Qualitative") +
+      theme_light() +
+      theme(axis.text.x = element_text(size=15)) +
+      theme(axis.text.y = element_text(size=15)) +
+      theme(axis.title.x = element_text(size=15)) +
+      theme(axis.title.y = element_text(size=15, angle=90)) +
+      theme(plot.title=element_text(size=20)) +
+      theme(legend.title=element_text(size=15)) +
+      theme(legend.text=element_text(size=15)) +
+      scale_x_continuous(paste(x.axis), label=comma) +
+      scale_y_continuous(input$yaxistype, label=comma)
+      
+      qualitative.time.series.point <- qplot(Interval, SMA(Selected, input$smoothingeq),  geom="line", data = spectra.timeseries.table) +
+      geom_point(aes(colour = as.factor(Qualitative)), lwd=input$pointsizeeq) +
+      scale_colour_discrete("Qualitative") +
+      theme_light() +
+      theme(axis.text.x = element_text(size=15)) +
+      theme(axis.text.y = element_text(size=15)) +
+      theme(axis.title.x = element_text(size=15)) +
+      theme(axis.title.y = element_text(size=15, angle=90)) +
+      theme(plot.title=element_text(size=20)) +
+      theme(legend.title=element_text(size=15)) +
+      theme(legend.text=element_text(size=15)) +
+      scale_x_continuous(paste(x.axis), label=comma) +
+      scale_y_continuous(input$yaxistype, label=comma)
+      
+      
+      depth.time.series <- qplot(Interval, SMA(Selected, input$smoothingeq),  geom="line", data = spectra.timeseries.table) +
+      geom_line(aes(colour = Depth), lwd=input$linesize+0.5) +
+      geom_line(lwd=input$linesize-0.5) +
+      scale_colour_gradientn("Depth", colours=rev(terrain.colors(length(spectra.line.table$Depth)))) +
+      theme_light() +
+      theme(axis.text.x = element_text(size=15)) +
+      theme(axis.text.y = element_text(size=15)) +
+      theme(axis.title.x = element_text(size=15)) +
+      theme(axis.title.y = element_text(size=15, angle=90)) +
+      theme(plot.title=element_text(size=20)) +
+      theme(legend.title=element_text(size=15)) +
+      theme(legend.text=element_text(size=15)) +
+      scale_x_continuous(paste(x.axis), label=comma) +
+      scale_y_continuous(input$yaxistype, label=comma)
+      
+      
+      #####X Axis Reverse
+      
+      
+      black.time.series.reverse <- qplot(Interval, SMA(Selected, input$smoothingeq), input$xaxistypeeq, geom="line", data = spectra.timeseries.table) +
+      geom_line(colour = "black", lwd=input$linesizeeq) +
+      theme_light() +
+      theme(axis.text.x = element_text(size=15)) +
+      theme(axis.text.y = element_text(size=15)) +
+      theme(axis.title.x = element_text(size=15)) +
+      theme(axis.title.y = element_text(size=15, angle=90)) +
+      theme(plot.title=element_text(size=20)) +
+      theme(legend.title=element_text(size=15)) +
+      theme(legend.text=element_text(size=15)) +
+      scale_x_reverse(paste(x.axis), label=comma) +
+      scale_y_continuous(input$yaxistype, label=comma)
+      
+      smooth.time.series.reverse <- qplot(spectra.timeseries.table$Interval, SMA(spectra.timeseries.table$Selected, input$smoothingeq),  geom="point") +
+      theme_light() +
+      stat_smooth() +
+      theme(axis.text.x = element_text(size=15)) +
+      theme(axis.text.y = element_text(size=15)) +
+      theme(axis.title.x = element_text(size=15)) +
+      theme(axis.title.y = element_text(size=15, angle=90)) +
+      theme(plot.title=element_text(size=20)) +
+      theme(legend.title=element_text(size=15)) +
+      theme(legend.text=element_text(size=15)) +
+      scale_x_reverse(paste(x.axis), label=comma) +
+      scale_y_continuous(input$yaxistype, label=comma)
+      
+      
+      ramp.time.series.reverse <- qplot(Interval, SMA(Selected, input$smoothingeq),  geom="line", data = spectra.timeseries.table) +
+      geom_line(aes(colour = Selected), lwd=input$linesizeeq) +
+      theme_light() +
+      scale_colour_gradientn(colours=rev(terrain.colors(length(spectra.timeseries.table$Depth)))) +
+      theme(axis.text.x = element_text(size=15)) +
+      theme(axis.text.y = element_text(size=15)) +
+      theme(axis.title.x = element_text(size=15)) +
+      theme(axis.title.y = element_text(size=15, angle=90)) +
+      theme(plot.title=element_text(size=20)) +
+      theme(legend.title=element_text(size=15)) +
+      theme(legend.text=element_text(size=15)) +
+      scale_x_reverse(paste(x.axis), label=comma) +
+      scale_y_continuous(input$yaxistype, label=comma)
+      
+      
+      area.time.series.reverse <- ggplot(spectra.timeseries.table, aes(Interval)) +
+      theme_classic() +
+      geom_area(aes(y=Selected, colour="grey60", fill="grey60"), alpha=0.6) +
+      scale_x_reverse(input$xaxistypeeq) +
+      theme(axis.text.x = element_text(size=15)) +
+      theme(axis.text.y = element_text(size=15)) +
+      theme(axis.title.x = element_text(size=15)) +
+      theme(axis.title.y = element_text(size=15, angle=90)) +
+      theme(plot.title=element_text(size=20)) +
+      theme(legend.title=element_text(size=15)) +
+      theme(legend.text=element_text(size=15)) +
+      scale_x_reverse(paste(x.axis), label=comma) +
+      scale_y_continuous(input$yaxistype, label=comma)
+      
+      
+      
+      cluster.time.series.reverse <- qplot(Interval, SMA(Selected, input$smoothingeq),  geom="line", data = spectra.timeseries.table) +
+      geom_point(aes(colour = as.factor(Cluster)), size=input$pointsizeeq) +
+      scale_colour_discrete("Cluster") +
+      theme_light() +
+      theme(axis.text.x = element_text(size=15)) +
+      theme(axis.text.y = element_text(size=15)) +
+      theme(axis.title.x = element_text(size=15)) +
+      theme(axis.title.y = element_text(size=15, angle=90)) +
+      theme(plot.title=element_text(size=20)) +
+      theme(legend.title=element_text(size=15)) +
+      theme(legend.text=element_text(size=15)) +
+      scale_x_reverse(paste(x.axis), label=comma) +
+      scale_y_continuous(input$yaxistype, label=comma)
+      
+      climate.time.series.line.reverse <- qplot(Interval, SMA(Selected, input$smoothingeq),  geom="line", data = spectra.timeseries.table, colour = as.factor(Climate)) +
+      scale_colour_discrete("Climatic Period") +
+      theme_light() +
+      theme(axis.text.x = element_text(size=15)) +
+      theme(axis.text.y = element_text(size=15)) +
+      theme(axis.title.x = element_text(size=15)) +
+      theme(axis.title.y = element_text(size=15, angle=90)) +
+      theme(plot.title=element_text(size=20)) +
+      theme(legend.title=element_text(size=15)) +
+      theme(legend.text=element_text(size=15)) +
+      scale_x_reverse(paste(x.axis), label=comma) +
+      scale_y_continuous(input$yaxistype, label=comma)
+      
+      
+      qualitative.time.series.line.reverse <- qplot(Interval, SMA(Selected, input$smoothingeq),  geom="line", data = spectra.timeseries.table, colour = as.factor(Qualitative)) +
+      scale_colour_discrete("Qualitative") +
+      theme_light() +
+      theme(axis.text.x = element_text(size=15)) +
+      theme(axis.text.y = element_text(size=15)) +
+      theme(axis.title.x = element_text(size=15)) +
+      theme(axis.title.y = element_text(size=15, angle=90)) +
+      theme(plot.title=element_text(size=20)) +
+      theme(legend.title=element_text(size=15)) +
+      theme(legend.text=element_text(size=15)) +
+      scale_x_reverse(paste(x.axis), label=comma) +
+      scale_y_continuous(input$yaxistype, label=comma)
+      
+      qualitative.time.series.point.reverse <- qplot(Interval, SMA(Selected, input$smoothingeq),  geom="line", data = spectra.timeseries.table) +
+      geom_point(aes(colour = as.factor(Qualitative)), lwd=input$pointsizeeq) +
+      scale_colour_discrete("Qualitative") +
+      theme_light() +
+      theme(axis.text.x = element_text(size=15)) +
+      theme(axis.text.y = element_text(size=15)) +
+      theme(axis.title.x = element_text(size=15)) +
+      theme(axis.title.y = element_text(size=15, angle=90)) +
+      theme(plot.title=element_text(size=20)) +
+      theme(legend.title=element_text(size=15)) +
+      theme(legend.text=element_text(size=15)) +
+      scale_x_reverse(paste(x.axis), label=comma) +
+      scale_y_continuous(input$yaxistype, label=comma)
+      
+      
+      depth.time.series.reverse <- qplot(Interval, SMA(Selected, input$smoothingeq),  geom="line", data = spectra.timeseries.table) +
+      geom_line(aes(colour = Depth), lwd=input$linesize+0.5) +
+      geom_line(lwd=input$linesize-0.5) +
+      scale_colour_gradientn("Depth", colours=rev(terrain.colors(length(spectra.line.table$Depth)))) +
+      theme_light() +
+      theme(axis.text.x = element_text(size=15)) +
+      theme(axis.text.y = element_text(size=15)) +
+      theme(axis.title.x = element_text(size=15)) +
+      theme(axis.title.y = element_text(size=15, angle=90)) +
+      theme(plot.title=element_text(size=20)) +
+      theme(legend.title=element_text(size=15)) +
+      theme(legend.text=element_text(size=15)) +
+      scale_x_reverse(paste(x.axis), label=comma) +
+      scale_y_continuous(input$yaxistype, label=comma)
+      
+      
+     
+      if (input$timecoloureq == "Black" && input$xaxistypeeq!="Depth") {
+          black.time.series
+      } else if (input$timecoloureq == "Smooth" && input$xaxistypeeq!="Depth") {
+          smooth.time.series
+      } else if (input$timecoloureq == "Selected" && input$xaxistypeeq!="Depth") {
+          ramp.time.series
+      } else if (input$timecoloureq == "Cluster" && input$xaxistypeeq!="Depth") {
+          cluster.time.series
+      } else if (input$timecoloureq == "Climate" && input$xaxistypeeq!="Depth") {
+          climate.time.series.line
+      } else if (input$timecoloureq == "QualitativePoint" && input$xaxistypeeq!="Depth") {
+          qualitative.time.series.point
+      } else if (input$timecoloureq == "QualitativeLine" && input$xaxistypeeq!="Depth") {
+          qualitative.time.series.line
+      } else if (input$timecoloureq == "Depth" && input$xaxistypeeq!="Depth") {
+          Depth.time.series
+      } else if (input$timecoloureq == "Black" && input$xaxistypeeq=="Depth") {
+          black.time.series.reverse
+      } else if (input$timecoloureq == "Smooth" && input$xaxistypeeq=="Depth") {
+          smooth.time.series.reverse
+      } else if (input$timecoloureq == "Selected" && input$xaxistypeeq=="Depth") {
+          ramp.time.series.reverse
+      } else if (input$timecoloureq == "Cluster" && input$xaxistypeeq=="Depth") {
+          cluster.time.series.reverse
+      } else if (input$timecoloureq == "Climate" && input$xaxistypeeq=="Depth") {
+          climate.time.series.line.reverse
+      } else if (input$timecoloureq == "QualitativePoint" && input$xaxistypeeq=="Depth") {
+          qualitative.time.series.point.reverse
+      } else if (input$timecoloureq == "QualitativeLine" && input$xaxistypeeq=="Depth") {
+          qualitative.time.series.line.reverse
+      } else if (input$timecoloureq == "Depth" && input$xaxistypeeq=="Depth") {
+          depth.time.series.reverse
+      } else if (input$timecoloureq == "Area" && input$xaxistypeeq=="Depth") {
+          area.time.series.reverse
+      }
+      
+      
+      
+  })
+  
+  observeEvent(input$timeserieseq3, {
+  })
+  
+  output$timeserieseqplot3 <- renderPlot({
+      input$timeserieseq3
+      
+      isolate(plotInput6c())      
+      
+  })
+  
+  hoverHold6c <- reactive({
+      input$timeserieseq3
+      
+      spectra.line.table <- dataTransform()
+      
+      spectra.line.table <- subset(spectra.line.table, !(spectra.line.table[input$xaxistypeeq] < input$xlimrangeeq[1] | spectra.line.table[input$xaxistypeeq] > input$xlimrangeeq[2]))
+      
+      if(is.null(spectra.line.table$Age)==TRUE){
+          spectra.line.table$Age <- rep(1, length(spectra.line.table$Spectrum))
+      }
+      
+      spectra.timeseries.table <- data.frame(spectra.line.table[c(input$xaxistypeeq)], spectra.line.table$Selected, spectra.line.table$Cluster, spectra.line.table$Qualitative, spectra.line.table$Depth, spectra.line.table$Climate, spectra.line.table$Age)
+      colnames(spectra.timeseries.table) <- c("Interval", "Selected", "Cluster", "Qualitative", "Depth", "Climate", "Age")
+      
+      isolate(spectra.timeseries.table)
+      
+  })
+  
+  
+  output$hover_info6c <- renderUI({
+      
+      point.table <- hoverHold6c()
+      
+      hover <- input$plot_hover6c
+      point <- nearPoints(point.table,  xvar="Interval", yvar="Selected", coordinfo=hover,   threshold = 10, maxpoints = 1)
+      
+      #if (nrow(point) == 0) return(NULL)
+      
+      
+      
+      
+      # calculate point position INSIDE the image as percent of total dimensions
+      # from left (horizontal) and from top (vertical)
+      left_pct <- (hover$x - hover$domain$left) / (hover$domain$right - hover$domain$left)
+      top_pct <- (hover$domain$top - hover$y) / (hover$domain$top - hover$domain$bottom)
+      
+      # calculate distance from left and bottom side of the picture in pixels
+      left_px <- hover$range$left + left_pct * (hover$range$right - hover$range$left)
+      top_px <- hover$range$top + top_pct * (hover$range$bottom - hover$range$top)
+      
+      
+      # create style property fot tooltip
+      # background color is set so tooltip is a bit transparent
+      # z-index is set so we are sure are tooltip will be on top
+      style <- paste0("position:absolute; z-index:100; background-color: rgba(245, 245, 245, 0.85); ",
+      "left:", left_px + 2, "px; top:", top_px + 2, "px;")
+      
+      # actual tooltip created as wellPanel
+      wellPanel(
+      style = style,
+      p(HTML(paste0("<b> Spectrum: </b>", point$Spectrum, "<br/>",
+      "<b> Depth: </b>", point$Depth, "<br/>",
+      "<b> Age: </b>", point$Age, "<br/>"
+      
+      )))
+      )
+  })
+  
+  output$downloadPlot6c <- downloadHandler(
+  
+  
+  filename = function() { paste(input$projectname, "_", input$yaxistype, '.tiff', sep='') },
+  content = function(file) {
+      ggsave(file,plotInput6c(), device="tiff", compression="lzw", type="cairo", dpi=300, width=12, height=7)
+  }
+  )
+  
+  
+  plotInput6d <- reactive({
+      
+      
+      
+      x.axis <- if (input$xaxistypeeq=="Depth") {
+          paste("Depth (", input$lengthuniteq, ")", sep="", collapse="")
+      } else if (input$xaxistypeeq=="Age" && input$timetypeeq=="BP"){
+          paste("cal year BP")
+      } else if (input$xaxistypeeq=="Age" && input$timetypeeq=="BC") {
+          paste("cal year BC")
+      } else if (input$xaxistypeeq=="Age" && input$timetypeeq=="AD") {
+          paste("cal year AD")
+      } else if (input$xaxistypeeq=="Age" && input$timetypeeq=="BC/AD") {
+          paste("cal year BC/AD")
+      } else if (input$xaxistypeeq=="Custom") {
+          input$customxaxiseq
+      }
+      
+      
+      
+      spectra.line.table <- dataTransform()
+      spectra.line.table <- subset(spectra.line.table, !(spectra.line.table[input$xaxistypeeq] < input$xlimrangeeq[1] | spectra.line.table[input$xaxistypeeq] > input$xlimrangeeq[2]))
+
+
+
+      
+      spectra.line.table.norm <- data.frame(spectra.line.table, null)
+      colnames(spectra.line.table.norm) <- c(names(spectra.line.table), "None")
+      spectra.line.table.norm
+      
+      #interval <- unique.spec*as.numeric(input$intervalmm)+as.numeric(input$startmmeq)
+      
+      #spectra.timeseries.table <- data.frame(interval, spectra.line.table[c(input$elementtrend)]/spectra.line.table.norm[c(input$elementnorm)], spectra.line.table$Cluster, spectra.line.table$Qualitative, spectra.line.table$Depth)
+      #colnames(spectra.timeseries.table) <- c("Interval", "Selected", "Cluster", "Qualitative", "Depth")
+      
+      spectra.timeseries.table <- data.frame(spectra.line.table[c(input$xaxistypeeq)], spectra.line.table$Selected, spectra.line.table$Cluster, spectra.line.table$Qualitative, spectra.line.table$Depth, spectra.line.table$Climate)
+      colnames(spectra.timeseries.table) <- c("Interval", "Selected", "Cluster", "Qualitative", "Depth", "Climate")
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      black.time.series <- qplot(Interval, SMA(Selected, input$smoothingeq), input$xaxistypeeq, geom="line", data = spectra.timeseries.table) +
+      geom_line(colour = "black", lwd=input$linesizeeq) +
+      theme_light() +
+      theme(axis.text.x = element_text(size=15)) +
+      theme(axis.text.y = element_text(size=15)) +
+      theme(axis.title.x = element_text(size=15)) +
+      theme(axis.title.y = element_text(size=15, angle=90)) +
+      theme(plot.title=element_text(size=20)) +
+      theme(legend.title=element_text(size=15)) +
+      theme(legend.text=element_text(size=15)) +
+      scale_x_continuous(paste(x.axis), label=comma) +
+      scale_y_continuous(input$yaxistype, label=comma)
+      
+      smooth.time.series <- qplot(spectra.timeseries.table$Interval, SMA(spectra.timeseries.table$Selected, input$smoothingeq),  geom="point") +
+      theme_light() +
+      stat_smooth() +
+      theme(axis.text.x = element_text(size=15)) +
+      theme(axis.text.y = element_text(size=15)) +
+      theme(axis.title.x = element_text(size=15)) +
+      theme(axis.title.y = element_text(size=15, angle=90)) +
+      theme(plot.title=element_text(size=20)) +
+      theme(legend.title=element_text(size=15)) +
+      theme(legend.text=element_text(size=15)) +
+      scale_x_continuous(paste(x.axis), label=comma) +
+      scale_y_continuous(input$yaxistype, label=comma)
+      
+      
+      ramp.time.series <- qplot(Interval, SMA(Selected, input$smoothingeq),  geom="line", data = spectra.timeseries.table) +
+      geom_line(aes(colour = Selected), lwd=input$linesizeeq) +
+      theme_light() +
+      scale_colour_gradientn(colours=rev(terrain.colors(length(spectra.timeseries.table$Depth)))) +
+      theme(axis.text.x = element_text(size=15)) +
+      theme(axis.text.y = element_text(size=15)) +
+      theme(axis.title.x = element_text(size=15)) +
+      theme(axis.title.y = element_text(size=15, angle=90)) +
+      theme(plot.title=element_text(size=20)) +
+      theme(legend.title=element_text(size=15)) +
+      theme(legend.text=element_text(size=15)) +
+      scale_x_continuous(paste(x.axis), label=comma) +
+      scale_y_continuous(input$yaxistype, label=comma)
+      
+      
+      area.time.series <- ggplot(spectra.timeseries.table, aes(Interval)) +
+      theme_classic() +
+      geom_area(aes(y=Selected, colour="grey60", fill="grey60"), alpha=0.6) +
+      scale_x_continuous(input$xaxistypeeq) +
+      theme(axis.text.x = element_text(size=15)) +
+      theme(axis.text.y = element_text(size=15)) +
+      theme(axis.title.x = element_text(size=15)) +
+      theme(axis.title.y = element_text(size=15, angle=90)) +
+      theme(plot.title=element_text(size=20)) +
+      theme(legend.title=element_text(size=15)) +
+      theme(legend.text=element_text(size=15)) +
+      scale_x_continuous(paste(x.axis), label=comma) +
+      scale_y_continuous(input$yaxistype, label=comma)
+      
+      
+      
+      cluster.time.series <- qplot(Interval, SMA(Selected, input$smoothingeq),  geom="line", data = spectra.timeseries.table) +
+      geom_point(aes(colour = as.factor(Cluster)), size=input$pointsizeeq) +
+      scale_colour_discrete("Cluster") +
+      theme_light() +
+      theme(axis.text.x = element_text(size=15)) +
+      theme(axis.text.y = element_text(size=15)) +
+      theme(axis.title.x = element_text(size=15)) +
+      theme(axis.title.y = element_text(size=15, angle=90)) +
+      theme(plot.title=element_text(size=20)) +
+      theme(legend.title=element_text(size=15)) +
+      theme(legend.text=element_text(size=15)) +
+      scale_x_continuous(paste(x.axis), label=comma) +
+      scale_y_continuous(input$yaxistype, label=comma)
+      
+      climate.time.series.line <- qplot(Interval, SMA(Selected, input$smoothingeq),  geom="line", data = spectra.timeseries.table, colour = as.factor(Climate)) +
+      scale_colour_discrete("Climatic Period") +
+      theme_light() +
+      theme(axis.text.x = element_text(size=15)) +
+      theme(axis.text.y = element_text(size=15)) +
+      theme(axis.title.x = element_text(size=15)) +
+      theme(axis.title.y = element_text(size=15, angle=90)) +
+      theme(plot.title=element_text(size=20)) +
+      theme(legend.title=element_text(size=15)) +
+      theme(legend.text=element_text(size=15)) +
+      scale_x_continuous(paste(x.axis), label=comma) +
+      scale_y_continuous(input$yaxistype, label=comma)
+      
+      
+      qualitative.time.series.line <- qplot(Interval, SMA(Selected, input$smoothingeq),  geom="line", data = spectra.timeseries.table, colour = as.factor(Qualitative)) +
+      scale_colour_discrete("Qualitative") +
+      theme_light() +
+      theme(axis.text.x = element_text(size=15)) +
+      theme(axis.text.y = element_text(size=15)) +
+      theme(axis.title.x = element_text(size=15)) +
+      theme(axis.title.y = element_text(size=15, angle=90)) +
+      theme(plot.title=element_text(size=20)) +
+      theme(legend.title=element_text(size=15)) +
+      theme(legend.text=element_text(size=15)) +
+      scale_x_continuous(paste(x.axis), label=comma) +
+      scale_y_continuous(input$yaxistype, label=comma)
+      
+      qualitative.time.series.point <- qplot(Interval, SMA(Selected, input$smoothingeq),  geom="line", data = spectra.timeseries.table) +
+      geom_point(aes(colour = as.factor(Qualitative)), lwd=input$pointsizeeq) +
+      scale_colour_discrete("Qualitative") +
+      theme_light() +
+      theme(axis.text.x = element_text(size=15)) +
+      theme(axis.text.y = element_text(size=15)) +
+      theme(axis.title.x = element_text(size=15)) +
+      theme(axis.title.y = element_text(size=15, angle=90)) +
+      theme(plot.title=element_text(size=20)) +
+      theme(legend.title=element_text(size=15)) +
+      theme(legend.text=element_text(size=15)) +
+      scale_x_continuous(paste(x.axis), label=comma) +
+      scale_y_continuous(input$yaxistype, label=comma)
+      
+      
+      depth.time.series <- qplot(Interval, SMA(Selected, input$smoothingeq),  geom="line", data = spectra.timeseries.table) +
+      geom_line(aes(colour = Depth), lwd=input$linesize+0.5) +
+      geom_line(lwd=input$linesize-0.5) +
+      scale_colour_gradientn("Depth", colours=rev(terrain.colors(length(spectra.line.table$Depth)))) +
+      theme_light() +
+      theme(axis.text.x = element_text(size=15)) +
+      theme(axis.text.y = element_text(size=15)) +
+      theme(axis.title.x = element_text(size=15)) +
+      theme(axis.title.y = element_text(size=15, angle=90)) +
+      theme(plot.title=element_text(size=20)) +
+      theme(legend.title=element_text(size=15)) +
+      theme(legend.text=element_text(size=15)) +
+      scale_x_continuous(paste(x.axis), label=comma) +
+      scale_y_continuous(input$yaxistype, label=comma)
+      
+      
+      #####X Axis Reverse
+      
+      
+      black.time.series.reverse <- qplot(Interval, SMA(Selected, input$smoothingeq), input$xaxistypeeq, geom="line", data = spectra.timeseries.table) +
+      geom_line(colour = "black", lwd=input$linesizeeq) +
+      theme_light() +
+      theme(axis.text.x = element_text(size=15)) +
+      theme(axis.text.y = element_text(size=15)) +
+      theme(axis.title.x = element_text(size=15)) +
+      theme(axis.title.y = element_text(size=15, angle=90)) +
+      theme(plot.title=element_text(size=20)) +
+      theme(legend.title=element_text(size=15)) +
+      theme(legend.text=element_text(size=15)) +
+      scale_x_reverse(paste(x.axis), label=comma) +
+      scale_y_continuous(input$yaxistype, label=comma)
+      
+      smooth.time.series.reverse <- qplot(spectra.timeseries.table$Interval, SMA(spectra.timeseries.table$Selected, input$smoothingeq),  geom="point") +
+      theme_light() +
+      stat_smooth() +
+      theme(axis.text.x = element_text(size=15)) +
+      theme(axis.text.y = element_text(size=15)) +
+      theme(axis.title.x = element_text(size=15)) +
+      theme(axis.title.y = element_text(size=15, angle=90)) +
+      theme(plot.title=element_text(size=20)) +
+      theme(legend.title=element_text(size=15)) +
+      theme(legend.text=element_text(size=15)) +
+      scale_x_reverse(paste(x.axis), label=comma) +
+      scale_y_continuous(input$yaxistype, label=comma)
+      
+      
+      ramp.time.series.reverse <- qplot(Interval, SMA(Selected, input$smoothingeq),  geom="line", data = spectra.timeseries.table) +
+      geom_line(aes(colour = Selected), lwd=input$linesizeeq) +
+      theme_light() +
+      scale_colour_gradientn(colours=rev(terrain.colors(length(spectra.timeseries.table$Depth)))) +
+      theme(axis.text.x = element_text(size=15)) +
+      theme(axis.text.y = element_text(size=15)) +
+      theme(axis.title.x = element_text(size=15)) +
+      theme(axis.title.y = element_text(size=15, angle=90)) +
+      theme(plot.title=element_text(size=20)) +
+      theme(legend.title=element_text(size=15)) +
+      theme(legend.text=element_text(size=15)) +
+      scale_x_reverse(paste(x.axis), label=comma) +
+      scale_y_continuous(input$yaxistype, label=comma)
+      
+      
+      area.time.series.reverse <- ggplot(spectra.timeseries.table, aes(Interval)) +
+      theme_classic() +
+      geom_area(aes(y=Selected, colour="grey60", fill="grey60"), alpha=0.6) +
+      scale_x_reverse(input$xaxistypeeq) +
+      theme(axis.text.x = element_text(size=15)) +
+      theme(axis.text.y = element_text(size=15)) +
+      theme(axis.title.x = element_text(size=15)) +
+      theme(axis.title.y = element_text(size=15, angle=90)) +
+      theme(plot.title=element_text(size=20)) +
+      theme(legend.title=element_text(size=15)) +
+      theme(legend.text=element_text(size=15)) +
+      scale_x_reverse(paste(x.axis), label=comma) +
+      scale_y_continuous(input$yaxistype, label=comma)
+      
+      
+      
+      cluster.time.series.reverse <- qplot(Interval, SMA(Selected, input$smoothingeq),  geom="line", data = spectra.timeseries.table) +
+      geom_point(aes(colour = as.factor(Cluster)), size=input$pointsizeeq) +
+      scale_colour_discrete("Cluster") +
+      theme_light() +
+      theme(axis.text.x = element_text(size=15)) +
+      theme(axis.text.y = element_text(size=15)) +
+      theme(axis.title.x = element_text(size=15)) +
+      theme(axis.title.y = element_text(size=15, angle=90)) +
+      theme(plot.title=element_text(size=20)) +
+      theme(legend.title=element_text(size=15)) +
+      theme(legend.text=element_text(size=15)) +
+      scale_x_reverse(paste(x.axis), label=comma) +
+      scale_y_continuous(input$yaxistype, label=comma)
+      
+      climate.time.series.line.reverse <- qplot(Interval, SMA(Selected, input$smoothingeq),  geom="line", data = spectra.timeseries.table, colour = as.factor(Climate)) +
+      scale_colour_discrete("Climatic Period") +
+      theme_light() +
+      theme(axis.text.x = element_text(size=15)) +
+      theme(axis.text.y = element_text(size=15)) +
+      theme(axis.title.x = element_text(size=15)) +
+      theme(axis.title.y = element_text(size=15, angle=90)) +
+      theme(plot.title=element_text(size=20)) +
+      theme(legend.title=element_text(size=15)) +
+      theme(legend.text=element_text(size=15)) +
+      scale_x_reverse(paste(x.axis), label=comma) +
+      scale_y_continuous(input$yaxistype, label=comma)
+      
+      
+      qualitative.time.series.line.reverse <- qplot(Interval, SMA(Selected, input$smoothingeq),  geom="line", data = spectra.timeseries.table, colour = as.factor(Qualitative)) +
+      scale_colour_discrete("Qualitative") +
+      theme_light() +
+      theme(axis.text.x = element_text(size=15)) +
+      theme(axis.text.y = element_text(size=15)) +
+      theme(axis.title.x = element_text(size=15)) +
+      theme(axis.title.y = element_text(size=15, angle=90)) +
+      theme(plot.title=element_text(size=20)) +
+      theme(legend.title=element_text(size=15)) +
+      theme(legend.text=element_text(size=15)) +
+      scale_x_reverse(paste(x.axis), label=comma) +
+      scale_y_continuous(input$yaxistype, label=comma)
+      
+      qualitative.time.series.point.reverse <- qplot(Interval, SMA(Selected, input$smoothingeq),  geom="line", data = spectra.timeseries.table) +
+      geom_point(aes(colour = as.factor(Qualitative)), lwd=input$pointsizeeq) +
+      scale_colour_discrete("Qualitative") +
+      theme_light() +
+      theme(axis.text.x = element_text(size=15)) +
+      theme(axis.text.y = element_text(size=15)) +
+      theme(axis.title.x = element_text(size=15)) +
+      theme(axis.title.y = element_text(size=15, angle=90)) +
+      theme(plot.title=element_text(size=20)) +
+      theme(legend.title=element_text(size=15)) +
+      theme(legend.text=element_text(size=15)) +
+      scale_x_reverse(paste(x.axis), label=comma) +
+      scale_y_continuous(input$yaxistype, label=comma)
+      
+      
+      depth.time.series.reverse <- qplot(Interval, SMA(Selected, input$smoothingeq),  geom="line", data = spectra.timeseries.table) +
+      geom_line(aes(colour = Depth), lwd=input$linesize+0.5) +
+      geom_line(lwd=input$linesize-0.5) +
+      scale_colour_gradientn("Depth", colours=rev(terrain.colors(length(spectra.line.table$Depth)))) +
+      theme_light() +
+      theme(axis.text.x = element_text(size=15)) +
+      theme(axis.text.y = element_text(size=15)) +
+      theme(axis.title.x = element_text(size=15)) +
+      theme(axis.title.y = element_text(size=15, angle=90)) +
+      theme(plot.title=element_text(size=20)) +
+      theme(legend.title=element_text(size=15)) +
+      theme(legend.text=element_text(size=15)) +
+      scale_x_reverse(paste(x.axis), label=comma) +
+      scale_y_continuous(input$yaxistype, label=comma)
+      
+      
+     
+      if (input$timecoloureq == "Black" && input$xaxistypeeq!="Depth") {
+          black.time.series
+      } else if (input$timecoloureq == "Smooth" && input$xaxistypeeq!="Depth") {
+          smooth.time.series
+      } else if (input$timecoloureq == "Selected" && input$xaxistypeeq!="Depth") {
+          ramp.time.series
+      } else if (input$timecoloureq == "Cluster" && input$xaxistypeeq!="Depth") {
+          cluster.time.series
+      } else if (input$timecoloureq == "Climate" && input$xaxistypeeq!="Depth") {
+          climate.time.series.line
+      } else if (input$timecoloureq == "QualitativePoint" && input$xaxistypeeq!="Depth") {
+          qualitative.time.series.point
+      } else if (input$timecoloureq == "QualitativeLine" && input$xaxistypeeq!="Depth") {
+          qualitative.time.series.line
+      } else if (input$timecoloureq == "Depth" && input$xaxistypeeq!="Depth") {
+          Depth.time.series
+      } else if (input$timecoloureq == "Black" && input$xaxistypeeq=="Depth") {
+          black.time.series.reverse
+      } else if (input$timecoloureq == "Smooth" && input$xaxistypeeq=="Depth") {
+          smooth.time.series.reverse
+      } else if (input$timecoloureq == "Selected" && input$xaxistypeeq=="Depth") {
+          ramp.time.series.reverse
+      } else if (input$timecoloureq == "Cluster" && input$xaxistypeeq=="Depth") {
+          cluster.time.series.reverse
+      } else if (input$timecoloureq == "Climate" && input$xaxistypeeq=="Depth") {
+          climate.time.series.line.reverse
+      } else if (input$timecoloureq == "QualitativePoint" && input$xaxistypeeq=="Depth") {
+          qualitative.time.series.point.reverse
+      } else if (input$timecoloureq == "QualitativeLine" && input$xaxistypeeq=="Depth") {
+          qualitative.time.series.line.reverse
+      } else if (input$timecoloureq == "Depth" && input$xaxistypeeq=="Depth") {
+          depth.time.series.reverse
+      } else if (input$timecoloureq == "Area" && input$xaxistypeeq=="Depth") {
+          area.time.series.reverse
+      }
+      
+      
+  })
+  
+  observeEvent(input$timeserieseq4, {
+      
+  })
+  
+  
+  
+  output$timeserieseqplot4 <- renderPlot({
+      input$timeserieseq4
+      isolate(plotInput6d())      
+  })
+  
+  
+  hoverHold6d <- reactive({
+      input$timeserieseq4
+      
+      spectra.line.table <- dataTransform()
+      
+      spectra.line.table <- subset(spectra.line.table, !(spectra.line.table[input$xaxistypeeq] < input$xlimrangeeq[1] | spectra.line.table[input$xaxistypeeq] > input$xlimrangeeq[2]))
+      
+      if(is.null(spectra.line.table$Age)==TRUE){
+          spectra.line.table$Age <- rep(1, length(spectra.line.table$Spectrum))
+      }
+      
+      spectra.timeseries.table <- data.frame(spectra.line.table[c(input$xaxistypeeq)], spectra.line.table$Selected, spectra.line.table$Cluster, spectra.line.table$Qualitative, spectra.line.table$Depth, spectra.line.table$Climate, spectra.line.table$Age)
+      colnames(spectra.timeseries.table) <- c("Interval", "Selected", "Cluster", "Qualitative", "Depth", "Climate", "Age")
+      
+      isolate(spectra.timeseries.table)
+      
+  })
+  
+  
+  
+  output$hover_info6d <- renderUI({
+      
+      point.table <- hoverHold6d()
+      
+      hover <- input$plot_hover6d
+      point <- nearPoints(point.table,  xvar="Interval", yvar="Selected", coordinfo=hover,   threshold = 10, maxpoints = 1)
+      
+      #if (nrow(point) == 0) return(NULL)
+      
+      
+      
+      
+      # calculate point position INSIDE the image as percent of total dimensions
+      # from left (horizontal) and from top (vertical)
+      left_pct <- (hover$x - hover$domain$left) / (hover$domain$right - hover$domain$left)
+      top_pct <- (hover$domain$top - hover$y) / (hover$domain$top - hover$domain$bottom)
+      
+      # calculate distance from left and bottom side of the picture in pixels
+      left_px <- hover$range$left + left_pct * (hover$range$right - hover$range$left)
+      top_px <- hover$range$top + top_pct * (hover$range$bottom - hover$range$top)
+      
+      
+      # create style property fot tooltip
+      # background color is set so tooltip is a bit transparent
+      # z-index is set so we are sure are tooltip will be on top
+      style <- paste0("position:absolute; z-index:100; background-color: rgba(245, 245, 245, 0.85); ",
+      "left:", left_px + 2, "px; top:", top_px + 2, "px;")
+      
+      # actual tooltip created as wellPanel
+      wellPanel(
+      style = style,
+      p(HTML(paste0("<b> Spectrum: </b>", point$Spectrum, "<br/>",
+      "<b> Depth: </b>", point$Depth, "<br/>",
+      "<b> Age: </b>", point$Age, "<br/>"
+      
+      )))
+      )
+  })
+  
+  output$downloadPlot6d <- downloadHandler(
+  
+  
+  
+  filename = function() { paste(input$projectname, "_", input$yaxistype, '.tiff', sep='') },
+  content = function(file) {
+      ggsave(file,plotInput6d(), device="tiff", compression="lzw", type="cairo", dpi=300, width=12, height=7)
+  }
+  )
+  
+  
+  
+  
+  
+  plotInput6e <- reactive({
       
 
       
-      output$downloadPlot6a <- downloadHandler(
-      
-      
-      filename = function() { paste(input$projectname, "_", input$yaxistype, '.tiff', sep='') },
-      content = function(file) {
-          ggsave(file,plotInput6a(), device="tiff", dpi=300, width=12, height=7)
+      x.axis <- if (input$xaxistypeeq=="Depth") {
+          paste("Depth (", input$lengthuniteq, ")", sep="", collapse="")
+      } else if (input$xaxistypeeq=="Age" && input$timetypeeq=="BP"){
+          paste("cal year BP")
+      } else if (input$xaxistypeeq=="Age" && input$timetypeeq=="BC") {
+          paste("cal year BC")
+      } else if (input$xaxistypeeq=="Age" && input$timetypeeq=="AD") {
+          paste("cal year AD")
+      } else if (input$xaxistypeeq=="Age" && input$timetypeeq=="BC/AD") {
+          paste("cal year BC/AD")
+      } else if (input$xaxistypeeq=="Custom") {
+          input$customxaxiseq
       }
-      )
       
       
       
-      plotInput6b <- reactive({
-          spectra.line.table <- ageData()
-          data.transformation <- dataTransform()
-          
-          
-          x.axis <- if (input$xaxistypeeq=="Depth") {
-              paste("Depth (", input$lengthuniteq, ")", sep="", collapse="")
-          } else if (input$xaxistypeeq=="Age" && input$timetypeeq=="BP"){
-              paste("cal year BP")
-          } else if (input$xaxistypeeq=="Age" && input$timetypeeq=="BC") {
-              paste("cal year BC")
-          } else if (input$axistype=="Age" && input$timetypeeq=="AD") {
-              paste("cal year AD")
-          } else if (input$axistype=="Age" && input$timetypeeq=="BC/AD") {
-              paste("cal year BC/AD")
-          }
-          
-          
-          spectra.line.table.norm <- data.frame(spectra.line.table, null)
-          colnames(spectra.line.table.norm) <- c(names(spectra.line.table), "None")
-          spectra.line.table.norm
-          
-          #interval <- unique.spec*as.numeric(input$intervalmm)+as.numeric(input$startmmeq)
-          
-          #spectra.timeseries.table <- data.frame(interval, spectra.line.table[c(input$elementtrend)]/spectra.line.table.norm[c(input$elementnorm)], spectra.line.table$Cluster, spectra.line.table$Qualitative, spectra.line.table$Depth)
-          #colnames(spectra.timeseries.table) <- c("Interval", "Selected", "Cluster", "Qualitative", "Depth")
-          
-          spectra.timeseries.table <- data.frame(spectra.line.table[c(input$xaxistypeeq)], data.transformation, spectra.line.table$Cluster, spectra.line.table$Qualitative, spectra.line.table$Depth, spectra.line.table$Climate)
-          colnames(spectra.timeseries.table) <- c("Interval", "Selected", "Cluster", "Qualitative", "Depth", "Climate")
-          
-          
-          
-          
-          
-          
-          
-          
-          
-          
-          
-          
-          
-          
-          
-          
-          black.time.series <- qplot(Interval, SMA(Selected, input$smoothingeq), input$xaxistypeeq, geom="line", data = spectra.timeseries.table) +
-          geom_line(colour = "black", lwd=input$linesizeeq) +
-          theme_light() +
-          theme(axis.text.x = element_text(size=15)) +
-          theme(axis.text.y = element_text(size=15)) +
-          theme(axis.title.x = element_text(size=15)) +
-          theme(axis.title.y = element_text(size=15, angle=90)) +
-          theme(plot.title=element_text(size=20)) +
-          theme(legend.title=element_text(size=15)) +
-          theme(legend.text=element_text(size=15)) +
-          scale_x_continuous(paste(x.axis), label=comma) +
-          scale_y_continuous(paste(input$yaxistype))
-          
-          smooth.time.series <- qplot(spectra.timeseries.table$Interval, SMA(spectra.timeseries.table$Selected, input$smoothingeq), xlab = input$xaxistypeeq, geom="point") +
-          theme_light() +
-          stat_smooth() +
-          theme(axis.text.x = element_text(size=15)) +
-          theme(axis.text.y = element_text(size=15)) +
-          theme(axis.title.x = element_text(size=15)) +
-          theme(axis.title.y = element_text(size=15, angle=90)) +
-          theme(plot.title=element_text(size=20)) +
-          theme(legend.title=element_text(size=15)) +
-          theme(legend.text=element_text(size=15)) +
-          scale_x_continuous(paste(x.axis), label=comma) +
-          scale_y_continuous(paste(input$yaxistype))
-          
-          
-          ramp.time.series <- qplot(Interval, SMA(Selected, input$smoothingeq), xlab = input$xaxistypeeq, geom="line", data = spectra.timeseries.table) +
-          geom_line(aes(colour = Selected), lwd=input$linesizeeq) +
-          theme_light() +
-          scale_colour_gradientn(colours=rainbow(7)) +
-          theme(axis.text.x = element_text(size=15)) +
-          theme(axis.text.y = element_text(size=15)) +
-          theme(axis.title.x = element_text(size=15)) +
-          theme(axis.title.y = element_text(size=15, angle=90)) +
-          theme(plot.title=element_text(size=20)) +
-          theme(legend.title=element_text(size=15)) +
-          theme(legend.text=element_text(size=15)) +
-          scale_x_continuous(paste(x.axis), label=comma) +
-          scale_y_continuous(paste(input$yaxistype))
-          
-          
-          area.time.series <- ggplot(spectra.timeseries.table, aes(Interval)) +
-          theme_classic() +
-          geom_area(aes(y=Selected, colour="grey60", fill="grey60"), alpha=0.6) +
-          scale_x_continuous(input$xaxistypeeq) +
-          theme(axis.text.x = element_text(size=15)) +
-          theme(axis.text.y = element_text(size=15)) +
-          theme(axis.title.x = element_text(size=15)) +
-          theme(axis.title.y = element_text(size=15, angle=90)) +
-          theme(plot.title=element_text(size=20)) +
-          theme(legend.title=element_text(size=15)) +
-          theme(legend.text=element_text(size=15)) +
-          scale_x_continuous(paste(x.axis), label=comma) +
-          scale_y_continuous(paste(input$yaxistype))
-          
-          
-          
-          cluster.time.series <- qplot(Interval, SMA(Selected, input$smoothingeq), xlab = input$xaxistypeeq, geom="line", data = spectra.timeseries.table) +
-          geom_point(aes(colour = as.factor(Cluster)), size=input$pointsizeeq) +
-          scale_colour_discrete("Cluster") +
-          theme_light() +
-          theme(axis.text.x = element_text(size=15)) +
-          theme(axis.text.y = element_text(size=15)) +
-          theme(axis.title.x = element_text(size=15)) +
-          theme(axis.title.y = element_text(size=15, angle=90)) +
-          theme(plot.title=element_text(size=20)) +
-          theme(legend.title=element_text(size=15)) +
-          theme(legend.text=element_text(size=15)) +
-          scale_x_continuous(paste(x.axis), label=comma) +
-          scale_y_continuous(paste(input$yaxistype))
-          
-          climate.time.series.line <- qplot(Interval, SMA(Selected, input$smoothingeq), xlab = input$xaxistypeeq, geom="line", data = spectra.timeseries.table, colour = as.factor(Climate)) +
-          scale_colour_discrete("Climatic Period") +
-          theme_light() +
-          theme(axis.text.x = element_text(size=15)) +
-          theme(axis.text.y = element_text(size=15)) +
-          theme(axis.title.x = element_text(size=15)) +
-          theme(axis.title.y = element_text(size=15, angle=90)) +
-          theme(plot.title=element_text(size=20)) +
-          theme(legend.title=element_text(size=15)) +
-          theme(legend.text=element_text(size=15)) +
-          scale_x_continuous(paste(x.axis), label=comma) +
-          scale_y_continuous(paste(input$yaxistype))
-          
-          
-          qualitative.time.series.line <- qplot(Interval, SMA(Selected, input$smoothingeq), xlab = input$xaxistypeeq, geom="line", data = spectra.timeseries.table, colour = as.factor(Qualitative)) +
-          scale_colour_discrete("Qualitative") +
-          theme_light() +
-          theme(axis.text.x = element_text(size=15)) +
-          theme(axis.text.y = element_text(size=15)) +
-          theme(axis.title.x = element_text(size=15)) +
-          theme(axis.title.y = element_text(size=15, angle=90)) +
-          theme(plot.title=element_text(size=20)) +
-          theme(legend.title=element_text(size=15)) +
-          theme(legend.text=element_text(size=15)) +
-          scale_x_continuous(paste(x.axis), label=comma) +
-          scale_y_continuous(paste(input$yaxistype))
-          
-          qualitative.time.series.point <- qplot(Interval, SMA(Selected, input$smoothingeq), xlab = input$xaxistypeeq, geom="line", data = spectra.timeseries.table) +
-          geom_point(aes(colour = as.factor(Qualitative)), lwd=input$pointsizeeq) +
-          scale_colour_discrete("Qualitative") +
-          theme_light() +
-          theme(axis.text.x = element_text(size=15)) +
-          theme(axis.text.y = element_text(size=15)) +
-          theme(axis.title.x = element_text(size=15)) +
-          theme(axis.title.y = element_text(size=15, angle=90)) +
-          theme(plot.title=element_text(size=20)) +
-          theme(legend.title=element_text(size=15)) +
-          theme(legend.text=element_text(size=15)) +
-          scale_x_continuous(paste(x.axis), label=comma) +
-          scale_y_continuous(paste(input$yaxistype))
-          
-          
-          Depth.time.series <- qplot(Interval, SMA(Selected, input$smoothingeq), xlab = input$xaxistypeeq, geom="line", data = spectra.timeseries.table) +
-          geom_point(aes(colour = Depth), lwd=input$pointsizeeq) +
-          scale_colour_gradientn("Depth", colours=rainbow(length(spectra.line.table$Depth))) +
-          theme_light() +
-          theme(axis.text.x = element_text(size=15)) +
-          theme(axis.text.y = element_text(size=15)) +
-          theme(axis.title.x = element_text(size=15)) +
-          theme(axis.title.y = element_text(size=15, angle=90)) +
-          theme(plot.title=element_text(size=20)) +
-          theme(legend.title=element_text(size=15)) +
-          theme(legend.text=element_text(size=15)) +
-          scale_x_continuous(paste(x.axis), label=comma) +
-          scale_y_continuous(paste(input$yaxistype))
-          
-          
-          if (input$timecoloureq == "Black") {
-              black.time.series
-          } else if (input$timecoloureq == "Smooth") {
-              smooth.time.series
-          } else if (input$timecoloureq == "Selected") {
-              ramp.time.series
-          } else if (input$timecoloureq == "Cluster") {
-              cluster.time.series
-          } else if (input$timecoloureq == "Climate") {
-              climate.time.series.line
-          } else if (input$timecoloureq == "QualitativePoint") {
-              qualitative.time.series.point
-          } else if (input$timecoloureq == "QualitativeLine") {
-              qualitative.time.series.line
-          } else if (input$timecoloureq == "Depth") {
-              Depth.time.series
-          } else if (input$timecoloureq == "Area") {
-              area.time.series
-          }
-          
-          
-          
-      })
       
+      spectra.line.table <- dataTransform()
+      spectra.line.table <- subset(spectra.line.table, !(spectra.line.table[input$xaxistypeeq] < input$xlimrangeeq[1] | spectra.line.table[input$xaxistypeeq] > input$xlimrangeeq[2]))
+
+
       
-      observeEvent(input$timeserieseq2, {
-          
-          
-      })
-      output$timeserieseqplot2 <- renderPlot({
-          input$timeserieseq2
-          isolate(print(plotInput6b()))
-          
-      })
+      spectra.line.table.norm <- data.frame(spectra.line.table, null)
+      colnames(spectra.line.table.norm) <- c(names(spectra.line.table), "None")
+      spectra.line.table.norm
       
+      #interval <- unique.spec*as.numeric(input$intervalmm)+as.numeric(input$startmmeq)
       
-      output$downloadPlot6b <- downloadHandler(
+      #spectra.timeseries.table <- data.frame(interval, spectra.line.table[c(input$elementtrend)]/spectra.line.table.norm[c(input$elementnorm)], spectra.line.table$Cluster, spectra.line.table$Qualitative, spectra.line.table$Depth)
+      #colnames(spectra.timeseries.table) <- c("Interval", "Selected", "Cluster", "Qualitative", "Depth")
+      
+      spectra.timeseries.table <- data.frame(spectra.line.table[c(input$xaxistypeeq)], spectra.line.table$Selected, spectra.line.table$Cluster, spectra.line.table$Qualitative, spectra.line.table$Depth, spectra.line.table$Climate)
+      colnames(spectra.timeseries.table) <- c("Interval", "Selected", "Cluster", "Qualitative", "Depth", "Climate")
       
       
       
-      filename = function() { paste(input$projectname, "_", input$yaxistype, '.tiff', sep='') },
-      content = function(file) {
-          ggsave(file,plotInput6b(), device="tiff", dpi=300, width=12, height=7)
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      black.time.series <- qplot(Interval, SMA(Selected, input$smoothingeq), input$xaxistypeeq, geom="line", data = spectra.timeseries.table) +
+      geom_line(colour = "black", lwd=input$linesizeeq) +
+      theme_light() +
+      theme(axis.text.x = element_text(size=15)) +
+      theme(axis.text.y = element_text(size=15)) +
+      theme(axis.title.x = element_text(size=15)) +
+      theme(axis.title.y = element_text(size=15, angle=90)) +
+      theme(plot.title=element_text(size=20)) +
+      theme(legend.title=element_text(size=15)) +
+      theme(legend.text=element_text(size=15)) +
+      scale_x_continuous(paste(x.axis), label=comma) +
+      scale_y_continuous(input$yaxistype, label=comma)
+      
+      smooth.time.series <- qplot(spectra.timeseries.table$Interval, SMA(spectra.timeseries.table$Selected, input$smoothingeq),  geom="point") +
+      theme_light() +
+      stat_smooth() +
+      theme(axis.text.x = element_text(size=15)) +
+      theme(axis.text.y = element_text(size=15)) +
+      theme(axis.title.x = element_text(size=15)) +
+      theme(axis.title.y = element_text(size=15, angle=90)) +
+      theme(plot.title=element_text(size=20)) +
+      theme(legend.title=element_text(size=15)) +
+      theme(legend.text=element_text(size=15)) +
+      scale_x_continuous(paste(x.axis), label=comma) +
+      scale_y_continuous(input$yaxistype, label=comma)
+      
+      
+      ramp.time.series <- qplot(Interval, SMA(Selected, input$smoothingeq),  geom="line", data = spectra.timeseries.table) +
+      geom_line(aes(colour = Selected), lwd=input$linesizeeq) +
+      theme_light() +
+      scale_colour_gradientn(colours=rev(terrain.colors(length(spectra.timeseries.table$Depth)))) +
+      theme(axis.text.x = element_text(size=15)) +
+      theme(axis.text.y = element_text(size=15)) +
+      theme(axis.title.x = element_text(size=15)) +
+      theme(axis.title.y = element_text(size=15, angle=90)) +
+      theme(plot.title=element_text(size=20)) +
+      theme(legend.title=element_text(size=15)) +
+      theme(legend.text=element_text(size=15)) +
+      scale_x_continuous(paste(x.axis), label=comma) +
+      scale_y_continuous(input$yaxistype, label=comma)
+      
+      
+      area.time.series <- ggplot(spectra.timeseries.table, aes(Interval)) +
+      theme_classic() +
+      geom_area(aes(y=Selected, colour="grey60", fill="grey60"), alpha=0.6) +
+      scale_x_continuous(input$xaxistypeeq) +
+      theme(axis.text.x = element_text(size=15)) +
+      theme(axis.text.y = element_text(size=15)) +
+      theme(axis.title.x = element_text(size=15)) +
+      theme(axis.title.y = element_text(size=15, angle=90)) +
+      theme(plot.title=element_text(size=20)) +
+      theme(legend.title=element_text(size=15)) +
+      theme(legend.text=element_text(size=15)) +
+      scale_x_continuous(paste(x.axis), label=comma) +
+      scale_y_continuous(input$yaxistype, label=comma)
+      
+      
+      
+      cluster.time.series <- qplot(Interval, SMA(Selected, input$smoothingeq),  geom="line", data = spectra.timeseries.table) +
+      geom_point(aes(colour = as.factor(Cluster)), size=input$pointsizeeq) +
+      scale_colour_discrete("Cluster") +
+      theme_light() +
+      theme(axis.text.x = element_text(size=15)) +
+      theme(axis.text.y = element_text(size=15)) +
+      theme(axis.title.x = element_text(size=15)) +
+      theme(axis.title.y = element_text(size=15, angle=90)) +
+      theme(plot.title=element_text(size=20)) +
+      theme(legend.title=element_text(size=15)) +
+      theme(legend.text=element_text(size=15)) +
+      scale_x_continuous(paste(x.axis), label=comma) +
+      scale_y_continuous(input$yaxistype, label=comma)
+      
+      climate.time.series.line <- qplot(Interval, SMA(Selected, input$smoothingeq),  geom="line", data = spectra.timeseries.table, colour = as.factor(Climate)) +
+      scale_colour_discrete("Climatic Period") +
+      theme_light() +
+      theme(axis.text.x = element_text(size=15)) +
+      theme(axis.text.y = element_text(size=15)) +
+      theme(axis.title.x = element_text(size=15)) +
+      theme(axis.title.y = element_text(size=15, angle=90)) +
+      theme(plot.title=element_text(size=20)) +
+      theme(legend.title=element_text(size=15)) +
+      theme(legend.text=element_text(size=15)) +
+      scale_x_continuous(paste(x.axis), label=comma) +
+      scale_y_continuous(input$yaxistype, label=comma)
+      
+      
+      qualitative.time.series.line <- qplot(Interval, SMA(Selected, input$smoothingeq),  geom="line", data = spectra.timeseries.table, colour = as.factor(Qualitative)) +
+      scale_colour_discrete("Qualitative") +
+      theme_light() +
+      theme(axis.text.x = element_text(size=15)) +
+      theme(axis.text.y = element_text(size=15)) +
+      theme(axis.title.x = element_text(size=15)) +
+      theme(axis.title.y = element_text(size=15, angle=90)) +
+      theme(plot.title=element_text(size=20)) +
+      theme(legend.title=element_text(size=15)) +
+      theme(legend.text=element_text(size=15)) +
+      scale_x_continuous(paste(x.axis), label=comma) +
+      scale_y_continuous(input$yaxistype, label=comma)
+      
+      qualitative.time.series.point <- qplot(Interval, SMA(Selected, input$smoothingeq),  geom="line", data = spectra.timeseries.table) +
+      geom_point(aes(colour = as.factor(Qualitative)), lwd=input$pointsizeeq) +
+      scale_colour_discrete("Qualitative") +
+      theme_light() +
+      theme(axis.text.x = element_text(size=15)) +
+      theme(axis.text.y = element_text(size=15)) +
+      theme(axis.title.x = element_text(size=15)) +
+      theme(axis.title.y = element_text(size=15, angle=90)) +
+      theme(plot.title=element_text(size=20)) +
+      theme(legend.title=element_text(size=15)) +
+      theme(legend.text=element_text(size=15)) +
+      scale_x_continuous(paste(x.axis), label=comma) +
+      scale_y_continuous(input$yaxistype, label=comma)
+      
+      
+      depth.time.series <- qplot(Interval, SMA(Selected, input$smoothingeq),  geom="line", data = spectra.timeseries.table) +
+      geom_line(aes(colour = Depth), lwd=input$linesize+0.5) +
+      geom_line(lwd=input$linesize-0.5) +
+      scale_colour_gradientn("Depth", colours=rev(terrain.colors(length(spectra.line.table$Depth)))) +
+      theme_light() +
+      theme(axis.text.x = element_text(size=15)) +
+      theme(axis.text.y = element_text(size=15)) +
+      theme(axis.title.x = element_text(size=15)) +
+      theme(axis.title.y = element_text(size=15, angle=90)) +
+      theme(plot.title=element_text(size=20)) +
+      theme(legend.title=element_text(size=15)) +
+      theme(legend.text=element_text(size=15)) +
+      scale_x_continuous(paste(x.axis), label=comma) +
+      scale_y_continuous(input$yaxistype, label=comma)
+      
+      
+      #####X Axis Reverse
+      
+      
+      black.time.series.reverse <- qplot(Interval, SMA(Selected, input$smoothingeq), input$xaxistypeeq, geom="line", data = spectra.timeseries.table) +
+      geom_line(colour = "black", lwd=input$linesizeeq) +
+      theme_light() +
+      theme(axis.text.x = element_text(size=15)) +
+      theme(axis.text.y = element_text(size=15)) +
+      theme(axis.title.x = element_text(size=15)) +
+      theme(axis.title.y = element_text(size=15, angle=90)) +
+      theme(plot.title=element_text(size=20)) +
+      theme(legend.title=element_text(size=15)) +
+      theme(legend.text=element_text(size=15)) +
+      scale_x_reverse(paste(x.axis), label=comma) +
+      scale_y_continuous(input$yaxistype, label=comma)
+      
+      smooth.time.series.reverse <- qplot(spectra.timeseries.table$Interval, SMA(spectra.timeseries.table$Selected, input$smoothingeq),  geom="point") +
+      theme_light() +
+      stat_smooth() +
+      theme(axis.text.x = element_text(size=15)) +
+      theme(axis.text.y = element_text(size=15)) +
+      theme(axis.title.x = element_text(size=15)) +
+      theme(axis.title.y = element_text(size=15, angle=90)) +
+      theme(plot.title=element_text(size=20)) +
+      theme(legend.title=element_text(size=15)) +
+      theme(legend.text=element_text(size=15)) +
+      scale_x_reverse(paste(x.axis), label=comma) +
+      scale_y_continuous(input$yaxistype, label=comma)
+      
+      
+      ramp.time.series.reverse <- qplot(Interval, SMA(Selected, input$smoothingeq),  geom="line", data = spectra.timeseries.table) +
+      geom_line(aes(colour = Selected), lwd=input$linesizeeq) +
+      theme_light() +
+      scale_colour_gradientn(colours=rev(terrain.colors(length(spectra.timeseries.table$Depth)))) +
+      theme(axis.text.x = element_text(size=15)) +
+      theme(axis.text.y = element_text(size=15)) +
+      theme(axis.title.x = element_text(size=15)) +
+      theme(axis.title.y = element_text(size=15, angle=90)) +
+      theme(plot.title=element_text(size=20)) +
+      theme(legend.title=element_text(size=15)) +
+      theme(legend.text=element_text(size=15)) +
+      scale_x_reverse(paste(x.axis), label=comma) +
+      scale_y_continuous(input$yaxistype, label=comma)
+      
+      
+      area.time.series.reverse <- ggplot(spectra.timeseries.table, aes(Interval)) +
+      theme_classic() +
+      geom_area(aes(y=Selected, colour="grey60", fill="grey60"), alpha=0.6) +
+      scale_x_reverse(input$xaxistypeeq) +
+      theme(axis.text.x = element_text(size=15)) +
+      theme(axis.text.y = element_text(size=15)) +
+      theme(axis.title.x = element_text(size=15)) +
+      theme(axis.title.y = element_text(size=15, angle=90)) +
+      theme(plot.title=element_text(size=20)) +
+      theme(legend.title=element_text(size=15)) +
+      theme(legend.text=element_text(size=15)) +
+      scale_x_reverse(paste(x.axis), label=comma) +
+      scale_y_continuous(input$yaxistype, label=comma)
+      
+      
+      
+      cluster.time.series.reverse <- qplot(Interval, SMA(Selected, input$smoothingeq),  geom="line", data = spectra.timeseries.table) +
+      geom_point(aes(colour = as.factor(Cluster)), size=input$pointsizeeq) +
+      scale_colour_discrete("Cluster") +
+      theme_light() +
+      theme(axis.text.x = element_text(size=15)) +
+      theme(axis.text.y = element_text(size=15)) +
+      theme(axis.title.x = element_text(size=15)) +
+      theme(axis.title.y = element_text(size=15, angle=90)) +
+      theme(plot.title=element_text(size=20)) +
+      theme(legend.title=element_text(size=15)) +
+      theme(legend.text=element_text(size=15)) +
+      scale_x_reverse(paste(x.axis), label=comma) +
+      scale_y_continuous(input$yaxistype, label=comma)
+      
+      climate.time.series.line.reverse <- qplot(Interval, SMA(Selected, input$smoothingeq),  geom="line", data = spectra.timeseries.table, colour = as.factor(Climate)) +
+      scale_colour_discrete("Climatic Period") +
+      theme_light() +
+      theme(axis.text.x = element_text(size=15)) +
+      theme(axis.text.y = element_text(size=15)) +
+      theme(axis.title.x = element_text(size=15)) +
+      theme(axis.title.y = element_text(size=15, angle=90)) +
+      theme(plot.title=element_text(size=20)) +
+      theme(legend.title=element_text(size=15)) +
+      theme(legend.text=element_text(size=15)) +
+      scale_x_reverse(paste(x.axis), label=comma) +
+      scale_y_continuous(input$yaxistype, label=comma)
+      
+      
+      qualitative.time.series.line.reverse <- qplot(Interval, SMA(Selected, input$smoothingeq),  geom="line", data = spectra.timeseries.table, colour = as.factor(Qualitative)) +
+      scale_colour_discrete("Qualitative") +
+      theme_light() +
+      theme(axis.text.x = element_text(size=15)) +
+      theme(axis.text.y = element_text(size=15)) +
+      theme(axis.title.x = element_text(size=15)) +
+      theme(axis.title.y = element_text(size=15, angle=90)) +
+      theme(plot.title=element_text(size=20)) +
+      theme(legend.title=element_text(size=15)) +
+      theme(legend.text=element_text(size=15)) +
+      scale_x_reverse(paste(x.axis), label=comma) +
+      scale_y_continuous(input$yaxistype, label=comma)
+      
+      qualitative.time.series.point.reverse <- qplot(Interval, SMA(Selected, input$smoothingeq),  geom="line", data = spectra.timeseries.table) +
+      geom_point(aes(colour = as.factor(Qualitative)), lwd=input$pointsizeeq) +
+      scale_colour_discrete("Qualitative") +
+      theme_light() +
+      theme(axis.text.x = element_text(size=15)) +
+      theme(axis.text.y = element_text(size=15)) +
+      theme(axis.title.x = element_text(size=15)) +
+      theme(axis.title.y = element_text(size=15, angle=90)) +
+      theme(plot.title=element_text(size=20)) +
+      theme(legend.title=element_text(size=15)) +
+      theme(legend.text=element_text(size=15)) +
+      scale_x_reverse(paste(x.axis), label=comma) +
+      scale_y_continuous(input$yaxistype, label=comma)
+      
+      
+      depth.time.series.reverse <- qplot(Interval, SMA(Selected, input$smoothingeq),  geom="line", data = spectra.timeseries.table) +
+      geom_line(aes(colour = Depth), lwd=input$linesize+0.5) +
+      geom_line(lwd=input$linesize-0.5) +
+      scale_colour_gradientn("Depth", colours=rev(terrain.colors(length(spectra.line.table$Depth)))) +
+      theme_light() +
+      theme(axis.text.x = element_text(size=15)) +
+      theme(axis.text.y = element_text(size=15)) +
+      theme(axis.title.x = element_text(size=15)) +
+      theme(axis.title.y = element_text(size=15, angle=90)) +
+      theme(plot.title=element_text(size=20)) +
+      theme(legend.title=element_text(size=15)) +
+      theme(legend.text=element_text(size=15)) +
+      scale_x_reverse(paste(x.axis), label=comma) +
+      scale_y_continuous(input$yaxistype, label=comma)
+      
+      
+     
+      if (input$timecoloureq == "Black" && input$xaxistypeeq!="Depth") {
+          black.time.series
+      } else if (input$timecoloureq == "Smooth" && input$xaxistypeeq!="Depth") {
+          smooth.time.series
+      } else if (input$timecoloureq == "Selected" && input$xaxistypeeq!="Depth") {
+          ramp.time.series
+      } else if (input$timecoloureq == "Cluster" && input$xaxistypeeq!="Depth") {
+          cluster.time.series
+      } else if (input$timecoloureq == "Climate" && input$xaxistypeeq!="Depth") {
+          climate.time.series.line
+      } else if (input$timecoloureq == "QualitativePoint" && input$xaxistypeeq!="Depth") {
+          qualitative.time.series.point
+      } else if (input$timecoloureq == "QualitativeLine" && input$xaxistypeeq!="Depth") {
+          qualitative.time.series.line
+      } else if (input$timecoloureq == "Depth" && input$xaxistypeeq!="Depth") {
+          Depth.time.series
+      } else if (input$timecoloureq == "Black" && input$xaxistypeeq=="Depth") {
+          black.time.series.reverse
+      } else if (input$timecoloureq == "Smooth" && input$xaxistypeeq=="Depth") {
+          smooth.time.series.reverse
+      } else if (input$timecoloureq == "Selected" && input$xaxistypeeq=="Depth") {
+          ramp.time.series.reverse
+      } else if (input$timecoloureq == "Cluster" && input$xaxistypeeq=="Depth") {
+          cluster.time.series.reverse
+      } else if (input$timecoloureq == "Climate" && input$xaxistypeeq=="Depth") {
+          climate.time.series.line.reverse
+      } else if (input$timecoloureq == "QualitativePoint" && input$xaxistypeeq=="Depth") {
+          qualitative.time.series.point.reverse
+      } else if (input$timecoloureq == "QualitativeLine" && input$xaxistypeeq=="Depth") {
+          qualitative.time.series.line.reverse
+      } else if (input$timecoloureq == "Depth" && input$xaxistypeeq=="Depth") {
+          depth.time.series.reverse
+      } else if (input$timecoloureq == "Area" && input$xaxistypeeq=="Depth") {
+          area.time.series.reverse
       }
-      )
       
       
       
-      plotInput6c <- reactive({
-          
-          spectra.line.table <- ageData()
-          data.transformation <- dataTransform()
-          
-          
-          x.axis <- if (input$xaxistypeeq=="Depth") {
-              paste("Depth (", input$lengthuniteq, ")", sep="", collapse="")
-          } else if (input$xaxistypeeq=="Age" && input$timetypeeq=="BP"){
-              paste("cal year BP")
-          } else if (input$xaxistypeeq=="Age" && input$timetypeeq=="BC") {
-              paste("cal year BC")
-          } else if (input$axistype=="Age" && input$timetypeeq=="AD") {
-              paste("cal year AD")
-          } else if (input$axistype=="Age" && input$timetypeeq=="BC/AD") {
-              paste("cal year BC/AD")
-          }
-          
-          
-          spectra.line.table.norm <- data.frame(spectra.line.table, null)
-          colnames(spectra.line.table.norm) <- c(names(spectra.line.table), "None")
-          spectra.line.table.norm
-          
-          #interval <- unique.spec*as.numeric(input$intervalmm)+as.numeric(input$startmmeq)
-          
-          #spectra.timeseries.table <- data.frame(interval, spectra.line.table[c(input$elementtrend)]/spectra.line.table.norm[c(input$elementnorm)], spectra.line.table$Cluster, spectra.line.table$Qualitative, spectra.line.table$Depth)
-          #colnames(spectra.timeseries.table) <- c("Interval", "Selected", "Cluster", "Qualitative", "Depth")
-          
-          spectra.timeseries.table <- data.frame(spectra.line.table[c(input$xaxistypeeq)], data.transformation, spectra.line.table$Cluster, spectra.line.table$Qualitative, spectra.line.table$Depth, spectra.line.table$Climate)
-          colnames(spectra.timeseries.table) <- c("Interval", "Selected", "Cluster", "Qualitative", "Depth", "Climate")
-          
-          
-          
-          
-          
-          
-          
-          
-          
-          
-          
-          
-          
-          
-          
-          
-          
-          black.time.series <- qplot(Interval, SMA(Selected, input$smoothingeq), input$xaxistypeeq, geom="line", data = spectra.timeseries.table) +
-          geom_line(colour = "black", lwd=input$linesizeeq) +
-          theme_light() +
-          theme(axis.text.x = element_text(size=15)) +
-          theme(axis.text.y = element_text(size=15)) +
-          theme(axis.title.x = element_text(size=15)) +
-          theme(axis.title.y = element_text(size=15, angle=90)) +
-          theme(plot.title=element_text(size=20)) +
-          theme(legend.title=element_text(size=15)) +
-          theme(legend.text=element_text(size=15)) +
-          scale_x_continuous(paste(x.axis), label=comma) +
-          scale_y_continuous(paste(input$yaxistype))
-          
-          smooth.time.series <- qplot(spectra.timeseries.table$Interval, SMA(spectra.timeseries.table$Selected, input$smoothingeq), xlab = input$xaxistypeeq, geom="point") +
-          theme_light() +
-          stat_smooth() +
-          theme(axis.text.x = element_text(size=15)) +
-          theme(axis.text.y = element_text(size=15)) +
-          theme(axis.title.x = element_text(size=15)) +
-          theme(axis.title.y = element_text(size=15, angle=90)) +
-          theme(plot.title=element_text(size=20)) +
-          theme(legend.title=element_text(size=15)) +
-          theme(legend.text=element_text(size=15)) +
-          scale_x_continuous(paste(x.axis), label=comma) +
-          scale_y_continuous(paste(input$yaxistype))
-          
-          
-          ramp.time.series <- qplot(Interval, SMA(Selected, input$smoothingeq), xlab = input$xaxistypeeq, geom="line", data = spectra.timeseries.table) +
-          geom_line(aes(colour = Selected), lwd=input$linesizeeq) +
-          theme_light() +
-          scale_colour_gradientn(colours=rainbow(7)) +
-          theme(axis.text.x = element_text(size=15)) +
-          theme(axis.text.y = element_text(size=15)) +
-          theme(axis.title.x = element_text(size=15)) +
-          theme(axis.title.y = element_text(size=15, angle=90)) +
-          theme(plot.title=element_text(size=20)) +
-          theme(legend.title=element_text(size=15)) +
-          theme(legend.text=element_text(size=15)) +
-          scale_x_continuous(paste(x.axis), label=comma) +
-          scale_y_continuous(paste(input$yaxistype))
-          
-          
-          area.time.series <- ggplot(spectra.timeseries.table, aes(Interval)) +
-          theme_classic() +
-          geom_area(aes(y=Selected, colour="grey60", fill="grey60"), alpha=0.6) +
-          scale_x_continuous(input$xaxistypeeq) +
-          theme(axis.text.x = element_text(size=15)) +
-          theme(axis.text.y = element_text(size=15)) +
-          theme(axis.title.x = element_text(size=15)) +
-          theme(axis.title.y = element_text(size=15, angle=90)) +
-          theme(plot.title=element_text(size=20)) +
-          theme(legend.title=element_text(size=15)) +
-          theme(legend.text=element_text(size=15)) +
-          scale_x_continuous(paste(x.axis), label=comma) +
-          scale_y_continuous(paste(input$yaxistype))
-          
-          
-          
-          cluster.time.series <- qplot(Interval, SMA(Selected, input$smoothingeq), xlab = input$xaxistypeeq, geom="line", data = spectra.timeseries.table) +
-          geom_point(aes(colour = as.factor(Cluster)), size=input$pointsizeeq) +
-          scale_colour_discrete("Cluster") +
-          theme_light() +
-          theme(axis.text.x = element_text(size=15)) +
-          theme(axis.text.y = element_text(size=15)) +
-          theme(axis.title.x = element_text(size=15)) +
-          theme(axis.title.y = element_text(size=15, angle=90)) +
-          theme(plot.title=element_text(size=20)) +
-          theme(legend.title=element_text(size=15)) +
-          theme(legend.text=element_text(size=15)) +
-          scale_x_continuous(paste(x.axis), label=comma) +
-          scale_y_continuous(paste(input$yaxistype))
-          
-          climate.time.series.line <- qplot(Interval, SMA(Selected, input$smoothingeq), xlab = input$xaxistypeeq, geom="line", data = spectra.timeseries.table, colour = as.factor(Climate)) +
-          scale_colour_discrete("Climatic Period") +
-          theme_light() +
-          theme(axis.text.x = element_text(size=15)) +
-          theme(axis.text.y = element_text(size=15)) +
-          theme(axis.title.x = element_text(size=15)) +
-          theme(axis.title.y = element_text(size=15, angle=90)) +
-          theme(plot.title=element_text(size=20)) +
-          theme(legend.title=element_text(size=15)) +
-          theme(legend.text=element_text(size=15)) +
-          scale_x_continuous(paste(x.axis), label=comma) +
-          scale_y_continuous(paste(input$yaxistype))
-          
-          
-          qualitative.time.series.line <- qplot(Interval, SMA(Selected, input$smoothingeq), xlab = input$xaxistypeeq, geom="line", data = spectra.timeseries.table, colour = as.factor(Qualitative)) +
-          scale_colour_discrete("Qualitative") +
-          theme_light() +
-          theme(axis.text.x = element_text(size=15)) +
-          theme(axis.text.y = element_text(size=15)) +
-          theme(axis.title.x = element_text(size=15)) +
-          theme(axis.title.y = element_text(size=15, angle=90)) +
-          theme(plot.title=element_text(size=20)) +
-          theme(legend.title=element_text(size=15)) +
-          theme(legend.text=element_text(size=15)) +
-          scale_x_continuous(paste(x.axis), label=comma) +
-          scale_y_continuous(paste(input$yaxistype))
-          
-          qualitative.time.series.point <- qplot(Interval, SMA(Selected, input$smoothingeq), xlab = input$xaxistypeeq, geom="line", data = spectra.timeseries.table) +
-          geom_point(aes(colour = as.factor(Qualitative)), lwd=input$pointsizeeq) +
-          scale_colour_discrete("Qualitative") +
-          theme_light() +
-          theme(axis.text.x = element_text(size=15)) +
-          theme(axis.text.y = element_text(size=15)) +
-          theme(axis.title.x = element_text(size=15)) +
-          theme(axis.title.y = element_text(size=15, angle=90)) +
-          theme(plot.title=element_text(size=20)) +
-          theme(legend.title=element_text(size=15)) +
-          theme(legend.text=element_text(size=15)) +
-          scale_x_continuous(paste(x.axis), label=comma) +
-          scale_y_continuous(paste(input$yaxistype))
-          
-          
-          Depth.time.series <- qplot(Interval, SMA(Selected, input$smoothingeq), xlab = input$xaxistypeeq, geom="line", data = spectra.timeseries.table) +
-          geom_point(aes(colour = Depth), lwd=input$pointsizeeq) +
-          scale_colour_gradientn("Depth", colours=rainbow(length(spectra.line.table$Depth))) +
-          theme_light() +
-          theme(axis.text.x = element_text(size=15)) +
-          theme(axis.text.y = element_text(size=15)) +
-          theme(axis.title.x = element_text(size=15)) +
-          theme(axis.title.y = element_text(size=15, angle=90)) +
-          theme(plot.title=element_text(size=20)) +
-          theme(legend.title=element_text(size=15)) +
-          theme(legend.text=element_text(size=15)) +
-          scale_x_continuous(paste(x.axis), label=comma) +
-          scale_y_continuous(paste(input$yaxistype))
-          
-          
-          if (input$timecoloureq == "Black") {
-              black.time.series
-          } else if (input$timecoloureq == "Smooth") {
-              smooth.time.series
-          } else if (input$timecoloureq == "Selected") {
-              ramp.time.series
-          } else if (input$timecoloureq == "Cluster") {
-              cluster.time.series
-          } else if (input$timecoloureq == "Climate") {
-              climate.time.series.line
-          } else if (input$timecoloureq == "QualitativePoint") {
-              qualitative.time.series.point
-          } else if (input$timecoloureq == "QualitativeLine") {
-              qualitative.time.series.line
-          } else if (input$timecoloureq == "Depth") {
-              Depth.time.series
-          } else if (input$timecoloureq == "Area") {
-              area.time.series
-          }
-          
-          
-          
-          
-      })
-      
-      observeEvent(input$timeserieseq3, {
-      })
-      
-      output$timeserieseqplot3 <- renderPlot({
-          input$timeserieseq3
-          
-          isolate(print(plotInput6c()))
-          
-          
-      })
-      
-      output$downloadPlot6c <- downloadHandler(
+  })
+  
+  observeEvent(input$timeserieseq5, {
       
       
-      filename = function() { paste(input$projectname, "_", input$yaxistype, '.tiff', sep='') },
-      content = function(file) {
-          ggsave(file,plotInput6c(), device="tiff", dpi=300, width=12, height=7)
+  })
+  
+  output$timeserieseqplot5 <- renderPlot({
+      input$timeserieseq5
+      
+      
+      
+      isolate(plotInput6e())      
+  })
+  
+  
+  hoverHold6e <- reactive({
+      input$timeserieseq5
+      
+      spectra.line.table <- dataTransform()
+      
+      spectra.line.table <- subset(spectra.line.table, !(spectra.line.table[input$xaxistypeeq] < input$xlimrangeeq[1] | spectra.line.table[input$xaxistypeeq] > input$xlimrangeeq[2]))
+      
+      if(is.null(spectra.line.table$Age)==TRUE){
+          spectra.line.table$Age <- rep(1, length(spectra.line.table$Spectrum))
       }
+      
+      spectra.timeseries.table <- data.frame(spectra.line.table[c(input$xaxistypeeq)], spectra.line.table$Selected, spectra.line.table$Cluster, spectra.line.table$Qualitative, spectra.line.table$Depth, spectra.line.table$Climate, spectra.line.table$Age)
+      colnames(spectra.timeseries.table) <- c("Interval", "Selected", "Cluster", "Qualitative", "Depth", "Climate", "Age")
+      
+      isolate(spectra.timeseries.table)
+      
+  })
+  
+  
+  
+  output$hover_info6e <- renderUI({
+      
+      point.table <- hoverHold6e()
+      
+      hover <- input$plot_hover6e
+      point <- nearPoints(point.table,  xvar="Interval", yvar="Selected", coordinfo=hover,   threshold = 10, maxpoints = 1)
+      
+      #if (nrow(point) == 0) return(NULL)
+      
+      
+      
+      
+      # calculate point position INSIDE the image as percent of total dimensions
+      # from left (horizontal) and from top (vertical)
+      left_pct <- (hover$x - hover$domain$left) / (hover$domain$right - hover$domain$left)
+      top_pct <- (hover$domain$top - hover$y) / (hover$domain$top - hover$domain$bottom)
+      
+      # calculate distance from left and bottom side of the picture in pixels
+      left_px <- hover$range$left + left_pct * (hover$range$right - hover$range$left)
+      top_px <- hover$range$top + top_pct * (hover$range$bottom - hover$range$top)
+      
+      
+      # create style property fot tooltip
+      # background color is set so tooltip is a bit transparent
+      # z-index is set so we are sure are tooltip will be on top
+      style <- paste0("position:absolute; z-index:100; background-color: rgba(245, 245, 245, 0.85); ",
+      "left:", left_px + 2, "px; top:", top_px + 2, "px;")
+      
+      # actual tooltip created as wellPanel
+      wellPanel(
+      style = style,
+      p(HTML(paste0("<b> Spectrum: </b>", point$Spectrum, "<br/>",
+      "<b> Depth: </b>", point$Depth, "<br/>",
+      "<b> Age: </b>", point$Age, "<br/>"
+      
+      )))
       )
+  })
+  
+  
+  output$downloadPlot6e <- downloadHandler(
+  
+  
+  
+  filename = function() { paste(input$projectname, "_", input$yaxistype, '.tiff', sep='') },
+  content = function(file) {
+      ggsave(file,plotInput6e(), device="tiff", compression="lzw", type="cairo", dpi=300, width=12, height=7)
+  }
+  )
+  
+  
+  miniDataTransformY <- reactive({
       
-      
-      plotInput6d <- reactive({
-          
-          spectra.line.table <- ageData()
-          data.transformation <- dataTransform()
-          
-          
-          x.axis <- if (input$xaxistypeeq=="Depth") {
-              paste("Depth (", input$lengthuniteq, ")", sep="", collapse="")
-          } else if (input$xaxistypeeq=="Age" && input$timetypeeq=="BP"){
-              paste("cal year BP")
-          } else if (input$xaxistypeeq=="Age" && input$timetypeeq=="BC") {
-              paste("cal year BC")
-          } else if (input$axistype=="Age" && input$timetypeeq=="AD") {
-              paste("cal year AD")
-          } else if (input$axistype=="Age" && input$timetypeeq=="BC/AD") {
-              paste("cal year BC/AD")
-          }
-          
-          
-          spectra.line.table.norm <- data.frame(spectra.line.table, null)
-          colnames(spectra.line.table.norm) <- c(names(spectra.line.table), "None")
-          spectra.line.table.norm
-          
-          #interval <- unique.spec*as.numeric(input$intervalmm)+as.numeric(input$startmmeq)
-          
-          #spectra.timeseries.table <- data.frame(interval, spectra.line.table[c(input$elementtrend)]/spectra.line.table.norm[c(input$elementnorm)], spectra.line.table$Cluster, spectra.line.table$Qualitative, spectra.line.table$Depth)
-          #colnames(spectra.timeseries.table) <- c("Interval", "Selected", "Cluster", "Qualitative", "Depth")
-          
-          spectra.timeseries.table <- data.frame(spectra.line.table[c(input$xaxistypeeq)], data.transformation, spectra.line.table$Cluster, spectra.line.table$Qualitative, spectra.line.table$Depth, spectra.line.table$Climate)
-          colnames(spectra.timeseries.table) <- c("Interval", "Selected", "Cluster", "Qualitative", "Depth", "Climate")
-          
-          
-          
-          
-          
-          
-          
-          
-          
-          
-          
-          
-          
-          
-          
-          
-          black.time.series <- qplot(Interval, SMA(Selected, input$smoothingeq), input$xaxistypeeq, geom="line", data = spectra.timeseries.table) +
-          geom_line(colour = "black", lwd=input$linesizeeq) +
-          theme_light() +
-          theme(axis.text.x = element_text(size=15)) +
-          theme(axis.text.y = element_text(size=15)) +
-          theme(axis.title.x = element_text(size=15)) +
-          theme(axis.title.y = element_text(size=15, angle=90)) +
-          theme(plot.title=element_text(size=20)) +
-          theme(legend.title=element_text(size=15)) +
-          theme(legend.text=element_text(size=15)) +
-          scale_x_continuous(paste(x.axis), label=comma) +
-          scale_y_continuous(paste(input$yaxistype))
-          
-          smooth.time.series <- qplot(spectra.timeseries.table$Interval, SMA(spectra.timeseries.table$Selected, input$smoothingeq), xlab = input$xaxistypeeq, geom="point") +
-          theme_light() +
-          stat_smooth() +
-          theme(axis.text.x = element_text(size=15)) +
-          theme(axis.text.y = element_text(size=15)) +
-          theme(axis.title.x = element_text(size=15)) +
-          theme(axis.title.y = element_text(size=15, angle=90)) +
-          theme(plot.title=element_text(size=20)) +
-          theme(legend.title=element_text(size=15)) +
-          theme(legend.text=element_text(size=15)) +
-          scale_x_continuous(paste(x.axis), label=comma) +
-          scale_y_continuous(paste(input$yaxistype))
-          
-          
-          ramp.time.series <- qplot(Interval, SMA(Selected, input$smoothingeq), xlab = input$xaxistypeeq, geom="line", data = spectra.timeseries.table) +
-          geom_line(aes(colour = Selected), lwd=input$linesizeeq) +
-          theme_light() +
-          scale_colour_gradientn(colours=rainbow(7)) +
-          theme(axis.text.x = element_text(size=15)) +
-          theme(axis.text.y = element_text(size=15)) +
-          theme(axis.title.x = element_text(size=15)) +
-          theme(axis.title.y = element_text(size=15, angle=90)) +
-          theme(plot.title=element_text(size=20)) +
-          theme(legend.title=element_text(size=15)) +
-          theme(legend.text=element_text(size=15)) +
-          scale_x_continuous(paste(x.axis), label=comma) +
-          scale_y_continuous(paste(input$yaxistype))
-          
-          
-          area.time.series <- ggplot(spectra.timeseries.table, aes(Interval)) +
-          theme_classic() +
-          geom_area(aes(y=Selected, colour="grey60", fill="grey60"), alpha=0.6) +
-          scale_x_continuous(input$xaxistypeeq) +
-          theme(axis.text.x = element_text(size=15)) +
-          theme(axis.text.y = element_text(size=15)) +
-          theme(axis.title.x = element_text(size=15)) +
-          theme(axis.title.y = element_text(size=15, angle=90)) +
-          theme(plot.title=element_text(size=20)) +
-          theme(legend.title=element_text(size=15)) +
-          theme(legend.text=element_text(size=15)) +
-          scale_x_continuous(paste(x.axis), label=comma) +
-          scale_y_continuous(paste(input$yaxistype))
-          
-          
-          
-          cluster.time.series <- qplot(Interval, SMA(Selected, input$smoothingeq), xlab = input$xaxistypeeq, geom="line", data = spectra.timeseries.table) +
-          geom_point(aes(colour = as.factor(Cluster)), size=input$pointsizeeq) +
-          scale_colour_discrete("Cluster") +
-          theme_light() +
-          theme(axis.text.x = element_text(size=15)) +
-          theme(axis.text.y = element_text(size=15)) +
-          theme(axis.title.x = element_text(size=15)) +
-          theme(axis.title.y = element_text(size=15, angle=90)) +
-          theme(plot.title=element_text(size=20)) +
-          theme(legend.title=element_text(size=15)) +
-          theme(legend.text=element_text(size=15)) +
-          scale_x_continuous(paste(x.axis), label=comma) +
-          scale_y_continuous(paste(input$yaxistype))
-          
-          climate.time.series.line <- qplot(Interval, SMA(Selected, input$smoothingeq), xlab = input$xaxistypeeq, geom="line", data = spectra.timeseries.table, colour = as.factor(Climate)) +
-          scale_colour_discrete("Climatic Period") +
-          theme_light() +
-          theme(axis.text.x = element_text(size=15)) +
-          theme(axis.text.y = element_text(size=15)) +
-          theme(axis.title.x = element_text(size=15)) +
-          theme(axis.title.y = element_text(size=15, angle=90)) +
-          theme(plot.title=element_text(size=20)) +
-          theme(legend.title=element_text(size=15)) +
-          theme(legend.text=element_text(size=15)) +
-          scale_x_continuous(paste(x.axis), label=comma) +
-          scale_y_continuous(paste(input$yaxistype))
-          
-          
-          qualitative.time.series.line <- qplot(Interval, SMA(Selected, input$smoothingeq), xlab = input$xaxistypeeq, geom="line", data = spectra.timeseries.table, colour = as.factor(Qualitative)) +
-          scale_colour_discrete("Qualitative") +
-          theme_light() +
-          theme(axis.text.x = element_text(size=15)) +
-          theme(axis.text.y = element_text(size=15)) +
-          theme(axis.title.x = element_text(size=15)) +
-          theme(axis.title.y = element_text(size=15, angle=90)) +
-          theme(plot.title=element_text(size=20)) +
-          theme(legend.title=element_text(size=15)) +
-          theme(legend.text=element_text(size=15)) +
-          scale_x_continuous(paste(x.axis), label=comma) +
-          scale_y_continuous(paste(input$yaxistype))
-          
-          qualitative.time.series.point <- qplot(Interval, SMA(Selected, input$smoothingeq), xlab = input$xaxistypeeq, geom="line", data = spectra.timeseries.table) +
-          geom_point(aes(colour = as.factor(Qualitative)), lwd=input$pointsizeeq) +
-          scale_colour_discrete("Qualitative") +
-          theme_light() +
-          theme(axis.text.x = element_text(size=15)) +
-          theme(axis.text.y = element_text(size=15)) +
-          theme(axis.title.x = element_text(size=15)) +
-          theme(axis.title.y = element_text(size=15, angle=90)) +
-          theme(plot.title=element_text(size=20)) +
-          theme(legend.title=element_text(size=15)) +
-          theme(legend.text=element_text(size=15)) +
-          scale_x_continuous(paste(x.axis), label=comma) +
-          scale_y_continuous(paste(input$yaxistype))
-          
-          
-          Depth.time.series <- qplot(Interval, SMA(Selected, input$smoothingeq), xlab = input$xaxistypeeq, geom="line", data = spectra.timeseries.table) +
-          geom_point(aes(colour = Depth), lwd=input$pointsizeeq) +
-          scale_colour_gradientn("Depth", colours=rainbow(length(spectra.line.table$Depth))) +
-          theme_light() +
-          theme(axis.text.x = element_text(size=15)) +
-          theme(axis.text.y = element_text(size=15)) +
-          theme(axis.title.x = element_text(size=15)) +
-          theme(axis.title.y = element_text(size=15, angle=90)) +
-          theme(plot.title=element_text(size=20)) +
-          theme(legend.title=element_text(size=15)) +
-          theme(legend.text=element_text(size=15)) +
-          scale_x_continuous(paste(x.axis), label=comma) +
-          scale_y_continuous(paste(input$yaxistype))
-          
-          
-          if (input$timecoloureq == "Black") {
-              black.time.series
-          } else if (input$timecoloureq == "Smooth") {
-              smooth.time.series
-          } else if (input$timecoloureq == "Selected") {
-              ramp.time.series
-          } else if (input$timecoloureq == "Cluster") {
-              cluster.time.series
-          } else if (input$timecoloureq == "Climate") {
-              climate.time.series.line
-          } else if (input$timecoloureq == "QualitativePoint") {
-              qualitative.time.series.point
-          } else if (input$timecoloureq == "QualitativeLine") {
-              qualitative.time.series.line
-          } else if (input$timecoloureq == "Depth") {
-              Depth.time.series
-          } else if (input$timecoloureq == "Area") {
-              area.time.series
-          }
-          
-          
-          
-          
-      })
-      
-      observeEvent(input$timeserieseq4, {
-          
-      })
+      spectra.line.table <- ageData()
       
       
       
-      output$timeserieseqplot4 <- renderPlot({
-          input$timeserieseq4
-          isolate(print(plotInput6d()))
-          
-      })
-      
-      output$downloadPlot6d <- downloadHandler(
-      
-      
-      
-      filename = function() { paste(input$projectname, "_", input$yaxistype, '.tiff', sep='') },
-      content = function(file) {
-          ggsave(file,plotInput6d(), device="tiff", dpi=300, width=12, height=7)
+      data.transformation.selection <- if(input$ytransform1=="None" && input$yelementden2=="None") {
+          spectra.line.table[input$yelementden1]
+          ########Two Numerators
+      } else if(input$ytransform1=="+" && input$yelementden2!="None"){
+          spectra.line.table[input$yelementden1] + spectra.line.table[input$yelementden2]
+      } else if(input$ytransform1=="-" && input$yelementden2!="None"){
+          spectra.line.table[input$yelementden1] - spectra.line.table[input$yelementden2]
+      } else if(input$ytransform1=="*" && input$yelementden2!="None"){
+          spectra.line.table[input$yelementden1] * spectra.line.table[input$yelementden2]
+      } else if(input$ytransform1=="/" && input$yelementden2!="None"){
+          spectra.line.table[input$yelementden1] / spectra.line.table[input$yelementden2]
+          ######Addition Third Numerator
+      } else if(input$ytransform1=="+" && input$yelementden2!="None" && input$ytransform2=="+" && input$yelementden3!="None"){
+          spectra.line.table[input$yelementden1] + spectra.line.table[input$yelementden2] + spectra.line.table[input$yelementden3]
+      } else if(input$ytransform1=="-" && input$yelementden2!="None" && input$ytransform2=="+" && input$yelementden3!="None"){
+          spectra.line.table[input$yelementden1] - spectra.line.table[input$yelementden2] + spectra.line.table[input$yelementden3]
+      } else if(input$ytransform1=="*" && input$yelementden2!="None" && input$ytransform2=="+" && input$yelementden3!="None"){
+          spectra.line.table[input$yelementden1] * spectra.line.table[input$yelementden2] + spectra.line.table[input$yelementden3]
+      } else if(input$ytransform1=="/" && input$yelementden2!="None" && input$ytransform2=="+" && input$yelementden3!="None"){
+          spectra.line.table[input$yelementden1] / spectra.line.table[input$yelementden2] + spectra.line.table[input$yelementden3]
+          ######Subtraction Third Numerator
+      } else if(input$ytransform1=="+" && input$yelementden2!="None" && input$ytransform2=="-" && input$yelementden3!="None"){
+          spectra.line.table[input$yelementden1] + spectra.line.table[input$yelementden2] - spectra.line.table[input$yelementden3]
+      } else if(input$ytransform1=="-" && input$yelementden2!="None" && input$ytransform2=="-" && input$yelementden3!="None"){
+          spectra.line.table[input$yelementden1] - spectra.line.table[input$yelementden2] - spectra.line.table[input$yelementden3]
+      } else if(input$ytransform1=="*" && input$yelementden2!="None" && input$ytransform2=="-" && input$yelementden3!="None"){
+          spectra.line.table[input$yelementden1] * spectra.line.table[input$yelementden2] - spectra.line.table[input$yelementden3]
+      } else if(input$ytransform1=="/" && input$yelementden2!="None" && input$ytransform2=="-" && input$yelementden3!="None"){
+          spectra.line.table[input$yelementden1] / spectra.line.table[input$yelementden2] - spectra.line.table[input$yelementden3]
+          ######Multiplication Third Numerator
+      } else if(input$ytransform1=="+" && input$yelementden2!="None" && input$ytransform2=="*" && input$yelementden3!="None"){
+          spectra.line.table[input$yelementden1] + spectra.line.table[input$yelementden2] * spectra.line.table[input$yelementden3]
+      } else if(input$ytransform1=="-" && input$yelementden2!="None" && input$ytransform2=="*" && input$yelementden3!="None"){
+          spectra.line.table[input$yelementden1] - spectra.line.table[input$yelementden2] * spectra.line.table[input$yelementden3]
+      } else if(input$ytransform1=="*" && input$yelementden2!="None" && input$ytransform2=="*" && input$yelementden3!="None"){
+          spectra.line.table[input$yelementden1] * spectra.line.table[input$yelementden2] * spectra.line.table[input$yelementden3]
+      } else if(input$ytransform1=="/" && input$yelementden2!="None" && input$ytransform2=="*" && input$yelementden3!="None"){
+          spectra.line.table[input$yelementden1] / spectra.line.table[input$yelementden2] * spectra.line.table[input$yelementden3]
+          ######Division Third Numerator
+      } else if(input$ytransform1=="+" && input$yelementden2!="None" && input$ytransform2=="/" && input$yelementden3!="None"){
+          spectra.line.table[input$yelementden1] + spectra.line.table[input$yelementden2] / spectra.line.table[input$yelementden3]
+      } else if(input$ytransform1=="-" && input$yelementden2!="None" && input$ytransform2=="/" && input$yelementden3!="None"){
+          spectra.line.table[input$yelementden1] - spectra.line.table[input$yelementden2] / spectra.line.table[input$yelementden3]
+      } else if(input$ytransform1=="*" && input$yelementden2!="None" && input$ytransform2=="/" && input$yelementden3!="None"){
+          spectra.line.table[input$yelementden1] * spectra.line.table[input$yelementden2] / spectra.line.table[input$yelementden3]
+      } else if(input$ytransform1=="/" && input$yelementden2!="None" && input$ytransform2=="/" && input$yelementden3!="None"){
+          spectra.line.table[input$yelementden1] / spectra.line.table[input$yelementden2] / spectra.line.table[input$yelementden3]
       }
-      )
+      
+      data.transformation.selection
+      
+  })
+  
+  miniDataTransformX <- reactive({
+      
+      spectra.line.table <- ageData()
       
       
       
-      
-      
-      plotInput6e <- reactive({
-          
-          spectra.line.table <- ageData()
-          data.transformation <- dataTransform()
-          
-          
-          x.axis <- if (input$xaxistypeeq=="Depth") {
-              paste("Depth (", input$lengthuniteq, ")", sep="", collapse="")
-          } else if (input$xaxistypeeq=="Age" && input$timetypeeq=="BP"){
-              paste("cal year BP")
-          } else if (input$xaxistypeeq=="Age" && input$timetypeeq=="BC") {
-              paste("cal year BC")
-          } else if (input$axistype=="Age" && input$timetypeeq=="AD") {
-              paste("cal year AD")
-          } else if (input$axistype=="Age" && input$timetypeeq=="BC/AD") {
-              paste("cal year BC/AD")
-          }
-          
-          
-          spectra.line.table.norm <- data.frame(spectra.line.table, null)
-          colnames(spectra.line.table.norm) <- c(names(spectra.line.table), "None")
-          spectra.line.table.norm
-          
-          #interval <- unique.spec*as.numeric(input$intervalmm)+as.numeric(input$startmmeq)
-          
-          #spectra.timeseries.table <- data.frame(interval, spectra.line.table[c(input$elementtrend)]/spectra.line.table.norm[c(input$elementnorm)], spectra.line.table$Cluster, spectra.line.table$Qualitative, spectra.line.table$Depth)
-          #colnames(spectra.timeseries.table) <- c("Interval", "Selected", "Cluster", "Qualitative", "Depth")
-          
-          spectra.timeseries.table <- data.frame(spectra.line.table[c(input$xaxistypeeq)], data.transformation, spectra.line.table$Cluster, spectra.line.table$Qualitative, spectra.line.table$Depth, spectra.line.table$Climate)
-          colnames(spectra.timeseries.table) <- c("Interval", "Selected", "Cluster", "Qualitative", "Depth", "Climate")
-          
-          
-          
-          
-          
-          
-          
-          
-          
-          
-          
-          
-          
-          
-          
-          
-          black.time.series <- qplot(Interval, SMA(Selected, input$smoothingeq), input$xaxistypeeq, geom="line", data = spectra.timeseries.table) +
-          geom_line(colour = "black", lwd=input$linesizeeq) +
-          theme_light() +
-          theme(axis.text.x = element_text(size=15)) +
-          theme(axis.text.y = element_text(size=15)) +
-          theme(axis.title.x = element_text(size=15)) +
-          theme(axis.title.y = element_text(size=15, angle=90)) +
-          theme(plot.title=element_text(size=20)) +
-          theme(legend.title=element_text(size=15)) +
-          theme(legend.text=element_text(size=15)) +
-          scale_x_continuous(paste(x.axis), label=comma) +
-          scale_y_continuous(paste(input$yaxistype))
-          
-          smooth.time.series <- qplot(spectra.timeseries.table$Interval, SMA(spectra.timeseries.table$Selected, input$smoothingeq), xlab = input$xaxistypeeq, geom="point") +
-          theme_light() +
-          stat_smooth() +
-          theme(axis.text.x = element_text(size=15)) +
-          theme(axis.text.y = element_text(size=15)) +
-          theme(axis.title.x = element_text(size=15)) +
-          theme(axis.title.y = element_text(size=15, angle=90)) +
-          theme(plot.title=element_text(size=20)) +
-          theme(legend.title=element_text(size=15)) +
-          theme(legend.text=element_text(size=15)) +
-          scale_x_continuous(paste(x.axis), label=comma) +
-          scale_y_continuous(paste(input$yaxistype))
-          
-          
-          ramp.time.series <- qplot(Interval, SMA(Selected, input$smoothingeq), xlab = input$xaxistypeeq, geom="line", data = spectra.timeseries.table) +
-          geom_line(aes(colour = Selected), lwd=input$linesizeeq) +
-          theme_light() +
-          scale_colour_gradientn(colours=rainbow(7)) +
-          theme(axis.text.x = element_text(size=15)) +
-          theme(axis.text.y = element_text(size=15)) +
-          theme(axis.title.x = element_text(size=15)) +
-          theme(axis.title.y = element_text(size=15, angle=90)) +
-          theme(plot.title=element_text(size=20)) +
-          theme(legend.title=element_text(size=15)) +
-          theme(legend.text=element_text(size=15)) +
-          scale_x_continuous(paste(x.axis), label=comma) +
-          scale_y_continuous(paste(input$yaxistype))
-          
-          
-          area.time.series <- ggplot(spectra.timeseries.table, aes(Interval)) +
-          theme_classic() +
-          geom_area(aes(y=Selected, colour="grey60", fill="grey60"), alpha=0.6) +
-          scale_x_continuous(input$xaxistypeeq) +
-          theme(axis.text.x = element_text(size=15)) +
-          theme(axis.text.y = element_text(size=15)) +
-          theme(axis.title.x = element_text(size=15)) +
-          theme(axis.title.y = element_text(size=15, angle=90)) +
-          theme(plot.title=element_text(size=20)) +
-          theme(legend.title=element_text(size=15)) +
-          theme(legend.text=element_text(size=15)) +
-          scale_x_continuous(paste(x.axis), label=comma) +
-          scale_y_continuous(paste(input$yaxistype))
-          
-          
-          
-          cluster.time.series <- qplot(Interval, SMA(Selected, input$smoothingeq), xlab = input$xaxistypeeq, geom="line", data = spectra.timeseries.table) +
-          geom_point(aes(colour = as.factor(Cluster)), size=input$pointsizeeq) +
-          scale_colour_discrete("Cluster") +
-          theme_light() +
-          theme(axis.text.x = element_text(size=15)) +
-          theme(axis.text.y = element_text(size=15)) +
-          theme(axis.title.x = element_text(size=15)) +
-          theme(axis.title.y = element_text(size=15, angle=90)) +
-          theme(plot.title=element_text(size=20)) +
-          theme(legend.title=element_text(size=15)) +
-          theme(legend.text=element_text(size=15)) +
-          scale_x_continuous(paste(x.axis), label=comma) +
-          scale_y_continuous(paste(input$yaxistype))
-          
-          climate.time.series.line <- qplot(Interval, SMA(Selected, input$smoothingeq), xlab = input$xaxistypeeq, geom="line", data = spectra.timeseries.table, colour = as.factor(Climate)) +
-          scale_colour_discrete("Climatic Period") +
-          theme_light() +
-          theme(axis.text.x = element_text(size=15)) +
-          theme(axis.text.y = element_text(size=15)) +
-          theme(axis.title.x = element_text(size=15)) +
-          theme(axis.title.y = element_text(size=15, angle=90)) +
-          theme(plot.title=element_text(size=20)) +
-          theme(legend.title=element_text(size=15)) +
-          theme(legend.text=element_text(size=15)) +
-          scale_x_continuous(paste(x.axis), label=comma) +
-          scale_y_continuous(paste(input$yaxistype))
-          
-          
-          qualitative.time.series.line <- qplot(Interval, SMA(Selected, input$smoothingeq), xlab = input$xaxistypeeq, geom="line", data = spectra.timeseries.table, colour = as.factor(Qualitative)) +
-          scale_colour_discrete("Qualitative") +
-          theme_light() +
-          theme(axis.text.x = element_text(size=15)) +
-          theme(axis.text.y = element_text(size=15)) +
-          theme(axis.title.x = element_text(size=15)) +
-          theme(axis.title.y = element_text(size=15, angle=90)) +
-          theme(plot.title=element_text(size=20)) +
-          theme(legend.title=element_text(size=15)) +
-          theme(legend.text=element_text(size=15)) +
-          scale_x_continuous(paste(x.axis), label=comma) +
-          scale_y_continuous(paste(input$yaxistype))
-          
-          qualitative.time.series.point <- qplot(Interval, SMA(Selected, input$smoothingeq), xlab = input$xaxistypeeq, geom="line", data = spectra.timeseries.table) +
-          geom_point(aes(colour = as.factor(Qualitative)), lwd=input$pointsizeeq) +
-          scale_colour_discrete("Qualitative") +
-          theme_light() +
-          theme(axis.text.x = element_text(size=15)) +
-          theme(axis.text.y = element_text(size=15)) +
-          theme(axis.title.x = element_text(size=15)) +
-          theme(axis.title.y = element_text(size=15, angle=90)) +
-          theme(plot.title=element_text(size=20)) +
-          theme(legend.title=element_text(size=15)) +
-          theme(legend.text=element_text(size=15)) +
-          scale_x_continuous(paste(x.axis), label=comma) +
-          scale_y_continuous(paste(input$yaxistype))
-          
-          
-          Depth.time.series <- qplot(Interval, SMA(Selected, input$smoothingeq), xlab = input$xaxistypeeq, geom="line", data = spectra.timeseries.table) +
-          geom_point(aes(colour = Depth), lwd=input$pointsizeeq) +
-          scale_colour_gradientn("Depth", colours=rainbow(length(spectra.line.table$Depth))) +
-          theme_light() +
-          theme(axis.text.x = element_text(size=15)) +
-          theme(axis.text.y = element_text(size=15)) +
-          theme(axis.title.x = element_text(size=15)) +
-          theme(axis.title.y = element_text(size=15, angle=90)) +
-          theme(plot.title=element_text(size=20)) +
-          theme(legend.title=element_text(size=15)) +
-          theme(legend.text=element_text(size=15)) +
-          scale_x_continuous(paste(x.axis), label=comma) +
-          scale_y_continuous(paste(input$yaxistype))
-          
-          
-          if (input$timecoloureq == "Black") {
-              black.time.series
-          } else if (input$timecoloureq == "Smooth") {
-              smooth.time.series
-          } else if (input$timecoloureq == "Selected") {
-              ramp.time.series
-          } else if (input$timecoloureq == "Cluster") {
-              cluster.time.series
-          } else if (input$timecoloureq == "Climate") {
-              climate.time.series.line
-          } else if (input$timecoloureq == "QualitativePoint") {
-              qualitative.time.series.point
-          } else if (input$timecoloureq == "QualitativeLine") {
-              qualitative.time.series.line
-          } else if (input$timecoloureq == "Depth") {
-              Depth.time.series
-          } else if (input$timecoloureq == "Area") {
-              area.time.series
-          }
-          
-          
-          
-          
-      })
-      
-      observeEvent(input$timeserieseq5, {
-          
-          
-      })
-      
-      output$timeserieseqplot5 <- renderPlot({
-          input$timeserieseq5
-          
-          
-          
-          isolate(print(plotInput6e()))
-          
-      })
-      
-      
-      output$downloadPlot6e <- downloadHandler(
-      
-      
-      
-      filename = function() { paste(input$projectname, "_", input$yaxistype, '.tiff', sep='') },
-      content = function(file) {
-          ggsave(file,plotInput6e(), device="tiff", dpi=300, width=12, height=7)
+      spectra.line.table$Selected <- if(input$xtransform1=="None" && input$xelementnum2=="None") {
+          spectra.line.table[input$xelementnum1]
+          ########Two Numerators
+      } else if(input$xtransform1=="+" && input$xelementnum2!="None"){
+          spectra.line.table[input$xelementnum1] + spectra.line.table[input$xelementnum2]
+      } else if(input$xtransform1=="-" && input$xelementnum2!="None"){
+          spectra.line.table[input$xelementnum1] - spectra.line.table[input$xelementnum2]
+      } else if(input$xtransform1=="*" && input$xelementnum2!="None"){
+          spectra.line.table[input$xelementnum1] * spectra.line.table[input$xelementnum2]
+      } else if(input$xtransform1=="/" && input$xelementnum2!="None"){
+          spectra.line.table[input$xelementnum1] / spectra.line.table[input$xelementnum2]
+          ######Addition Third Numerator
+      } else if(input$xtransform1=="+" && input$xelementnum2!="None" && input$xtransform2=="+" && input$xelementnum3!="None"){
+          spectra.line.table[input$xelementnum1] + spectra.line.table[input$xelementnum2] + spectra.line.table[input$xelementnum3]
+      } else if(input$xtransform1=="-" && input$xelementnum2!="None" && input$xtransform2=="+" && input$xelementnum3!="None"){
+          spectra.line.table[input$xelementnum1] - spectra.line.table[input$xelementnum2] + spectra.line.table[input$xelementnum3]
+      } else if(input$xtransform1=="*" && input$xelementnum2!="None" && input$xtransform2=="+" && input$xelementnum3!="None"){
+          spectra.line.table[input$xelementnum1] * spectra.line.table[input$xelementnum2] + spectra.line.table[input$xelementnum3]
+      } else if(input$xtransform1=="/" && input$xelementnum2!="None" && input$xtransform2=="+" && input$xelementnum3!="None"){
+          spectra.line.table[input$xelementnum1] / spectra.line.table[input$xelementnum2] + spectra.line.table[input$xelementnum3]
+          ######Subtraction Third Numerator
+      } else if(input$xtransform1=="+" && input$xelementnum2!="None" && input$xtransform2=="-" && input$xelementnum3!="None"){
+          spectra.line.table[input$xelementnum1] + spectra.line.table[input$xelementnum2] - spectra.line.table[input$xelementnum3]
+      } else if(input$xtransform1=="-" && input$xelementnum2!="None" && input$xtransform2=="-" && input$xelementnum3!="None"){
+          spectra.line.table[input$xelementnum1] - spectra.line.table[input$xelementnum2] - spectra.line.table[input$xelementnum3]
+      } else if(input$xtransform1=="*" && input$xelementnum2!="None" && input$xtransform2=="-" && input$xelementnum3!="None"){
+          spectra.line.table[input$xelementnum1] * spectra.line.table[input$xelementnum2] - spectra.line.table[input$xelementnum3]
+      } else if(input$xtransform1=="/" && input$xelementnum2!="None" && input$xtransform2=="-" && input$xelementnum3!="None"){
+          spectra.line.table[input$xelementnum1] / spectra.line.table[input$xelementnum2] - spectra.line.table[input$xelementnum3]
+          ######Multiplication Third Numerator
+      } else if(input$xtransform1=="+" && input$xelementnum2!="None" && input$xtransform2=="*" && input$xelementnum3!="None"){
+          spectra.line.table[input$xelementnum1] + spectra.line.table[input$xelementnum2] * spectra.line.table[input$xelementnum3]
+      } else if(input$xtransform1=="-" && input$xelementnum2!="None" && input$xtransform2=="*" && input$xelementnum3!="None"){
+          spectra.line.table[input$xelementnum1] - spectra.line.table[input$xelementnum2] * spectra.line.table[input$xelementnum3]
+      } else if(input$xtransform1=="*" && input$xelementnum2!="None" && input$xtransform2=="*" && input$xelementnum3!="None"){
+          spectra.line.table[input$xelementnum1] * spectra.line.table[input$xelementnum2] * spectra.line.table[input$xelementnum3]
+      } else if(input$xtransform1=="/" && input$xelementnum2!="None" && input$xtransform2=="*" && input$xelementnum3!="None"){
+          spectra.line.table[input$xelementnum1] / spectra.line.table[input$xelementnum2] * spectra.line.table[input$xelementnum3]
+          ######Division Third Numerator
+      } else if(input$xtransform1=="+" && input$xelementnum2!="None" && input$xtransform2=="/" && input$xelementnum3!="None"){
+          spectra.line.table[input$xelementnum1] + spectra.line.table[input$xelementnum2] / spectra.line.table[input$xelementnum3]
+      } else if(input$xtransform1=="-" && input$xelementnum2!="None" && input$xtransform2=="/" && input$xelementnum3!="None"){
+          spectra.line.table[input$xelementnum1] - spectra.line.table[input$xelementnum2] / spectra.line.table[input$xelementnum3]
+      } else if(input$xtransform1=="*" && input$xelementnum2!="None" && input$xtransform2=="/" && input$xelementnum3!="None"){
+          spectra.line.table[input$xelementnum1] * spectra.line.table[input$xelementnum2] / spectra.line.table[input$xelementnum3]
+      } else if(input$xtransform1=="/" && input$xelementnum2!="None" && input$xtransform2=="/" && input$xelementnum3!="None"){
+          spectra.line.table[input$xelementnum1] / spectra.line.table[input$xelementnum2] / spectra.line.table[input$xelementnum3]
       }
-      )
+      
+      data.transformation.selection
+      
+  })
+  
+  
+  output$inelementx1 <- renderUI({
+      selectInput("xelementnum1", "X Axis 1", choices=choiceLines(), selected=dataDefaultSelect())
+  })
+  
+  output$inelementx2 <- renderUI({
+      selectInput("xelementnum2", "X Axis 2", choices=choiceLines(), selected="None")
+  })
+  
+  output$inelementx3 <- renderUI({
+      selectInput("xelementnum3", "X Axis 3", choices=choiceLines(), selected="None")
+  })
+  
+  output$inelementy1 <- renderUI({
+      selectInput("yelementden1", "Y Axis 1", choices=choiceLines(), selected=secondDefaultSelect())
+  })
+  
+  output$inelementy2 <- renderUI({
+      selectInput("yelementden2", "Y Axis 2", choices=choiceLines(), selected="None")
+  })
+  
+  output$inelementy3 <- renderUI({
+      selectInput("yelementden3", "Y Axis 3", choices=choiceLines(), selected="None")
+  })
+  
+
+
+  
+  elementRatioEquation <- reactive({
+      
+      
+      spectra.line.table <- ageData()
+      
+      unique.spec <- seq(1, length(spectra.line.table$Depth), 1)
+      null <- rep(1, length(unique.spec))
+      
+      x.axis.transform <- miniDataTransformX()
+      y.axis.transform <- miniDataTransformY()
       
       
       
+      ratio.frame <- data.frame(x.axis.transform, y.axis.transform, spectra.line.table$Cluster, spectra.line.table$Qualitative, spectra.line.table$Depth, spectra.line.table$Age, spectra.line.table$Climate)
+      colnames(ratio.frame) <- c(input$xaxisdef, input$yaxisdef, "Cluster", "Qualitative", "Depth", "Age", "Climate")
+      
+      
+      ratio.names.x <- input$xaxisdef
+      ratio.names.y <- input$yaxisdef
+      
+      
+      black.ratio.plot <- qplot(ratio.frame[input$xaxisdef], ratio.frame[input$yaxisdef] ) +
+      geom_point(lwd=input$spotsize3) +
+      theme_light() +
+      theme(axis.text.x = element_text(size=15)) +
+      theme(axis.text.y = element_text(size=15)) +
+      theme(axis.title.x = element_text(size=15)) +
+      theme(axis.title.y = element_text(size=15, angle=90)) +
+      theme(plot.title=element_text(size=20)) +
+      theme(legend.title=element_text(size=15)) +
+      theme(legend.text=element_text(size=15))+
+      scale_x_continuous(ratio.names.x, label=comma) +
+      scale_y_continuous(ratio.names.y, label=comma)
+      
+      cluster.ratio.plot <- qplot(ratio.frame[input$xaxisdef], ratio.frame[input$yaxisdef] ) +
+      geom_point(aes(colour=as.factor(ratio.frame$Cluster), shape=as.factor(ratio.frame$Cluster)), size=input$spotsize3+1) +
+      geom_point(colour="grey30", size=input$spotsize3-2) +
+      scale_shape_manual("Cluster", values=1:nlevels(as.factor(as.factor(ratio.frame$Cluster)))) +
+      scale_colour_discrete("Cluster") +
+      theme_light() +
+      theme(axis.text.x = element_text(size=15)) +
+      theme(axis.text.y = element_text(size=15)) +
+      theme(axis.title.x = element_text(size=15)) +
+      theme(axis.title.y = element_text(size=15, angle=90)) +
+      theme(plot.title=element_text(size=20)) +
+      theme(legend.title=element_text(size=15)) +
+      theme(legend.text=element_text(size=15))+
+      scale_x_continuous(ratio.names.x, label=comma) +
+      scale_y_continuous(ratio.names.y, label=comma)
+      
+      cluster.ratio.ellipse.plot <- qplot(ratio.frame[input$xaxisdef], ratio.frame[input$yaxisdef] ) +
+      stat_ellipse(aes(ratio.frame[input$xaxisdef], ratio.frame[input$yaxisdef], colour=as.factor(ratio.frame$Cluster))) +
+      geom_point(aes(colour=as.factor(ratio.frame$Cluster), shape=as.factor(ratio.frame$Cluster)), size=input$spotsize3+1) +
+      geom_point(colour="grey30", size=input$spotsize3-2) +
+      scale_shape_manual("Cluster", values=1:nlevels(as.factor(as.factor(ratio.frame$Cluster)))) +
+      scale_colour_discrete("Cluster") +
+      theme_light() +
+      theme(axis.text.x = element_text(size=15)) +
+      theme(axis.text.y = element_text(size=15)) +
+      theme(axis.title.x = element_text(size=15)) +
+      theme(axis.title.y = element_text(size=15, angle=90)) +
+      theme(plot.title=element_text(size=20)) +
+      theme(legend.title=element_text(size=15)) +
+      theme(legend.text=element_text(size=15))+
+      scale_x_continuous(ratio.names.x, label=comma) +
+      scale_y_continuous(ratio.names.y, label=comma)
+      
+      
+      climate.ratio.plot <- qplot(ratio.frame[input$xaxisdef], ratio.frame[input$yaxisdef] ) +
+      geom_point(aes(colour=as.factor(ratio.frame$Climate), shape=as.factor(ratio.frame$Climate)), size=input$spotsize3+1) +
+      geom_point(colour="grey30", size=input$spotsize3-2) +
+      scale_shape_manual("Climatic Period", values=1:nlevels(ratio.frame$Climate)) +
+      scale_colour_discrete("Climatic Period") +
+      theme_light() +
+      theme(axis.text.x = element_text(size=15)) +
+      theme(axis.text.y = element_text(size=15)) +
+      theme(axis.title.x = element_text(size=15)) +
+      theme(axis.title.y = element_text(size=15, angle=90)) +
+      theme(plot.title=element_text(size=20)) +
+      theme(legend.title=element_text(size=15)) +
+      theme(legend.text=element_text(size=15))+
+      scale_x_continuous(ratio.names.x, label=comma) +
+      scale_y_continuous(ratio.names.y, label=comma)
+      
+      climate.ratio.ellipse.plot <- qplot(ratio.frame[input$xaxisdef], ratio.frame[input$yaxisdef] ) +
+      stat_ellipse(aes(ratio.frame[input$xaxisdef], ratio.frame[input$yaxisdef], colour=as.factor(ratio.frame$Climate))) +
+      geom_point(aes(colour=as.factor(ratio.frame$Climate), shape=as.factor(ratio.frame$Climate)), size=input$spotsize3+1) +
+      geom_point(colour="grey30", size=input$spotsize3-2) +
+      scale_shape_manual("Climatic Period", values=1:nlevels(ratio.frame$Climate)) +
+      scale_colour_discrete("Climatic Period") +
+      theme_light() +
+      theme(axis.text.x = element_text(size=15)) +
+      theme(axis.text.y = element_text(size=15)) +
+      theme(axis.title.x = element_text(size=15)) +
+      theme(axis.title.y = element_text(size=15, angle=90)) +
+      theme(plot.title=element_text(size=20)) +
+      theme(legend.title=element_text(size=15)) +
+      theme(legend.text=element_text(size=15))+
+      scale_x_continuous(ratio.names.x, label=comma) +
+      scale_y_continuous(ratio.names.y, label=comma)
+      
+      
+      qualitative.ratio.plot <- qplot(ratio.frame[input$xaxisdef], ratio.frame[input$yaxisdef] ) +
+      geom_point(aes(colour=as.factor(ratio.frame$Qualitative), shape=as.factor(ratio.frame$Qualitative)), size=input$spotsize3+1) +
+      geom_point(colour="grey30", size=input$spotsize3-2) +
+      scale_shape_manual("Qualitative", values=1:nlevels(ratio.frame$Qualitative)) +
+      scale_colour_discrete("Qualitative") +
+      theme_light() +
+      theme(axis.text.x = element_text(size=15)) +
+      theme(axis.text.y = element_text(size=15)) +
+      theme(axis.title.x = element_text(size=15)) +
+      theme(axis.title.y = element_text(size=15, angle=90)) +
+      theme(plot.title=element_text(size=20)) +
+      theme(legend.title=element_text(size=15)) +
+      theme(legend.text=element_text(size=15))+
+      scale_x_continuous(ratio.names.x, label=comma) +
+      scale_y_continuous(ratio.names.y, label=comma)
+      
+      qualitative.ratio.ellipse.plot <- qplot(ratio.frame[input$xaxisdef], ratio.frame[input$yaxisdef] ) +
+      stat_ellipse(aes(ratio.frame[input$xaxisdef], ratio.frame[input$yaxisdef], colour=as.factor(ratio.frame$Qualitative))) +
+      geom_point(aes(colour=as.factor(ratio.frame$Qualitative), shape=as.factor(ratio.frame$Qualitative)), size=input$spotsize3+1) +
+      geom_point(colour="grey30", size=input$spotsize3-2) +
+      scale_shape_manual("Qualitative", values=1:nlevels(ratio.frame$Qualitative)) +
+      scale_colour_discrete("Qualitative") +
+      theme_light() +
+      theme(axis.text.x = element_text(size=15)) +
+      theme(axis.text.y = element_text(size=15)) +
+      theme(axis.title.x = element_text(size=15)) +
+      theme(axis.title.y = element_text(size=15, angle=90)) +
+      theme(plot.title=element_text(size=20)) +
+      theme(legend.title=element_text(size=15)) +
+      theme(legend.text=element_text(size=15))+
+      scale_x_continuous(ratio.names.x, label=comma) +
+      scale_y_continuous(ratio.names.y, label=comma)
+      
+      depth.ratio.plot <- qplot(ratio.frame[input$xaxisdef], ratio.frame[input$yaxisdef] ) +
+      geom_point(aes(colour = ratio.frame$Depth), size=input$spotsize3+1) +
+      geom_point(size=input$spotsize3-2) +
+      scale_colour_gradientn("Depth", colours=rev(terrain.colors(length(ratio.frame$Depth)))) +
+      theme_light() +
+      theme(axis.text.x = element_text(size=15)) +
+      theme(axis.text.y = element_text(size=15)) +
+      theme(axis.title.x = element_text(size=15)) +
+      theme(axis.title.y = element_text(size=15, angle=90)) +
+      theme(plot.title=element_text(size=20)) +
+      theme(legend.title=element_text(size=15)) +
+      theme(legend.text=element_text(size=15))+
+      scale_x_continuous(ratio.names.x, label=comma) +
+      scale_y_continuous(ratio.names.y, label=comma)
+      
+      age.ratio.plot <- qplot(ratio.frame[input$xaxisdef], ratio.frame[input$yaxisdef] ) +
+      geom_point(aes(colour = ratio.frame$Age), size=input$spotsize3+1) +
+      geom_point(size=input$spotsize3-2) +
+      scale_colour_gradientn("Age", colours=terrain.colors(length(ratio.frame$Age))) +
+      theme_light() +
+      theme(axis.text.x = element_text(size=15)) +
+      theme(axis.text.y = element_text(size=15)) +
+      theme(axis.title.x = element_text(size=15)) +
+      theme(axis.title.y = element_text(size=15, angle=90)) +
+      theme(plot.title=element_text(size=20)) +
+      theme(legend.title=element_text(size=15)) +
+      theme(legend.text=element_text(size=15)) +
+      scale_x_continuous(ratio.names.x, label=comma) +
+      scale_y_continuous(ratio.names.y, label=comma)
+      
+      
+      
+      
+      
+      
+      if (input$ratiocolour == "Black" && input$elipseplot3==FALSE) {
+          black.ratio.plot
+      } else if (input$ratiocolour == "Cluster" && input$elipseplot3==FALSE) {
+          cluster.ratio.plot
+      } else if (input$ratiocolour == "Cluster" && input$elipseplot3==TRUE) {
+          cluster.ratio.ellipse.plot
+      } else if (input$ratiocolour == "Climate" && input$elipseplot3==FALSE) {
+          climate.ratio.plot
+      } else if (input$ratiocolour == "Climate" && input$elipseplot3==TRUE ) {
+          climate.ratio.ellipse.plot
+      } else if (input$ratiocolour == "Qualitative" && input$elipseplot3==FALSE) {
+          qualitative.ratio.plot
+      } else if (input$ratiocolour == "Qualitative" && input$elipseplot3==TRUE ) {
+          qualitative.ratio.ellipse.plot
+      } else if (input$ratiocolour == "Depth") {
+          depth.ratio.plot
+      } else if (input$ratiocolour == "Age") {
+          age.ratio.plot
+      }
+      
+  })
+  
+  output$elementratiotequation <- renderPlot({
+      print(elementRatioEquation())
+      
+      
+  })
+  
+  
+  
     })
     
 })
 
-
+ })
 
 
 
