@@ -250,7 +250,7 @@ shinyServer(function(input, output, session) {
         
     })
     
-    observeEvent(input$actionprocess, {
+    observeEvent(is.null(input$file1)==FALSE, {
 
     
     myValDataFirst <- reactive({
@@ -1604,6 +1604,7 @@ output$defaultlines <- renderUI({
       
       
       spectra.line.table.age.unconstrained$Climate <- climateperiods
+      spectra.line.table.age.unconstrained$None <- rep(1, length(spectra.line.table.age.unconstrained$Depth))
       
       spectra.line.table.age.constrained <- subset(spectra.line.table.age.unconstrained, spectra.line.table.age.unconstrained$Depth > c14min)
       spectra.line.table.age.constrained <- subset(spectra.line.table.age.constrained, spectra.line.table.age.constrained$Depth < c14max)
@@ -2405,7 +2406,7 @@ output$inxlimrange <- renderUI({
       spectra.line.table <- subset(spectra.line.table, !(spectra.line.table[input$xaxistype] < input$xlimrange[1] | spectra.line.table[input$xaxistype] > input$xlimrange[2]))
       
       if(is.null(spectra.line.table$Age)==TRUE){
-          spectra.line.table$Age <- rep(1, length(spectra.line.table$Spectrum))
+          spectra.line.table$Age <- rep(1, length(spectra.line.table$Depth))
       }
       
       spectra.line.table.norm <- data.frame(spectra.line.table, null)
@@ -2875,7 +2876,7 @@ output$inxlimrange <- renderUI({
       spectra.line.table <- subset(spectra.line.table, !(spectra.line.table[input$xaxistype] < input$xlimrange[1] | spectra.line.table[input$xaxistype] > input$xlimrange[2]))
       
       if(is.null(spectra.line.table$Age)==TRUE){
-          spectra.line.table$Age <- rep(1, length(spectra.line.table$Spectrum))
+          spectra.line.table$Age <- rep(1, length(spectra.line.table$Depth))
       }
       
       spectra.line.table.norm <- data.frame(spectra.line.table, null)
@@ -3326,7 +3327,7 @@ output$inxlimrange <- renderUI({
       spectra.line.table <- subset(spectra.line.table, !(spectra.line.table[input$xaxistype] < input$xlimrange[1] | spectra.line.table[input$xaxistype] > input$xlimrange[2]))
       
       if(is.null(spectra.line.table$Age)==TRUE){
-          spectra.line.table$Age <- rep(1, length(spectra.line.table$Spectrum))
+          spectra.line.table$Age <- rep(1, length(spectra.line.table$Depth))
       }
       
       spectra.line.table.norm <- data.frame(spectra.line.table, null)
@@ -3779,7 +3780,7 @@ output$inxlimrange <- renderUI({
       spectra.line.table <- subset(spectra.line.table, !(spectra.line.table[input$xaxistype] < input$xlimrange[1] | spectra.line.table[input$xaxistype] > input$xlimrange[2]))
       
       if(is.null(spectra.line.table$Age)==TRUE){
-          spectra.line.table$Age <- rep(1, length(spectra.line.table$Spectrum))
+          spectra.line.table$Age <- rep(1, length(spectra.line.table$Depth))
       }
       
       spectra.line.table.norm <- data.frame(spectra.line.table, null)
@@ -4241,7 +4242,7 @@ output$inxlimrange <- renderUI({
       spectra.line.table <- subset(spectra.line.table, !(spectra.line.table[input$xaxistype] < input$xlimrange[1] | spectra.line.table[input$xaxistype] > input$xlimrange[2]))
       
       if(is.null(spectra.line.table$Age)==TRUE){
-          spectra.line.table$Age <- rep(1, length(spectra.line.table$Spectrum))
+          spectra.line.table$Age <- rep(1, length(spectra.line.table$Depth))
       }
       
       spectra.line.table.norm <- data.frame(spectra.line.table, null)
@@ -6756,7 +6757,7 @@ scale_colour_gradientn(colours=rev(terrain.colors(length(spectra.timeseries.tabl
       spectra.line.table <- subset(spectra.line.table, !(spectra.line.table[input$xaxistypeeq] < input$xlimrangeeq[1] | spectra.line.table[input$xaxistypeeq] > input$xlimrangeeq[2]))
       
       if(is.null(spectra.line.table$Age)==TRUE){
-          spectra.line.table$Age <- rep(1, length(spectra.line.table$Spectrum))
+          spectra.line.table$Age <- rep(1, length(spectra.line.table$Depth))
       }
       
       spectra.timeseries.table <- data.frame(spectra.line.table[c(input$xaxistypeeq)], spectra.line.table$Selected, spectra.line.table$Cluster, spectra.line.table$Qualitative, spectra.line.table$Depth, spectra.line.table$Climate, spectra.line.table$Age)
@@ -7191,7 +7192,7 @@ scale_colour_gradientn(colours=rev(terrain.colors(length(spectra.timeseries.tabl
       spectra.line.table <- subset(spectra.line.table, !(spectra.line.table[input$xaxistypeeq] < input$xlimrangeeq[1] | spectra.line.table[input$xaxistypeeq] > input$xlimrangeeq[2]))
       
       if(is.null(spectra.line.table$Age)==TRUE){
-          spectra.line.table$Age <- rep(1, length(spectra.line.table$Spectrum))
+          spectra.line.table$Age <- rep(1, length(spectra.line.table$Depth))
       }
       
       spectra.timeseries.table <- data.frame(spectra.line.table[c(input$xaxistypeeq)], spectra.line.table$Selected, spectra.line.table$Cluster, spectra.line.table$Qualitative, spectra.line.table$Depth, spectra.line.table$Climate, spectra.line.table$Age)
@@ -7631,7 +7632,7 @@ scale_colour_gradientn(colours=rev(terrain.colors(length(spectra.timeseries.tabl
       spectra.line.table <- subset(spectra.line.table, !(spectra.line.table[input$xaxistypeeq] < input$xlimrangeeq[1] | spectra.line.table[input$xaxistypeeq] > input$xlimrangeeq[2]))
       
       if(is.null(spectra.line.table$Age)==TRUE){
-          spectra.line.table$Age <- rep(1, length(spectra.line.table$Spectrum))
+          spectra.line.table$Age <- rep(1, length(spectra.line.table$Depth))
       }
       
       spectra.timeseries.table <- data.frame(spectra.line.table[c(input$xaxistypeeq)], spectra.line.table$Selected, spectra.line.table$Cluster, spectra.line.table$Qualitative, spectra.line.table$Depth, spectra.line.table$Climate, spectra.line.table$Age)
@@ -8067,7 +8068,7 @@ scale_colour_gradientn(colours=rev(terrain.colors(length(spectra.timeseries.tabl
       spectra.line.table <- subset(spectra.line.table, !(spectra.line.table[input$xaxistypeeq] < input$xlimrangeeq[1] | spectra.line.table[input$xaxistypeeq] > input$xlimrangeeq[2]))
       
       if(is.null(spectra.line.table$Age)==TRUE){
-          spectra.line.table$Age <- rep(1, length(spectra.line.table$Spectrum))
+          spectra.line.table$Age <- rep(1, length(spectra.line.table$Depth))
       }
       
       spectra.timeseries.table <- data.frame(spectra.line.table[c(input$xaxistypeeq)], spectra.line.table$Selected, spectra.line.table$Cluster, spectra.line.table$Qualitative, spectra.line.table$Depth, spectra.line.table$Climate, spectra.line.table$Age)
@@ -8511,7 +8512,7 @@ scale_colour_gradientn(colours=rev(terrain.colors(length(spectra.timeseries.tabl
       spectra.line.table <- subset(spectra.line.table, !(spectra.line.table[input$xaxistypeeq] < input$xlimrangeeq[1] | spectra.line.table[input$xaxistypeeq] > input$xlimrangeeq[2]))
       
       if(is.null(spectra.line.table$Age)==TRUE){
-          spectra.line.table$Age <- rep(1, length(spectra.line.table$Spectrum))
+          spectra.line.table$Age <- rep(1, length(spectra.line.table$Depth))
       }
       
       spectra.timeseries.table <- data.frame(spectra.line.table[c(input$xaxistypeeq)], spectra.line.table$Selected, spectra.line.table$Cluster, spectra.line.table$Qualitative, spectra.line.table$Depth, spectra.line.table$Climate, spectra.line.table$Age)
