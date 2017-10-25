@@ -250,7 +250,7 @@ shinyServer(function(input, output, session) {
         
     })
     
-    observeEvent(is.null(input$file1)==FALSE, {
+    observeEvent(input$actionprocess, {
 
     
     myValDataFirst <- reactive({
