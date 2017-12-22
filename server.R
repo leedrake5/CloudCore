@@ -916,23 +916,40 @@ shinyServer(function(input, output, session) {
     
         myData <- reactive({
                 
-                if(is.null(input$file2)==TRUE){
+                data <- if(is.null(input$file2)==TRUE){
                     lightFrame()
                 } else if(is.null(input$file2)==FALSE){
                     merged.frame <- merge(lightFrame(), traceFrame(), by = "Depth", all=TRUE)
                     merged.frame[complete.cases(merged.frame), ]
                 }
+                
+                newdata <- data[order(data$Depth),]
+
+                
+                newdata
+
             
         })
         
         tableInputValQuant <- reactive({
             
-            if(is.null(input$file2)==TRUE){
+            data <- if(is.null(input$file2)==TRUE){
                 lightQuantFrame()
             } else if(is.null(input$file2)==FALSE){
-                merged.frame <- merge(lightQuantFrame(), traceQuantFrame(), by = "Depth", all=TRUE)
-                merged.frame[complete.cases(merged.frame), ]
+                #merged.frame <- merge(lightQuantFrame(), traceQuantFrame(), by = "Depth", all=TRUE)
+                #merged.frame[complete.cases(merged.frame), ]
+                merge(lightQuantFrame(), traceQuantFrame(), by = "Depth", all=TRUE)
             }
+            
+            newdata <- data[order(data$Depth),]
+            
+            
+            if(input$zeroout==TRUE){
+                newdata[newdata<0] <- 0
+            } 
+            
+            newdata
+
             
         })
         
@@ -1219,10 +1236,9 @@ output$defaultlines <- renderUI({
       empty.depth <- rep(0, 50)
       empty.age <- rep(0, 50)
       empty.sigma <- rep(0, 50)
-      empty.curve <- rep("intcal13", 50)
       
-      empty.table <- data.frame(empty.depth, empty.age, empty.sigma, empty.curve)
-      colnames(empty.table) <- c("Depth", "14C Age", "Sigma", "CalCurve")
+      empty.table <- data.frame(empty.depth, empty.age, empty.sigma)
+      colnames(empty.table) <- c("Depth", "14C Age", "Sigma")
       
       empty.table
       
@@ -1264,7 +1280,7 @@ output$defaultlines <- renderUI({
       
       isolate(
        if(input$ageon==TRUE){
-          Bchronology(ages=as.numeric(as.vector(DF5[,2])), ageSds=as.numeric(as.vector(DF5[,3])), positions=as.numeric(as.vector(DF5[,1])), positionThickness=rep(0.5, length(DF5$Sigma)), calCurves=DF5[,4], burn=2000, jitterPositions=TRUE)
+          Bchronology(ages=as.numeric(as.vector(DF5[,2])), ageSds=as.numeric(as.vector(DF5[,3])), positions=as.numeric(as.vector(DF5[,1])), positionThickness=rep(0.5, length(DF5$Sigma)), calCurves=rep(input$curvetype, length(DF5[,1])), burn=2000, jitterPositions=TRUE)
       }else if(input$ageon==FALSE){
           NULL
       }
@@ -1827,7 +1843,7 @@ output$defaultlines <- renderUI({
       
       hover <- input$plot_hoverpca
       point <- nearPoints(point.table,  coordinfo=hover,   threshold = 5, maxpoints = 1, addDist = TRUE)
-      #if (nrow(point) == 0) return(NULL)
+      if (nrow(point) == 0) return(NULL)
       
       
       
@@ -1982,7 +1998,7 @@ output$defaultlines <- renderUI({
      spectra.line.table <- ageData()
      
      x.data <- spectra.line.table[input$xaxistype]
-     xmindata <- min(x.data)
+     xmindata <- min(x.data) - min(x.data)*.05
      
          xmindata
      
@@ -1993,7 +2009,7 @@ output$defaultlines <- renderUI({
      spectra.line.table <- ageData()
      
      x.data <- spectra.line.table[input$xaxistype]
-     xmaxdata <- max(x.data)
+     xmaxdata <- max(x.data) + max(x.data)*.05
      xmaxdata
 
  })
@@ -2035,7 +2051,7 @@ output$inxlimrange <- renderUI({
       
       
       spectra.line.table <- ageData()
-      spectra.line.table <- subset(spectra.line.table, !(spectra.line.table[input$xaxistype] < input$xlimrange[1] | spectra.line.table[input$xaxistype] > input$xlimrange[2]))
+      #spectra.line.table <- subset(spectra.line.table, !(spectra.line.table[input$xaxistype] <= input$xlimrange[1] | spectra.line.table[input$xaxistype] >= input$xlimrange[2]))
       
       
       spectra.line.table.norm <- data.frame(spectra.line.table, null)
@@ -2403,7 +2419,7 @@ output$inxlimrange <- renderUI({
       
       spectra.line.table <- ageData()
       
-      spectra.line.table <- subset(spectra.line.table, !(spectra.line.table[input$xaxistype] < input$xlimrange[1] | spectra.line.table[input$xaxistype] > input$xlimrange[2]))
+      spectra.line.table <- subset(spectra.line.table, !(spectra.line.table[input$xaxistype] <= input$xlimrange[1] | spectra.line.table[input$xaxistype] >= input$xlimrange[2]))
       
       if(is.null(spectra.line.table$Age)==TRUE){
           spectra.line.table$Age <- rep(1, length(spectra.line.table$Depth))
@@ -2434,7 +2450,7 @@ output$inxlimrange <- renderUI({
       hover <- input$plot_hover3a
       point <- nearPoints(point.table,  xvar="Interval", yvar="Selected", coordinfo=hover,   threshold = 10, maxpoints = 1)
       
-      #if (nrow(point) == 0) return(NULL)
+      if (nrow(point) == 0) return(NULL)
       
       
       
@@ -2512,7 +2528,7 @@ output$inxlimrange <- renderUI({
       }
       
       spectra.line.table <- ageData()
-      spectra.line.table <- subset(spectra.line.table, !(spectra.line.table[input$xaxistype] < input$xlimrange[1] | spectra.line.table[input$xaxistype] > input$xlimrange[2]))
+      spectra.line.table <- subset(spectra.line.table, !(spectra.line.table[input$xaxistype] <= input$xlimrange[1] | spectra.line.table[input$xaxistype] >= input$xlimrange[2]))
       
       
       spectra.line.table.norm <- data.frame(spectra.line.table, null)
@@ -2873,7 +2889,7 @@ output$inxlimrange <- renderUI({
       
       spectra.line.table <- ageData()
       
-      spectra.line.table <- subset(spectra.line.table, !(spectra.line.table[input$xaxistype] < input$xlimrange[1] | spectra.line.table[input$xaxistype] > input$xlimrange[2]))
+      spectra.line.table <- subset(spectra.line.table, !(spectra.line.table[input$xaxistype] <= input$xlimrange[1] | spectra.line.table[input$xaxistype] >= input$xlimrange[2]))
       
       if(is.null(spectra.line.table$Age)==TRUE){
           spectra.line.table$Age <- rep(1, length(spectra.line.table$Depth))
@@ -2904,7 +2920,7 @@ output$inxlimrange <- renderUI({
       hover <- input$plot_hover3b
       point <- nearPoints(point.table,  xvar="Interval", yvar="Selected", coordinfo=hover,   threshold = 10, maxpoints = 1)
       
-      #if (nrow(point) == 0) return(NULL)
+      if (nrow(point) == 0) return(NULL)
       
       
       
@@ -2967,7 +2983,7 @@ output$inxlimrange <- renderUI({
       
       
       spectra.line.table <- ageData()
-      spectra.line.table <- subset(spectra.line.table, !(spectra.line.table[input$xaxistype] < input$xlimrange[1] | spectra.line.table[input$xaxistype] > input$xlimrange[2]))
+      spectra.line.table <- subset(spectra.line.table, !(spectra.line.table[input$xaxistype] <= input$xlimrange[1] | spectra.line.table[input$xaxistype] >= input$xlimrange[2]))
       
       spectra.line.table.norm <- data.frame(spectra.line.table, null)
       colnames(spectra.line.table.norm) <- c(names(spectra.line.table), "None")
@@ -3324,7 +3340,7 @@ output$inxlimrange <- renderUI({
       
       spectra.line.table <- ageData()
       
-      spectra.line.table <- subset(spectra.line.table, !(spectra.line.table[input$xaxistype] < input$xlimrange[1] | spectra.line.table[input$xaxistype] > input$xlimrange[2]))
+      spectra.line.table <- subset(spectra.line.table, !(spectra.line.table[input$xaxistype] <= input$xlimrange[1] | spectra.line.table[input$xaxistype] >= input$xlimrange[2]))
       
       if(is.null(spectra.line.table$Age)==TRUE){
           spectra.line.table$Age <- rep(1, length(spectra.line.table$Depth))
@@ -3355,7 +3371,7 @@ output$inxlimrange <- renderUI({
       hover <- input$plot_hover3c
       point <- nearPoints(point.table,  xvar="Interval", yvar="Selected", coordinfo=hover,   threshold = 10, maxpoints = 1)
       
-      #if (nrow(point) == 0) return(NULL)
+      if (nrow(point) == 0) return(NULL)
       
       
       
@@ -3414,7 +3430,7 @@ output$inxlimrange <- renderUI({
       
       
       spectra.line.table <- ageData()
-      spectra.line.table <- subset(spectra.line.table, !(spectra.line.table[input$xaxistype] < input$xlimrange[1] | spectra.line.table[input$xaxistype] > input$xlimrange[2]))
+      spectra.line.table <- subset(spectra.line.table, !(spectra.line.table[input$xaxistype] <= input$xlimrange[1] | spectra.line.table[input$xaxistype] >= input$xlimrange[2]))
       
       spectra.line.table.norm <- data.frame(spectra.line.table, null)
       colnames(spectra.line.table.norm) <- c(names(spectra.line.table), "None")
@@ -3777,7 +3793,7 @@ output$inxlimrange <- renderUI({
       
       spectra.line.table <- ageData()
       
-      spectra.line.table <- subset(spectra.line.table, !(spectra.line.table[input$xaxistype] < input$xlimrange[1] | spectra.line.table[input$xaxistype] > input$xlimrange[2]))
+      spectra.line.table <- subset(spectra.line.table, !(spectra.line.table[input$xaxistype] <= input$xlimrange[1] | spectra.line.table[input$xaxistype] >= input$xlimrange[2]))
       
       if(is.null(spectra.line.table$Age)==TRUE){
           spectra.line.table$Age <- rep(1, length(spectra.line.table$Depth))
@@ -3808,7 +3824,7 @@ output$inxlimrange <- renderUI({
       hover <- input$plot_hover3d
       point <- nearPoints(point.table,  xvar="Interval", yvar="Selected", coordinfo=hover,   threshold = 10, maxpoints = 1)
       
-      #if (nrow(point) == 0) return(NULL)
+      if (nrow(point) == 0) return(NULL)
       
       
       
@@ -3874,7 +3890,7 @@ output$inxlimrange <- renderUI({
       
       
       spectra.line.table <- ageData()
-      spectra.line.table <- subset(spectra.line.table, !(spectra.line.table[input$xaxistype] < input$xlimrange[1] | spectra.line.table[input$xaxistype] > input$xlimrange[2]))
+      spectra.line.table <- subset(spectra.line.table, !(spectra.line.table[input$xaxistype] <= input$xlimrange[1] | spectra.line.table[input$xaxistype] >= input$xlimrange[2]))
       
       
       spectra.line.table.norm <- data.frame(spectra.line.table, null)
@@ -4239,7 +4255,7 @@ output$inxlimrange <- renderUI({
       
       spectra.line.table <- ageData()
       
-      spectra.line.table <- subset(spectra.line.table, !(spectra.line.table[input$xaxistype] < input$xlimrange[1] | spectra.line.table[input$xaxistype] > input$xlimrange[2]))
+      spectra.line.table <- subset(spectra.line.table, !(spectra.line.table[input$xaxistype] <= input$xlimrange[1] | spectra.line.table[input$xaxistype] >= input$xlimrange[2]))
       
       if(is.null(spectra.line.table$Age)==TRUE){
           spectra.line.table$Age <- rep(1, length(spectra.line.table$Depth))
@@ -4270,7 +4286,7 @@ output$inxlimrange <- renderUI({
       hover <- input$plot_hover3e
       point <- nearPoints(point.table,  xvar="Interval", yvar="Selected", coordinfo=hover,   threshold = 10, maxpoints = 1)
       
-      #if (nrow(point) == 0) return(NULL)
+      if (nrow(point) == 0) return(NULL)
       
       
       
@@ -4651,7 +4667,7 @@ output$inxlimrange <- renderUI({
       
       hover <- input$plot_hoverratio
       point <- nearPoints(point.table,  coordinfo=hover,   threshold = 5, maxpoints = 1, addDist = TRUE)
-      #if (nrow(point) == 0) return(NULL)
+      if (nrow(point) == 0) return(NULL)
       
       
       # calculate point position INSIDE the image as percent of total dimensions
@@ -6335,8 +6351,8 @@ output$inxlimrange <- renderUI({
 
       
       x.data <- spectra.line.table[input$xaxistypeeq]
-      xmindata <- min(x.data)
-      
+      xmindata <- min(x.data) - min(x.data)*.05
+
       xmindata
       
       
@@ -6347,7 +6363,8 @@ output$inxlimrange <- renderUI({
 
       
       x.data <- spectra.line.table[input$xaxistypeeq]
-      xmaxdata <- max(x.data)
+      xmaxdata <- max(xmaxdata) + max(xmaxdata)*.05
+
       xmaxdata
       
   })
@@ -6414,7 +6431,7 @@ output$inxlimrange <- renderUI({
       
       spectra.line.table <- dataTransform()
       
-      spectra.line.table <- subset(spectra.line.table, !(spectra.line.table[input$xaxistypeeq] < input$xlimrangeeq[1] | spectra.line.table[input$xaxistypeeq] > input$xlimrangeeq[2]))
+      #spectra.line.table <- subset(spectra.line.table, !(spectra.line.table[input$xaxistypeeq] <= input$xlimrangeeq[1] | spectra.line.table[input$xaxistypeeq] >= input$xlimrangeeq[2]))
       
 
       
@@ -6754,7 +6771,7 @@ scale_colour_gradientn(colours=rev(terrain.colors(length(spectra.timeseries.tabl
       
       spectra.line.table <- dataTransform()
       
-      spectra.line.table <- subset(spectra.line.table, !(spectra.line.table[input$xaxistypeeq] < input$xlimrangeeq[1] | spectra.line.table[input$xaxistypeeq] > input$xlimrangeeq[2]))
+      #spectra.line.table <- subset(spectra.line.table, !(spectra.line.table[input$xaxistypeeq] <= input$xlimrangeeq[1] | spectra.line.table[input$xaxistypeeq] >= input$xlimrangeeq[2]))
       
       if(is.null(spectra.line.table$Age)==TRUE){
           spectra.line.table$Age <- rep(1, length(spectra.line.table$Depth))
@@ -6775,7 +6792,7 @@ scale_colour_gradientn(colours=rev(terrain.colors(length(spectra.timeseries.tabl
       hover <- input$plot_hover6a
       point <- nearPoints(point.table,  xvar="Interval", yvar="Selected", coordinfo=hover,   threshold = 10, maxpoints = 1)
       
-      #if (nrow(point) == 0) return(NULL)
+      if (nrow(point) == 0) return(NULL)
       
       
       
@@ -6839,7 +6856,7 @@ scale_colour_gradientn(colours=rev(terrain.colors(length(spectra.timeseries.tabl
       
       
       spectra.line.table <- dataTransform()
-      spectra.line.table <- subset(spectra.line.table, !(spectra.line.table[input$xaxistypeeq] < input$xlimrangeeq[1] | spectra.line.table[input$xaxistypeeq] > input$xlimrangeeq[2]))
+      #spectra.line.table <- subset(spectra.line.table, !(spectra.line.table[input$xaxistypeeq] <= input$xlimrangeeq[1] | spectra.line.table[input$xaxistypeeq] >= input$xlimrangeeq[2]))
 
 
       
@@ -7189,7 +7206,7 @@ scale_colour_gradientn(colours=rev(terrain.colors(length(spectra.timeseries.tabl
       
       spectra.line.table <- dataTransform()
       
-      spectra.line.table <- subset(spectra.line.table, !(spectra.line.table[input$xaxistypeeq] < input$xlimrangeeq[1] | spectra.line.table[input$xaxistypeeq] > input$xlimrangeeq[2]))
+      #spectra.line.table <- subset(spectra.line.table, !(spectra.line.table[input$xaxistypeeq] <= input$xlimrangeeq[1] | spectra.line.table[input$xaxistypeeq] >= input$xlimrangeeq[2]))
       
       if(is.null(spectra.line.table$Age)==TRUE){
           spectra.line.table$Age <- rep(1, length(spectra.line.table$Depth))
@@ -7211,7 +7228,7 @@ scale_colour_gradientn(colours=rev(terrain.colors(length(spectra.timeseries.tabl
       hover <- input$plot_hover6b
       point <- nearPoints(point.table,  xvar="Interval", yvar="Selected", coordinfo=hover,   threshold = 10, maxpoints = 1)
       
-      #if (nrow(point) == 0) return(NULL)
+      if (nrow(point) == 0) return(NULL)
       
       
       
@@ -7278,7 +7295,7 @@ scale_colour_gradientn(colours=rev(terrain.colors(length(spectra.timeseries.tabl
       
       
       spectra.line.table <- dataTransform()
-      spectra.line.table <- subset(spectra.line.table, !(spectra.line.table[input$xaxistypeeq] < input$xlimrangeeq[1] | spectra.line.table[input$xaxistypeeq] > input$xlimrangeeq[2]))
+      #spectra.line.table <- subset(spectra.line.table, !(spectra.line.table[input$xaxistypeeq] <= input$xlimrangeeq[1] | spectra.line.table[input$xaxistypeeq] >= input$xlimrangeeq[2]))
 
 
       
@@ -7629,7 +7646,7 @@ scale_colour_gradientn(colours=rev(terrain.colors(length(spectra.timeseries.tabl
       
       spectra.line.table <- dataTransform()
       
-      spectra.line.table <- subset(spectra.line.table, !(spectra.line.table[input$xaxistypeeq] < input$xlimrangeeq[1] | spectra.line.table[input$xaxistypeeq] > input$xlimrangeeq[2]))
+      #spectra.line.table <- subset(spectra.line.table, !(spectra.line.table[input$xaxistypeeq] <= input$xlimrangeeq[1] | spectra.line.table[input$xaxistypeeq] >= input$xlimrangeeq[2]))
       
       if(is.null(spectra.line.table$Age)==TRUE){
           spectra.line.table$Age <- rep(1, length(spectra.line.table$Depth))
@@ -7650,7 +7667,7 @@ scale_colour_gradientn(colours=rev(terrain.colors(length(spectra.timeseries.tabl
       hover <- input$plot_hover6c
       point <- nearPoints(point.table,  xvar="Interval", yvar="Selected", coordinfo=hover,   threshold = 10, maxpoints = 1)
       
-      #if (nrow(point) == 0) return(NULL)
+      if (nrow(point) == 0) return(NULL)
       
       
       
@@ -7713,7 +7730,7 @@ scale_colour_gradientn(colours=rev(terrain.colors(length(spectra.timeseries.tabl
       
       
       spectra.line.table <- dataTransform()
-      spectra.line.table <- subset(spectra.line.table, !(spectra.line.table[input$xaxistypeeq] < input$xlimrangeeq[1] | spectra.line.table[input$xaxistypeeq] > input$xlimrangeeq[2]))
+      #spectra.line.table <- subset(spectra.line.table, !(spectra.line.table[input$xaxistypeeq] <= input$xlimrangeeq[1] | spectra.line.table[input$xaxistypeeq] >= input$xlimrangeeq[2]))
 
 
 
@@ -8065,7 +8082,7 @@ scale_colour_gradientn(colours=rev(terrain.colors(length(spectra.timeseries.tabl
       
       spectra.line.table <- dataTransform()
       
-      spectra.line.table <- subset(spectra.line.table, !(spectra.line.table[input$xaxistypeeq] < input$xlimrangeeq[1] | spectra.line.table[input$xaxistypeeq] > input$xlimrangeeq[2]))
+      #spectra.line.table <- subset(spectra.line.table, !(spectra.line.table[input$xaxistypeeq] <= input$xlimrangeeq[1] | spectra.line.table[input$xaxistypeeq] >= input$xlimrangeeq[2]))
       
       if(is.null(spectra.line.table$Age)==TRUE){
           spectra.line.table$Age <- rep(1, length(spectra.line.table$Depth))
@@ -8087,7 +8104,7 @@ scale_colour_gradientn(colours=rev(terrain.colors(length(spectra.timeseries.tabl
       hover <- input$plot_hover6d
       point <- nearPoints(point.table,  xvar="Interval", yvar="Selected", coordinfo=hover,   threshold = 10, maxpoints = 1)
       
-      #if (nrow(point) == 0) return(NULL)
+      if (nrow(point) == 0) return(NULL)
       
       
       
@@ -8155,7 +8172,7 @@ scale_colour_gradientn(colours=rev(terrain.colors(length(spectra.timeseries.tabl
       
       
       spectra.line.table <- dataTransform()
-      spectra.line.table <- subset(spectra.line.table, !(spectra.line.table[input$xaxistypeeq] < input$xlimrangeeq[1] | spectra.line.table[input$xaxistypeeq] > input$xlimrangeeq[2]))
+      #spectra.line.table <- subset(spectra.line.table, !(spectra.line.table[input$xaxistypeeq] <= input$xlimrangeeq[1] | spectra.line.table[input$xaxistypeeq] >= input$xlimrangeeq[2]))
 
 
       
@@ -8509,7 +8526,7 @@ scale_colour_gradientn(colours=rev(terrain.colors(length(spectra.timeseries.tabl
       
       spectra.line.table <- dataTransform()
       
-      spectra.line.table <- subset(spectra.line.table, !(spectra.line.table[input$xaxistypeeq] < input$xlimrangeeq[1] | spectra.line.table[input$xaxistypeeq] > input$xlimrangeeq[2]))
+      #spectra.line.table <- subset(spectra.line.table, !(spectra.line.table[input$xaxistypeeq] <= input$xlimrangeeq[1] | spectra.line.table[input$xaxistypeeq] >= input$xlimrangeeq[2]))
       
       if(is.null(spectra.line.table$Age)==TRUE){
           spectra.line.table$Age <- rep(1, length(spectra.line.table$Depth))
@@ -8531,7 +8548,7 @@ scale_colour_gradientn(colours=rev(terrain.colors(length(spectra.timeseries.tabl
       hover <- input$plot_hover6e
       point <- nearPoints(point.table,  xvar="Interval", yvar="Selected", coordinfo=hover,   threshold = 10, maxpoints = 1)
       
-      #if (nrow(point) == 0) return(NULL)
+      if (nrow(point) == 0) return(NULL)
       
       
       

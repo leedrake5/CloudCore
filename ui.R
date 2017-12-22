@@ -190,8 +190,9 @@ downloadButton('ageresults', "Age Results Table"),
 tags$hr(),
 checkboxInput("ageon", label="Age Model On", TRUE),
 
-checkboxInput("constrainage", label="Constrain Chronology", TRUE)
+checkboxInput("constrainage", label="Constrain Chronology", TRUE),
 
+selectInput('curvetype', "Choose Calibration", choices=c("intcal13", "marine13", "shcal13", "normal"), selected="intcal13")
 
 
 
@@ -228,6 +229,8 @@ downloadButton('downloadData', "Table"),
 
 tags$hr(),
 
+checkboxInput('zeroout', "Eliminate Negative Values", value=TRUE),
+
 conditionalPanel(
 condition='input.dataset === myData()',
 uiOutput('defaultlines')
@@ -238,7 +241,6 @@ uiOutput('defaultlines')
 
 mainPanel(
 tabsetPanel(
-id = 'dataset',
 tabPanel('Spectral Lines', dataTableOutput('mytable1')),
 tabPanel('Add Categories', rHandsontableOutput('hot'))
 ))
@@ -284,7 +286,6 @@ downloadButton('xrfpcatablefull', "Results")
 
 mainPanel(
 tabsetPanel(
-id = 'dataset',
 tabPanel('PCA Plot',
 
 # this is an extra div used ONLY to create positioned ancestor for tooltip
@@ -384,7 +385,6 @@ numericInput("ymultiply", label="Y Axis Unit Shift", min=.000001, max=1000000, v
 
 mainPanel(
 tabsetPanel(
-id = 'dataset',
 tabPanel('Time Series 1',
 div(
 style = "position:relative",
@@ -485,7 +485,8 @@ downloadButton('downloadPlot5', "Plot")
 ),
 
 mainPanel(
-tabPanel('Ternary Plot', plotOutput('ternaryplot',
+tabPanel(
+plotOutput('ternaryplot',
 dblclick = "plot1_dblclick", height = 700,
 brush = brushOpts(
 id = "plot1_brush",
@@ -657,7 +658,6 @@ checkboxInput("transformnorm", label="Normalize", FALSE)
 
 mainPanel(
 tabsetPanel(
-id = 'dataset',
 tabPanel('Time Series 1',
 div(
 style = "position:relative",
