@@ -24,14 +24,12 @@ downloadButton('downloadPlot', "Plot"),
 tags$hr(),
 
 fileInput('file1', 'Light Element Spectra', multiple=TRUE,
-accept=c('text/csv',
-'text/comma-separated-values,text/plain',
-'.csv')),
+accept=c('.csv', '.zip')),
 
 fileInput('file2', 'Trace Element Spectra', multiple=TRUE,
-accept=c('text/csv',
-'text/comma-separated-values,text/plain',
-'.csv')),
+accept=c('.csv', '.zip')),
+
+checkboxInput('iszip', "Use Zip Archive (testing)", value=FALSE),
 
 radioButtons("filetype", label=NULL, c("Spectra", "Net"), selected="Spectra"),
 
@@ -485,13 +483,12 @@ downloadButton('downloadPlot5', "Plot")
 ),
 
 mainPanel(
-tabPanel(
 plotOutput('ternaryplot',
 dblclick = "plot1_dblclick", height = 700,
 brush = brushOpts(
 id = "plot1_brush",
 resetOnNew = TRUE
-))))
+)))
 
 
 ))

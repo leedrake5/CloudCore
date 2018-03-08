@@ -29,6 +29,14 @@ shinyServer(function(input, output, session) {
         withProgress(message = 'Processing Data', value = 0, {
             
             inFile <- input$file1
+            
+            inFile <- if(input$iszip==FALSE){
+                inFile
+            }else if(input$iszip==TRUE){
+                unzip(inFile$datapath, list=TRUE)
+            }
+            
+            
             if (is.null(inFile)) return(NULL)
             temp = inFile$name
             temp <- gsub(".csv", "", temp)
@@ -73,7 +81,15 @@ shinyServer(function(input, output, session) {
         
         withProgress(message = 'Processing Data', value = 0, {
             
+            
             inFile <- input$file2
+            
+            inFile <- if(input$iszip==FALSE){
+                inFile
+            }else if(input$iszip==TRUE){
+                unzip(inFile)
+            }
+            
             if (is.null(inFile)) return(NULL)
             temp = inFile$name
             temp <- gsub(".csv", "", temp)
@@ -147,9 +163,14 @@ shinyServer(function(input, output, session) {
     netCounts <- reactive({
         
         withProgress(message = 'Processing Data', value = 0, {
+            inFile <- input$file1
+            inFile <- if(input$iszip==FALSE){
+                inFile
+            }else if(input$iszip==TRUE){
+                unzip(inFile)
+            }
 
 
-        inFile <- input$file1
         if (is.null(inFile)) return(NULL)
         
         #inName <- inFile$name
@@ -190,9 +211,14 @@ shinyServer(function(input, output, session) {
     netCountsSecond <- reactive({
         
         withProgress(message = 'Processing Data', value = 0, {
-            
-            
             inFile <- input$file2
+
+            inFile <- if(input$iszip==FALSE){
+                inFile
+            }else if(input$iszip==TRUE){
+                unzip(inFile)
+            }
+            
             if (is.null(inFile)) return(NULL)
             
             #inName <- inFile$name
@@ -229,6 +255,8 @@ shinyServer(function(input, output, session) {
         united.frame
         
     })
+    
+
     
     myDataFirst <- reactive({
         if(input$filetype=="Spectra"){
@@ -5204,7 +5232,7 @@ output$inxlimrange <- renderUI({
   
   output$ternaryplot <- renderPlot({
       
-      print(plotInput5())
+      plotInput5()
       
   })
   
@@ -5529,7 +5557,7 @@ output$inxlimrange <- renderUI({
           (spectra.line.table[input$elementnum1] / spectra.line.table[input$elementnum2] / spectra.line.table[input$elementnum3])/(spectra.line.table[input$elementden1] / spectra.line.table[input$elementden2])
           #######################################
           #######################################
-          ########################################Phyt01ith!
+          ########################################
           ####Addition Third Denominator#########
           #######################################
           #######################################
@@ -5731,7 +5759,7 @@ output$inxlimrange <- renderUI({
           (spectra.line.table[input$elementnum1] / spectra.line.table[input$elementnum2] / spectra.line.table[input$elementnum3])/(spectra.line.table[input$elementden1] / spectra.line.table[input$elementden2] + spectra.line.table[input$elementden3])
           #######################################
           #######################################
-          ########################################Phyt01ith!
+          ########################################
           ####Subtraction Third Denominator#########
           #######################################
           #######################################
@@ -5933,7 +5961,7 @@ output$inxlimrange <- renderUI({
           (spectra.line.table[input$elementnum1] / spectra.line.table[input$elementnum2] / spectra.line.table[input$elementnum3])/(spectra.line.table[input$elementden1] / spectra.line.table[input$elementden2] - spectra.line.table[input$elementden3])
           #######################################
           #######################################
-          ########################################Phyt01ith!
+          ########################################
           ####Multiple Third Denominator#########
           #######################################
           #######################################
@@ -6135,7 +6163,7 @@ output$inxlimrange <- renderUI({
           (spectra.line.table[input$elementnum1] / spectra.line.table[input$elementnum2] / spectra.line.table[input$elementnum3])/(spectra.line.table[input$elementden1] / spectra.line.table[input$elementden2] * spectra.line.table[input$elementden3])
           #######################################
           #######################################
-          ########################################Phyt01ith!
+          ########################################
           ####Divide Third Denominator#########
           #######################################
           #######################################

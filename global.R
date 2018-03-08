@@ -1313,6 +1313,13 @@ spectra.line.fn <- function(data) {
     Ru.Ka.ag <- aggregate(list(Ru.Ka.frame$Counts), by=list(Ru.Ka.frame$Spectrum), FUN="sum")
     colnames(Ru.Ka.ag) <- c("Spectrum", "Ru K-alpha")
     
+    Compton.cps <- subset(data$CPS, !(data$Energy < 18.4 | data$Energy > 19.4))
+    Compton.file <- subset(data$Spectrum, !(data$Energy < 18.4 | data$Energy > 19.4))
+    Compton.frame <- data.frame(is.0(Compton.cps, Compton.file))
+    colnames(Compton.frame) <- c("Counts", "Spectrum")
+    Compton.ag <- aggregate(list(Compton.frame$Counts), by=list(Compton.frame$Spectrum), FUN="sum")
+    colnames(Compton.ag) <- c("Spectrum", "Compton")
+    
     Rh.Ka.cps <- subset(data$CPS, !(data$Energy < Rh.K[2]-0.02 | data$Energy > Rh.K[1]+0.02))
     Rh.file <- subset(data$Spectrum, !(data$Energy < Rh.K[2]-0.02 | data$Energy > Rh.K[1]+0.02))
     Rh.Ka.frame <- data.frame(is.0(Rh.Ka.cps, Rh.file))
@@ -2140,7 +2147,7 @@ spectra.line.fn <- function(data) {
     U.Lb.ag <- aggregate(list(U.Lb.frame$Counts), by=list(U.Lb.frame$Spectrum), FUN="sum")
     colnames(U.Lb.ag) <- c("Spectrum", "U L-beta")
     
-    spectra.lines <- Reduce(function(x, y) merge(x, y, all=TRUE), list(Ne.Ka.ag, Na.Ka.ag, Mg.Ka.ag, Al.Ka.ag, Si.Ka.ag, P.Ka.ag, S.Ka.ag, Cl.Ka.ag, Ar.Ka.ag, K.Ka.ag, Ca.Ka.ag, Sc.Ka.ag, Ti.Ka.ag, V.Ka.ag, Cr.Ka.ag, Mn.Ka.ag, Fe.Ka.ag, Co.Ka.ag, Ni.Ka.ag, Cu.Ka.ag, Zn.Ka.ag, Ga.Ka.ag, Ge.Ka.ag, As.Ka.ag, Se.Ka.ag, Br.Ka.ag, Kr.Ka.ag, Rb.Ka.ag, Sr.Ka.ag, Y.Ka.ag, Zr.Ka.ag, Nb.Ka.ag, Mo.Ka.ag, Mo.La.ag, Mo.Lb.ag, Ru.Ka.ag, Ru.La.ag, Ru.Lb.ag, Rh.Ka.ag, Rh.La.ag, Rh.Lb.ag, Pd.Ka.ag, Pd.La.ag, Pd.Lb.ag, Ag.Ka.ag, Ag.La.ag, Ag.Lb.ag, Cd.Ka.ag,Cd.La.ag, Cd.Lb.ag,  In.Ka.ag, In.La.ag, Sn.Ka.ag, Sn.La.ag, Sn.Lb.ag, Sb.Ka.ag, Sb.La.ag, Sb.Lb.ag, Te.Ka.ag, Te.La.ag, Te.Lb.ag, I.Ka.ag, I.La.ag, I.Lb.ag, Xe.Ka.ag, Xe.La.ag, Xe.Lb.ag, Cs.Ka.ag, Cs.La.ag, Cs.Lb.ag, Ba.Ka.ag, Ba.La.ag, Ba.Lb.ag, La.Ka.ag, La.La.ag, La.Lb.ag, Ce.Ka.ag, Ce.La.ag, Ce.Lb.ag, Pr.Ka.ag, Pr.La.ag, Pr.Lb.ag, Nd.Ka.ag, Nd.La.ag, Nd.Lb.ag, Pm.La.ag, Pm.Lb.ag, Sm.La.ag, Sm.Lb.ag, Eu.La.ag, Eu.Lb.ag, Gd.La.ag, Gd.Lb.ag, Tb.La.ag, Tb.Lb.ag, Dy.La.ag, Dy.Lb.ag, Ho.La.ag, Ho.Lb.ag, Er.La.ag, Er.Lb.ag, Tm.La.ag, Tm.Lb.ag, Yb.La.ag, Yb.Lb.ag, Lu.La.ag, Lu.Lb.ag, Hf.La.ag, Hf.Lb.ag, Ta.La.ag, Ta.Lb.ag, W.La.ag, W.Lb.ag, Re.La.ag, Re.Lb.ag, Os.La.ag, Os.Lb.ag, Ir.La.ag, Ir.Lb.ag, Pt.La.ag, Pt.Lb.ag, Au.La.ag, Au.Lb.ag, Hg.La.ag, Hg.Lb.ag, Tl.La.ag, Tl.Lb.ag, Pb.La.ag, Pb.Lb.ag, Bi.La.ag, Bi.Lb.ag, Po.La.ag, Po.Lb.ag, At.La.ag, At.Lb.ag, Rn.La.ag, Rn.Lb.ag, Fr.La.ag, Fr.Lb.ag, Ra.La.ag, Ra.Lb.ag, Ac.La.ag, Ac.Lb.ag, Th.La.ag, Th.Lb.ag, Pa.La.ag, Pa.Lb.ag, U.La.ag, U.Lb.ag))
+    spectra.lines <- Reduce(function(x, y) merge(x, y, all=TRUE), list(Ne.Ka.ag, Na.Ka.ag, Mg.Ka.ag, Al.Ka.ag, Si.Ka.ag, P.Ka.ag, S.Ka.ag, Cl.Ka.ag, Ar.Ka.ag, K.Ka.ag, Ca.Ka.ag, Sc.Ka.ag, Ti.Ka.ag, V.Ka.ag, Cr.Ka.ag, Mn.Ka.ag, Fe.Ka.ag, Co.Ka.ag, Ni.Ka.ag, Cu.Ka.ag, Zn.Ka.ag, Ga.Ka.ag, Ge.Ka.ag, As.Ka.ag, Se.Ka.ag, Br.Ka.ag, Kr.Ka.ag, Rb.Ka.ag, Sr.Ka.ag, Y.Ka.ag, Zr.Ka.ag, Nb.Ka.ag, Mo.Ka.ag, Mo.La.ag, Mo.Lb.ag, Ru.Ka.ag, Ru.La.ag, Ru.Lb.ag, Compton.ag, Rh.Ka.ag, Rh.La.ag, Rh.Lb.ag, Pd.Ka.ag, Pd.La.ag, Pd.Lb.ag, Ag.Ka.ag, Ag.La.ag, Ag.Lb.ag, Cd.Ka.ag,Cd.La.ag, Cd.Lb.ag,  In.Ka.ag, In.La.ag, Sn.Ka.ag, Sn.La.ag, Sn.Lb.ag, Sb.Ka.ag, Sb.La.ag, Sb.Lb.ag, Te.Ka.ag, Te.La.ag, Te.Lb.ag, I.Ka.ag, I.La.ag, I.Lb.ag, Xe.Ka.ag, Xe.La.ag, Xe.Lb.ag, Cs.Ka.ag, Cs.La.ag, Cs.Lb.ag, Ba.Ka.ag, Ba.La.ag, Ba.Lb.ag, La.Ka.ag, La.La.ag, La.Lb.ag, Ce.Ka.ag, Ce.La.ag, Ce.Lb.ag, Pr.Ka.ag, Pr.La.ag, Pr.Lb.ag, Nd.Ka.ag, Nd.La.ag, Nd.Lb.ag, Pm.La.ag, Pm.Lb.ag, Sm.La.ag, Sm.Lb.ag, Eu.La.ag, Eu.Lb.ag, Gd.La.ag, Gd.Lb.ag, Tb.La.ag, Tb.Lb.ag, Dy.La.ag, Dy.Lb.ag, Ho.La.ag, Ho.Lb.ag, Er.La.ag, Er.Lb.ag, Tm.La.ag, Tm.Lb.ag, Yb.La.ag, Yb.Lb.ag, Lu.La.ag, Lu.Lb.ag, Hf.La.ag, Hf.Lb.ag, Ta.La.ag, Ta.Lb.ag, W.La.ag, W.Lb.ag, Re.La.ag, Re.Lb.ag, Os.La.ag, Os.Lb.ag, Ir.La.ag, Ir.Lb.ag, Pt.La.ag, Pt.Lb.ag, Au.La.ag, Au.Lb.ag, Hg.La.ag, Hg.Lb.ag, Tl.La.ag, Tl.Lb.ag, Pb.La.ag, Pb.Lb.ag, Bi.La.ag, Bi.Lb.ag, Po.La.ag, Po.Lb.ag, At.La.ag, At.Lb.ag, Rn.La.ag, Rn.Lb.ag, Fr.La.ag, Fr.Lb.ag, Ra.La.ag, Ra.Lb.ag, Ac.La.ag, Ac.Lb.ag, Th.La.ag, Th.Lb.ag, Pa.La.ag, Pa.Lb.ag, U.La.ag, U.Lb.ag))
     
     spectra.lines <- data.frame(spectra.lines)
     return(spectra.lines)
@@ -2438,6 +2445,13 @@ spectra.trace.fn <- function(data) {
     Rh.Ka.ag <- aggregate(list(Rh.Ka.frame$Counts), by=list(Rh.Ka.frame$Spectrum), FUN="sum")
     colnames(Rh.Ka.ag) <- c("Spectrum", "Rh K-alpha")
     
+    Compton.cps <- subset(data$CPS, !(data$Energy < 18.4 | data$Energy > 19.4))
+    Compton.file <- subset(data$Spectrum, !(data$Energy < 18.4 | data$Energy > 19.4))
+    Compton.frame <- data.frame(is.0(Compton.cps, Compton.file))
+    colnames(Compton.frame) <- c("Counts", "Spectrum")
+    Compton.ag <- aggregate(list(Compton.frame$Counts), by=list(Compton.frame$Spectrum), FUN="sum")
+    colnames(Compton.ag) <- c("Spectrum", "Compton")
+    
     Pd.Ka.cps <- subset(data$CPS, !(data$Energy < Pd.K[2]-0.02 | data$Energy > Pd.K[1]+0.02))
     Pd.file <- subset(data$Spectrum, !(data$Energy < Pd.K[2]-0.02 | data$Energy > Pd.K[1]+0.02))
     Pd.Ka.frame <- data.frame(is.0(Pd.Ka.cps, Pd.file))
@@ -3244,7 +3258,7 @@ spectra.trace.fn <- function(data) {
     U.Lb.ag <- aggregate(list(U.Lb.frame$Counts), by=list(U.Lb.frame$Spectrum), FUN="sum")
     colnames(U.Lb.ag) <- c("Spectrum", "U L-beta")
     
-    spectra.lines <- Reduce(function(x, y) merge(x, y, all=TRUE), list(V.Ka.ag, Cr.Ka.ag, Mn.Ka.ag, Fe.Ka.ag, Co.Ka.ag, Ni.Ka.ag, Cu.Ka.ag, Zn.Ka.ag, Ga.Ka.ag, Ge.Ka.ag, As.Ka.ag, Se.Ka.ag, Br.Ka.ag, Kr.Ka.ag, Rb.Ka.ag, Sr.Ka.ag, Y.Ka.ag, Zr.Ka.ag, Nb.Ka.ag, Mo.Ka.ag, Mo.La.ag, Mo.Lb.ag, Ru.Ka.ag, Ru.La.ag, Ru.Lb.ag, Rh.Ka.ag, Rh.Lb.ag, Pd.Ka.ag, Pd.La.ag, Pd.Lb.ag, Ag.Ka.ag, Ag.La.ag, Ag.Lb.ag, Cd.Ka.ag,Cd.La.ag, Cd.Lb.ag,  In.Ka.ag, In.La.ag, Sn.Ka.ag, Sn.La.ag, Sn.Lb.ag, Sb.Ka.ag, Sb.La.ag, Sb.Lb.ag, Te.Ka.ag, Te.La.ag, Te.Lb.ag, I.Ka.ag, I.La.ag, I.Lb.ag, Xe.Ka.ag, Xe.La.ag, Xe.Lb.ag, Cs.Ka.ag, Cs.La.ag, Cs.Lb.ag, Ba.Ka.ag, Ba.Lb.ag, La.Ka.ag, La.La.ag, La.Lb.ag, Ce.Ka.ag, Ce.La.ag, Ce.Lb.ag, Pr.Ka.ag, Pr.La.ag, Pr.Lb.ag, Nd.Ka.ag, Nd.La.ag, Nd.Lb.ag, Pm.La.ag, Pm.Lb.ag, Sm.La.ag, Sm.Lb.ag, Eu.La.ag, Eu.Lb.ag, Gd.La.ag, Gd.Lb.ag, Tb.La.ag, Tb.Lb.ag, Dy.La.ag, Dy.Lb.ag, Ho.La.ag, Ho.Lb.ag, Er.La.ag, Er.Lb.ag, Tm.La.ag, Tm.Lb.ag, Yb.La.ag, Yb.Lb.ag, Lu.La.ag, Lu.Lb.ag, Hf.La.ag, Hf.Lb.ag, Ta.La.ag, Ta.Lb.ag, W.La.ag, W.Lb.ag, Re.La.ag, Re.Lb.ag, Os.La.ag, Os.Lb.ag, Ir.La.ag, Ir.Lb.ag, Pt.La.ag, Pt.Lb.ag, Au.La.ag, Au.Lb.ag, Hg.La.ag, Hg.Lb.ag, Tl.La.ag, Tl.Lb.ag, Pb.La.ag, Pb.Lb.ag, Bi.La.ag, Bi.Lb.ag, Po.La.ag, Po.Lb.ag, At.La.ag, At.Lb.ag, Rn.La.ag, Rn.Lb.ag, Fr.La.ag, Fr.Lb.ag, Ra.La.ag, Ra.Lb.ag, Ac.La.ag, Ac.Lb.ag, Th.La.ag, Th.Lb.ag, Pa.La.ag, Pa.Lb.ag, U.La.ag, U.Lb.ag))
+    spectra.lines <- Reduce(function(x, y) merge(x, y, all=TRUE), list(V.Ka.ag, Cr.Ka.ag, Mn.Ka.ag, Fe.Ka.ag, Co.Ka.ag, Ni.Ka.ag, Cu.Ka.ag, Zn.Ka.ag, Ga.Ka.ag, Ge.Ka.ag, As.Ka.ag, Se.Ka.ag, Br.Ka.ag, Kr.Ka.ag, Rb.Ka.ag, Sr.Ka.ag, Y.Ka.ag, Zr.Ka.ag, Nb.Ka.ag, Mo.Ka.ag, Mo.La.ag, Mo.Lb.ag, Ru.Ka.ag, Ru.La.ag, Ru.Lb.ag, Compton.ag, Rh.Ka.ag, Rh.Lb.ag, Pd.Ka.ag, Pd.La.ag, Pd.Lb.ag, Ag.Ka.ag, Ag.La.ag, Ag.Lb.ag, Cd.Ka.ag,Cd.La.ag, Cd.Lb.ag,  In.Ka.ag, In.La.ag, Sn.Ka.ag, Sn.La.ag, Sn.Lb.ag, Sb.Ka.ag, Sb.La.ag, Sb.Lb.ag, Te.Ka.ag, Te.La.ag, Te.Lb.ag, I.Ka.ag, I.La.ag, I.Lb.ag, Xe.Ka.ag, Xe.La.ag, Xe.Lb.ag, Cs.Ka.ag, Cs.La.ag, Cs.Lb.ag, Ba.Ka.ag, Ba.Lb.ag, La.Ka.ag, La.La.ag, La.Lb.ag, Ce.Ka.ag, Ce.La.ag, Ce.Lb.ag, Pr.Ka.ag, Pr.La.ag, Pr.Lb.ag, Nd.Ka.ag, Nd.La.ag, Nd.Lb.ag, Pm.La.ag, Pm.Lb.ag, Sm.La.ag, Sm.Lb.ag, Eu.La.ag, Eu.Lb.ag, Gd.La.ag, Gd.Lb.ag, Tb.La.ag, Tb.Lb.ag, Dy.La.ag, Dy.Lb.ag, Ho.La.ag, Ho.Lb.ag, Er.La.ag, Er.Lb.ag, Tm.La.ag, Tm.Lb.ag, Yb.La.ag, Yb.Lb.ag, Lu.La.ag, Lu.Lb.ag, Hf.La.ag, Hf.Lb.ag, Ta.La.ag, Ta.Lb.ag, W.La.ag, W.Lb.ag, Re.La.ag, Re.Lb.ag, Os.La.ag, Os.Lb.ag, Ir.La.ag, Ir.Lb.ag, Pt.La.ag, Pt.Lb.ag, Au.La.ag, Au.Lb.ag, Hg.La.ag, Hg.Lb.ag, Tl.La.ag, Tl.Lb.ag, Pb.La.ag, Pb.Lb.ag, Bi.La.ag, Bi.Lb.ag, Po.La.ag, Po.Lb.ag, At.La.ag, At.Lb.ag, Rn.La.ag, Rn.Lb.ag, Fr.La.ag, Fr.Lb.ag, Ra.La.ag, Ra.Lb.ag, Ac.La.ag, Ac.Lb.ag, Th.La.ag, Th.Lb.ag, Pa.La.ag, Pa.Lb.ag, U.La.ag, U.Lb.ag))
     
     spectra.lines <- data.frame(spectra.lines)
     return(spectra.lines)
