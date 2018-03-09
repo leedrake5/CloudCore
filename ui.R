@@ -3,6 +3,7 @@ library(dplyr)
 library(shinythemes)
 library(shiny)
 library(rhandsontable)
+library(shinyWidgets)
 
 
 
@@ -186,9 +187,9 @@ actionButton('hotableprocess3', "Run Age Model"),
 downloadButton('ageresults', "Age Results Table"),
 
 tags$hr(),
-checkboxInput("ageon", label="Age Model On", TRUE),
+checkboxInput("ageon", label="Age Model On", FALSE),
 
-checkboxInput("constrainage", label="Constrain Chronology", TRUE),
+checkboxInput("constrainage", label="Constrain Chronology", FALSE),
 
 selectInput('curvetype', "Choose Calibration", choices=c("intcal13", "marine13", "shcal13", "normal"), selected="intcal13")
 
@@ -297,6 +298,15 @@ uiOutput("hover_infopca")
 
 
 ),
+
+tabPanel("Optimal Clusters",
+div(
+style = "position:relative",
+plotOutput('optimalkplot',
+hover = hoverOpts("plot_hoveroptimalk", delay = 100, delayType = "debounce")),
+uiOutput("hover_infooptimalk"))
+),
+
 tabPanel("Table", DT::dataTableOutput('xrfpcatable'))
 
 
@@ -337,7 +347,7 @@ uiOutput('inelementtrend'),
 uiOutput('inelementnorm'),
 
 selectInput(
-"timecolour", "Time Series Type",
+'timecolour', "Time Series Type",
 c(
 "Black" = "Black",
 "Smooth" = "Smooth",
@@ -353,30 +363,35 @@ c(
 
 tags$hr(),
 
-uiOutput('inxlimrange'),
+dropdownButton(
+tags$h3("Line Options"), icon = icon("gear"),
+sliderInput('smoothing', label = "Smoothed Mean Average", value=1, min=1, max=50),
+sliderInput('linesize', label = "Line Size", value=1, min=1, max=15),
+sliderInput('pointsize', label = "Point Size", value=5, min=1, max=15),
+tooltip = tooltipOptions(title = "Click for line options")
+),
 
 
-sliderInput("smoothing", label = "Smoothed Mean Average", value=1, min=1, max=50),
+dropdownButton(
+tags$h3("X Axis Customization"), icon = icon("gear"),
+#uiOutput('inxlimrange'),
+selectInput('xaxistype', label="X Axis", c("Depth", "Age", "Custom"), selected="Depth"),
+textInput('customxaxis', label="Custom X Axis"),
+checkboxInput('flipx', label="Flip X Axis", value=FALSE),
+radioButtons('lengthunit', label=NULL, c("mm", "cm", "m", "inches", "feet"), selected="mm"),
+numericInput('startmm', label = "Start Point (mm)", value=0),
+radioButtons('timetype', label=NULL, c("AD", "BC", "BC/AD", "BP"), selected="BP"),
+tooltip = tooltipOptions(title = "Click for X-axis options")
+),
 
-sliderInput("linesize", label = "Line Size", value=1, min=1, max=15),
-sliderInput("pointsize", label = "Point Size", value=5, min=1, max=15),
-
-
-tags$hr(),
-
-selectInput("xaxistype", label="X Axis", c("Depth", "Age", "Custom"), selected="Depth"),
-textInput("customxaxis", label="Custom X Axis"),
-
-
-radioButtons("lengthunit", label=NULL, c("mm", "cm", "m", "inches", "feet"), selected="mm"),
-numericInput("startmm", label = "Start Point (mm)", value=0),
-radioButtons("timetype", label=NULL, c("AD", "BC", "BC/AD", "BP"), selected="BP"),
-
-tags$hr(),
-checkboxInput("usecustumyaxis", label="Use Custom Y Axis", value=FALSE),
-textInput("customyaxis", label="Custom Y Axis"),
-numericInput("ymultiply", label="Y Axis Unit Shift", min=.000001, max=1000000, value=1)
-
+dropdownButton(
+tags$h3("Y Axis Customization"), icon = icon("gear"),
+#uiOutput('inxlimrange'),
+checkboxInput('usecustumyaxis', label="Use Custom Y Axis", value=FALSE),
+textInput('customyaxis', label="Custom Y Axis"),
+numericInput('ymultiply', label="Y Axis Unit Shift", min=.000001, max=1000000, value=1),
+tooltip = tooltipOptions(title = "Click for Y-axis options")
+)
 
 
 ),
@@ -588,6 +603,8 @@ downloadButton('downloadPlot6e', "5"),
 
 tags$hr(),
 
+dropdownButton(
+tags$h3("Equation"), icon = icon("code"),
 uiOutput('inelementnum1'),
 selectInput("transform1", label=NULL, c("None", "+", "-", "*", "/"), selected="None"),
 uiOutput('inelementnum2'),
@@ -599,16 +616,18 @@ selectInput("transform3", label=NULL, c("None", "+", "-", "*", "/"), selected="N
 uiOutput('inelementden2'),
 selectInput("transform4", label=NULL, c("None", "+", "-", "*", "/"), selected="None"),
 uiOutput('inelementden3'),
+tooltip = tooltipOptions(title = "Define Mathematical Treatments")
+),
 
 tags$hr(),
 
-textInput("yaxistype", label="Y Axis Label", value="Index"),
+textInput('yaxistype', label="Y Axis Label", value="Index"),
 
 tags$hr(),
 
 
 selectInput(
-"timecoloureq", "Time Series Type",
+'timecoloureq', "Time Series Type",
 c(
 "Black" = "Black",
 "Smooth" = "Smooth",
@@ -624,27 +643,32 @@ c(
 
 tags$hr(),
 
-uiOutput('inxlimrangeeq'),
+
+
+dropdownButton(
+tags$h3("Line Options"), icon = icon("gear"),
+sliderInput('smoothingeq', label = "Smoothed Mean Average", value=1, min=1, max=50),
+sliderInput('linesizeeq', label = "Line Size", value=1, min=1, max=15),
+sliderInput('pointsizeeq', label = "Point Size", value=5, min=1, max=15),
+tooltip = tooltipOptions(title = "Click for line options")
+),
+
+
+dropdownButton(
+tags$h3("X Axis Customization"), icon = icon("gear"),
+#uiOutput('inxlimrange'),
+selectInput('xaxistypeeq', label="X Axis", c("Depth", "Age", "Custom"), selected="Depth"),
+textInput('customxaxiseq', label="Custom X Axis"),
+checkboxInput('flipxeq', label="Flip X Axis", value=FALSE),
+radioButtons('lengthuniteq', label=NULL, c("mm", "cm", "m", "inches", "feet"), selected="mm"),
+numericInput('startmmeq', label = "Start Point (mm)", value=0),
+radioButtons('timetypeeq', label=NULL, c("AD", "BC", "BC/AD", "BP"), selected="BP"),
+tooltip = tooltipOptions(title = "Click for X-axis options")
+),
 
 
 
-sliderInput("smoothingeq", label = "Smoothed Mean Average", value=1, min=1, max=50),
-
-sliderInput("linesizeeq", label = "Line Size", value=1, min=1, max=15),
-sliderInput("pointsizeeq", label = "Point Size", value=5, min=1, max=15),
-
-
-tags$hr(),
-
-selectInput("xaxistypeeq", label="X Axis", c("Depth", "Age", "Custom"), selected="Depth"),
-textInput("customxaxiseq", label="Custom X Axis"),
-
-
-radioButtons("lengthuniteq", label=NULL, c("mm", "cm", "m", "inches", "feet"), selected="mm"),
-numericInput("startmmeq", label = "Start Point (mm)", value=0),
-radioButtons("timetypeeq", label=NULL, c("AD", "BC", "BC/AD", "BP"), selected="BP"),
-
-checkboxInput("transformnorm", label="Normalize", FALSE)
+checkboxInput('transformnorm', label="Normalize", FALSE)
 
 
 
