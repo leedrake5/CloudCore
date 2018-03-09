@@ -262,7 +262,7 @@ sidebarPanel(
 numericInput("knum", label = "K-Means", value=3),
 
 selectInput("pcacolour", "Colour", choices=c(
-"Black"="black",
+"Black"="Black",
 "Cluster"="Cluster",
 "Climate"="Climate",
 "Qualitative"="Qualitative",
@@ -735,83 +735,83 @@ uiOutput("hover_info6e")
 ))
 
 
-)))),
+))))
 
 
-tabPanel("Equation Ratios",
-div(class="outer",
+#tabPanel("Equation Ratios",
+#div(class="outer",
 
 
-fluidRow(
-sidebarLayout(
+#fluidRow(
+#sidebarLayout(
 
-sidebarPanel(
+#sidebarPanel(
 
-selectInput(
-"ratiocolour", "Ratio Plot Type",
-c(
-"Black" = "Black",
-"Cluster" = "Cluster",
-"Climate"="Climate",
-"Age"="Age",
-"Depth"="Depth",
-"Qualitative" = "Qualitative"
-), selected="Cluster"),
+#selectInput(
+#"ratiocolour", "Ratio Plot Type",
+#c(
+#"Black" = "Black",
+#"Cluster" = "Cluster",
+#"Climate"="Climate",
+#"Age"="Age",
+#"Depth"="Depth",
+#"Qualitative" = "Qualitative"
+#), selected="Cluster"),
 
-tags$hr(),
+#tags$hr(),
 
-textInput("xaxisdef", label="Custom X Axis", value="X axis Index"),
+#textInput("xaxisdef", label="Custom X Axis", value="X axis Index"),
 
-uiOutput('inelementx1'),
-selectInput("xtransform1", label=NULL, c("None", "+", "-", "*", "/"), selected="None"),
-uiOutput('inelementx2'),
-selectInput("xtransform2", label=NULL, c("None", "+", "-", "*", "/"), selected="None"),
-uiOutput('inelementx3'),
+#uiOutput('inelementx1'),
+#selectInput("xtransform1", label=NULL, c("None", "+", "-", "*", "/"), selected="None"),
+#uiOutput('inelementx2'),
+#selectInput("xtransform2", label=NULL, c("None", "+", "-", "*", "/"), selected="None"),
+#uiOutput('inelementx3'),
 
-tags$hr(),
+#tags$hr(),
 
-textInput("yaxisdef", label="Custom Y Axis", value="Y Axis Index"),
+#textInput("yaxisdef", label="Custom Y Axis", value="Y Axis Index"),
 
-uiOutput('inelementy1'),
-selectInput("ytransform1", label=NULL, c("None", "+", "-", "*", "/"), selected="None"),
-uiOutput('inelementy2'),
-selectInput("ytransform1", label=NULL, c("None", "+", "-", "*", "/"), selected="None"),
-uiOutput('inelementy3'),
-
-
-tags$hr(),
-
-sliderInput("spotsize3", label = "Point Size", value=5, min=2, max=15),
+#uiOutput('inelementy1'),
+#selectInput("ytransform1", label=NULL, c("None", "+", "-", "*", "/"), selected="None"),
+#uiOutput('inelementy2'),
+#selectInput("ytransform1", label=NULL, c("None", "+", "-", "*", "/"), selected="None"),
+#uiOutput('inelementy3'),
 
 
-checkboxInput('elipseplot3', "Elipse"),
+#tags$hr(),
+
+#sliderInput("spotsize3", label = "Point Size", value=5, min=2, max=15),
 
 
-
-tags$hr(),
-
-
-downloadButton('downloadPlot7', "Plot")
+#checkboxInput('elipseplot3', "Elipse"),
 
 
 
-),
+#tags$hr(),
 
-mainPanel(
-tabPanel('Element Ratios', plotOutput('elementratiotequation',
-dblclick = "plot1_dblclick", height = 700,
-brush = brushOpts(
-id = "plot1_brush",
-resetOnNew = TRUE
-)))
+
+#downloadButton('downloadPlot7', "Plot")
 
 
 
-)
+#),
 
-))
+#mainPanel(
+#tabPanel('Element Ratios', plotOutput('elementratiotequation',
+#dblclick = "plot1_dblclick", height = 700,
+#brush = brushOpts(
+#id = "plot1_brush",
+#resetOnNew = TRUE
+#)))
 
-))
+
+
+#)
+
+#))
+
+#))
 
 
 ))

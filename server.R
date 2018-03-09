@@ -1914,7 +1914,7 @@ output$defaultlines <- renderUI({
       scale_colour_gradientn("Depth", colours=rainbow(length(spectra.line.table$Depth)))
       
       
-      if (input$elipseplot1 == FALSE && input$pcacolour == "black") {
+      if (input$elipseplot1 == FALSE && input$pcacolour == "Black") {
           basic
       } else if (input$elipseplot1 == TRUE && input$pcacolour == "Cluster") {
           ellipse
@@ -2493,7 +2493,7 @@ output$inxlimrange <- renderUI({
       } else if (input$timecolour == "QualitativeLine" && input$flipx==FALSE) {
           qualitative.time.series.line
       } else if (input$timecolour == "Depth" && input$flipx==FALSE) {
-          Depth.time.series
+          depth.time.series
       } else if (input$timecolour == "Area" && input$flipx==FALSE) {
           area.time.series
       } else if (input$timecolour == "Black" && input$flipx==TRUE) {
@@ -2964,7 +2964,7 @@ output$inxlimrange <- renderUI({
       } else if (input$timecolour == "QualitativeLine" && input$flipx==FALSE) {
           qualitative.time.series.line
       } else if (input$timecolour == "Depth" && input$flipx==FALSE) {
-          Depth.time.series
+          depth.time.series
       } else if (input$timecolour == "Area" && input$flipx==FALSE) {
           area.time.series
       } else if (input$timecolour == "Black" && input$flipx==TRUE) {
@@ -3416,7 +3416,7 @@ output$inxlimrange <- renderUI({
       } else if (input$timecolour == "QualitativeLine" && input$flipx==FALSE) {
           qualitative.time.series.line
       } else if (input$timecolour == "Depth" && input$flipx==FALSE) {
-          Depth.time.series
+          depth.time.series
       } else if (input$timecolour == "Area" && input$flipx==FALSE) {
           area.time.series
       } else if (input$timecolour == "Black" && input$flipx==TRUE) {
@@ -3869,7 +3869,7 @@ output$inxlimrange <- renderUI({
       } else if (input$timecolour == "QualitativeLine" && input$flipx==FALSE) {
           qualitative.time.series.line
       } else if (input$timecolour == "Depth" && input$flipx==FALSE) {
-          Depth.time.series
+          depth.time.series
       } else if (input$timecolour == "Area" && input$flipx==FALSE) {
           area.time.series
       } else if (input$timecolour == "Black" && input$flipx==TRUE) {
@@ -4330,7 +4330,7 @@ output$inxlimrange <- renderUI({
       } else if (input$timecolour == "QualitativeLine" && input$flipx==FALSE) {
           qualitative.time.series.line
       } else if (input$timecolour == "Depth" && input$flipx==FALSE) {
-          Depth.time.series
+          depth.time.series
       } else if (input$timecolour == "Area" && input$flipx==FALSE) {
           area.time.series
       } else if (input$timecolour == "Black" && input$flipx==TRUE) {
@@ -4712,7 +4712,7 @@ output$inxlimrange <- renderUI({
       
       
       
-      if (input$ratiocolour == "Black" && input$elipseplotnorm==FALSE) {
+      if (input$ratiocolour == "Black" && input$elipseplot2==FALSE) {
           black.ratio.plot
       } else if (input$ratiocolour == "Cluster" && input$elipseplot2==FALSE) {
           cluster.ratio.plot
@@ -6853,7 +6853,7 @@ scale_colour_gradientn(colours=rev(terrain.colors(length(spectra.timeseries.tabl
       } else if (input$timecoloureq == "QualitativeLine" && input$flipxeq==FALSE) {
           qualitative.time.series.line
       } else if (input$timecoloureq == "Depth" && input$flipxeq==FALSE) {
-          Depth.time.series
+          depth.time.series
       } else if (input$timecoloureq == "Black" && input$flipxeq==TRUE) {
           black.time.series.reverse
       } else if (input$timecoloureq == "Smooth" && input$flipxeq==TRUE) {
