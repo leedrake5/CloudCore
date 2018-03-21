@@ -1625,6 +1625,8 @@ output$defaultlines <- renderUI({
       ggplot(wss.frame, aes(clustercount, wss)) +
       geom_line() +
       geom_point() +
+      geom_point(data=wss.frame[screeCrunch(), ], aes(clustercount, wss), size=3) +
+      geom_point(data=wss.frame[screeCrunch(), ], aes(clustercount, wss), pch=1, size=6) +
       scale_x_continuous("Number of Clusters") +
       scale_y_continuous("Within Groups Sum of Squares", labels=comma) +
       theme_light()
