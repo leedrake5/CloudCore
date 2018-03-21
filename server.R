@@ -1568,7 +1568,6 @@ output$defaultlines <- renderUI({
   
   optimalK <- reactive({
       
-      iter <- input$knum*3
       
       spectra.line.table <- if(input$usecalfile==FALSE){
           myData()
@@ -1580,13 +1579,41 @@ output$defaultlines <- renderUI({
       xrf.pca.frame <- xrf.pca.frame[complete.cases(xrf.pca.frame),]
       
       wss <- (nrow(xrf.pca.frame)-1)*sum(apply(xrf.pca.frame,2,var))
-      for (i in 2:iter) wss[i] <- sum(kmeans(xrf.pca.frame,
+      for (i in 2:30) wss[i] <- sum(kmeans(xrf.pca.frame,
       centers=i)$withinss)
       
       data.frame(
-      clustercount=seq(1, iter, 1),
+      clustercount=seq(1, 30, 1),
       wss=wss)
       
+  })
+  
+  
+  output$wsstable <- downloadHandler(
+  filename = function() { paste(paste(c(input$projectname, "_", "WSSTable"), collapse=''), '.csv', sep=',') },
+  content = function(file
+  ) {
+      write.csv(optimalK(), file)
+  }
+  )
+  
+  
+
+  
+  screeCrunch <- reactive({
+      
+      wss.frame <- optimalK()
+      
+      best.choice <- scree_crunch(dataframe=wss.frame, dependent="wss", independent="clustercount")
+      
+      best.choice
+      
+  })
+  
+  output$knumui <- renderUI({
+      
+      numericInput("knum", label = "K-Means", value=screeCrunch())
+
   })
   
   

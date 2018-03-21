@@ -259,7 +259,8 @@ fluidRow(
 sidebarLayout(
 
 sidebarPanel(
-numericInput("knum", label = "K-Means", value=3),
+
+uiOutput('knumui'),
 
 selectInput("pcacolour", "Colour", choices=c(
 "Black"="Black",
@@ -277,7 +278,8 @@ tags$hr(),
 
 
 downloadButton('downloadPlot2', "Plot"),
-downloadButton('xrfpcatablefull', "Results")
+downloadButton('xrfpcatablefull', "Results"),
+downloadButton('wsstable', "WSS")
 
 ),
 
