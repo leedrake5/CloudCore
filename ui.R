@@ -278,7 +278,7 @@ tags$hr(),
 
 
 downloadButton('downloadPlot2', "Plot"),
-downloadButton('xrfpcatablefull', "Results"),
+downloadButton('downloadPcaTable', "Results"),
 downloadButton('wsstable', "WSS")
 
 ),
