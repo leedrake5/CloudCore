@@ -251,6 +251,22 @@ tabPanel('Add Categories', rHandsontableOutput('hot'))
 
 )),
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 tabPanel("PCA",
 div(class="outer",
 
