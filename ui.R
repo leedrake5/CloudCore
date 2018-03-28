@@ -30,7 +30,7 @@ accept=c('.csv', '.zip')),
 fileInput('file2', 'Trace Element Spectra', multiple=TRUE,
 accept=c('.csv', '.zip')),
 
-checkboxInput('iszip', "Use Zip Archive (testing)", value=FALSE),
+checkboxInput('useall', "Match Light and Trace scans", value=TRUE),
 
 selectInput("filetype", label=NULL, c("Spectra", "Net", "Spreadsheet"), selected="Spectra"),
 
