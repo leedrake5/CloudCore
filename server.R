@@ -14,7 +14,7 @@ library(Bchron)
 library(scales)
 library(zoo)
 library(Cairo)
-
+library(openxlsx)
 
 
 options(shiny.maxRequestSize=180000*1024^2)
@@ -256,6 +256,45 @@ shinyServer(function(input, output, session) {
         
     })
     
+    
+    ExcelDataFirst <- reactive({
+        
+        inFile <- input$file1
+        
+        #if (is.null(inFile)) {return(NULL)}
+        
+        
+        
+        proto.fish <- loadWorkbook(file=inFile$datapath)
+        just.fish <- readWorkbook(proto.fish, sheet=2)
+        colnames(just.fish)[1] <- "Spectrum"
+        
+        
+        just.fish
+        
+        
+        
+    })
+    
+    ExcelDataSecond <- reactive({
+        
+        inFile <- input$file2
+        
+        #if (is.null(inFile)) {return(NULL)}
+        
+        
+        
+        proto.fish <- loadWorkbook(file=inFile$datapath)
+        just.fish <- readWorkbook(proto.fish, sheet=2)
+        colnames(just.fish)[1] <- "Spectrum"
+        
+        
+        just.fish
+        
+        
+        
+    })
+    
 
     
     myDataFirst <- reactive({
@@ -263,6 +302,8 @@ shinyServer(function(input, output, session) {
             fullSpectra()
         } else if(input$filetype=="Net"){
             netCounts()
+        } else if(input$filetype=="Spreadsheet"){
+            ExcelDataFirst()
         }
         
     })
@@ -274,6 +315,8 @@ shinyServer(function(input, output, session) {
             fullSpectraSecond()
         } else if(input$filetype=="Net"){
             netCountsSecond()
+        } else if(input$filetype=="Spreadsheet"){
+            ExcelDataSecond()
         }
         
     })
@@ -1220,10 +1263,14 @@ shinyServer(function(input, output, session) {
                spectralLines
            } else if(input$usecalfile==FALSE && input$filetype=="Net"){
                colnames(spectra.line.table)
+           } else if(input$usecalfile==FALSE && input$filetype=="Spreadsheet"){
+               colnames(spectra.line.table)
            } else if(input$usecalfile==TRUE && input$filetype=="Spectra"){
                quantified
-           }else if(input$usecalfile==TRUE && input$filetype=="Net"){
+           } else if(input$usecalfile==TRUE && input$filetype=="Net"){
               quantified
+           } else if(input$usecalfile==TRUE && input$filetype=="Spreadsheet"){
+               quantified
            }
            
        })
@@ -1238,9 +1285,13 @@ defaultLines <- reactive({
         c("Ca.K.alpha", "Ti.K.alpha", "Fe.K.alpha", "Cu.K.alpha", "Zn.K.alpha")
     } else if(input$usecalfile==FALSE && input$filetype=="Net"){
         colnames(spectra.line.table)
+    } else if(input$usecalfile==FALSE && input$filetype=="Spreadsheet"){
+        colnames(spectra.line.table)
     } else if(input$usecalfile==TRUE && input$filetype=="Spectra"){
         quantified
-    }else if(input$usecalfile==TRUE && input$filetype=="Net"){
+    } else if(input$usecalfile==TRUE && input$filetype=="Net"){
+        quantified
+    } else if(input$usecalfile==TRUE && input$filetype=="Spreadsheet"){
         quantified
     }
     
@@ -2115,6 +2166,8 @@ output$defaultlines <- renderUI({
           colnames(spectra.line.table)
       } else if(input$filetype=="Net"){
           colnames(spectra.line.table)
+      } else if(input$filetype=="Spreadsheet"){
+          colnames(spectra.line.table)
       }
       
   })
@@ -2229,6 +2282,10 @@ output$inxlimrange <- renderUI({
       } else if(input$elementnorm=="None" && input$filetype=="Net" && input$usecalfile==FALSE && input$usecustumyaxis==FALSE) {
           paste(gsub("[.]", "", c(substr(input$elementtrend, 1, 2), " Net Counts")), sep=",", collapse="")
       } else if(input$elementnorm=="None" && input$filetype=="Net" && input$usecalfile==TRUE && input$usecustumyaxis==FALSE) {
+          paste(gsub("[.]", "", c(substr(input$elementtrend, 1, 2), " ", calFileContentsFirst()[[2]])), sep=",", collapse="")
+      } else if(input$elementnorm=="None" && input$filetype=="Spreadsheet" && input$usecalfile==FALSE && input$usecustumyaxis==FALSE) {
+          paste(gsub("[.]", "", c(substr(input$elementtrend, 1, 2), " Net Counts")), sep=",", collapse="")
+      } else if(input$elementnorm=="None" && input$filetype=="Spreadsheet" && input$usecalfile==TRUE && input$usecustumyaxis==FALSE) {
           paste(gsub("[.]", "", c(substr(input$elementtrend, 1, 2), " ", calFileContentsFirst()[[2]])), sep=",", collapse="")
       } else if(input$elementnorm!="None" && input$usecustumyaxis==FALSE){
           paste(gsub("[.]", "", c(substr(input$elementtrend, 1, 2), "/", substr(input$elementnorm, 1, 2))), sep=",", collapse="")
@@ -2638,10 +2695,11 @@ output$inxlimrange <- renderUI({
   trendPlot <- reactive({
       trendy <-  if(input$elementnorm=="None" && input$filetype=="Spectra") {
           paste(gsub("[.]", "", c(substr(input$elementtrend, 1, 2), " CPS")), sep=",", collapse="")
-      } else
-        if(input$elementnorm=="None" && input$filetype=="Net") {
+      } else if(input$elementnorm=="None" && input$filetype=="Net") {
               paste(gsub("[.]", "", c(substr(input$elementtrend, 1, 2), " NetCounts")), sep=",", collapse="")
-          } else if(input$elementnorm!="None"){
+        }  else if(input$elementnorm=="None" && input$filetype=="Spreadsheet") {
+            paste(gsub("[.]", "", c(substr(input$elementtrend, 1, 2), " NetCounts")), sep=",", collapse="")
+        } else if(input$elementnorm!="None"){
           paste(gsub("[.]", "", c(substr(input$elementtrend, 1, 2), "/", substr(input$elementnorm, 1, 2))), sep=",", collapse="")
       }
       
@@ -2702,14 +2760,18 @@ output$inxlimrange <- renderUI({
       } else if(input$elementnorm=="None" && input$filetype=="Spectra" && input$usecalfile==TRUE && input$usecustumyaxis==FALSE) {
           paste(gsub("[.]", "", c(substr(input$elementtrend, 1, 2), " ", calFileContentsFirst()[[2]])), sep=",", collapse="")
       } else if(input$elementnorm=="None" && input$filetype=="Net" && input$usecalfile==FALSE && input$usecustumyaxis==FALSE) {
-              paste(gsub("[.]", "", c(substr(input$elementtrend, 1, 2), " Net Counts")), sep=",", collapse="")
+          paste(gsub("[.]", "", c(substr(input$elementtrend, 1, 2), " Net Counts")), sep=",", collapse="")
       } else if(input$elementnorm=="None" && input$filetype=="Net" && input$usecalfile==TRUE && input$usecustumyaxis==FALSE) {
           paste(gsub("[.]", "", c(substr(input$elementtrend, 1, 2), " ", calFileContentsFirst()[[2]])), sep=",", collapse="")
-          } else if(input$elementnorm!="None" && input$usecustumyaxis==FALSE){
+      } else if(input$elementnorm=="None" && input$filetype=="Spreadsheet" && input$usecalfile==FALSE && input$usecustumyaxis==FALSE) {
+          paste(gsub("[.]", "", c(substr(input$elementtrend, 1, 2), " Net Counts")), sep=",", collapse="")
+      } else if(input$elementnorm=="None" && input$filetype=="Spreadsheet" && input$usecalfile==TRUE && input$usecustumyaxis==FALSE) {
+          paste(gsub("[.]", "", c(substr(input$elementtrend, 1, 2), " ", calFileContentsFirst()[[2]])), sep=",", collapse="")
+      } else if(input$elementnorm!="None" && input$usecustumyaxis==FALSE){
           paste(gsub("[.]", "", c(substr(input$elementtrend, 1, 2), "/", substr(input$elementnorm, 1, 2))), sep=",", collapse="")
-          } else if(input$usecustumyaxis==TRUE) {
-              paste(input$customyaxis)
-          }
+      } else if(input$usecustumyaxis==TRUE) {
+          paste(input$customyaxis)
+      }
       
       
       
@@ -3157,14 +3219,18 @@ output$inxlimrange <- renderUI({
       } else if(input$elementnorm=="None" && input$filetype=="Spectra" && input$usecalfile==TRUE && input$usecustumyaxis==FALSE) {
           paste(gsub("[.]", "", c(substr(input$elementtrend, 1, 2), " ", calFileContentsFirst()[[2]])), sep=",", collapse="")
       } else if(input$elementnorm=="None" && input$filetype=="Net" && input$usecalfile==FALSE && input$usecustumyaxis==FALSE) {
-              paste(gsub("[.]", "", c(substr(input$elementtrend, 1, 2), " Net Counts")), sep=",", collapse="")
+          paste(gsub("[.]", "", c(substr(input$elementtrend, 1, 2), " Net Counts")), sep=",", collapse="")
       } else if(input$elementnorm=="None" && input$filetype=="Net" && input$usecalfile==TRUE && input$usecustumyaxis==FALSE) {
           paste(gsub("[.]", "", c(substr(input$elementtrend, 1, 2), " ", calFileContentsFirst()[[2]])), sep=",", collapse="")
-          } else if(input$elementnorm!="None" && input$usecustumyaxis==FALSE){
+      } else if(input$elementnorm=="None" && input$filetype=="Spreadsheet" && input$usecalfile==FALSE && input$usecustumyaxis==FALSE) {
+          paste(gsub("[.]", "", c(substr(input$elementtrend, 1, 2), " Net Counts")), sep=",", collapse="")
+      } else if(input$elementnorm=="None" && input$filetype=="Spreadsheet" && input$usecalfile==TRUE && input$usecustumyaxis==FALSE) {
+          paste(gsub("[.]", "", c(substr(input$elementtrend, 1, 2), " ", calFileContentsFirst()[[2]])), sep=",", collapse="")
+      } else if(input$elementnorm!="None" && input$usecustumyaxis==FALSE){
           paste(gsub("[.]", "", c(substr(input$elementtrend, 1, 2), "/", substr(input$elementnorm, 1, 2))), sep=",", collapse="")
-          } else if(input$usecustumyaxis==TRUE) {
-              paste(input$customyaxis)
-          }
+      } else if(input$usecustumyaxis==TRUE) {
+          paste(input$customyaxis)
+      }
       
       
       
@@ -3605,14 +3671,18 @@ output$inxlimrange <- renderUI({
       } else if(input$elementnorm=="None" && input$filetype=="Spectra" && input$usecalfile==TRUE && input$usecustumyaxis==FALSE) {
           paste(gsub("[.]", "", c(substr(input$elementtrend, 1, 2), " ", calFileContentsFirst()[[2]])), sep=",", collapse="")
       } else if(input$elementnorm=="None" && input$filetype=="Net" && input$usecalfile==FALSE && input$usecustumyaxis==FALSE) {
-              paste(gsub("[.]", "", c(substr(input$elementtrend, 1, 2), " Net Counts")), sep=",", collapse="")
+          paste(gsub("[.]", "", c(substr(input$elementtrend, 1, 2), " Net Counts")), sep=",", collapse="")
       } else if(input$elementnorm=="None" && input$filetype=="Net" && input$usecalfile==TRUE && input$usecustumyaxis==FALSE) {
           paste(gsub("[.]", "", c(substr(input$elementtrend, 1, 2), " ", calFileContentsFirst()[[2]])), sep=",", collapse="")
-          } else if(input$elementnorm!="None" && input$usecustumyaxis==FALSE){
+      } else if(input$elementnorm=="None" && input$filetype=="Spreadsheet" && input$usecalfile==FALSE && input$usecustumyaxis==FALSE) {
+          paste(gsub("[.]", "", c(substr(input$elementtrend, 1, 2), " Net Counts")), sep=",", collapse="")
+      } else if(input$elementnorm=="None" && input$filetype=="Spreadsheet" && input$usecalfile==TRUE && input$usecustumyaxis==FALSE) {
+          paste(gsub("[.]", "", c(substr(input$elementtrend, 1, 2), " ", calFileContentsFirst()[[2]])), sep=",", collapse="")
+      } else if(input$elementnorm!="None" && input$usecustumyaxis==FALSE){
           paste(gsub("[.]", "", c(substr(input$elementtrend, 1, 2), "/", substr(input$elementnorm, 1, 2))), sep=",", collapse="")
-          } else if(input$usecustumyaxis==TRUE) {
-              paste(input$customyaxis)
-          }
+      } else if(input$usecustumyaxis==TRUE) {
+          paste(input$customyaxis)
+      }
       
       
       
@@ -4067,14 +4137,18 @@ output$inxlimrange <- renderUI({
       } else if(input$elementnorm=="None" && input$filetype=="Spectra" && input$usecalfile==TRUE && input$usecustumyaxis==FALSE) {
           paste(gsub("[.]", "", c(substr(input$elementtrend, 1, 2), " ", calFileContentsFirst()[[2]])), sep=",", collapse="")
       } else if(input$elementnorm=="None" && input$filetype=="Net" && input$usecalfile==FALSE && input$usecustumyaxis==FALSE) {
-              paste(gsub("[.]", "", c(substr(input$elementtrend, 1, 2), " Net Counts")), sep=",", collapse="")
+          paste(gsub("[.]", "", c(substr(input$elementtrend, 1, 2), " Net Counts")), sep=",", collapse="")
       } else if(input$elementnorm=="None" && input$filetype=="Net" && input$usecalfile==TRUE && input$usecustumyaxis==FALSE) {
           paste(gsub("[.]", "", c(substr(input$elementtrend, 1, 2), " ", calFileContentsFirst()[[2]])), sep=",", collapse="")
-          } else if(input$elementnorm!="None" && input$usecustumyaxis==FALSE){
+      } else if(input$elementnorm=="None" && input$filetype=="Spreadsheet" && input$usecalfile==FALSE && input$usecustumyaxis==FALSE) {
+          paste(gsub("[.]", "", c(substr(input$elementtrend, 1, 2), " Net Counts")), sep=",", collapse="")
+      } else if(input$elementnorm=="None" && input$filetype=="Spreadsheet" && input$usecalfile==TRUE && input$usecustumyaxis==FALSE) {
+          paste(gsub("[.]", "", c(substr(input$elementtrend, 1, 2), " ", calFileContentsFirst()[[2]])), sep=",", collapse="")
+      } else if(input$elementnorm!="None" && input$usecustumyaxis==FALSE){
           paste(gsub("[.]", "", c(substr(input$elementtrend, 1, 2), "/", substr(input$elementnorm, 1, 2))), sep=",", collapse="")
-          } else if(input$usecustumyaxis==TRUE) {
-              paste(input$customyaxis)
-          }
+      } else if(input$usecustumyaxis==TRUE) {
+          paste(input$customyaxis)
+      }
       
       
       
@@ -4902,6 +4976,8 @@ output$inxlimrange <- renderUI({
           "Al.K.alpha"
       } else if(input$filetype=="Net"){
           spectra.line.names[2]
+      }  else if(input$filetype=="Spreaqdsheet"){
+          spectra.line.names[2]
       }
       
   })
@@ -4915,6 +4991,8 @@ output$inxlimrange <- renderUI({
           "Si.K.alpha"
       } else if(input$filetype=="Net"){
           spectra.line.names[3]
+      } else if(input$filetype=="Spreadsheet"){
+          spectra.line.names[3]
       }
       
   })
@@ -4927,6 +5005,8 @@ output$inxlimrange <- renderUI({
       standard <- if(input$filetype=="Spectra"){
           "Ca.K.alpha"
       } else if(input$filetype=="Net"){
+          spectra.line.names[4]
+      } else if(input$filetype=="Spreadsheet"){
           spectra.line.names[4]
       }
       

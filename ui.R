@@ -32,7 +32,7 @@ accept=c('.csv', '.zip')),
 
 checkboxInput('iszip', "Use Zip Archive (testing)", value=FALSE),
 
-radioButtons("filetype", label=NULL, c("Spectra", "Net"), selected="Spectra"),
+selectInput("filetype", label=NULL, c("Spectra", "Net", "Spreadsheet"), selected="Spectra"),
 
 numericInput("aggregationfactor", label="Aggregation", value=5, min=1, max=100),
 
