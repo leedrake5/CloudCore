@@ -30,11 +30,6 @@ shinyServer(function(input, output, session) {
             
             inFile <- input$file1
             
-            inFile <- if(input$iszip==FALSE){
-                inFile
-            }else if(input$iszip==TRUE){
-                unzip(inFile$datapath, list=TRUE)
-            }
             
             
             if (is.null(inFile)) return(NULL)
@@ -84,11 +79,6 @@ shinyServer(function(input, output, session) {
             
             inFile <- input$file2
             
-            inFile <- if(input$iszip==FALSE){
-                inFile
-            }else if(input$iszip==TRUE){
-                unzip(inFile)
-            }
             
             if (is.null(inFile)) return(NULL)
             temp = inFile$name
@@ -1006,7 +996,11 @@ shinyServer(function(input, output, session) {
             
             light.frame <- data.frame(myDataFirst(), valuesLight[["DPL"]]$LightDepth)
             colnames(light.frame) <- c(names(myDataFirst()), "Depth")
-            light.frame[ ,!(colnames(light.frame) == "Spectrum")]
+            light.frame <- light.frame[ ,!(colnames(light.frame) == "Spectrum")]
+            if(is.null(input$file2)==FALSE){
+                #light.frame <- light.frame[,colnames(light.frame) %in% c("Depth", preference.light)]
+            }
+            light.frame
             
         })
         
@@ -1014,24 +1008,29 @@ shinyServer(function(input, output, session) {
             
             trace.frame <- data.frame(myDataSecond(), valuesTrace[["DPT"]]$TraceDepth)
             colnames(trace.frame) <- c(names(myDataSecond()), "Depth")
-            trace.frame[ ,!(colnames(trace.frame) == "Spectrum")]
-            
+            trace.frame <- trace.frame[ ,!(colnames(trace.frame) == "Spectrum")]
+            trace.frame <- trace.frame[,colnames(trace.frame) %in% c("Depth", preference.trace)]
+            trace.frame
         })
         
         lightQuantFrame <- reactive({
             
             light.frame <- data.frame(tableInputValQuantFirst(), valuesLight[["DPL"]]$LightDepth)
             colnames(light.frame) <- c(names(tableInputValQuantFirst()), "Depth")
-            light.frame[ ,!(colnames(light.frame) == "Spectrum")]
-            
+            light.frame <- light.frame[ ,!(colnames(light.frame) == "Spectrum")]
+            if(!is.null(input$file2)){
+                #light.frame <- light.frame[,colnames(light.frame) %in% c("Depth", preference.light)]
+            }
+            light.frame
         })
         
         traceQuantFrame <- reactive({
             
             trace.frame <- data.frame(tableInputValQuantSecond(), valuesTrace[["DPT"]]$TraceDepth)
             colnames(trace.frame) <- c(names(tableInputValQuantSecond()), "Depth")
-            trace.frame[ ,!(colnames(trace.frame) == "Spectrum")]
-            
+            trace.frame <- trace.frame[ ,!(colnames(trace.frame) == "Spectrum")]
+            trace.frame <- trace.frame[,colnames(trace.frame) %in% c("Depth", preference.trace)]
+            trace.frame
         })
         
         
@@ -1349,11 +1348,22 @@ shinyServer(function(input, output, session) {
                 
             })
             
+            
+            optionLines <- reactive({
+                
+                if(input$clusterlearn==FALSE){
+                    defaultLines()
+                } else if(input$clusterlearn==TRUE){
+                    thanksForAllTheFish()
+                }
+                
+            })
+            
             output$defaultlines <- renderUI({
                 
                 
                 checkboxGroupInput('show_vars', 'Elemental lines to show:',
-                choices=lineOptions(), selected = thanksForAllTheFish())
+                choices=lineOptions(), selected = optionLines())
             })
             
             
@@ -1671,7 +1681,11 @@ shinyServer(function(input, output, session) {
             
             output$nvariablesui <- renderUI({
                 
-                sliderInput("nvariables", label = "# Elements", min=2, max=length(defaultVariables()), value=3)
+                if(input$clusterlearn==TRUE){
+                    numericInput("nvariables", label = "# Elements", min=2, max=length(defaultVariables()), value=3)
+                } else if(input$clusterlearn==FALSE){
+                    p()
+                }
                 
             })
             
@@ -1698,11 +1712,10 @@ shinyServer(function(input, output, session) {
                 }
                 
                 thanks.for.all.the.fish <- combos_mod(elements)
-                list.of.frames <- lapply(thanks.for.all.the.fish, function(x) as.data.frame(spectra.line.table[,x]))
                 
-                list.of.elbows <- pbapply::pblapply(list.of.frames, function(x) optimal_k_chain(x), cl=4L)
+                list.of.elbows <- pbapply::pblapply(thanks.for.all.the.fish, function(x) optimal_k_chain(spectra.line.table[,x]), cl=6L)
                 frame.of.elbows <- do.call("rbind", list.of.elbows)
-                result <- frame.of.elbows[which.min(frame.of.elbows$wss),]
+                result <- frame.of.elbows[which.max(frame.of.elbows$percent),]
                 best.choice <- thanks.for.all.the.fish[[as.numeric(rownames(result))]]
 
                 

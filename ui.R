@@ -232,6 +232,7 @@ checkboxInput('zeroout', "Eliminate Negative Values", value=TRUE),
 
 conditionalPanel(
 condition='input.dataset === myData()',
+checkboxInput('clusterlearn', "Machine Learn Cluster", value=FALSE),
 uiOutput('nvariablesui'),
 uiOutput('defaultlines')
 )),
