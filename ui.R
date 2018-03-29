@@ -232,6 +232,7 @@ checkboxInput('zeroout', "Eliminate Negative Values", value=TRUE),
 
 conditionalPanel(
 condition='input.dataset === myData()',
+uiOutput('nvariablesui'),
 uiOutput('defaultlines')
 )),
 
@@ -286,7 +287,7 @@ selectInput("pcacolour", "Colour", choices=c(
 "Quantitative"="Quantitative"),
 selected="Cluster"),
 
-sliderInput("spotsize", label = "Point Size", value=5, min=2, max=15),
+sliderInput("spotsize", label = "Point Size", value=2, min=2, max=15),
 
 checkboxInput('elipseplot1', "Elipse"),
 

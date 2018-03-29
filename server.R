@@ -321,6 +321,54 @@ shinyServer(function(input, output, session) {
         
     })
     
+    defaultVariables <- reactive({
+        
+       elements <-  if(is.null(input$file2)){
+            inFile <- input$file1
+            if(input$filetype=="Spectra"){
+                hold <- read.csv(inFile$datapath[[1]])
+                voltage <- as.numeric(as.vector(hold[11,1]))
+                if(voltage<25){
+                    accepted.spec.light
+                }else{
+                    accepted.spec.trace
+                }
+        } else if(input$filetype=="Net"){
+            hold <- read.csv(inFile$datapath[[1]])
+            hold.k <- subset(hold, Line=="K12")
+            hold.med <- median(hold.k$Energy.keV)
+            if(hold.med<=5){
+                accepted.net.light
+            } else if(!(hold.med < 5 | hold.med > 7)){
+                accepted.net.combined
+            } else if(hold.med >= 7){
+                accepted.net.trace
+            }
+        } else if(input$filetype=="Spreadsheet"){
+            proto.fish <- loadWorkbook(file=inFile$datapath)
+            just.fish <- readWorkbook(proto.fish, sheet=1)
+            voltage <- as.numeric(just.fish[4,2])
+            if(voltage<25){
+                accepted.net.light
+            }else{
+                accepted.net.trace
+            }
+        }
+        } else if(!is.null(input$file2)){
+            if(input$filetype=="Spectra"){
+                accepted.spec.combined
+            } else if(input$filetype=="Net"){
+                accepted.net.combined
+            } else if(input$filetype=="Spreadsheet"){
+                accepted.net.combined
+            }
+        }
+        
+        elements
+
+        
+    })
+    
     observeEvent(input$actionprocess, {
         
         
@@ -1305,7 +1353,7 @@ shinyServer(function(input, output, session) {
                 
                 
                 checkboxGroupInput('show_vars', 'Elemental lines to show:',
-                choices=lineOptions(), selected = defaultLines())
+                choices=lineOptions(), selected = thanksForAllTheFish())
             })
             
             
@@ -1615,6 +1663,49 @@ shinyServer(function(input, output, session) {
                 xrf.pca.results <- data.frame(xrf.clusters, element.counts)
                 
                 xrf.pca.results
+            })
+            
+            
+            ####Identify best variables
+            
+            
+            output$nvariablesui <- renderUI({
+                
+                sliderInput("nvariables", label = "# Elements", min=2, max=length(defaultVariables()), value=3)
+                
+            })
+            
+            thanksForAllTheFish <- reactive({
+                
+                spectra.line.table <- if(input$usecalfile==FALSE){
+                    myData()
+                } else if(input$usecalfile==TRUE){
+                    tableInput()
+                }
+                
+                elements <- as.vector(intersect(defaultVariables(), colnames(spectra.line.table[,-1])))
+                
+                combos_mod <- function(a.vector){
+                    
+                    so <- seq(from=2, to=input$nvariables, by=1)
+                    
+                    long <- lapply(so, function(x) combn(x=a.vector, m=x))
+                    and <- lapply(long, function(x) plyr::alply(x, 2))
+                    thanks.for.all.the.fish <- do.call(list, unlist(and, recursive=FALSE))
+                    
+                    thanks.for.all.the.fish
+                    
+                }
+                
+                thanks.for.all.the.fish <- combos_mod(elements)
+                list.of.frames <- lapply(thanks.for.all.the.fish, function(x) as.data.frame(spectra.line.table[,x]))
+                
+                list.of.elbows <- pbapply::pblapply(list.of.frames, function(x) optimal_k_chain(x), cl=4L)
+                frame.of.elbows <- do.call("rbind", list.of.elbows)
+                result <- frame.of.elbows[which.min(frame.of.elbows$wss),]
+                best.choice <- thanks.for.all.the.fish[[as.numeric(rownames(result))]]
+
+                
             })
             
             
