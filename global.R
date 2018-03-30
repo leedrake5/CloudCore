@@ -13,7 +13,7 @@ library(ggtern)
 library(ggplot2)
 library(shiny)
 library(DT)
-
+library(gRbase)
 
 plot_dim2 <- function(dim = c(NA, NA), scale = 1, units = c("in", "cm", "mm"),
 limitsize = TRUE) {
@@ -4595,8 +4595,8 @@ combos <- function(a.vector){
     
     so <- seq(from=2, to=length(a.vector), by=1)
     
-    long <- lapply(so, function(x) combn(x=a.vector, m=x))
-    and <- lapply(long, function(x) plyr::alply(x, 2))
+    long <- pblapply(so, function(x) combnPrim(x=a.vector, m=x), cl=12L)
+    and <- pblapply(long, function(x) plyr::alply(x, 2), cl=12L)
     thanks.for.all.the.fish <- do.call(list, unlist(and, recursive=FALSE))
     
     thanks.for.all.the.fish
@@ -4605,11 +4605,13 @@ combos <- function(a.vector){
 
 optimal_k_chain <- function(a.data.frame){
     
-    n <- if(nrow(a.data.frame)<30){
-        nrow(a.data.frame)-5
-    } else {
-        30
-    }
+    #n <- if(nrow(a.data.frame)<30){
+    #nrow(a.data.frame)-5
+    #} else {
+    #30
+    #}
+    
+    n <- 20
     
     xrf.pca.frame <- a.data.frame[complete.cases(a.data.frame),]
     

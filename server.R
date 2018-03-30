@@ -15,7 +15,7 @@ library(scales)
 library(zoo)
 library(Cairo)
 library(openxlsx)
-
+library(gRbase)
 
 options(shiny.maxRequestSize=180000*1024^2)
 
@@ -1703,8 +1703,8 @@ shinyServer(function(input, output, session) {
                     
                     so <- seq(from=2, to=input$nvariables, by=1)
                     
-                    long <- lapply(so, function(x) combn(x=a.vector, m=x))
-                    and <- lapply(long, function(x) plyr::alply(x, 2))
+                    long <- pblapply(so, function(x) combnPrim(x=a.vector, m=x), cl=6L)
+                    and <- pblapply(long, function(x) plyr::alply(x, 2), cl=6L)
                     thanks.for.all.the.fish <- do.call(list, unlist(and, recursive=FALSE))
                     
                     thanks.for.all.the.fish
@@ -2474,8 +2474,8 @@ shinyServer(function(input, output, session) {
                 
                 
                 
-                cluster.time.series <- qplot(Interval, SMA(Selected, input$smoothing),  geom="line", data = spectra.timeseries.table) +
-                geom_point(aes(colour = as.factor(Cluster)), size=input$pointsize) +
+                cluster.time.series <- qplot(Interval, SMA(Selected, input$smoothing),  geom="line", data = spectra.timeseries.table, alpha=0.6) +
+                geom_point(aes(colour = as.factor(Cluster)), size=input$pointsize, alpha=0.8) +
                 scale_colour_discrete("Cluster") +
                 theme_light() +
                 theme(axis.text.x = element_text(size=15)) +
@@ -2606,8 +2606,8 @@ shinyServer(function(input, output, session) {
                 
                 
                 
-                cluster.time.series.reverse <- qplot(Interval, SMA(Selected, input$smoothing),  geom="line", data = spectra.timeseries.table) +
-                geom_point(aes(colour = as.factor(Cluster)), size=input$pointsize) +
+                cluster.time.series.reverse <- qplot(Interval, SMA(Selected, input$smoothing),  geom="line", data = spectra.timeseries.table, alpha=0.6) +
+                geom_point(aes(colour = as.factor(Cluster)), size=input$pointsize, alpha=0.8) +
                 scale_colour_discrete("Cluster") +
                 theme_light() +
                 theme(axis.text.x = element_text(size=15)) +
@@ -2952,8 +2952,8 @@ shinyServer(function(input, output, session) {
                 
                 
                 
-                cluster.time.series <- qplot(Interval, SMA(Selected, input$smoothing),  geom="line", data = spectra.timeseries.table) +
-                geom_point(aes(colour = as.factor(Cluster)), size=input$pointsize) +
+                cluster.time.series <- qplot(Interval, SMA(Selected, input$smoothing),  geom="line", data = spectra.timeseries.table, alpha=0.6) +
+                geom_point(aes(colour = as.factor(Cluster)), size=input$pointsize, alpha=0.8) +
                 scale_colour_discrete("Cluster") +
                 theme_light() +
                 theme(axis.text.x = element_text(size=15)) +
@@ -3083,8 +3083,8 @@ shinyServer(function(input, output, session) {
                 
                 
                 
-                cluster.time.series.reverse <- qplot(Interval, SMA(Selected, input$smoothing),  geom="line", data = spectra.timeseries.table) +
-                geom_point(aes(colour = as.factor(Cluster)), size=input$pointsize) +
+                cluster.time.series.reverse <- qplot(Interval, SMA(Selected, input$smoothing),  geom="line", data = spectra.timeseries.table, alpha=0.6) +
+                geom_point(aes(colour = as.factor(Cluster)), size=input$pointsize, alpha=0.8) +
                 scale_colour_discrete("Cluster") +
                 theme_light() +
                 theme(axis.text.x = element_text(size=15)) +
@@ -3411,8 +3411,8 @@ shinyServer(function(input, output, session) {
                 
                 
                 
-                cluster.time.series <- qplot(Interval, SMA(Selected, input$smoothing),  geom="line", data = spectra.timeseries.table) +
-                geom_point(aes(colour = as.factor(Cluster)), size=input$pointsize) +
+                cluster.time.series <- qplot(Interval, SMA(Selected, input$smoothing),  geom="line", data = spectra.timeseries.table, alpha=0.6) +
+                geom_point(aes(colour = as.factor(Cluster)), size=input$pointsize, alpha=0.8) +
                 scale_colour_discrete("Cluster") +
                 theme_light() +
                 theme(axis.text.x = element_text(size=15)) +
@@ -3540,8 +3540,8 @@ shinyServer(function(input, output, session) {
                 
                 
                 
-                cluster.time.series.reverse <- qplot(Interval, SMA(Selected, input$smoothing),  geom="line", data = spectra.timeseries.table) +
-                geom_point(aes(colour = as.factor(Cluster)), size=input$pointsize) +
+                cluster.time.series.reverse <- qplot(Interval, SMA(Selected, input$smoothing),  geom="line", data = spectra.timeseries.table, alpha=0.6) +
+                geom_point(aes(colour = as.factor(Cluster)), size=input$pointsize, alpha=0.8) +
                 scale_colour_discrete("Cluster") +
                 theme_light() +
                 theme(axis.text.x = element_text(size=15)) +
@@ -3863,8 +3863,8 @@ shinyServer(function(input, output, session) {
                 
                 
                 
-                cluster.time.series <- qplot(Interval, SMA(Selected, input$smoothing),  geom="line", data = spectra.timeseries.table) +
-                geom_point(aes(colour = as.factor(Cluster)), size=input$pointsize) +
+                cluster.time.series <- qplot(Interval, SMA(Selected, input$smoothing),  geom="line", data = spectra.timeseries.table, alpha=0.6) +
+                geom_point(aes(colour = as.factor(Cluster)), size=input$pointsize, alpha=0.8) +
                 scale_colour_discrete("Cluster") +
                 theme_light() +
                 theme(axis.text.x = element_text(size=15)) +
@@ -3995,8 +3995,8 @@ shinyServer(function(input, output, session) {
                 
                 
                 
-                cluster.time.series.reverse <- qplot(Interval, SMA(Selected, input$smoothing),  geom="line", data = spectra.timeseries.table) +
-                geom_point(aes(colour = as.factor(Cluster)), size=input$pointsize) +
+                cluster.time.series.reverse <- qplot(Interval, SMA(Selected, input$smoothing),  geom="line", data = spectra.timeseries.table, alpha=0.6) +
+                geom_point(aes(colour = as.factor(Cluster)), size=input$pointsize, alpha=0.8) +
                 scale_colour_discrete("Cluster") +
                 theme_light() +
                 theme(axis.text.x = element_text(size=15)) +
@@ -4329,8 +4329,8 @@ shinyServer(function(input, output, session) {
                 
                 
                 
-                cluster.time.series <- qplot(Interval, SMA(Selected, input$smoothing),  geom="line", data = spectra.timeseries.table) +
-                geom_point(aes(colour = as.factor(Cluster)), size=input$pointsize) +
+                cluster.time.series <- qplot(Interval, SMA(Selected, input$smoothing),  geom="line", data = spectra.timeseries.table, alpha=0.6) +
+                geom_point(aes(colour = as.factor(Cluster)), size=input$pointsize, alpha=0.8) +
                 scale_colour_discrete("Cluster") +
                 theme_light() +
                 theme(axis.text.x = element_text(size=15)) +
@@ -4461,8 +4461,8 @@ shinyServer(function(input, output, session) {
                 
                 
                 
-                cluster.time.series.reverse <- qplot(Interval, SMA(Selected, input$smoothing),  geom="line", data = spectra.timeseries.table) +
-                geom_point(aes(colour = as.factor(Cluster)), size=input$pointsize) +
+                cluster.time.series.reverse <- qplot(Interval, SMA(Selected, input$smoothing),  geom="line", data = spectra.timeseries.table, alpha=0.6) +
+                geom_point(aes(colour = as.factor(Cluster)), size=input$pointsize, alpha=0.8) +
                 scale_colour_discrete("Cluster") +
                 theme_light() +
                 theme(axis.text.x = element_text(size=15)) +
@@ -6854,8 +6854,8 @@ shinyServer(function(input, output, session) {
                 
                 
                 
-                cluster.time.series <- qplot(Interval, SMA(Selected, input$smoothingeq),  geom="line", data = spectra.timeseries.table) +
-                geom_point(aes(colour = as.factor(Cluster)), size=input$pointsizeeq) +
+                cluster.time.series <- qplot(Interval, SMA(Selected, input$smoothingeq),  geom="line", data = spectra.timeseries.table, alpha=0.6) +
+                geom_point(aes(colour = as.factor(Cluster)), size=input$pointsizeeq, alpha=0.8) +
                 scale_colour_discrete("Cluster") +
                 theme_light() +
                 theme(axis.text.x = element_text(size=15)) +
@@ -6988,8 +6988,8 @@ shinyServer(function(input, output, session) {
                 
                 
                 
-                cluster.time.series.reverse <- qplot(Interval, SMA(Selected, input$smoothingeq),  geom="line", data = spectra.timeseries.table) +
-                geom_point(aes(colour = as.factor(Cluster)), size=input$pointsizeeq) +
+                cluster.time.series.reverse <- qplot(Interval, SMA(Selected, input$smoothingeq),  geom="line", data = spectra.timeseries.table, alpha=0.6) +
+                geom_point(aes(colour = as.factor(Cluster)), size=input$pointsizeeq, alpha=0.8) +
                 scale_colour_discrete("Cluster") +
                 theme_light() +
                 theme(axis.text.x = element_text(size=15)) +
@@ -7291,8 +7291,8 @@ shinyServer(function(input, output, session) {
                 
                 
                 
-                cluster.time.series <- qplot(Interval, SMA(Selected, input$smoothingeq),  geom="line", data = spectra.timeseries.table) +
-                geom_point(aes(colour = as.factor(Cluster)), size=input$pointsizeeq) +
+                cluster.time.series <- qplot(Interval, SMA(Selected, input$smoothingeq),  geom="line", data = spectra.timeseries.table, alpha=0.6) +
+                geom_point(aes(colour = as.factor(Cluster)), size=input$pointsizeeq, alpha=0.8) +
                 scale_colour_discrete("Cluster") +
                 theme_light() +
                 theme(axis.text.x = element_text(size=15)) +
@@ -7424,8 +7424,8 @@ shinyServer(function(input, output, session) {
                 
                 
                 
-                cluster.time.series.reverse <- qplot(Interval, SMA(Selected, input$smoothingeq),  geom="line", data = spectra.timeseries.table) +
-                geom_point(aes(colour = as.factor(Cluster)), size=input$pointsizeeq) +
+                cluster.time.series.reverse <- qplot(Interval, SMA(Selected, input$smoothingeq),  geom="line", data = spectra.timeseries.table, alpha=0.6) +
+                geom_point(aes(colour = as.factor(Cluster)), size=input$pointsizeeq, alpha=0.8) +
                 scale_colour_discrete("Cluster") +
                 theme_light() +
                 theme(axis.text.x = element_text(size=15)) +
@@ -7730,8 +7730,8 @@ shinyServer(function(input, output, session) {
                 
                 
                 
-                cluster.time.series <- qplot(Interval, SMA(Selected, input$smoothingeq),  geom="line", data = spectra.timeseries.table) +
-                geom_point(aes(colour = as.factor(Cluster)), size=input$pointsizeeq) +
+                cluster.time.series <- qplot(Interval, SMA(Selected, input$smoothingeq),  geom="line", data = spectra.timeseries.table, alpha=0.6) +
+                geom_point(aes(colour = as.factor(Cluster)), size=input$pointsizeeq, alpha=0.8) +
                 scale_colour_discrete("Cluster") +
                 theme_light() +
                 theme(axis.text.x = element_text(size=15)) +
@@ -7863,8 +7863,8 @@ shinyServer(function(input, output, session) {
                 
                 
                 
-                cluster.time.series.reverse <- qplot(Interval, SMA(Selected, input$smoothingeq),  geom="line", data = spectra.timeseries.table) +
-                geom_point(aes(colour = as.factor(Cluster)), size=input$pointsizeeq) +
+                cluster.time.series.reverse <- qplot(Interval, SMA(Selected, input$smoothingeq),  geom="line", data = spectra.timeseries.table, alpha=0.6) +
+                geom_point(aes(colour = as.factor(Cluster)), size=input$pointsizeeq, alpha=0.8) +
                 scale_colour_discrete("Cluster") +
                 theme_light() +
                 theme(axis.text.x = element_text(size=15)) +
@@ -8165,8 +8165,8 @@ shinyServer(function(input, output, session) {
                 
                 
                 
-                cluster.time.series <- qplot(Interval, SMA(Selected, input$smoothingeq),  geom="line", data = spectra.timeseries.table) +
-                geom_point(aes(colour = as.factor(Cluster)), size=input$pointsizeeq) +
+                cluster.time.series <- qplot(Interval, SMA(Selected, input$smoothingeq),  geom="line", data = spectra.timeseries.table, alpha=0.6) +
+                geom_point(aes(colour = as.factor(Cluster)), size=input$pointsizeeq, alpha=0.8) +
                 scale_colour_discrete("Cluster") +
                 theme_light() +
                 theme(axis.text.x = element_text(size=15)) +
@@ -8298,8 +8298,8 @@ shinyServer(function(input, output, session) {
                 
                 
                 
-                cluster.time.series.reverse <- qplot(Interval, SMA(Selected, input$smoothingeq),  geom="line", data = spectra.timeseries.table) +
-                geom_point(aes(colour = as.factor(Cluster)), size=input$pointsizeeq) +
+                cluster.time.series.reverse <- qplot(Interval, SMA(Selected, input$smoothingeq),  geom="line", data = spectra.timeseries.table, alpha=0.6) +
+                geom_point(aes(colour = as.factor(Cluster)), size=input$pointsizeeq, alpha=0.8) +
                 scale_colour_discrete("Cluster") +
                 theme_light() +
                 theme(axis.text.x = element_text(size=15)) +
@@ -8606,8 +8606,8 @@ shinyServer(function(input, output, session) {
                 
                 
                 
-                cluster.time.series <- qplot(Interval, SMA(Selected, input$smoothingeq),  geom="line", data = spectra.timeseries.table) +
-                geom_point(aes(colour = as.factor(Cluster)), size=input$pointsizeeq) +
+                cluster.time.series <- qplot(Interval, SMA(Selected, input$smoothingeq),  geom="line", data = spectra.timeseries.table, alpha=0.6) +
+                geom_point(aes(colour = as.factor(Cluster)), size=input$pointsizeeq, alpha=0.8) +
                 scale_colour_discrete("Cluster") +
                 theme_light() +
                 theme(axis.text.x = element_text(size=15)) +
@@ -8739,8 +8739,8 @@ shinyServer(function(input, output, session) {
                 
                 
                 
-                cluster.time.series.reverse <- qplot(Interval, SMA(Selected, input$smoothingeq),  geom="line", data = spectra.timeseries.table) +
-                geom_point(aes(colour = as.factor(Cluster)), size=input$pointsizeeq) +
+                cluster.time.series.reverse <- qplot(Interval, SMA(Selected, input$smoothingeq),  geom="line", data = spectra.timeseries.table, alpha=0.6) +
+                geom_point(aes(colour = as.factor(Cluster)), size=input$pointsizeeq, alpha=0.8) +
                 scale_colour_discrete("Cluster") +
                 theme_light() +
                 theme(axis.text.x = element_text(size=15)) +
