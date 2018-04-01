@@ -243,7 +243,8 @@ uiOutput('defaultlines')
 mainPanel(
 tabsetPanel(
 tabPanel('Spectral Lines', dataTableOutput('mytable1')),
-tabPanel('Add Categories', rHandsontableOutput('hot'))
+tabPanel('Add Categories', rHandsontableOutput('hot')),
+tabPanel("Machine Determined Clusers", DT::dataTableOutput('thanksforallthefish'))
 ))
 )
 

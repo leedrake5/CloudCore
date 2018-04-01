@@ -1354,7 +1354,7 @@ shinyServer(function(input, output, session) {
                 if(input$clusterlearn==FALSE){
                     defaultLines()
                 } else if(input$clusterlearn==TRUE){
-                    thanksForAllTheFish()
+                    theFish()
                 }
                 
             })
@@ -1689,7 +1689,8 @@ shinyServer(function(input, output, session) {
                 
             })
             
-            thanksForAllTheFish <- reactive({
+            
+            fishVector <- reactive({
                 
                 spectra.line.table <- if(input$usecalfile==FALSE){
                     myData()
@@ -1711,14 +1712,59 @@ shinyServer(function(input, output, session) {
                     
                 }
                 
-                thanks.for.all.the.fish <- combos_mod(elements)
+                 combos_mod(elements)
+                
+            })
+            
+            thanksForAllTheFish <- reactive({
+                
+                spectra.line.table <- if(input$usecalfile==FALSE){
+                    myData()
+                } else if(input$usecalfile==TRUE){
+                    tableInput()
+                }
+                
+                thanks.for.all.the.fish <- fishVector()
+              
+                
+                thanks.for.all.the.length <- lapply(thanks.for.all.the.fish, `length<-`, max(lengths(thanks.for.all.the.fish)))
+                names(thanks.for.all.the.length) <- seq(1, length(thanks.for.all.the.length), 1)
+
+                frame.of.thanks <- as.data.frame(do.call("rbind", thanks.for.all.the.length))
                 
                 list.of.elbows <- pbapply::pblapply(thanks.for.all.the.fish, function(x) optimal_k_chain(spectra.line.table[,x]), cl=6L)
-                frame.of.elbows <- do.call("rbind", list.of.elbows)
-                result <- frame.of.elbows[which.max(frame.of.elbows$percent),]
-                best.choice <- thanks.for.all.the.fish[[as.numeric(rownames(result))]]
+                names(list.of.elbows) <- seq(1, length(list.of.elbows), 1)
+                frame.of.elbows <- as.data.frame(do.call("rbind", list.of.elbows))
+                cbind(frame.of.elbows, frame.of.thanks)
 
                 
+            })
+            
+            output$thanksforallthefish <- renderDataTable({
+                
+                data.table(thanksForAllTheFish())
+                
+            })
+            
+            
+            output$thanksforallthefishtable <- downloadHandler(
+            filename = function() { paste(paste(c(input$projectname, "_", "MCLTable"), collapse=''), '.csv', sep=',') },
+            content = function(file
+            ) {
+                write.csv(thanksForAllTheFish(), file)
+            }
+            )
+            
+            theFish <- reactive({
+                
+                thanks.for.all.the.fish <- fishVector()
+
+                frame.of.elbows <- thanksForAllTheFish()
+                
+                result <- frame.of.elbows[which.max(frame.of.elbows$percent),]
+                best.choice <- thanks.for.all.the.fish[[as.numeric(rownames(result))]]
+                best.choice
+
             })
             
             

@@ -4595,8 +4595,8 @@ combos <- function(a.vector){
     
     so <- seq(from=2, to=length(a.vector), by=1)
     
-    long <- pblapply(so, function(x) combnPrim(x=a.vector, m=x), cl=12L)
-    and <- pblapply(long, function(x) plyr::alply(x, 2), cl=12L)
+    long <- pblapply(so, function(x) combnPrim(x=a.vector, m=x), cl=6L)
+    and <- pblapply(long, function(x) plyr::alply(x, 2), cl=6L)
     thanks.for.all.the.fish <- do.call(list, unlist(and, recursive=FALSE))
     
     thanks.for.all.the.fish
