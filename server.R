@@ -998,7 +998,7 @@ shinyServer(function(input, output, session) {
             colnames(light.frame) <- c(names(myDataFirst()), "Depth")
             light.frame <- light.frame[ ,!(colnames(light.frame) == "Spectrum")]
             if(is.null(input$file2)==FALSE){
-                #light.frame <- light.frame[,colnames(light.frame) %in% c("Depth", preference.light)]
+                light.frame <- light.frame[,colnames(light.frame) %in% c("Depth", preference.light)]
             }
             light.frame
             
@@ -1019,7 +1019,7 @@ shinyServer(function(input, output, session) {
             colnames(light.frame) <- c(names(tableInputValQuantFirst()), "Depth")
             light.frame <- light.frame[ ,!(colnames(light.frame) == "Spectrum")]
             if(!is.null(input$file2)){
-                #light.frame <- light.frame[,colnames(light.frame) %in% c("Depth", preference.light)]
+                light.frame <- light.frame[,colnames(light.frame) %in% c("Depth", preference.light)]
             }
             light.frame
         })
@@ -1041,16 +1041,13 @@ shinyServer(function(input, output, session) {
             
             myData <- reactive({
                 
-                data <- if(is.null(input$file2)==TRUE){
-                    lightFrame()
-                } else if(is.null(input$file2)==FALSE && input$useall==FALSE){
+                if(is.null(input$file2)==TRUE){
+                    data <- lightFrame()
+                } else {
                     merged.frame <- merge(lightFrame(), traceFrame(), by = "Depth", all=TRUE)
-                    merged.frame
-                } else if(is.null(input$file2)==FALSE && input$useall==TRUE){
-                    merged.frame <- merge(lightFrame(), traceFrame(), by = "Depth", all=TRUE)
-                    merged.frame <- subset(merged.frame, (Depth %in% lightFrame()$Depth))
-                    merged.frame <- subset(merged.frame, (Depth %in% traceFrame()$Depth))
-                    merged.frame
+                    merged.frame <- subset(merged.frame, (merged.frame$Depth %in% lightFrame()$Depth))
+                    merged.frame <- subset(merged.frame, (merged.frame$Depth %in% traceFrame()$Depth))
+                    data <- merged.frame
                 }
                 
                 newdata <- data[order(data$Depth),]
@@ -1063,8 +1060,16 @@ shinyServer(function(input, output, session) {
             
             tableInputValQuant <- reactive({
                 
-                newdata <- myData()
+                if(is.null(input$file2)==TRUE){
+                    data <- lightQuantFrame()
+                } else {
+                    merged.frame <- merge(lightQuantFrame(), traceQuantFrame(), by = "Depth", all=TRUE)
+                    merged.frame <- subset(merged.frame, (merged.frame$Depth %in% lightQuantFrame()$Depth))
+                    merged.frame <- subset(merged.frame, (merged.frame$Depth %in% traceQuantFrame()$Depth))
+                    data <- merged.frame
+                }
                 
+                newdata <- data[order(data$Depth),]
                 
                 if(input$zeroout==TRUE){
                     newdata[newdata<0] <- 0
@@ -1075,8 +1080,24 @@ shinyServer(function(input, output, session) {
                 
             })
             
+            fullTable <- reactive({
+                
+                if(input$usecalfile==FALSE){
+                    myData()
+                } else if(input$usecalfile==TRUE){
+                    tableInputValQuant()
+                }
+                
+            })
             
             
+            output$downloadFullData <- downloadHandler(
+            filename = function() { paste(paste(c(input$projectname, "_", "FullTable"), collapse=''), '.csv', sep='') },
+            content = function(file
+            ) {
+                write.csv(fullTable(), file)
+            }
+            )
             
             
             

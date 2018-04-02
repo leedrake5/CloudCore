@@ -30,7 +30,7 @@ accept=c('.csv', '.zip')),
 fileInput('file2', 'Trace Element Spectra', multiple=TRUE,
 accept=c('.csv', '.zip')),
 
-checkboxInput('useall', "Match Light and Trace scans", value=TRUE),
+#checkboxInput('useall', "Match Light and Trace scans", value=TRUE),
 
 selectInput("filetype", label=NULL, c("Spectra", "Net", "Spreadsheet"), selected="Spectra"),
 
@@ -144,7 +144,8 @@ tags$hr(),
 fileInput('calfileinput1', 'Load Light Element Cal File', accept='.quant', multiple=FALSE),
 fileInput('calfileinput2', 'Load Trace Element Cal File', accept='.quant', multiple=FALSE),
 
-checkboxInput('usecalfile', "Use Cal File")
+checkboxInput('usecalfile', "Use Cal File"),
+downloadButton('downloadFullData', "Full Table")
 
 
 
