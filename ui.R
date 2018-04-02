@@ -32,7 +32,7 @@ accept=c('.csv', '.zip')),
 
 #checkboxInput('useall', "Match Light and Trace scans", value=TRUE),
 
-selectInput("filetype", label=NULL, c("Spectra", "Net", "Spreadsheet"), selected="Spectra"),
+selectInput("filetype", label=NULL, c("Spectra", "Net", "Artax Excel", "Spreadsheet"), selected="Spectra"),
 
 numericInput("aggregationfactor", label="Aggregation", value=5, min=1, max=100),
 

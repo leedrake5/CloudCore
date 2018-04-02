@@ -247,7 +247,7 @@ shinyServer(function(input, output, session) {
     })
     
     
-    ExcelDataFirst <- reactive({
+    artaxExcelDataFirst <- reactive({
         
         inFile <- input$file1
         
@@ -266,7 +266,7 @@ shinyServer(function(input, output, session) {
         
     })
     
-    ExcelDataSecond <- reactive({
+    artaxExcelDataSecond <- reactive({
         
         inFile <- input$file2
         
@@ -286,14 +286,45 @@ shinyServer(function(input, output, session) {
     })
     
     
+    ExcelData <- reactive({
+        inFile <- input$file1
+        if (is.null(inFile)) return(NULL)
+        
+        proto.fish <- loadWorkbook(file=inFile$datapath)
+        just.fish <- readWorkbook(proto.fish, sheet=1)
+        just.fish[,1] <- as.numeric(just.fish[,1])
+        quant.fish <- just.fish[, sapply(just.fish, is.numeric)]
+        qual.fish <- just.fish[, !sapply(just.fish, is.numeric)]
+        
+        data.frame(Spectrum=as.character(quant.fish[,1]), Depth=quant.fish[,1], quant.fish[,-1])
+        
+    })
+    
+    qualExcelData <- reactive({
+        inFile <- input$file1
+        if (is.null(inFile)) return(NULL)
+        
+        proto.fish <- loadWorkbook(file=inFile$datapath)
+        just.fish <- readWorkbook(proto.fish, sheet=1)
+        just.fish[,1] <- as.numeric(just.fish[,1])
+        quant.fish <- just.fish[, sapply(just.fish, is.numeric)]
+        qual.fish <- just.fish[, !sapply(just.fish, is.numeric)]
+        
+        data.frame(Spectrum=as.character(quant.fish[,1]), Depth=quant.fish[,1], qual.fish[,2:length(qual.fish)])
+        
+    })
+    
+    
     
     myDataFirst <- reactive({
         if(input$filetype=="Spectra"){
             fullSpectra()
         } else if(input$filetype=="Net"){
             netCounts()
+        } else if(input$filetype=="Artax Excel"){
+            artaxExcelDataFirst()
         } else if(input$filetype=="Spreadsheet"){
-            ExcelDataFirst()
+            ExcelData()
         }
         
     })
@@ -305,8 +336,8 @@ shinyServer(function(input, output, session) {
             fullSpectraSecond()
         } else if(input$filetype=="Net"){
             netCountsSecond()
-        } else if(input$filetype=="Spreadsheet"){
-            ExcelDataSecond()
+        } else if(input$filetype=="Artax Excel"){
+            artaxExcelDataSecond()
         }
         
     })
@@ -334,7 +365,7 @@ shinyServer(function(input, output, session) {
             } else if(hold.med >= 7){
                 accepted.net.trace
             }
-        } else if(input$filetype=="Spreadsheet"){
+        } else if(input$filetype=="Artax Excel"){
             proto.fish <- loadWorkbook(file=inFile$datapath)
             just.fish <- readWorkbook(proto.fish, sheet=1)
             voltage <- as.numeric(just.fish[4,2])
@@ -343,13 +374,15 @@ shinyServer(function(input, output, session) {
             }else{
                 accepted.net.trace
             }
+        } else if(input$filetype=="Spreadsheet"){
+            lineOptions()
         }
         } else if(!is.null(input$file2)){
             if(input$filetype=="Spectra"){
                 accepted.spec.combined
             } else if(input$filetype=="Net"){
                 accepted.net.combined
-            } else if(input$filetype=="Spreadsheet"){
+            } else if(input$filetype=="Artax Excel"){
                 accepted.net.combined
             }
         }
@@ -437,7 +470,7 @@ shinyServer(function(input, output, session) {
             if(input$filetype=="Spectra"){val.line.table <- spectra.line.frame[,c("Spectrum", variableelements)]}
             
             if(input$filetype=="Net"){val.line.table <- val.data}
-            if(input$filetype=="Spreadsheet"){val.line.table <- val.data}
+            if(input$filetype=="Artax Excel"){val.line.table <- val.data}
             
             val.line.table
         })
@@ -458,7 +491,7 @@ shinyServer(function(input, output, session) {
                 rawSpectra()
             } else if(input$filetype=="Net"){
                 myDataFirst()
-            } else if(input$filetype=="Spreadsheet"){
+            } else if(input$filetype=="Artax Excel"){
                 myDataFirst()
             }
             
@@ -712,7 +745,7 @@ shinyServer(function(input, output, session) {
             if(input$filetype=="Spectra"){val.line.table <- spectra.line.frame[,c("Spectrum", variableelements)]}
             
             if(input$filetype=="Net"){val.line.table <- val.data}
-            if(input$filetype=="Spreadsheet"){val.line.table <- val.data}
+            if(input$filetype=="Artax Excel"){val.line.table <- val.data}
             
             
             val.line.table
@@ -734,7 +767,7 @@ shinyServer(function(input, output, session) {
                 rawSpectraSecond()
             } else if(input$filetype=="Net"){
                 myDataSecond()
-            } else if(input$filetype=="Spreadsheet"){
+            } else if(input$filetype=="Artax Excel"){
                 myDataSecond()
             }
             
@@ -916,7 +949,11 @@ shinyServer(function(input, output, session) {
             
             light.table <- data.frame(myDataFirst()$Spectrum)
             light.table$Spectrum <- myDataFirst()$Spectrum
-            light.table$LightDepth <- myDataFirst()[,2]*0
+            if(input$filetype!="Spreadsheet"){
+                light.table$LightDepth <- myDataFirst()[,2]*0
+            } else if(input$filetype=="Spreadsheet"){
+                light.table$LightDepth <- as.numeric(myDataFirst()$Depth)
+            }
             
             light.table <- light.table[2:3]
             
@@ -1335,13 +1372,17 @@ shinyServer(function(input, output, session) {
                     spectralLines
                 } else if(input$usecalfile==FALSE && input$filetype=="Net"){
                     colnames(spectra.line.table)
+                } else if(input$usecalfile==FALSE && input$filetype=="Artax Excel"){
+                    colnames(spectra.line.table)
                 } else if(input$usecalfile==FALSE && input$filetype=="Spreadsheet"){
                     colnames(spectra.line.table)
                 } else if(input$usecalfile==TRUE && input$filetype=="Spectra"){
                     quantified
                 } else if(input$usecalfile==TRUE && input$filetype=="Net"){
                     quantified
-                } else if(input$usecalfile==TRUE && input$filetype=="Spreadsheet"){
+                } else if(input$usecalfile==TRUE && input$filetype=="Artax Excel"){
+                    quantified
+                }else if(input$usecalfile==TRUE && input$filetype=="Spreadsheet"){
                     quantified
                 }
                 
@@ -1357,11 +1398,15 @@ shinyServer(function(input, output, session) {
                     c("Ca.K.alpha", "Ti.K.alpha", "Fe.K.alpha", "Cu.K.alpha", "Zn.K.alpha")
                 } else if(input$usecalfile==FALSE && input$filetype=="Net"){
                     colnames(spectra.line.table)
+                } else if(input$usecalfile==FALSE && input$filetype=="Artax Excel"){
+                    colnames(spectra.line.table)
                 } else if(input$usecalfile==FALSE && input$filetype=="Spreadsheet"){
                     colnames(spectra.line.table)
                 } else if(input$usecalfile==TRUE && input$filetype=="Spectra"){
                     quantified
                 } else if(input$usecalfile==TRUE && input$filetype=="Net"){
+                    quantified
+                } else if(input$usecalfile==TRUE && input$filetype=="Artax Excel"){
                     quantified
                 } else if(input$usecalfile==TRUE && input$filetype=="Spreadsheet"){
                     quantified
@@ -1613,6 +1658,7 @@ shinyServer(function(input, output, session) {
                 line.table <- data.frame(depths, na.input, empty.line.table$Custom, empty.line.table$Quantitative1, empty.line.table$Quantitative2, empty.line.table$Quantitative3)
                 colnames(line.table) <- c("Depth", "Qualitative", "Custom", "Quantitative1", "Quantitative2", "Quantitative3")
                 
+                #if(input$filetype=="Spreadsheet" && length(qualExcelData())>=3){empty.line.table$Qualitative <- qualExcelData()[,3]}
                 
                 
                 line.table
@@ -2341,6 +2387,8 @@ shinyServer(function(input, output, session) {
                     colnames(spectra.line.table)
                 } else if(input$filetype=="Net"){
                     colnames(spectra.line.table)
+                } else if(input$filetype=="Artax Excel"){
+                    colnames(spectra.line.table)
                 } else if(input$filetype=="Spreadsheet"){
                     colnames(spectra.line.table)
                 }
@@ -2458,9 +2506,9 @@ shinyServer(function(input, output, session) {
                     paste(gsub("[.]", "", c(substr(input$elementtrend, 1, 2), " Net Counts")), sep=",", collapse="")
                 } else if(input$elementnorm=="None" && input$filetype=="Net" && input$usecalfile==TRUE && input$usecustumyaxis==FALSE) {
                     paste(gsub("[.]", "", c(substr(input$elementtrend, 1, 2), " ", calFileContentsFirst()[[2]])), sep=",", collapse="")
-                } else if(input$elementnorm=="None" && input$filetype=="Spreadsheet" && input$usecalfile==FALSE && input$usecustumyaxis==FALSE) {
+                } else if(input$elementnorm=="None" && input$filetype=="Artax Excel" && input$usecalfile==FALSE && input$usecustumyaxis==FALSE) {
                     paste(gsub("[.]", "", c(substr(input$elementtrend, 1, 2), " Net Counts")), sep=",", collapse="")
-                } else if(input$elementnorm=="None" && input$filetype=="Spreadsheet" && input$usecalfile==TRUE && input$usecustumyaxis==FALSE) {
+                } else if(input$elementnorm=="None" && input$filetype=="Artax Excel" && input$usecalfile==TRUE && input$usecustumyaxis==FALSE) {
                     paste(gsub("[.]", "", c(substr(input$elementtrend, 1, 2), " ", calFileContentsFirst()[[2]])), sep=",", collapse="")
                 } else if(input$elementnorm!="None" && input$usecustumyaxis==FALSE){
                     paste(gsub("[.]", "", c(substr(input$elementtrend, 1, 2), "/", substr(input$elementnorm, 1, 2))), sep=",", collapse="")
@@ -2872,7 +2920,7 @@ shinyServer(function(input, output, session) {
                     paste(gsub("[.]", "", c(substr(input$elementtrend, 1, 2), " CPS")), sep=",", collapse="")
                 } else if(input$elementnorm=="None" && input$filetype=="Net") {
                     paste(gsub("[.]", "", c(substr(input$elementtrend, 1, 2), " NetCounts")), sep=",", collapse="")
-                }  else if(input$elementnorm=="None" && input$filetype=="Spreadsheet") {
+                }  else if(input$elementnorm=="None" && input$filetype=="Artax Excel") {
                     paste(gsub("[.]", "", c(substr(input$elementtrend, 1, 2), " NetCounts")), sep=",", collapse="")
                 } else if(input$elementnorm!="None"){
                     paste(gsub("[.]", "", c(substr(input$elementtrend, 1, 2), "/", substr(input$elementnorm, 1, 2))), sep=",", collapse="")
@@ -2938,9 +2986,9 @@ shinyServer(function(input, output, session) {
                     paste(gsub("[.]", "", c(substr(input$elementtrend, 1, 2), " Net Counts")), sep=",", collapse="")
                 } else if(input$elementnorm=="None" && input$filetype=="Net" && input$usecalfile==TRUE && input$usecustumyaxis==FALSE) {
                     paste(gsub("[.]", "", c(substr(input$elementtrend, 1, 2), " ", calFileContentsFirst()[[2]])), sep=",", collapse="")
-                } else if(input$elementnorm=="None" && input$filetype=="Spreadsheet" && input$usecalfile==FALSE && input$usecustumyaxis==FALSE) {
+                } else if(input$elementnorm=="None" && input$filetype=="Artax Excel" && input$usecalfile==FALSE && input$usecustumyaxis==FALSE) {
                     paste(gsub("[.]", "", c(substr(input$elementtrend, 1, 2), " Net Counts")), sep=",", collapse="")
-                } else if(input$elementnorm=="None" && input$filetype=="Spreadsheet" && input$usecalfile==TRUE && input$usecustumyaxis==FALSE) {
+                } else if(input$elementnorm=="None" && input$filetype=="Artax Excel" && input$usecalfile==TRUE && input$usecustumyaxis==FALSE) {
                     paste(gsub("[.]", "", c(substr(input$elementtrend, 1, 2), " ", calFileContentsFirst()[[2]])), sep=",", collapse="")
                 } else if(input$elementnorm!="None" && input$usecustumyaxis==FALSE){
                     paste(gsub("[.]", "", c(substr(input$elementtrend, 1, 2), "/", substr(input$elementnorm, 1, 2))), sep=",", collapse="")
@@ -3397,9 +3445,9 @@ shinyServer(function(input, output, session) {
                     paste(gsub("[.]", "", c(substr(input$elementtrend, 1, 2), " Net Counts")), sep=",", collapse="")
                 } else if(input$elementnorm=="None" && input$filetype=="Net" && input$usecalfile==TRUE && input$usecustumyaxis==FALSE) {
                     paste(gsub("[.]", "", c(substr(input$elementtrend, 1, 2), " ", calFileContentsFirst()[[2]])), sep=",", collapse="")
-                } else if(input$elementnorm=="None" && input$filetype=="Spreadsheet" && input$usecalfile==FALSE && input$usecustumyaxis==FALSE) {
+                } else if(input$elementnorm=="None" && input$filetype=="Artax Excel" && input$usecalfile==FALSE && input$usecustumyaxis==FALSE) {
                     paste(gsub("[.]", "", c(substr(input$elementtrend, 1, 2), " Net Counts")), sep=",", collapse="")
-                } else if(input$elementnorm=="None" && input$filetype=="Spreadsheet" && input$usecalfile==TRUE && input$usecustumyaxis==FALSE) {
+                } else if(input$elementnorm=="None" && input$filetype=="Artax Excel" && input$usecalfile==TRUE && input$usecustumyaxis==FALSE) {
                     paste(gsub("[.]", "", c(substr(input$elementtrend, 1, 2), " ", calFileContentsFirst()[[2]])), sep=",", collapse="")
                 } else if(input$elementnorm!="None" && input$usecustumyaxis==FALSE){
                     paste(gsub("[.]", "", c(substr(input$elementtrend, 1, 2), "/", substr(input$elementnorm, 1, 2))), sep=",", collapse="")
@@ -3849,9 +3897,9 @@ shinyServer(function(input, output, session) {
                     paste(gsub("[.]", "", c(substr(input$elementtrend, 1, 2), " Net Counts")), sep=",", collapse="")
                 } else if(input$elementnorm=="None" && input$filetype=="Net" && input$usecalfile==TRUE && input$usecustumyaxis==FALSE) {
                     paste(gsub("[.]", "", c(substr(input$elementtrend, 1, 2), " ", calFileContentsFirst()[[2]])), sep=",", collapse="")
-                } else if(input$elementnorm=="None" && input$filetype=="Spreadsheet" && input$usecalfile==FALSE && input$usecustumyaxis==FALSE) {
+                } else if(input$elementnorm=="None" && input$filetype=="Artax Excel" && input$usecalfile==FALSE && input$usecustumyaxis==FALSE) {
                     paste(gsub("[.]", "", c(substr(input$elementtrend, 1, 2), " Net Counts")), sep=",", collapse="")
-                } else if(input$elementnorm=="None" && input$filetype=="Spreadsheet" && input$usecalfile==TRUE && input$usecustumyaxis==FALSE) {
+                } else if(input$elementnorm=="None" && input$filetype=="Artax Excel" && input$usecalfile==TRUE && input$usecustumyaxis==FALSE) {
                     paste(gsub("[.]", "", c(substr(input$elementtrend, 1, 2), " ", calFileContentsFirst()[[2]])), sep=",", collapse="")
                 } else if(input$elementnorm!="None" && input$usecustumyaxis==FALSE){
                     paste(gsub("[.]", "", c(substr(input$elementtrend, 1, 2), "/", substr(input$elementnorm, 1, 2))), sep=",", collapse="")
@@ -4315,9 +4363,9 @@ shinyServer(function(input, output, session) {
                     paste(gsub("[.]", "", c(substr(input$elementtrend, 1, 2), " Net Counts")), sep=",", collapse="")
                 } else if(input$elementnorm=="None" && input$filetype=="Net" && input$usecalfile==TRUE && input$usecustumyaxis==FALSE) {
                     paste(gsub("[.]", "", c(substr(input$elementtrend, 1, 2), " ", calFileContentsFirst()[[2]])), sep=",", collapse="")
-                } else if(input$elementnorm=="None" && input$filetype=="Spreadsheet" && input$usecalfile==FALSE && input$usecustumyaxis==FALSE) {
+                } else if(input$elementnorm=="None" && input$filetype=="Artax Excel" && input$usecalfile==FALSE && input$usecustumyaxis==FALSE) {
                     paste(gsub("[.]", "", c(substr(input$elementtrend, 1, 2), " Net Counts")), sep=",", collapse="")
-                } else if(input$elementnorm=="None" && input$filetype=="Spreadsheet" && input$usecalfile==TRUE && input$usecustumyaxis==FALSE) {
+                } else if(input$elementnorm=="None" && input$filetype=="Artax Excel" && input$usecalfile==TRUE && input$usecustumyaxis==FALSE) {
                     paste(gsub("[.]", "", c(substr(input$elementtrend, 1, 2), " ", calFileContentsFirst()[[2]])), sep=",", collapse="")
                 } else if(input$elementnorm!="None" && input$usecustumyaxis==FALSE){
                     paste(gsub("[.]", "", c(substr(input$elementtrend, 1, 2), "/", substr(input$elementnorm, 1, 2))), sep=",", collapse="")
@@ -5151,6 +5199,8 @@ shinyServer(function(input, output, session) {
                     "Al.K.alpha"
                 } else if(input$filetype=="Net"){
                     spectra.line.names[2]
+                }  else if(input$filetype=="Artax Excel"){
+                    spectra.line.names[2]
                 }  else if(input$filetype=="Spreaqdsheet"){
                     spectra.line.names[2]
                 }
@@ -5166,7 +5216,9 @@ shinyServer(function(input, output, session) {
                     "Si.K.alpha"
                 } else if(input$filetype=="Net"){
                     spectra.line.names[3]
-                } else if(input$filetype=="Spreadsheet"){
+                }  else if(input$filetype=="Artax Excel"){
+                    spectra.line.names[3]
+                }  else if(input$filetype=="Spreaqdsheet"){
                     spectra.line.names[3]
                 }
                 
@@ -5181,7 +5233,9 @@ shinyServer(function(input, output, session) {
                     "Ca.K.alpha"
                 } else if(input$filetype=="Net"){
                     spectra.line.names[4]
-                } else if(input$filetype=="Spreadsheet"){
+                }  else if(input$filetype=="Artax Excel"){
+                    spectra.line.names[4]
+                }  else if(input$filetype=="Spreaqdsheet"){
                     spectra.line.names[4]
                 }
                 
