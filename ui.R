@@ -225,6 +225,7 @@ sidebarPanel(
 
 actionButton('hotableprocess', "Enter Values"),
 downloadButton('downloadData', "Table"),
+downloadButton('thanksforallthefishtable', "MCL"),
 
 tags$hr(),
 

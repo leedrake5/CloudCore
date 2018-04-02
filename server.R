@@ -1524,7 +1524,7 @@ shinyServer(function(input, output, session) {
             
             
             output$ageresults <- downloadHandler(
-            filename = function() { paste(input$projectname, "_AgeTable", '.csv', sep=',') },
+            filename = function() { paste(input$projectname, "_AgeTable", '.csv', sep='') },
             content = function(file
             ) {
                 write.csv(ageTable(), file)
@@ -1556,7 +1556,7 @@ shinyServer(function(input, output, session) {
             
             
             output$downloadData <- downloadHandler(
-            filename = function() { paste(paste(c(input$projectname, "_", "CountTable"), collapse=''), '.csv', sep=',') },
+            filename = function() { paste(paste(c(input$projectname, "_", "CountTable"), collapse=''), '.csv', sep='') },
             content = function(file
             ) {
                 write.csv(tableInput(), file)
@@ -1748,7 +1748,7 @@ shinyServer(function(input, output, session) {
             
             
             output$thanksforallthefishtable <- downloadHandler(
-            filename = function() { paste(paste(c(input$projectname, "_", "MCLTable"), collapse=''), '.csv', sep=',') },
+            filename = function() { paste(paste(c(input$projectname, "_", "MCLTable"), collapse=''), '.csv', sep='') },
             content = function(file
             ) {
                 write.csv(thanksForAllTheFish(), file)
@@ -1802,7 +1802,7 @@ shinyServer(function(input, output, session) {
             
             
             output$wsstable <- downloadHandler(
-            filename = function() { paste(paste(c(input$projectname, "_", "WSSTable"), collapse=''), '.csv', sep=',') },
+            filename = function() { paste(paste(c(input$projectname, "_", "WSSTable"), collapse=''), '.csv', sep='') },
             content = function(file
             ) {
                 write.csv(optimalK(), file)
@@ -2279,7 +2279,7 @@ shinyServer(function(input, output, session) {
             
             
             output$downloadPcaTable <- downloadHandler(
-            filename = function() { paste(paste(c(input$projectname, "_", "PCATable"), collapse=''), '.csv', sep=',') },
+            filename = function() { paste(paste(c(input$projectname, "_", "PCATable"), collapse=''), '.csv', sep='') },
             content = function(file
             ) {
                 write.csv(pcaTableInput(), file)
