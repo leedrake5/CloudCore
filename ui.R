@@ -315,7 +315,9 @@ tabPanel('PCA Plot',
 div(
 style = "position:relative",
 plotOutput("xrfpcaplot", height = 700,
-hover = hoverOpts("plot_hoverpca", delay = 100, delayType = "debounce")),
+hover = hoverOpts("plot_hoverpca", delay = 100, delayType = "debounce"),
+dblclick = "plot_pca_dblclick",
+brush = brushOpts(id = "plot_pca_brush", resetOnNew = TRUE)),
 uiOutput("hover_infopca")
 )
 
@@ -426,6 +428,8 @@ div(
 style = "position:relative",
 plotOutput('timeseriesplot1',
 hover = hoverOpts("plot_hover3a", delay = 100, delayType = "debounce"),
+dblclick = "plot_3a_dblclick",
+brush = brushOpts(id = "plot_3a_brush", resetOnNew = TRUE),
 height = 700),
 uiOutput("hover_info3a")
 )
@@ -436,6 +440,8 @@ div(
 style = "position:relative",
 plotOutput('timeseriesplot2',
 hover = hoverOpts("plot_hover3b", delay = 100, delayType = "debounce"),
+dblclick = "plot_3b_dblclick",
+brush = brushOpts(id = "plot_3b_brush", resetOnNew = TRUE),
 height = 700),
 uiOutput("hover_info3b")
 )
@@ -446,6 +452,8 @@ div(
 style = "position:relative",
 plotOutput('timeseriesplot3',
 hover = hoverOpts("plot_hover3c", delay = 100, delayType = "debounce"),
+dblclick = "plot_3c_dblclick",
+brush = brushOpts(id = "plot_3c_brush", resetOnNew = TRUE),
 height = 700),
 uiOutput("hover_info3c")
 )
@@ -456,6 +464,8 @@ div(
 style = "position:relative",
 plotOutput('timeseriesplot4',
 hover = hoverOpts("plot_hover3d", delay = 100, delayType = "debounce"),
+dblclick = "plot_3d_dblclick",
+brush = brushOpts(id = "plot_3d_brush", resetOnNew = TRUE),
 height = 700),
 uiOutput("hover_info3d")
 )
@@ -466,6 +476,8 @@ div(
 style = "position:relative",
 plotOutput('timeseriesplot5',
 hover = hoverOpts("plot_hover3e", delay = 100, delayType = "debounce"),
+dblclick = "plot_3e_dblclick",
+brush = brushOpts(id = "plot_3e_brush", resetOnNew = TRUE),
 height = 700),
 uiOutput("hover_info3e")
 )
@@ -585,7 +597,9 @@ tabPanel("Element Ratios",
 div(
 style = "position:relative",
 plotOutput("elementratiotimeseries", height = 700,
-hover = hoverOpts("plot_hoverratio", delay = 100, delayType = "debounce")),
+hover = hoverOpts("plot_hoverratio", delay = 100, delayType = "debounce"),
+dblclick = "plot_ratio_dblclick",
+brush = brushOpts(id = "plot_ratio_brush", resetOnNew = TRUE)),
 uiOutput("hover_inforatio")
 )
 )
@@ -707,6 +721,8 @@ div(
 style = "position:relative",
 plotOutput('timeserieseqplot1',
 hover = hoverOpts("plot_hover6a", delay = 100, delayType = "debounce"),
+dblclick = "plot_6a_dblclick",
+brush = brushOpts(id = "plot_6a_brush", resetOnNew = TRUE),
 height = 700
 ),
 uiOutput("hover_info6a")
@@ -718,6 +734,8 @@ div(
 style = "position:relative",
 plotOutput('timeserieseqplot2',
 hover = hoverOpts("plot_hover6b", delay = 100, delayType = "debounce"),
+dblclick = "plot_6b_dblclick",
+brush = brushOpts(id = "plot_6b_brush", resetOnNew = TRUE),
 height = 700),
 uiOutput("hover_info6b")
 )
@@ -728,6 +746,8 @@ div(
 style = "position:relative",
 plotOutput('timeserieseqplot3',
 hover = hoverOpts("plot_hover6c", delay = 100, delayType = "debounce"),
+dblclick = "plot_6c_dblclick",
+brush = brushOpts(id = "plot_6c_brush", resetOnNew = TRUE),
 height = 700),
 uiOutput("hover_info6c")
 )
@@ -738,6 +758,8 @@ div(
 style = "position:relative",
 plotOutput('timeserieseqplot4',
 hover = hoverOpts("plot_hover6d", delay = 100, delayType = "debounce"),
+dblclick = "plot_6d_dblclick",
+brush = brushOpts(id = "plot_6d_brush", resetOnNew = TRUE),
 height = 700),
 uiOutput("hover_info6d")
 )
@@ -748,6 +770,8 @@ div(
 style = "position:relative",
 plotOutput('timeserieseqplot5',
 hover = hoverOpts("plot_hover6e", delay = 100, delayType = "debounce"),
+dblclick = "plot_6e_dblclick",
+brush = brushOpts(id = "plot_6e_brush", resetOnNew = TRUE),
 height = 700),
 uiOutput("hover_info6e")
 )
