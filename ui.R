@@ -3,6 +3,7 @@ library(dplyr)
 library(shinythemes)
 library(shiny)
 library(rhandsontable)
+library(shinyWidgets)
 
 
 
@@ -24,16 +25,14 @@ downloadButton('downloadPlot', "Plot"),
 tags$hr(),
 
 fileInput('file1', 'Light Element Spectra', multiple=TRUE,
-accept=c('text/csv',
-'text/comma-separated-values,text/plain',
-'.csv')),
+accept=c('.csv', '.zip')),
 
 fileInput('file2', 'Trace Element Spectra', multiple=TRUE,
-accept=c('text/csv',
-'text/comma-separated-values,text/plain',
-'.csv')),
+accept=c('.csv', '.zip')),
 
-radioButtons("filetype", label=NULL, c("Spectra", "Net"), selected="Spectra"),
+#checkboxInput('useall', "Match Light and Trace scans", value=TRUE),
+
+selectInput("filetype", label=NULL, c("Spectra", "Net", "Artax Excel", "Spreadsheet"), selected="Spectra"),
 
 numericInput("aggregationfactor", label="Aggregation", value=5, min=1, max=100),
 
@@ -145,7 +144,8 @@ tags$hr(),
 fileInput('calfileinput1', 'Load Light Element Cal File', accept='.quant', multiple=FALSE),
 fileInput('calfileinput2', 'Load Trace Element Cal File', accept='.quant', multiple=FALSE),
 
-checkboxInput('usecalfile', "Use Cal File")
+checkboxInput('usecalfile', "Use Cal File"),
+downloadButton('downloadFullData', "Full Table")
 
 
 
@@ -188,10 +188,11 @@ actionButton('hotableprocess3', "Run Age Model"),
 downloadButton('ageresults', "Age Results Table"),
 
 tags$hr(),
-checkboxInput("ageon", label="Age Model On", TRUE),
+checkboxInput("ageon", label="Age Model On", FALSE),
 
-checkboxInput("constrainage", label="Constrain Chronology", TRUE)
+checkboxInput("constrainage", label="Constrain Chronology", FALSE),
 
+selectInput('curvetype', "Choose Calibration", choices=c("intcal13", "marine13", "shcal13", "normal"), selected="intcal13")
 
 
 
@@ -225,11 +226,16 @@ sidebarPanel(
 
 actionButton('hotableprocess', "Enter Values"),
 downloadButton('downloadData', "Table"),
+downloadButton('thanksforallthefishtable', "MCL"),
 
 tags$hr(),
 
+checkboxInput('zeroout', "Eliminate Negative Values", value=TRUE),
+
 conditionalPanel(
 condition='input.dataset === myData()',
+checkboxInput('clusterlearn', "Machine Learn Cluster", value=FALSE),
+uiOutput('nvariablesui'),
 uiOutput('defaultlines')
 )),
 
@@ -238,9 +244,9 @@ uiOutput('defaultlines')
 
 mainPanel(
 tabsetPanel(
-id = 'dataset',
 tabPanel('Spectral Lines', dataTableOutput('mytable1')),
-tabPanel('Add Categories', rHandsontableOutput('hot'))
+tabPanel('Add Categories', rHandsontableOutput('hot')),
+tabPanel("Machine Determined Clusers", DT::dataTableOutput('thanksforallthefish'))
 ))
 )
 
@@ -250,6 +256,22 @@ tabPanel('Add Categories', rHandsontableOutput('hot'))
 
 )),
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 tabPanel("PCA",
 div(class="outer",
 
@@ -258,17 +280,18 @@ fluidRow(
 sidebarLayout(
 
 sidebarPanel(
-numericInput("knum", label = "K-Means", value=3),
+
+uiOutput('knumui'),
 
 selectInput("pcacolour", "Colour", choices=c(
-"Black"="black",
+"Black"="Black",
 "Cluster"="Cluster",
 "Climate"="Climate",
 "Qualitative"="Qualitative",
 "Quantitative"="Quantitative"),
 selected="Cluster"),
 
-sliderInput("spotsize", label = "Point Size", value=5, min=2, max=15),
+sliderInput("spotsize", label = "Point Size", value=2, min=2, max=15),
 
 checkboxInput('elipseplot1', "Elipse"),
 
@@ -276,7 +299,8 @@ tags$hr(),
 
 
 downloadButton('downloadPlot2', "Plot"),
-downloadButton('xrfpcatablefull', "Results")
+downloadButton('downloadPcaTable', "Results"),
+downloadButton('wsstable', "WSS")
 
 ),
 
@@ -284,7 +308,6 @@ downloadButton('xrfpcatablefull', "Results")
 
 mainPanel(
 tabsetPanel(
-id = 'dataset',
 tabPanel('PCA Plot',
 
 # this is an extra div used ONLY to create positioned ancestor for tooltip
@@ -292,12 +315,23 @@ tabPanel('PCA Plot',
 div(
 style = "position:relative",
 plotOutput("xrfpcaplot", height = 700,
-hover = hoverOpts("plot_hoverpca", delay = 100, delayType = "debounce")),
+hover = hoverOpts("plot_hoverpca", delay = 100, delayType = "debounce"),
+dblclick = "plot_pca_dblclick",
+brush = brushOpts(id = "plot_pca_brush", resetOnNew = TRUE)),
 uiOutput("hover_infopca")
 )
 
 
 ),
+
+tabPanel("Optimal Clusters",
+div(
+style = "position:relative",
+plotOutput('optimalkplot',
+hover = hoverOpts("plot_hoveroptimalk", delay = 100, delayType = "debounce")),
+uiOutput("hover_infooptimalk"))
+),
+
 tabPanel("Table", DT::dataTableOutput('xrfpcatable'))
 
 
@@ -338,7 +372,7 @@ uiOutput('inelementtrend'),
 uiOutput('inelementnorm'),
 
 selectInput(
-"timecolour", "Time Series Type",
+'timecolour', "Time Series Type",
 c(
 "Black" = "Black",
 "Smooth" = "Smooth",
@@ -354,42 +388,48 @@ c(
 
 tags$hr(),
 
-uiOutput('inxlimrange'),
+dropdownButton(
+tags$h3("Line Options"), icon = icon("gear"),
+sliderInput('smoothing', label = "Smoothed Mean Average", value=1, min=1, max=50),
+sliderInput('linesize', label = "Line Size", value=1, min=1, max=15),
+sliderInput('pointsize', label = "Point Size", value=5, min=1, max=15),
+tooltip = tooltipOptions(title = "Click for line options")
+),
 
 
-sliderInput("smoothing", label = "Smoothed Mean Average", value=1, min=1, max=50),
+dropdownButton(
+tags$h3("X Axis Customization"), icon = icon("gear"),
+#uiOutput('inxlimrange'),
+selectInput('xaxistype', label="X Axis", c("Depth", "Age", "Custom"), selected="Depth"),
+textInput('customxaxis', label="Custom X Axis"),
+checkboxInput('flipx', label="Flip X Axis", value=FALSE),
+radioButtons('lengthunit', label=NULL, c("mm", "cm", "m", "inches", "feet"), selected="mm"),
+numericInput('startmm', label = "Start Point (mm)", value=0),
+radioButtons('timetype', label=NULL, c("AD", "BC", "BC/AD", "BP"), selected="BP"),
+tooltip = tooltipOptions(title = "Click for X-axis options")
+),
 
-sliderInput("linesize", label = "Line Size", value=1, min=1, max=15),
-sliderInput("pointsize", label = "Point Size", value=5, min=1, max=15),
-
-
-tags$hr(),
-
-selectInput("xaxistype", label="X Axis", c("Depth", "Age", "Custom"), selected="Depth"),
-textInput("customxaxis", label="Custom X Axis"),
-
-
-radioButtons("lengthunit", label=NULL, c("mm", "cm", "m", "inches", "feet"), selected="mm"),
-numericInput("startmm", label = "Start Point (mm)", value=0),
-radioButtons("timetype", label=NULL, c("AD", "BC", "BC/AD", "BP"), selected="BP"),
-
-tags$hr(),
-checkboxInput("usecustumyaxis", label="Use Custom Y Axis", value=FALSE),
-textInput("customyaxis", label="Custom Y Axis"),
-numericInput("ymultiply", label="Y Axis Unit Shift", min=.000001, max=1000000, value=1)
-
+dropdownButton(
+tags$h3("Y Axis Customization"), icon = icon("gear"),
+#uiOutput('inxlimrange'),
+checkboxInput('usecustumyaxis', label="Use Custom Y Axis", value=FALSE),
+textInput('customyaxis', label="Custom Y Axis"),
+numericInput('ymultiply', label="Y Axis Unit Shift", min=.000001, max=1000000, value=1),
+tooltip = tooltipOptions(title = "Click for Y-axis options")
+)
 
 
 ),
 
 mainPanel(
 tabsetPanel(
-id = 'dataset',
 tabPanel('Time Series 1',
 div(
 style = "position:relative",
 plotOutput('timeseriesplot1',
 hover = hoverOpts("plot_hover3a", delay = 100, delayType = "debounce"),
+dblclick = "plot_3a_dblclick",
+brush = brushOpts(id = "plot_3a_brush", resetOnNew = TRUE),
 height = 700),
 uiOutput("hover_info3a")
 )
@@ -400,6 +440,8 @@ div(
 style = "position:relative",
 plotOutput('timeseriesplot2',
 hover = hoverOpts("plot_hover3b", delay = 100, delayType = "debounce"),
+dblclick = "plot_3b_dblclick",
+brush = brushOpts(id = "plot_3b_brush", resetOnNew = TRUE),
 height = 700),
 uiOutput("hover_info3b")
 )
@@ -410,6 +452,8 @@ div(
 style = "position:relative",
 plotOutput('timeseriesplot3',
 hover = hoverOpts("plot_hover3c", delay = 100, delayType = "debounce"),
+dblclick = "plot_3c_dblclick",
+brush = brushOpts(id = "plot_3c_brush", resetOnNew = TRUE),
 height = 700),
 uiOutput("hover_info3c")
 )
@@ -420,6 +464,8 @@ div(
 style = "position:relative",
 plotOutput('timeseriesplot4',
 hover = hoverOpts("plot_hover3d", delay = 100, delayType = "debounce"),
+dblclick = "plot_3d_dblclick",
+brush = brushOpts(id = "plot_3d_brush", resetOnNew = TRUE),
 height = 700),
 uiOutput("hover_info3d")
 )
@@ -430,6 +476,8 @@ div(
 style = "position:relative",
 plotOutput('timeseriesplot5',
 hover = hoverOpts("plot_hover3e", delay = 100, delayType = "debounce"),
+dblclick = "plot_3e_dblclick",
+brush = brushOpts(id = "plot_3e_brush", resetOnNew = TRUE),
 height = 700),
 uiOutput("hover_info3e")
 )
@@ -485,12 +533,12 @@ downloadButton('downloadPlot5', "Plot")
 ),
 
 mainPanel(
-tabPanel('Ternary Plot', plotOutput('ternaryplot',
+plotOutput('ternaryplot',
 dblclick = "plot1_dblclick", height = 700,
 brush = brushOpts(
 id = "plot1_brush",
 resetOnNew = TRUE
-))))
+)))
 
 
 ))
@@ -549,7 +597,9 @@ tabPanel("Element Ratios",
 div(
 style = "position:relative",
 plotOutput("elementratiotimeseries", height = 700,
-hover = hoverOpts("plot_hoverratio", delay = 100, delayType = "debounce")),
+hover = hoverOpts("plot_hoverratio", delay = 100, delayType = "debounce"),
+dblclick = "plot_ratio_dblclick",
+brush = brushOpts(id = "plot_ratio_brush", resetOnNew = TRUE)),
 uiOutput("hover_inforatio")
 )
 )
@@ -590,6 +640,8 @@ downloadButton('downloadPlot6e', "5"),
 
 tags$hr(),
 
+dropdownButton(
+tags$h3("Equation"), icon = icon("code"),
 uiOutput('inelementnum1'),
 selectInput("transform1", label=NULL, c("None", "+", "-", "*", "/"), selected="None"),
 uiOutput('inelementnum2'),
@@ -601,16 +653,18 @@ selectInput("transform3", label=NULL, c("None", "+", "-", "*", "/"), selected="N
 uiOutput('inelementden2'),
 selectInput("transform4", label=NULL, c("None", "+", "-", "*", "/"), selected="None"),
 uiOutput('inelementden3'),
+tooltip = tooltipOptions(title = "Define Mathematical Treatments")
+),
 
 tags$hr(),
 
-textInput("yaxistype", label="Y Axis Label", value="Index"),
+textInput('yaxistype', label="Y Axis Label", value="Index"),
 
 tags$hr(),
 
 
 selectInput(
-"timecoloureq", "Time Series Type",
+'timecoloureq', "Time Series Type",
 c(
 "Black" = "Black",
 "Smooth" = "Smooth",
@@ -626,27 +680,32 @@ c(
 
 tags$hr(),
 
-uiOutput('inxlimrangeeq'),
+
+
+dropdownButton(
+tags$h3("Line Options"), icon = icon("gear"),
+sliderInput('smoothingeq', label = "Smoothed Mean Average", value=1, min=1, max=50),
+sliderInput('linesizeeq', label = "Line Size", value=1, min=1, max=15),
+sliderInput('pointsizeeq', label = "Point Size", value=5, min=1, max=15),
+tooltip = tooltipOptions(title = "Click for line options")
+),
+
+
+dropdownButton(
+tags$h3("X Axis Customization"), icon = icon("gear"),
+#uiOutput('inxlimrange'),
+selectInput('xaxistypeeq', label="X Axis", c("Depth", "Age", "Custom"), selected="Depth"),
+textInput('customxaxiseq', label="Custom X Axis"),
+checkboxInput('flipxeq', label="Flip X Axis", value=FALSE),
+radioButtons('lengthuniteq', label=NULL, c("mm", "cm", "m", "inches", "feet"), selected="mm"),
+numericInput('startmmeq', label = "Start Point (mm)", value=0),
+radioButtons('timetypeeq', label=NULL, c("AD", "BC", "BC/AD", "BP"), selected="BP"),
+tooltip = tooltipOptions(title = "Click for X-axis options")
+),
 
 
 
-sliderInput("smoothingeq", label = "Smoothed Mean Average", value=1, min=1, max=50),
-
-sliderInput("linesizeeq", label = "Line Size", value=1, min=1, max=15),
-sliderInput("pointsizeeq", label = "Point Size", value=5, min=1, max=15),
-
-
-tags$hr(),
-
-selectInput("xaxistypeeq", label="X Axis", c("Depth", "Age", "Custom"), selected="Depth"),
-textInput("customxaxiseq", label="Custom X Axis"),
-
-
-radioButtons("lengthuniteq", label=NULL, c("mm", "cm", "m", "inches", "feet"), selected="mm"),
-numericInput("startmmeq", label = "Start Point (mm)", value=0),
-radioButtons("timetypeeq", label=NULL, c("AD", "BC", "BC/AD", "BP"), selected="BP"),
-
-checkboxInput("transformnorm", label="Normalize", FALSE)
+checkboxInput('transformnorm', label="Normalize", FALSE)
 
 
 
@@ -657,12 +716,13 @@ checkboxInput("transformnorm", label="Normalize", FALSE)
 
 mainPanel(
 tabsetPanel(
-id = 'dataset',
 tabPanel('Time Series 1',
 div(
 style = "position:relative",
 plotOutput('timeserieseqplot1',
 hover = hoverOpts("plot_hover6a", delay = 100, delayType = "debounce"),
+dblclick = "plot_6a_dblclick",
+brush = brushOpts(id = "plot_6a_brush", resetOnNew = TRUE),
 height = 700
 ),
 uiOutput("hover_info6a")
@@ -674,6 +734,8 @@ div(
 style = "position:relative",
 plotOutput('timeserieseqplot2',
 hover = hoverOpts("plot_hover6b", delay = 100, delayType = "debounce"),
+dblclick = "plot_6b_dblclick",
+brush = brushOpts(id = "plot_6b_brush", resetOnNew = TRUE),
 height = 700),
 uiOutput("hover_info6b")
 )
@@ -684,6 +746,8 @@ div(
 style = "position:relative",
 plotOutput('timeserieseqplot3',
 hover = hoverOpts("plot_hover6c", delay = 100, delayType = "debounce"),
+dblclick = "plot_6c_dblclick",
+brush = brushOpts(id = "plot_6c_brush", resetOnNew = TRUE),
 height = 700),
 uiOutput("hover_info6c")
 )
@@ -694,6 +758,8 @@ div(
 style = "position:relative",
 plotOutput('timeserieseqplot4',
 hover = hoverOpts("plot_hover6d", delay = 100, delayType = "debounce"),
+dblclick = "plot_6d_dblclick",
+brush = brushOpts(id = "plot_6d_brush", resetOnNew = TRUE),
 height = 700),
 uiOutput("hover_info6d")
 )
@@ -704,6 +770,8 @@ div(
 style = "position:relative",
 plotOutput('timeserieseqplot5',
 hover = hoverOpts("plot_hover6e", delay = 100, delayType = "debounce"),
+dblclick = "plot_6e_dblclick",
+brush = brushOpts(id = "plot_6e_brush", resetOnNew = TRUE),
 height = 700),
 uiOutput("hover_info6e")
 )
@@ -714,83 +782,83 @@ uiOutput("hover_info6e")
 ))
 
 
-)))),
+))))
 
 
-tabPanel("Equation Ratios",
-div(class="outer",
+#tabPanel("Equation Ratios",
+#div(class="outer",
 
 
-fluidRow(
-sidebarLayout(
+#fluidRow(
+#sidebarLayout(
 
-sidebarPanel(
+#sidebarPanel(
 
-selectInput(
-"ratiocolour", "Ratio Plot Type",
-c(
-"Black" = "Black",
-"Cluster" = "Cluster",
-"Climate"="Climate",
-"Age"="Age",
-"Depth"="Depth",
-"Qualitative" = "Qualitative"
-), selected="Cluster"),
+#selectInput(
+#"ratiocolour", "Ratio Plot Type",
+#c(
+#"Black" = "Black",
+#"Cluster" = "Cluster",
+#"Climate"="Climate",
+#"Age"="Age",
+#"Depth"="Depth",
+#"Qualitative" = "Qualitative"
+#), selected="Cluster"),
 
-tags$hr(),
+#tags$hr(),
 
-textInput("xaxisdef", label="Custom X Axis", value="X axis Index"),
+#textInput("xaxisdef", label="Custom X Axis", value="X axis Index"),
 
-uiOutput('inelementx1'),
-selectInput("xtransform1", label=NULL, c("None", "+", "-", "*", "/"), selected="None"),
-uiOutput('inelementx2'),
-selectInput("xtransform2", label=NULL, c("None", "+", "-", "*", "/"), selected="None"),
-uiOutput('inelementx3'),
+#uiOutput('inelementx1'),
+#selectInput("xtransform1", label=NULL, c("None", "+", "-", "*", "/"), selected="None"),
+#uiOutput('inelementx2'),
+#selectInput("xtransform2", label=NULL, c("None", "+", "-", "*", "/"), selected="None"),
+#uiOutput('inelementx3'),
 
-tags$hr(),
+#tags$hr(),
 
-textInput("yaxisdef", label="Custom Y Axis", value="Y Axis Index"),
+#textInput("yaxisdef", label="Custom Y Axis", value="Y Axis Index"),
 
-uiOutput('inelementy1'),
-selectInput("ytransform1", label=NULL, c("None", "+", "-", "*", "/"), selected="None"),
-uiOutput('inelementy2'),
-selectInput("ytransform1", label=NULL, c("None", "+", "-", "*", "/"), selected="None"),
-uiOutput('inelementy3'),
-
-
-tags$hr(),
-
-sliderInput("spotsize3", label = "Point Size", value=5, min=2, max=15),
+#uiOutput('inelementy1'),
+#selectInput("ytransform1", label=NULL, c("None", "+", "-", "*", "/"), selected="None"),
+#uiOutput('inelementy2'),
+#selectInput("ytransform1", label=NULL, c("None", "+", "-", "*", "/"), selected="None"),
+#uiOutput('inelementy3'),
 
 
-checkboxInput('elipseplot3', "Elipse"),
+#tags$hr(),
+
+#sliderInput("spotsize3", label = "Point Size", value=5, min=2, max=15),
 
 
-
-tags$hr(),
-
-
-downloadButton('downloadPlot7', "Plot")
+#checkboxInput('elipseplot3', "Elipse"),
 
 
 
-),
+#tags$hr(),
 
-mainPanel(
-tabPanel('Element Ratios', plotOutput('elementratiotequation',
-dblclick = "plot1_dblclick", height = 700,
-brush = brushOpts(
-id = "plot1_brush",
-resetOnNew = TRUE
-)))
+
+#downloadButton('downloadPlot7', "Plot")
 
 
 
-)
+#),
 
-))
+#mainPanel(
+#tabPanel('Element Ratios', plotOutput('elementratiotequation',
+#dblclick = "plot1_dblclick", height = 700,
+#brush = brushOpts(
+#id = "plot1_brush",
+#resetOnNew = TRUE
+#)))
 
-))
+
+
+#)
+
+#))
+
+#))
 
 
 ))
