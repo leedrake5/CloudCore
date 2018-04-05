@@ -1500,12 +1500,20 @@ shinyServer(function(input, output, session) {
             
             
             
-            
+            ageImport <- reactive({
+                
+                
+                
+            })
             
             
             agePredict <- reactive({
                 
-                age.math <- ageResults()
+                age.math <- if(is.null(input$agemodelfile)){
+                    ageResults()
+                } else if(is.null(input$agemodelfile)){
+                    
+                }
                 
                 spectra.line.table <- myData()
                 

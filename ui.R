@@ -189,8 +189,9 @@ downloadButton('ageresults', "Age Results Table"),
 
 tags$hr(),
 checkboxInput("ageon", label="Age Model On", FALSE),
-
 checkboxInput("constrainage", label="Constrain Chronology", FALSE),
+fileInput('agemodelfile', 'Load Age Model', accept='.txt', multiple=FALSE),
+
 
 selectInput('curvetype', "Choose Calibration", choices=c("intcal13", "marine13", "shcal13", "normal"), selected="intcal13")
 
