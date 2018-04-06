@@ -286,17 +286,31 @@ shinyServer(function(input, output, session) {
     })
     
     
-    ExcelData <- reactive({
+    ExcelDataFirst <- reactive({
         inFile <- input$file1
         if (is.null(inFile)) return(NULL)
         
         proto.fish <- loadWorkbook(file=inFile$datapath)
         just.fish <- readWorkbook(proto.fish, sheet=1)
-        just.fish[,1] <- as.numeric(just.fish[,1])
-        quant.fish <- just.fish[, sapply(just.fish, is.numeric)]
-        qual.fish <- just.fish[, !sapply(just.fish, is.numeric)]
+        just.fish[,1] <- as.character(just.fish[,1])
+        quant.fish <- as.data.frame(just.fish[, sapply(just.fish, is.numeric)])
+        qual.fish <- as.data.frame(just.fish[, !sapply(just.fish, is.numeric)])
         
-        data.frame(Spectrum=as.character(quant.fish[,1]), Depth=quant.fish[,1], quant.fish[,-1])
+        as.data.frame(data.frame(Spectrum=qual.fish[,1], quant.fish))
+        
+    })
+    
+    ExcelDataSecond <- reactive({
+        inFile <- input$file2
+        if (is.null(inFile)) return(NULL)
+        
+        proto.fish <- loadWorkbook(file=inFile$datapath)
+        just.fish <- readWorkbook(proto.fish, sheet=1)
+        just.fish[,1] <- as.character(just.fish[,1])
+        quant.fish <- as.data.frame(just.fish[, sapply(just.fish, is.numeric)])
+        qual.fish <- as.data.frame(just.fish[, !sapply(just.fish, is.numeric)])
+        
+        as.data.frame(data.frame(Spectrum=qual.fish[,1], quant.fish))
         
     })
     
@@ -306,11 +320,14 @@ shinyServer(function(input, output, session) {
         
         proto.fish <- loadWorkbook(file=inFile$datapath)
         just.fish <- readWorkbook(proto.fish, sheet=1)
-        just.fish[,1] <- as.numeric(just.fish[,1])
-        quant.fish <- just.fish[, sapply(just.fish, is.numeric)]
-        qual.fish <- just.fish[, !sapply(just.fish, is.numeric)]
-        
-        data.frame(Spectrum=as.character(quant.fish[,1]), Depth=quant.fish[,1], qual.fish[,2:length(qual.fish)])
+        just.fish[,1] <- as.character(just.fish[,1])
+        quant.fish <- as.data.frame(just.fish[, sapply(just.fish, is.numeric)])
+        qual.fish <- as.data.frame(just.fish[, !sapply(just.fish, is.numeric)])
+        if(length(qual.fish)>1){
+            data.frame(Spectrum=qual.fish[,1], qual.fish[,2:length(qual.fish)])
+        } else if(length(qual.fish)==1){
+            data.frame(Spectrum=qual.fish[,1], Qualitative1=qual.fish[,1])
+        }
         
     })
     
@@ -324,7 +341,7 @@ shinyServer(function(input, output, session) {
         } else if(input$filetype=="Artax Excel"){
             artaxExcelDataFirst()
         } else if(input$filetype=="Spreadsheet"){
-            ExcelData()
+            ExcelDataFirst()
         }
         
     })
@@ -338,6 +355,8 @@ shinyServer(function(input, output, session) {
             netCountsSecond()
         } else if(input$filetype=="Artax Excel"){
             artaxExcelDataSecond()
+        } else if(input$filetype=="Spreadsheet"){
+            ExcelDataSecond()
         }
         
     })
@@ -384,6 +403,8 @@ shinyServer(function(input, output, session) {
                 accepted.net.combined
             } else if(input$filetype=="Artax Excel"){
                 accepted.net.combined
+            } else if(input$filetype=="Spreadsheet"){
+                accepted.spec.combined
             }
         }
         
@@ -492,6 +513,8 @@ shinyServer(function(input, output, session) {
             } else if(input$filetype=="Net"){
                 myDataFirst()
             } else if(input$filetype=="Artax Excel"){
+                myDataFirst()
+            } else if(input$filetype=="Spreadsheet"){
                 myDataFirst()
             }
             
@@ -769,6 +792,8 @@ shinyServer(function(input, output, session) {
                 myDataSecond()
             } else if(input$filetype=="Artax Excel"){
                 myDataSecond()
+            } else if(input$filetype=="Spreadsheet"){
+                myDataSecond()
             }
             
             
@@ -947,15 +972,16 @@ shinyServer(function(input, output, session) {
         
         hotableInputDepthLight <- reactive({
             
-            light.table <- data.frame(myDataFirst()$Spectrum)
-            light.table$Spectrum <- myDataFirst()$Spectrum
+            light.table <- data.frame(myDataFirst()[,1])
+            light.table$Spectrum <- myDataFirst()[,1]
             if(input$filetype!="Spreadsheet"){
                 light.table$LightDepth <- myDataFirst()[,2]*0
+                light.table <- light.table[2:3]
             } else if(input$filetype=="Spreadsheet"){
-                light.table$LightDepth <- as.numeric(myDataFirst()$Depth)
+                light.table <- data.frame(Spectrum=myDataFirst()[,1], LightDepth=as.numeric(as.vector(myDataFirst()[,1])))
             }
             
-            light.table <- light.table[2:3]
+            light.table
             
         })
         
@@ -985,7 +1011,7 @@ shinyServer(function(input, output, session) {
         
         hotableInputDepthTrace <- reactive({
             
-            if(is.null(input$file2)==FALSE){
+            if(is.null(input$file2)==FALSE && input$filetype!="Spreadsheet"){
                 
                 trace.table <- data.frame(myDataSecond()$Spectrum)
                 trace.table$Spectrum <- myDataSecond()$Spectrum
@@ -994,10 +1020,15 @@ shinyServer(function(input, output, session) {
                 trace.table <- trace.table[2:3]
                 
                 colnames(trace.table) <- c("TraceSpectrum", "TraceDepth")
-            } else if(is.null(input$file2)==TRUE){
+            } else if(is.null(input$file2)==TRUE && input$filetype!="Spreadsheet"){
                 trace.table <- data.frame(0, 0)
                 colnames(trace.table) <- c("TraceSpectrum", "TraceDepth")
-            }
+            }  else if(is.null(input$file2)==TRUE && input$filetype=="Spreadsheet"){
+                trace.table <- data.frame(0, 0)
+                colnames(trace.table) <- c("TraceSpectrum", "TraceDepth")
+            } else if(is.null(input$file2)==FALSE && input$filetype=="Spreadsheet"){
+            trace.table <- data.frame(Spectrum=myDataSecond()[,1], TraceDepth=as.numeric(as.vector(myDataSecond()[,1])))
+        }
             
             trace.table
             
@@ -1037,7 +1068,7 @@ shinyServer(function(input, output, session) {
             if(is.null(input$file2)==FALSE){
                 light.frame <- light.frame[,colnames(light.frame) %in% c("Depth", preference.light)]
             }
-            light.frame
+            as.data.frame(light.frame)
             
         })
         
@@ -1047,7 +1078,8 @@ shinyServer(function(input, output, session) {
             colnames(trace.frame) <- c(names(myDataSecond()), "Depth")
             trace.frame <- trace.frame[ ,!(colnames(trace.frame) == "Spectrum")]
             trace.frame <- trace.frame[,colnames(trace.frame) %in% c("Depth", preference.trace)]
-            trace.frame
+            as.data.frame(trace.frame)
+            
         })
         
         lightQuantFrame <- reactive({
@@ -1058,7 +1090,7 @@ shinyServer(function(input, output, session) {
             if(!is.null(input$file2)){
                 light.frame <- light.frame[,colnames(light.frame) %in% c("Depth", preference.light)]
             }
-            light.frame
+            as.data.frame(light.frame)
         })
         
         traceQuantFrame <- reactive({
@@ -1067,8 +1099,25 @@ shinyServer(function(input, output, session) {
             colnames(trace.frame) <- c(names(tableInputValQuantSecond()), "Depth")
             trace.frame <- trace.frame[ ,!(colnames(trace.frame) == "Spectrum")]
             trace.frame <- trace.frame[,colnames(trace.frame) %in% c("Depth", preference.trace)]
-            trace.frame
+            as.data.frame(trace.frame)
         })
+        
+        
+        output$downloadlight <- downloadHandler(
+        filename = function() { paste(paste(c(input$projectname, "_", "lightTable"), collapse=''), '.csv', sep='') },
+        content = function(file
+        ) {
+            write.csv(ExcelDataFirst(), file)
+        }
+        )
+        
+        output$downloadtrace <- downloadHandler(
+        filename = function() { paste(paste(c(input$projectname, "_", "traceTable"), collapse=''), '.csv', sep='') },
+        content = function(file
+        ) {
+            write.csv(ExcelDataSecond(), file)
+        }
+        )
         
         
         observeEvent(input$actionprocessdepth, {
@@ -1081,7 +1130,8 @@ shinyServer(function(input, output, session) {
                 if(is.null(input$file2)==TRUE){
                     data <- lightFrame()
                 } else {
-                    merged.frame <- merge(lightFrame(), traceFrame(), by = "Depth", all=TRUE)
+                    merged.frame <- plyr::join(lightFrame(), traceFrame(), by="Depth", type="inner")
+                    #merged.frame <- merge(lightFrame(), traceFrame(), by = "Depth", all=TRUE)
                     merged.frame <- subset(merged.frame, (merged.frame$Depth %in% lightFrame()$Depth))
                     merged.frame <- subset(merged.frame, (merged.frame$Depth %in% traceFrame()$Depth))
                     data <- merged.frame

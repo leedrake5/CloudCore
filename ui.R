@@ -145,7 +145,9 @@ fileInput('calfileinput1', 'Load Light Element Cal File', accept='.quant', multi
 fileInput('calfileinput2', 'Load Trace Element Cal File', accept='.quant', multiple=FALSE),
 
 checkboxInput('usecalfile', "Use Cal File"),
-downloadButton('downloadFullData', "Full Table")
+downloadButton('downloadFullData', "Full Table"),
+downloadButton('downloadlight', "light"),
+downloadButton('downloadtrace', "trace")
 
 
 
