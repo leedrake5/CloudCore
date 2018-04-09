@@ -463,7 +463,19 @@ shinyServer(function(input, output, session) {
         
         
         
-        
+        calDataType <- reactive({
+            
+            if(input$filetype=="Spectra"){
+                "Spectra"
+            } else if(input$filetype=="Net"){
+                "Net"
+            } else if(input$filetype=="Artax Excel"){
+                "Net"
+            } else if(input$filetype=="Spreadsheet"){
+                "Spectra"
+            }
+            
+        })
         
         
         
@@ -474,24 +486,23 @@ shinyServer(function(input, output, session) {
             val.data <- myValDataFirst()
             
             
-            if(input$filetype=="Spectra"){spectra.line.list <- lapply(variableelements, function(x) elementGrab(element.line=x, data=rawSpectra()))}
-            if(input$filetype=="Spectra"){element.count.list <- lapply(spectra.line.list, `[`, 2)}
+            if(calDataType()=="Spectra"){spectra.line.list <- lapply(variableelements, function(x) elementGrab(element.line=x, data=rawSpectra()))}
+            if(calDataType()=="Spectra"){element.count.list <- lapply(spectra.line.list, `[`, 2)}
             
             
-            if(input$filetype=="Spectra"){spectra.line.vector <- as.numeric(unlist(element.count.list))}
+            if(calDataType()=="Spectra"){spectra.line.vector <- as.numeric(unlist(element.count.list))}
             
-            if(input$filetype=="Spectra"){dim(spectra.line.vector) <- c(length(val.data$Spectrum), length(variableelements))}
+            if(calDataType()=="Spectra"){dim(spectra.line.vector) <- c(length(val.data$Spectrum), length(variableelements))}
             
-            if(input$filetype=="Spectra"){spectra.line.frame <- data.frame(val.data$Spectrum, spectra.line.vector)}
+            if(calDataType()=="Spectra"){spectra.line.frame <- data.frame(val.data$Spectrum, spectra.line.vector)}
             
-            if(input$filetype=="Spectra"){colnames(spectra.line.frame) <- c("Spectrum", variableelements)}
+            if(calDataType()=="Spectra"){colnames(spectra.line.frame) <- c("Spectrum", variableelements)}
             
-            if(input$filetype=="Spectra"){spectra.line.frame <- as.data.frame(spectra.line.frame)}
+            if(calDataType()=="Spectra"){spectra.line.frame <- as.data.frame(spectra.line.frame)}
             
-            if(input$filetype=="Spectra"){val.line.table <- spectra.line.frame[,c("Spectrum", variableelements)]}
+            if(calDataType()=="Spectra"){val.line.table <- spectra.line.frame[,c("Spectrum", variableelements)]}
             
-            if(input$filetype=="Net"){val.line.table <- val.data}
-            if(input$filetype=="Artax Excel"){val.line.table <- val.data}
+            if(calDataType()=="Net"){val.line.table <- val.data}
             
             val.line.table
         })
@@ -523,7 +534,7 @@ shinyServer(function(input, output, session) {
             
             
             predicted.list <- pblapply(elements, function (x)
-            if(input$filetype=="Spectra" && the.cal[[x]][[1]]$CalTable$CalType!=3 && the.cal[[x]][[1]]$CalTable$NormType==1){
+            if(calDataType()=="Spectra" && the.cal[[x]][[1]]$CalTable$CalType!=3 && the.cal[[x]][[1]]$CalTable$NormType==1){
                 predict(
                 object=the.cal[[x]][[2]],
                 newdata=general.prep(
@@ -532,7 +543,7 @@ shinyServer(function(input, output, session) {
                 ),
                 element.line=x)
                 )
-            } else if(input$filetype=="Spectra" && the.cal[[x]][[1]]$CalTable$CalType!=3 && the.cal[[x]][[1]]$CalTable$NormType==2) {
+            } else if(calDataType()=="Spectra" && the.cal[[x]][[1]]$CalTable$CalType!=3 && the.cal[[x]][[1]]$CalTable$NormType==2) {
                 predict(
                 object=the.cal[[x]][[2]],
                 newdata=simple.tc.prep(
@@ -543,7 +554,7 @@ shinyServer(function(input, output, session) {
                 element.line=x
                 )
                 )
-            } else if(input$filetype=="Spectra" && the.cal[[x]][[1]]$CalTable$CalType!=3 && the.cal[[x]][[1]]$CalTable$NormType==3) {
+            } else if(calDataType()=="Spectra" && the.cal[[x]][[1]]$CalTable$CalType!=3 && the.cal[[x]][[1]]$CalTable$NormType==3) {
                 predict(
                 object=the.cal[[x]][[2]],
                 newdata=simple.comp.prep(
@@ -556,7 +567,7 @@ shinyServer(function(input, output, session) {
                 norm.max=the.cal[[x]][[1]][1]$CalTable$Max
                 )
                 )
-            } else if(input$filetype=="Spectra" && the.cal[[x]][[1]]$CalTable$CalType==3 && the.cal[[x]][[1]]$CalTable$NormType==1){
+            } else if(calDataType()=="Spectra" && the.cal[[x]][[1]]$CalTable$CalType==3 && the.cal[[x]][[1]]$CalTable$NormType==1){
                 predict(
                 object=the.cal[[x]][[2]],
                 newdata=lukas.simp.prep(
@@ -568,7 +579,7 @@ shinyServer(function(input, output, session) {
                 intercept.element.lines=the.cal[[x]][[1]][3]$Intercept
                 )
                 )
-            } else if(input$filetype=="Spectra" && the.cal[[x]][[1]]$CalTable$CalType==3 && the.cal[[x]][[1]]$CalTable$NormType==2){
+            } else if(calDataType()=="Spectra" && the.cal[[x]][[1]]$CalTable$CalType==3 && the.cal[[x]][[1]]$CalTable$NormType==2){
                 predict(
                 object=the.cal[[x]][[2]],
                 newdata=lukas.tc.prep(
@@ -581,7 +592,7 @@ shinyServer(function(input, output, session) {
                 intercept.element.lines=the.cal[[x]][[1]][3]$Intercept
                 )
                 )
-            } else if(input$filetype=="Spectra" && the.cal[[x]][[1]]$CalTable$CalType==3 && the.cal[[x]][[1]]$CalTable$NormType==3){
+            } else if(calDataType()=="Spectra" && the.cal[[x]][[1]]$CalTable$CalType==3 && the.cal[[x]][[1]]$CalTable$NormType==3){
                 predict(
                 object=the.cal[[x]][[2]],
                 newdata=lukas.comp.prep(
@@ -596,7 +607,7 @@ shinyServer(function(input, output, session) {
                 norm.max=the.cal[[x]][[1]][1]$CalTable$Max
                 )
                 )
-            }else if(input$filetype!="Spectra" && the.cal[[x]][[1]]$CalTable$CalType!=3 && the.cal[[x]][[1]]$CalTable$NormType==1){
+            }else if(calDataType()!="Spectra" && the.cal[[x]][[1]]$CalTable$CalType!=3 && the.cal[[x]][[1]]$CalTable$NormType==1){
                 predict(
                 object=the.cal[[x]][[2]],
                 newdata=general.prep.net(
@@ -605,7 +616,7 @@ shinyServer(function(input, output, session) {
                 ),
                 element.line=x)
                 )
-            } else if(input$filetype!="Spectra" && the.cal[[x]][[1]]$CalTable$CalType!=3 && the.cal[[x]][[1]]$CalTable$NormType==2) {
+            } else if(calDataType()!="Spectra" && the.cal[[x]][[1]]$CalTable$CalType!=3 && the.cal[[x]][[1]]$CalTable$NormType==2) {
                 predict(
                 object=the.cal[[x]][[2]],
                 newdata=simple.tc.prep.net(
@@ -616,7 +627,7 @@ shinyServer(function(input, output, session) {
                 element.line=x
                 )
                 )
-            } else if(input$filetype!="Spectra" && the.cal[[x]][[1]]$CalTable$CalType!=3 && the.cal[[x]][[1]]$CalTable$NormType==3) {
+            } else if(calDataType()!="Spectra" && the.cal[[x]][[1]]$CalTable$CalType!=3 && the.cal[[x]][[1]]$CalTable$NormType==3) {
                 predict(
                 object=the.cal[[x]][[2]],
                 newdata=simple.comp.prep.net(
@@ -629,7 +640,7 @@ shinyServer(function(input, output, session) {
                 norm.max=the.cal[[x]][[1]][1]$CalTable$Max
                 )
                 )
-            } else if(input$filetype!="Spectra" && the.cal[[x]][[1]]$CalTable$CalType==3 && the.cal[[x]][[1]]$CalTable$NormType==1){
+            } else if(calDataType()!="Spectra" && the.cal[[x]][[1]]$CalTable$CalType==3 && the.cal[[x]][[1]]$CalTable$NormType==1){
                 predict(
                 object=the.cal[[x]][[2]],
                 newdata=lukas.simp.prep.net(
@@ -641,7 +652,7 @@ shinyServer(function(input, output, session) {
                 intercept.element.lines=the.cal[[x]][[1]][3]$Intercept
                 )
                 )
-            } else if(input$filetype!="Spectra" && the.cal[[x]][[1]]$CalTable$CalType==3 && the.cal[[x]][[1]]$CalTable$NormType==2){
+            } else if(calDataType()!="Spectra" && the.cal[[x]][[1]]$CalTable$CalType==3 && the.cal[[x]][[1]]$CalTable$NormType==2){
                 predict(
                 object=the.cal[[x]][[2]],
                 newdata=lukas.tc.prep.net(
@@ -654,7 +665,7 @@ shinyServer(function(input, output, session) {
                 intercept.element.lines=the.cal[[x]][[1]][3]$Intercept
                 )
                 )
-            } else if(input$filetype!="Spectra" && the.cal[[x]][[1]]$CalTable$CalType==3 && the.cal[[x]][[1]]$CalTable$NormType==3){
+            } else if(calDataType()!="Spectra" && the.cal[[x]][[1]]$CalTable$CalType==3 && the.cal[[x]][[1]]$CalTable$NormType==3){
                 predict(
                 object=the.cal[[x]][[2]],
                 newdata=lukas.comp.prep.net(
@@ -751,24 +762,23 @@ shinyServer(function(input, output, session) {
             val.data <- myValDataSecond()
             
             
-            if(input$filetype=="Spectra"){spectra.line.list <- lapply(variableelements, function(x) elementGrab(element.line=x, data=rawSpectraSecond()))}
-            if(input$filetype=="Spectra"){element.count.list <- lapply(spectra.line.list, `[`, 2)}
+            if(calDataType()=="Spectra"){spectra.line.list <- lapply(variableelements, function(x) elementGrab(element.line=x, data=rawSpectraSecond()))}
+            if(calDataType()=="Spectra"){element.count.list <- lapply(spectra.line.list, `[`, 2)}
             
             
-            if(input$filetype=="Spectra"){spectra.line.vector <- as.numeric(unlist(element.count.list))}
+            if(calDataType()=="Spectra"){spectra.line.vector <- as.numeric(unlist(element.count.list))}
             
-            if(input$filetype=="Spectra"){dim(spectra.line.vector) <- c(length(val.data$Spectrum), length(variableelements))}
+            if(calDataType()=="Spectra"){dim(spectra.line.vector) <- c(length(val.data$Spectrum), length(variableelements))}
             
-            if(input$filetype=="Spectra"){spectra.line.frame <- data.frame(val.data$Spectrum, spectra.line.vector)}
+            if(calDataType()=="Spectra"){spectra.line.frame <- data.frame(val.data$Spectrum, spectra.line.vector)}
             
-            if(input$filetype=="Spectra"){colnames(spectra.line.frame) <- c("Spectrum", variableelements)}
+            if(calDataType()=="Spectra"){colnames(spectra.line.frame) <- c("Spectrum", variableelements)}
             
-            if(input$filetype=="Spectra"){spectra.line.frame <- as.data.frame(spectra.line.frame)}
+            if(calDataType()=="Spectra"){spectra.line.frame <- as.data.frame(spectra.line.frame)}
             
-            if(input$filetype=="Spectra"){val.line.table <- spectra.line.frame[,c("Spectrum", variableelements)]}
+            if(calDataType()=="Spectra"){val.line.table <- spectra.line.frame[,c("Spectrum", variableelements)]}
             
-            if(input$filetype=="Net"){val.line.table <- val.data}
-            if(input$filetype=="Artax Excel"){val.line.table <- val.data}
+            if(calDataType()=="Net"){val.line.table <- val.data}
             
             
             val.line.table
@@ -801,7 +811,7 @@ shinyServer(function(input, output, session) {
             
             
             predicted.list <- pblapply(elements, function (x)
-            if(input$filetype=="Spectra" && the.cal[[x]][[1]]$CalTable$CalType!=3 && the.cal[[x]][[1]]$CalTable$NormType==1){
+            if(calDataType()=="Spectra" && the.cal[[x]][[1]]$CalTable$CalType!=3 && the.cal[[x]][[1]]$CalTable$NormType==1){
                 predict(
                 object=the.cal[[x]][[2]],
                 newdata=general.prep(
@@ -810,7 +820,7 @@ shinyServer(function(input, output, session) {
                 ),
                 element.line=x)
                 )
-            } else if(input$filetype=="Spectra" && the.cal[[x]][[1]]$CalTable$CalType!=3 && the.cal[[x]][[1]]$CalTable$NormType==2) {
+            } else if(calDataType()=="Spectra" && the.cal[[x]][[1]]$CalTable$CalType!=3 && the.cal[[x]][[1]]$CalTable$NormType==2) {
                 predict(
                 object=the.cal[[x]][[2]],
                 newdata=simple.tc.prep(
@@ -821,7 +831,7 @@ shinyServer(function(input, output, session) {
                 element.line=x
                 )
                 )
-            } else if(input$filetype=="Spectra" && the.cal[[x]][[1]]$CalTable$CalType!=3 && the.cal[[x]][[1]]$CalTable$NormType==3) {
+            } else if(calDataType()=="Spectra" && the.cal[[x]][[1]]$CalTable$CalType!=3 && the.cal[[x]][[1]]$CalTable$NormType==3) {
                 predict(
                 object=the.cal[[x]][[2]],
                 newdata=simple.comp.prep(
@@ -834,7 +844,7 @@ shinyServer(function(input, output, session) {
                 norm.max=the.cal[[x]][[1]][1]$CalTable$Max
                 )
                 )
-            } else if(input$filetype=="Spectra" && the.cal[[x]][[1]]$CalTable$CalType==3 && the.cal[[x]][[1]]$CalTable$NormType==1){
+            } else if(calDataType()=="Spectra" && the.cal[[x]][[1]]$CalTable$CalType==3 && the.cal[[x]][[1]]$CalTable$NormType==1){
                 predict(
                 object=the.cal[[x]][[2]],
                 newdata=lukas.simp.prep(
@@ -846,7 +856,7 @@ shinyServer(function(input, output, session) {
                 intercept.element.lines=the.cal[[x]][[1]][3]$Intercept
                 )
                 )
-            } else if(input$filetype=="Spectra" && the.cal[[x]][[1]]$CalTable$CalType==3 && the.cal[[x]][[1]]$CalTable$NormType==2){
+            } else if(calDataType()=="Spectra" && the.cal[[x]][[1]]$CalTable$CalType==3 && the.cal[[x]][[1]]$CalTable$NormType==2){
                 predict(
                 object=the.cal[[x]][[2]],
                 newdata=lukas.tc.prep(
@@ -859,7 +869,7 @@ shinyServer(function(input, output, session) {
                 intercept.element.lines=the.cal[[x]][[1]][3]$Intercept
                 )
                 )
-            } else if(input$filetype=="Spectra" && the.cal[[x]][[1]]$CalTable$CalType==3 && the.cal[[x]][[1]]$CalTable$NormType==3){
+            } else if(calDataType()=="Spectra" && the.cal[[x]][[1]]$CalTable$CalType==3 && the.cal[[x]][[1]]$CalTable$NormType==3){
                 predict(
                 object=the.cal[[x]][[2]],
                 newdata=lukas.comp.prep(
@@ -874,7 +884,7 @@ shinyServer(function(input, output, session) {
                 norm.max=the.cal[[x]][[1]][1]$CalTable$Max
                 )
                 )
-            }else if(input$filetype!="Spectra" && the.cal[[x]][[1]]$CalTable$CalType!=3 && the.cal[[x]][[1]]$CalTable$NormType==1){
+            }else if(calDataType()!="Spectra" && the.cal[[x]][[1]]$CalTable$CalType!=3 && the.cal[[x]][[1]]$CalTable$NormType==1){
                 predict(
                 object=the.cal[[x]][[2]],
                 newdata=general.prep.net(
@@ -883,7 +893,7 @@ shinyServer(function(input, output, session) {
                 ),
                 element.line=x)
                 )
-            } else if(input$filetype!="Spectra" && the.cal[[x]][[1]]$CalTable$CalType!=3 && the.cal[[x]][[1]]$CalTable$NormType==2) {
+            } else if(calDataType()!="Spectra" && the.cal[[x]][[1]]$CalTable$CalType!=3 && the.cal[[x]][[1]]$CalTable$NormType==2) {
                 predict(
                 object=the.cal[[x]][[2]],
                 newdata=simple.tc.prep.net(
@@ -894,7 +904,7 @@ shinyServer(function(input, output, session) {
                 element.line=x
                 )
                 )
-            } else if(input$filetype!="Spectra" && the.cal[[x]][[1]]$CalTable$CalType!=3 && the.cal[[x]][[1]]$CalTable$NormType==3) {
+            } else if(calDataType()!="Spectra" && the.cal[[x]][[1]]$CalTable$CalType!=3 && the.cal[[x]][[1]]$CalTable$NormType==3) {
                 predict(
                 object=the.cal[[x]][[2]],
                 newdata=simple.comp.prep.net(
@@ -907,7 +917,7 @@ shinyServer(function(input, output, session) {
                 norm.max=the.cal[[x]][[1]][1]$CalTable$Max
                 )
                 )
-            } else if(input$filetype!="Spectra" && the.cal[[x]][[1]]$CalTable$CalType==3 && the.cal[[x]][[1]]$CalTable$NormType==1){
+            } else if(calDataType()!="Spectra" && the.cal[[x]][[1]]$CalTable$CalType==3 && the.cal[[x]][[1]]$CalTable$NormType==1){
                 predict(
                 object=the.cal[[x]][[2]],
                 newdata=lukas.simp.prep.net(
@@ -919,7 +929,7 @@ shinyServer(function(input, output, session) {
                 intercept.element.lines=the.cal[[x]][[1]][3]$Intercept
                 )
                 )
-            } else if(input$filetype!="Spectra" && the.cal[[x]][[1]]$CalTable$CalType==3 && the.cal[[x]][[1]]$CalTable$NormType==2){
+            } else if(calDataType()!="Spectra" && the.cal[[x]][[1]]$CalTable$CalType==3 && the.cal[[x]][[1]]$CalTable$NormType==2){
                 predict(
                 object=the.cal[[x]][[2]],
                 newdata=lukas.tc.prep.net(
@@ -932,7 +942,7 @@ shinyServer(function(input, output, session) {
                 intercept.element.lines=the.cal[[x]][[1]][3]$Intercept
                 )
                 )
-            } else if(input$filetype!="Spectra" && the.cal[[x]][[1]]$CalTable$CalType==3 && the.cal[[x]][[1]]$CalTable$NormType==3){
+            } else if(calDataType()!="Spectra" && the.cal[[x]][[1]]$CalTable$CalType==3 && the.cal[[x]][[1]]$CalTable$NormType==3){
                 predict(
                 object=the.cal[[x]][[2]],
                 newdata=lukas.comp.prep.net(
