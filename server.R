@@ -5916,7 +5916,7 @@ shinyServer(function(input, output, session) {
             
             output$ternaryplot <- renderPlot({
                 
-                plotInput5()
+                print(plotInput5())
                 
             })
             
