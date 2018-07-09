@@ -16,6 +16,7 @@ library(zoo)
 library(Cairo)
 library(openxlsx)
 library(gRbase)
+library(randomForest)
 
 options(shiny.maxRequestSize=180000*1024^2)
 
@@ -438,7 +439,7 @@ shinyServer(function(input, output, session) {
         
         calValHoldFirst <- reactive({
             
-            calFileContentsFirst()[[6]]
+            calFileContentsFirst()[["calList"]]
             
         })
         
@@ -509,7 +510,31 @@ shinyServer(function(input, output, session) {
         
         
         
-        
+        valDataType <- reactive({
+            
+            if(input$filetype=="CSV"){
+                "Spectra"
+            } else if(input$filetype=="TXT"){
+                "Spectra"
+            } else if(input$filetype=="Net"){
+                "Net"
+            } else if(input$filetype=="Elio") {
+                "Spectra"
+            } else if(input$filetype=="SPX") {
+                "Spectra"
+            } else if(input$filetype=="MCA") {
+                "Spectra"
+            } else if(input$filetype=="PDZ") {
+                "Spectra"
+            } else if(input$filetype=="Spectra") {
+                "Spectra"
+            } else if(input$filetype=="Spreadsheet") {
+                "Spectra"
+            } else if(input$filetype=="Artax Excel") {
+                "Spectra"
+            }
+            
+        })
         
         
         
@@ -533,20 +558,39 @@ shinyServer(function(input, output, session) {
             
             
             
-            predicted.list <- pblapply(elements, function (x)
-            if(calDataType()=="Spectra" && the.cal[[x]][[1]]$CalTable$CalType!=3 && the.cal[[x]][[1]]$CalTable$NormType==1){
+            cal_type <- function(element){
+                
+                
+                if(the.cal[[element]][[1]]$CalTable$CalType==1){
+                    1
+                } else if(the.cal[[element]][[1]]$CalTable$CalType==2){
+                    1
+                } else if(the.cal[[element]][[1]]$CalTable$CalType==3){
+                    3
+                } else if(the.cal[[element]][[1]]$CalTable$CalType==4){
+                    4
+                } else if(the.cal[[element]][[1]]$CalTable$CalType==5){
+                    5
+                }
+                
+            }
+            
+            
+            
+            predicted.list <- lapply(elements, function (x)
+            if(valDataType()=="Spectra" && cal_type(x)==1 && the.cal[[x]][[1]]$CalTable$NormType==1){
                 predict(
                 object=the.cal[[x]][[2]],
-                newdata=general.prep(
+                newdata=general_prep_xrf(
                 spectra.line.table=as.data.frame(
                 count.table
                 ),
                 element.line=x)
                 )
-            } else if(calDataType()=="Spectra" && the.cal[[x]][[1]]$CalTable$CalType!=3 && the.cal[[x]][[1]]$CalTable$NormType==2) {
+            } else if(valDataType()=="Spectra" && cal_type(x)==1 && the.cal[[x]][[1]]$CalTable$NormType==2) {
                 predict(
                 object=the.cal[[x]][[2]],
-                newdata=simple.tc.prep(
+                newdata=simple_tc_prep_xrf(
                 data=valdata,
                 spectra.line.table=as.data.frame(
                 count.table
@@ -554,10 +598,10 @@ shinyServer(function(input, output, session) {
                 element.line=x
                 )
                 )
-            } else if(calDataType()=="Spectra" && the.cal[[x]][[1]]$CalTable$CalType!=3 && the.cal[[x]][[1]]$CalTable$NormType==3) {
+            } else if(valDataType()=="Spectra" && cal_type(x)==1 && the.cal[[x]][[1]]$CalTable$NormType==3) {
                 predict(
                 object=the.cal[[x]][[2]],
-                newdata=simple.comp.prep(
+                newdata=simple_comp_prep_xrf(
                 data=valdata,
                 spectra.line.table=as.data.frame(
                 count.table
@@ -567,10 +611,10 @@ shinyServer(function(input, output, session) {
                 norm.max=the.cal[[x]][[1]][1]$CalTable$Max
                 )
                 )
-            } else if(calDataType()=="Spectra" && the.cal[[x]][[1]]$CalTable$CalType==3 && the.cal[[x]][[1]]$CalTable$NormType==1){
+            } else if(valDataType()=="Spectra" && cal_type(x)==3 && the.cal[[x]][[1]]$CalTable$NormType==1){
                 predict(
                 object=the.cal[[x]][[2]],
-                newdata=lukas.simp.prep(
+                newdata=lucas_simp_prep_xrf(
                 spectra.line.table=as.data.frame(
                 count.table
                 ),
@@ -579,10 +623,10 @@ shinyServer(function(input, output, session) {
                 intercept.element.lines=the.cal[[x]][[1]][3]$Intercept
                 )
                 )
-            } else if(calDataType()=="Spectra" && the.cal[[x]][[1]]$CalTable$CalType==3 && the.cal[[x]][[1]]$CalTable$NormType==2){
+            } else if(valDataType()=="Spectra" && cal_type(x)==3 && the.cal[[x]][[1]]$CalTable$NormType==2){
                 predict(
                 object=the.cal[[x]][[2]],
-                newdata=lukas.tc.prep(
+                newdata=lucas_tc_prep_xrf(
                 data=valdata,
                 spectra.line.table=as.data.frame(
                 count.table
@@ -592,10 +636,10 @@ shinyServer(function(input, output, session) {
                 intercept.element.lines=the.cal[[x]][[1]][3]$Intercept
                 )
                 )
-            } else if(calDataType()=="Spectra" && the.cal[[x]][[1]]$CalTable$CalType==3 && the.cal[[x]][[1]]$CalTable$NormType==3){
+            } else if(valDataType()=="Spectra" && cal_type(x)==3 && the.cal[[x]][[1]]$CalTable$NormType==3){
                 predict(
                 object=the.cal[[x]][[2]],
-                newdata=lukas.comp.prep(
+                newdata=lucas_comp_prep_xrf(
                 data=valdata,
                 spectra.line.table=as.data.frame(
                 count.table
@@ -607,19 +651,76 @@ shinyServer(function(input, output, session) {
                 norm.max=the.cal[[x]][[1]][1]$CalTable$Max
                 )
                 )
-            }else if(calDataType()!="Spectra" && the.cal[[x]][[1]]$CalTable$CalType!=3 && the.cal[[x]][[1]]$CalTable$NormType==1){
+            } else if(valDataType()=="Spectra" && cal_type(x)==4 && the.cal[[x]][[1]]$CalTable$NormType==1){
                 predict(
                 object=the.cal[[x]][[2]],
-                newdata=general.prep.net(
+                newdata=lucas_simp_prep_xrf(
+                spectra.line.table=as.data.frame(
+                count.table
+                ),
+                element.line=x,
+                slope.element.lines=variables,
+                intercept.element.lines=the.cal[[x]][[1]][3]$Intercept
+                )
+                )
+            } else if(valDataType()=="Spectra" && cal_type(x)==4 && the.cal[[x]][[1]]$CalTable$NormType==2){
+                predict(
+                object=the.cal[[x]][[2]],
+                newdata=lucas_tc_prep_xrf(
+                data=valdata,
+                spectra.line.table=as.data.frame(
+                count.table
+                ),
+                element.line=x,
+                slope.element.lines=variables,
+                intercept.element.lines=the.cal[[x]][[1]][3]$Intercept
+                )
+                )
+            } else if(valDataType()=="Spectra" && cal_type(x)==4 && the.cal[[x]][[1]]$CalTable$NormType==3){
+                predict(
+                object=the.cal[[x]][[2]],
+                newdata=lucas_comp_prep_xrf(
+                data=valdata,
+                spectra.line.table=as.data.frame(
+                count.table
+                ),
+                element.line=x,
+                slope.element.lines=variables,
+                intercept.element.lines=the.cal[[x]][[1]][3]$Intercept,
+                norm.min=the.cal[[x]][[1]][1]$CalTable$Min,
+                norm.max=the.cal[[x]][[1]][1]$CalTable$Max
+                )
+                )
+            } else if(valDataType()=="Spectra" && cal_type(x)==5 && the.cal[[x]][[1]]$CalTable$NormType==1){
+                predict(
+                object=the.cal[[x]][[2]],
+                newdata=spectra_simp_prep_xrf(valdata)[,-1]
+                )
+            } else if(valDataType()=="Spectra" && cal_type(x)==5 && the.cal[[x]][[1]]$CalTable$NormType==2){
+                predict(
+                object=the.cal[[x]][[2]],
+                newdata=spectra_tc_prep_xrf(valdata)[,-1]
+                )
+            } else if(valDataType()=="Spectra" && cal_type(x)==5 && the.cal[[x]][[1]]$CalTable$NormType==3){
+                predict(
+                object=the.cal[[x]][[2]],
+                newdata=spectra_comp_prep_xrf(valdata,
+                norm.min=the.cal[[x]][[1]][1]$CalTable$Min,
+                norm.max=the.cal[[x]][[1]][1]$CalTable$Max)[,-1]
+                )
+            } else if(valDataType()=="Net" && cal_type(x)==1 && the.cal[[x]][[1]]$CalTable$NormType==1){
+                predict(
+                object=the.cal[[x]][[2]],
+                newdata=general_prep_xrf_net(
                 spectra.line.table=as.data.frame(
                 count.table
                 ),
                 element.line=x)
                 )
-            } else if(calDataType()!="Spectra" && the.cal[[x]][[1]]$CalTable$CalType!=3 && the.cal[[x]][[1]]$CalTable$NormType==2) {
+            } else if(valDataType()=="Net" && cal_type(x)==1 && the.cal[[x]][[1]]$CalTable$NormType==2) {
                 predict(
                 object=the.cal[[x]][[2]],
-                newdata=simple.tc.prep.net(
+                newdata=simple_tc_prep_xrf_net(
                 data=valdata,
                 spectra.line.table=as.data.frame(
                 count.table
@@ -627,10 +728,10 @@ shinyServer(function(input, output, session) {
                 element.line=x
                 )
                 )
-            } else if(calDataType()!="Spectra" && the.cal[[x]][[1]]$CalTable$CalType!=3 && the.cal[[x]][[1]]$CalTable$NormType==3) {
+            } else if(valDataType()=="Net" && cal_type(x)==1 && the.cal[[x]][[1]]$CalTable$NormType==3) {
                 predict(
                 object=the.cal[[x]][[2]],
-                newdata=simple.comp.prep.net(
+                newdata=simple_comp_prep_xrf_net(
                 data=valdata,
                 spectra.line.table=as.data.frame(
                 count.table
@@ -640,10 +741,10 @@ shinyServer(function(input, output, session) {
                 norm.max=the.cal[[x]][[1]][1]$CalTable$Max
                 )
                 )
-            } else if(calDataType()!="Spectra" && the.cal[[x]][[1]]$CalTable$CalType==3 && the.cal[[x]][[1]]$CalTable$NormType==1){
+            } else if(valDataType()=="Net" && cal_type(x)==3 && the.cal[[x]][[1]]$CalTable$NormType==1){
                 predict(
                 object=the.cal[[x]][[2]],
-                newdata=lukas.simp.prep.net(
+                newdata=lucas_simp_prep_xrf_net(
                 spectra.line.table=as.data.frame(
                 count.table
                 ),
@@ -652,10 +753,10 @@ shinyServer(function(input, output, session) {
                 intercept.element.lines=the.cal[[x]][[1]][3]$Intercept
                 )
                 )
-            } else if(calDataType()!="Spectra" && the.cal[[x]][[1]]$CalTable$CalType==3 && the.cal[[x]][[1]]$CalTable$NormType==2){
+            } else if(valDataType()=="Net" && cal_type(x)==3 && the.cal[[x]][[1]]$CalTable$NormType==2){
                 predict(
                 object=the.cal[[x]][[2]],
-                newdata=lukas.tc.prep.net(
+                newdata=lucas_tc_prep_xrf_net(
                 data=valdata,
                 spectra.line.table=as.data.frame(
                 count.table
@@ -665,25 +766,62 @@ shinyServer(function(input, output, session) {
                 intercept.element.lines=the.cal[[x]][[1]][3]$Intercept
                 )
                 )
-            } else if(calDataType()!="Spectra" && the.cal[[x]][[1]]$CalTable$CalType==3 && the.cal[[x]][[1]]$CalTable$NormType==3){
+            } else if(valDataType()=="Net" && cal_type(x)==3 && the.cal[[x]][[1]]$CalTable$NormType==3){
                 predict(
                 object=the.cal[[x]][[2]],
-                newdata=lukas.comp.prep.net(
+                newdata=lucas_comp_prep_xrf_net(
                 data=valdata,
                 spectra.line.table=as.data.frame(
                 count.table
                 ),
                 element.line=x,
                 slope.element.lines=the.cal[[x]][[1]][2]$Slope,
+                intercept.element.lines=the.cal[[x]][[1]][3]$Intercept,
+                norm.min=the.cal[[x]][[1]][1]$CalTable$Min,
+                norm.max=the.cal[[x]][[1]][1]$CalTable$Max
+                )
+                )
+            } else if(valDataType()=="Net" && cal_type(x)==4 && the.cal[[x]][[1]]$CalTable$NormType==1){
+                predict(
+                object=the.cal[[x]][[2]],
+                newdata=lucas_simp_prep_xrf_net(
+                spectra.line.table=as.data.frame(
+                count.table
+                ),
+                element.line=x,
+                slope.element.lines=variables,
+                intercept.element.lines=the.cal[[x]][[1]][3]$Intercept
+                )
+                )
+            } else if(valDataType()=="Net" && cal_type(x)==4 && the.cal[[x]][[1]]$CalTable$NormType==2){
+                predict(
+                object=the.cal[[x]][[2]],
+                newdata=lucas_tc_prep_xrf_net(
+                data=valdata,
+                spectra.line.table=as.data.frame(
+                count.table
+                ),
+                element.line=x,
+                slope.element.lines=variables,
+                intercept.element.lines=the.cal[[x]][[1]][3]$Intercept
+                )
+                )
+            } else if(valDataType()=="Net" && cal_type(x)==4 && the.cal[[x]][[1]]$CalTable$NormType==3){
+                predict(
+                object=the.cal[[x]][[2]],
+                newdata=lucas_comp_prep_xrf_net(
+                data=valdata,
+                spectra.line.table=as.data.frame(
+                count.table
+                ),
+                element.line=x,
+                slope.element.lines=variables,
                 intercept.element.lines=the.cal[[x]][[1]][3]$Intercept,
                 norm.min=the.cal[[x]][[1]][1]$CalTable$Min,
                 norm.max=the.cal[[x]][[1]][1]$CalTable$Max
                 )
                 )
             }
-            
-            
-            
             )
             
             predicted.vector <- unlist(predicted.list)
@@ -810,20 +948,40 @@ shinyServer(function(input, output, session) {
             
             
             
-            predicted.list <- pblapply(elements, function (x)
-            if(calDataType()=="Spectra" && the.cal[[x]][[1]]$CalTable$CalType!=3 && the.cal[[x]][[1]]$CalTable$NormType==1){
+            
+            cal_type <- function(element){
+                
+                
+                if(the.cal[[element]][[1]]$CalTable$CalType==1){
+                    1
+                } else if(the.cal[[element]][[1]]$CalTable$CalType==2){
+                    1
+                } else if(the.cal[[element]][[1]]$CalTable$CalType==3){
+                    3
+                } else if(the.cal[[element]][[1]]$CalTable$CalType==4){
+                    4
+                } else if(the.cal[[element]][[1]]$CalTable$CalType==5){
+                    5
+                }
+                
+            }
+            
+            
+            
+            predicted.list <- lapply(elements, function (x)
+            if(valDataType()=="Spectra" && cal_type(x)==1 && the.cal[[x]][[1]]$CalTable$NormType==1){
                 predict(
                 object=the.cal[[x]][[2]],
-                newdata=general.prep(
+                newdata=general_prep_xrf(
                 spectra.line.table=as.data.frame(
                 count.table
                 ),
                 element.line=x)
                 )
-            } else if(calDataType()=="Spectra" && the.cal[[x]][[1]]$CalTable$CalType!=3 && the.cal[[x]][[1]]$CalTable$NormType==2) {
+            } else if(valDataType()=="Spectra" && cal_type(x)==1 && the.cal[[x]][[1]]$CalTable$NormType==2) {
                 predict(
                 object=the.cal[[x]][[2]],
-                newdata=simple.tc.prep(
+                newdata=simple_tc_prep_xrf(
                 data=valdata,
                 spectra.line.table=as.data.frame(
                 count.table
@@ -831,10 +989,10 @@ shinyServer(function(input, output, session) {
                 element.line=x
                 )
                 )
-            } else if(calDataType()=="Spectra" && the.cal[[x]][[1]]$CalTable$CalType!=3 && the.cal[[x]][[1]]$CalTable$NormType==3) {
+            } else if(valDataType()=="Spectra" && cal_type(x)==1 && the.cal[[x]][[1]]$CalTable$NormType==3) {
                 predict(
                 object=the.cal[[x]][[2]],
-                newdata=simple.comp.prep(
+                newdata=simple_comp_prep_xrf(
                 data=valdata,
                 spectra.line.table=as.data.frame(
                 count.table
@@ -844,10 +1002,10 @@ shinyServer(function(input, output, session) {
                 norm.max=the.cal[[x]][[1]][1]$CalTable$Max
                 )
                 )
-            } else if(calDataType()=="Spectra" && the.cal[[x]][[1]]$CalTable$CalType==3 && the.cal[[x]][[1]]$CalTable$NormType==1){
+            } else if(valDataType()=="Spectra" && cal_type(x)==3 && the.cal[[x]][[1]]$CalTable$NormType==1){
                 predict(
                 object=the.cal[[x]][[2]],
-                newdata=lukas.simp.prep(
+                newdata=lucas_simp_prep_xrf(
                 spectra.line.table=as.data.frame(
                 count.table
                 ),
@@ -856,10 +1014,10 @@ shinyServer(function(input, output, session) {
                 intercept.element.lines=the.cal[[x]][[1]][3]$Intercept
                 )
                 )
-            } else if(calDataType()=="Spectra" && the.cal[[x]][[1]]$CalTable$CalType==3 && the.cal[[x]][[1]]$CalTable$NormType==2){
+            } else if(valDataType()=="Spectra" && cal_type(x)==3 && the.cal[[x]][[1]]$CalTable$NormType==2){
                 predict(
                 object=the.cal[[x]][[2]],
-                newdata=lukas.tc.prep(
+                newdata=lucas_tc_prep_xrf(
                 data=valdata,
                 spectra.line.table=as.data.frame(
                 count.table
@@ -869,10 +1027,10 @@ shinyServer(function(input, output, session) {
                 intercept.element.lines=the.cal[[x]][[1]][3]$Intercept
                 )
                 )
-            } else if(calDataType()=="Spectra" && the.cal[[x]][[1]]$CalTable$CalType==3 && the.cal[[x]][[1]]$CalTable$NormType==3){
+            } else if(valDataType()=="Spectra" && cal_type(x)==3 && the.cal[[x]][[1]]$CalTable$NormType==3){
                 predict(
                 object=the.cal[[x]][[2]],
-                newdata=lukas.comp.prep(
+                newdata=lucas_comp_prep_xrf(
                 data=valdata,
                 spectra.line.table=as.data.frame(
                 count.table
@@ -884,19 +1042,76 @@ shinyServer(function(input, output, session) {
                 norm.max=the.cal[[x]][[1]][1]$CalTable$Max
                 )
                 )
-            }else if(calDataType()!="Spectra" && the.cal[[x]][[1]]$CalTable$CalType!=3 && the.cal[[x]][[1]]$CalTable$NormType==1){
+            } else if(valDataType()=="Spectra" && cal_type(x)==4 && the.cal[[x]][[1]]$CalTable$NormType==1){
                 predict(
                 object=the.cal[[x]][[2]],
-                newdata=general.prep.net(
+                newdata=lucas_simp_prep_xrf(
+                spectra.line.table=as.data.frame(
+                count.table
+                ),
+                element.line=x,
+                slope.element.lines=variables,
+                intercept.element.lines=the.cal[[x]][[1]][3]$Intercept
+                )
+                )
+            } else if(valDataType()=="Spectra" && cal_type(x)==4 && the.cal[[x]][[1]]$CalTable$NormType==2){
+                predict(
+                object=the.cal[[x]][[2]],
+                newdata=lucas_tc_prep_xrf(
+                data=valdata,
+                spectra.line.table=as.data.frame(
+                count.table
+                ),
+                element.line=x,
+                slope.element.lines=variables,
+                intercept.element.lines=the.cal[[x]][[1]][3]$Intercept
+                )
+                )
+            } else if(valDataType()=="Spectra" && cal_type(x)==4 && the.cal[[x]][[1]]$CalTable$NormType==3){
+                predict(
+                object=the.cal[[x]][[2]],
+                newdata=lucas_comp_prep_xrf(
+                data=valdata,
+                spectra.line.table=as.data.frame(
+                count.table
+                ),
+                element.line=x,
+                slope.element.lines=variables,
+                intercept.element.lines=the.cal[[x]][[1]][3]$Intercept,
+                norm.min=the.cal[[x]][[1]][1]$CalTable$Min,
+                norm.max=the.cal[[x]][[1]][1]$CalTable$Max
+                )
+                )
+            } else if(valDataType()=="Spectra" && cal_type(x)==5 && the.cal[[x]][[1]]$CalTable$NormType==1){
+                predict(
+                object=the.cal[[x]][[2]],
+                newdata=spectra_simp_prep_xrf(valdata)[,-1]
+                )
+            } else if(valDataType()=="Spectra" && cal_type(x)==5 && the.cal[[x]][[1]]$CalTable$NormType==2){
+                predict(
+                object=the.cal[[x]][[2]],
+                newdata=spectra_tc_prep_xrf(valdata)[,-1]
+                )
+            } else if(valDataType()=="Spectra" && cal_type(x)==5 && the.cal[[x]][[1]]$CalTable$NormType==3){
+                predict(
+                object=the.cal[[x]][[2]],
+                newdata=spectra_comp_prep_xrf(valdata,
+                norm.min=the.cal[[x]][[1]][1]$CalTable$Min,
+                norm.max=the.cal[[x]][[1]][1]$CalTable$Max)[,-1]
+                )
+            } else if(valDataType()=="Net" && cal_type(x)==1 && the.cal[[x]][[1]]$CalTable$NormType==1){
+                predict(
+                object=the.cal[[x]][[2]],
+                newdata=general_prep_xrf_net(
                 spectra.line.table=as.data.frame(
                 count.table
                 ),
                 element.line=x)
                 )
-            } else if(calDataType()!="Spectra" && the.cal[[x]][[1]]$CalTable$CalType!=3 && the.cal[[x]][[1]]$CalTable$NormType==2) {
+            } else if(valDataType()=="Net" && cal_type(x)==1 && the.cal[[x]][[1]]$CalTable$NormType==2) {
                 predict(
                 object=the.cal[[x]][[2]],
-                newdata=simple.tc.prep.net(
+                newdata=simple_tc_prep_xrf_net(
                 data=valdata,
                 spectra.line.table=as.data.frame(
                 count.table
@@ -904,10 +1119,10 @@ shinyServer(function(input, output, session) {
                 element.line=x
                 )
                 )
-            } else if(calDataType()!="Spectra" && the.cal[[x]][[1]]$CalTable$CalType!=3 && the.cal[[x]][[1]]$CalTable$NormType==3) {
+            } else if(valDataType()=="Net" && cal_type(x)==1 && the.cal[[x]][[1]]$CalTable$NormType==3) {
                 predict(
                 object=the.cal[[x]][[2]],
-                newdata=simple.comp.prep.net(
+                newdata=simple_comp_prep_xrf_net(
                 data=valdata,
                 spectra.line.table=as.data.frame(
                 count.table
@@ -917,10 +1132,10 @@ shinyServer(function(input, output, session) {
                 norm.max=the.cal[[x]][[1]][1]$CalTable$Max
                 )
                 )
-            } else if(calDataType()!="Spectra" && the.cal[[x]][[1]]$CalTable$CalType==3 && the.cal[[x]][[1]]$CalTable$NormType==1){
+            } else if(valDataType()=="Net" && cal_type(x)==3 && the.cal[[x]][[1]]$CalTable$NormType==1){
                 predict(
                 object=the.cal[[x]][[2]],
-                newdata=lukas.simp.prep.net(
+                newdata=lucas_simp_prep_xrf_net(
                 spectra.line.table=as.data.frame(
                 count.table
                 ),
@@ -929,10 +1144,10 @@ shinyServer(function(input, output, session) {
                 intercept.element.lines=the.cal[[x]][[1]][3]$Intercept
                 )
                 )
-            } else if(calDataType()!="Spectra" && the.cal[[x]][[1]]$CalTable$CalType==3 && the.cal[[x]][[1]]$CalTable$NormType==2){
+            } else if(valDataType()=="Net" && cal_type(x)==3 && the.cal[[x]][[1]]$CalTable$NormType==2){
                 predict(
                 object=the.cal[[x]][[2]],
-                newdata=lukas.tc.prep.net(
+                newdata=lucas_tc_prep_xrf_net(
                 data=valdata,
                 spectra.line.table=as.data.frame(
                 count.table
@@ -942,25 +1157,62 @@ shinyServer(function(input, output, session) {
                 intercept.element.lines=the.cal[[x]][[1]][3]$Intercept
                 )
                 )
-            } else if(calDataType()!="Spectra" && the.cal[[x]][[1]]$CalTable$CalType==3 && the.cal[[x]][[1]]$CalTable$NormType==3){
+            } else if(valDataType()=="Net" && cal_type(x)==3 && the.cal[[x]][[1]]$CalTable$NormType==3){
                 predict(
                 object=the.cal[[x]][[2]],
-                newdata=lukas.comp.prep.net(
+                newdata=lucas_comp_prep_xrf_net(
                 data=valdata,
                 spectra.line.table=as.data.frame(
                 count.table
                 ),
                 element.line=x,
                 slope.element.lines=the.cal[[x]][[1]][2]$Slope,
+                intercept.element.lines=the.cal[[x]][[1]][3]$Intercept,
+                norm.min=the.cal[[x]][[1]][1]$CalTable$Min,
+                norm.max=the.cal[[x]][[1]][1]$CalTable$Max
+                )
+                )
+            } else if(valDataType()=="Net" && cal_type(x)==4 && the.cal[[x]][[1]]$CalTable$NormType==1){
+                predict(
+                object=the.cal[[x]][[2]],
+                newdata=lucas_simp_prep_xrf_net(
+                spectra.line.table=as.data.frame(
+                count.table
+                ),
+                element.line=x,
+                slope.element.lines=variables,
+                intercept.element.lines=the.cal[[x]][[1]][3]$Intercept
+                )
+                )
+            } else if(valDataType()=="Net" && cal_type(x)==4 && the.cal[[x]][[1]]$CalTable$NormType==2){
+                predict(
+                object=the.cal[[x]][[2]],
+                newdata=lucas_tc_prep_xrf_net(
+                data=valdata,
+                spectra.line.table=as.data.frame(
+                count.table
+                ),
+                element.line=x,
+                slope.element.lines=variables,
+                intercept.element.lines=the.cal[[x]][[1]][3]$Intercept
+                )
+                )
+            } else if(valDataType()=="Net" && cal_type(x)==4 && the.cal[[x]][[1]]$CalTable$NormType==3){
+                predict(
+                object=the.cal[[x]][[2]],
+                newdata=lucas_comp_prep_xrf_net(
+                data=valdata,
+                spectra.line.table=as.data.frame(
+                count.table
+                ),
+                element.line=x,
+                slope.element.lines=variables,
                 intercept.element.lines=the.cal[[x]][[1]][3]$Intercept,
                 norm.min=the.cal[[x]][[1]][1]$CalTable$Min,
                 norm.max=the.cal[[x]][[1]][1]$CalTable$Max
                 )
                 )
             }
-            
-            
-            
             )
             
             predicted.vector <- unlist(predicted.list)
@@ -1461,7 +1713,7 @@ shinyServer(function(input, output, session) {
                 } else if(input$usecalfile==FALSE && input$filetype=="Artax Excel"){
                     colnames(spectra.line.table)
                 } else if(input$usecalfile==FALSE && input$filetype=="Spreadsheet"){
-                    colnames(spectra.line.table)
+                    c("Ca.K.alpha", "Fe.K.alpha", "Ti.K.alpha")
                 } else if(input$usecalfile==TRUE && input$filetype=="Spectra"){
                     quantified
                 } else if(input$usecalfile==TRUE && input$filetype=="Net"){
@@ -2154,7 +2406,7 @@ shinyServer(function(input, output, session) {
                 
                 
                 basic <- ggplot(data= spectra.line.table) +
-                coord_cartesian(xlim = rangespca$x, ylim = rangespca$y, expand = FALSE) +
+                coord_cartesian(xlim = rangespca$x, ylim = rangespca$y, expand = TRUE) +
                 geom_point(aes(PC1, PC2), size = input$spotsize) +
                 scale_x_continuous("Principle Component 1") +
                 scale_y_continuous("Principle Component 2") +
@@ -2171,7 +2423,7 @@ shinyServer(function(input, output, session) {
                 
                 regular <- ggplot(data= spectra.line.table) +
                 geom_point(aes(PC1, PC2, colour=as.factor(Cluster), shape=as.factor(Cluster)), size = input$spotsize+1) +
-                coord_cartesian(xlim = rangespca$x, ylim = rangespca$y, expand = FALSE) +
+                coord_cartesian(xlim = rangespca$x, ylim = rangespca$y, expand = TRUE) +
                 geom_point(aes(PC1, PC2), colour="grey30", size=input$spotsize-2) +
                 scale_x_continuous("Principle Component 1") +
                 scale_y_continuous("Principle Component 2") +
@@ -2188,7 +2440,7 @@ shinyServer(function(input, output, session) {
                 
                 
                 ellipse <- ggplot(data= spectra.line.table) +
-                coord_cartesian(xlim = rangespca$x, ylim = rangespca$y, expand = FALSE) +
+                coord_cartesian(xlim = rangespca$x, ylim = rangespca$y, expand = TRUE) +
                 geom_point(aes(PC1, PC2, colour=as.factor(Cluster), shape=as.factor(Cluster)), size = input$spotsize+1) +
                 geom_point(aes(PC1, PC2), colour="grey30", size=input$spotsize-2) +
                 scale_x_continuous("Principle Component 1") +
@@ -2207,7 +2459,7 @@ shinyServer(function(input, output, session) {
                 scale_colour_discrete("Cluster")
                 
                 clim.regular <- ggplot(data= spectra.line.table) +
-                coord_cartesian(xlim = rangespca$x, ylim = rangespca$y, expand = FALSE) +
+                coord_cartesian(xlim = rangespca$x, ylim = rangespca$y, expand = TRUE) +
                 geom_point(aes(PC1, PC2, colour=as.factor(Climate), shape=as.factor(Climate)), size = input$spotsize+1) +
                 geom_point(aes(PC1, PC2), colour="grey30", size=input$spotsize-2) +
                 scale_x_continuous("Principle Component 1") +
@@ -2225,7 +2477,7 @@ shinyServer(function(input, output, session) {
                 
                 
                 clim.ellipse <- ggplot(data= spectra.line.table) +
-                coord_cartesian(xlim = rangespca$x, ylim = rangespca$y, expand = FALSE) +
+                coord_cartesian(xlim = rangespca$x, ylim = rangespca$y, expand = TRUE) +
                 geom_point(aes(PC1, PC2, colour=as.factor(Climate), shape=as.factor(Climate)), size = input$spotsize+1) +
                 geom_point(aes(PC1, PC2), colour="grey30", size=input$spotsize-2) +
                 scale_x_continuous("Principle Component 1") +
@@ -2245,7 +2497,7 @@ shinyServer(function(input, output, session) {
                 
                 
                 qual.regular <- ggplot(data= spectra.line.table) +
-                coord_cartesian(xlim = rangespca$x, ylim = rangespca$y, expand = FALSE) +
+                coord_cartesian(xlim = rangespca$x, ylim = rangespca$y, expand = TRUE) +
                 geom_point(aes(PC1, PC2, colour=as.factor(Qualitative), shape=as.factor(Qualitative)), size = input$spotsize+1) +
                 geom_point(aes(PC1, PC2), colour="grey30", size=input$spotsize-2) +
                 scale_x_continuous("Principle Component 1") +
@@ -2263,7 +2515,7 @@ shinyServer(function(input, output, session) {
                 
                 
                 qual.ellipse <- ggplot(data= spectra.line.table) +
-                coord_cartesian(xlim = rangespca$x, ylim = rangespca$y, expand = FALSE) +
+                coord_cartesian(xlim = rangespca$x, ylim = rangespca$y, expand = TRUE) +
                 geom_point(aes(PC1, PC2, colour=as.factor(Qualitative), shape=as.factor(Qualitative)), size = input$spotsize+1) +
                 geom_point(aes(PC1, PC2), colour="grey30", size=input$spotsize-2) +
                 scale_x_continuous("Principle Component 1") +
@@ -2283,7 +2535,7 @@ shinyServer(function(input, output, session) {
                 
                 
                 quant.regular <- ggplot(data= spectra.line.table) +
-                coord_cartesian(xlim = rangespca$x, ylim = rangespca$y, expand = FALSE) +
+                coord_cartesian(xlim = rangespca$x, ylim = rangespca$y, expand = TRUE) +
                 geom_point(aes(PC1, PC2, colour=Depth), size = input$spotsize) +
                 scale_x_continuous("Principle Component 1") +
                 scale_y_continuous("Principle Component 2") +
@@ -2599,11 +2851,11 @@ shinyServer(function(input, output, session) {
                 theme(legend.text=element_text(size=15)) +
                 scale_x_continuous(paste(x.axis), label=comma) +
                 scale_y_continuous(paste(trendy), label=comma) +
-                coord_cartesian(xlim = ranges3a$x, ylim = ranges3a$y, expand = FALSE)
+                coord_cartesian(xlim = ranges3a$x, ylim = ranges3a$y, expand = TRUE)
                 
                 
                 smooth.time.series <- qplot(spectra.timeseries.table$Interval, DEMA(spectra.timeseries.table$Selected, input$smoothing), geom="point") +
-                coord_cartesian(xlim = ranges3a$x, ylim = ranges3a$y, expand = FALSE) +
+                coord_cartesian(xlim = ranges3a$x, ylim = ranges3a$y, expand = TRUE) +
                 theme_light() +
                 stat_smooth() +
                 theme(axis.text.x = element_text(size=15)) +
@@ -2620,7 +2872,7 @@ shinyServer(function(input, output, session) {
                 
                 ramp.time.series <- qplot(Interval, DEMA(Selected, input$smoothing),  geom="line", data = spectra.timeseries.table) +
                 geom_line(aes(colour = Selected), lwd=input$linesize) +
-                coord_cartesian(xlim = ranges3a$x, ylim = ranges3a$y, expand = FALSE) +
+                coord_cartesian(xlim = ranges3a$x, ylim = ranges3a$y, expand = TRUE) +
                 theme_light() +
                 scale_colour_gradientn(colours=rainbow(7)) +
                 theme(axis.text.x = element_text(size=15)) +
@@ -2636,7 +2888,7 @@ shinyServer(function(input, output, session) {
                 
                 
                 area.time.series <- ggplot(spectra.timeseries.table, aes(Interval)) +
-                coord_cartesian(xlim = ranges3a$x, ylim = ranges3a$y, expand = FALSE) +
+                coord_cartesian(xlim = ranges3a$x, ylim = ranges3a$y, expand = TRUE) +
                 theme_classic() +
                 geom_area(aes(y=Selected, colour="grey60", fill="grey60"), alpha=0.6) +
                 theme(axis.text.x = element_text(size=15)) +
@@ -2653,7 +2905,7 @@ shinyServer(function(input, output, session) {
                 
                 
                 cluster.time.series <- qplot(Interval, DEMA(Selected, input$smoothing),  geom="line", data = spectra.timeseries.table, alpha=0.6) +
-                coord_cartesian(xlim = ranges3a$x, ylim = ranges3a$y, expand = FALSE) +
+                coord_cartesian(xlim = ranges3a$x, ylim = ranges3a$y, expand = TRUE) +
                 geom_point(aes(colour = as.factor(Cluster)), size=input$pointsize, alpha=0.8) +
                 scale_colour_discrete("Cluster") +
                 theme_light() +
@@ -2669,7 +2921,7 @@ shinyServer(function(input, output, session) {
                 
                 
                 climate.time.series.line <- qplot(Interval, DEMA(Selected, input$smoothing), geom="line", data = spectra.timeseries.table, colour = as.factor(Climate)) +
-                coord_cartesian(xlim = ranges3a$x, ylim = ranges3a$y, expand = FALSE) +
+                coord_cartesian(xlim = ranges3a$x, ylim = ranges3a$y, expand = TRUE) +
                 scale_colour_discrete("Climatic Period") +
                 theme_light() +
                 theme(axis.text.x = element_text(size=15)) +
@@ -2684,7 +2936,7 @@ shinyServer(function(input, output, session) {
                 
                 
                 qualitative.time.series.line <- qplot(Interval, DEMA(Selected, input$smoothing), geom="line", data = spectra.timeseries.table, colour = as.factor(Qualitative)) +
-                coord_cartesian(xlim = ranges3a$x, ylim = ranges3a$y, expand = FALSE) +
+                coord_cartesian(xlim = ranges3a$x, ylim = ranges3a$y, expand = TRUE) +
                 scale_colour_discrete("Qualitative") +
                 theme_light() +
                 theme(axis.text.x = element_text(size=15)) +
@@ -2698,7 +2950,7 @@ shinyServer(function(input, output, session) {
                 scale_y_continuous(paste(trendy), label=comma)
                 
                 qualitative.time.series.point <- qplot(Interval, DEMA(Selected, input$smoothing),  geom="line", data = spectra.timeseries.table) +
-                coord_cartesian(xlim = ranges3a$x, ylim = ranges3a$y, expand = FALSE) +
+                coord_cartesian(xlim = ranges3a$x, ylim = ranges3a$y, expand = TRUE) +
                 geom_point(aes(colour = as.factor(Qualitative)), lwd=input$pointsize) +
                 scale_colour_discrete("Qualitative") +
                 theme_light() +
@@ -2714,7 +2966,7 @@ shinyServer(function(input, output, session) {
                 
                 
                 depth.time.series <- qplot(Interval, DEMA(Selected, input$smoothing),  geom="line", data = spectra.timeseries.table) +
-                coord_cartesian(xlim = ranges3a$x, ylim = ranges3a$y, expand = FALSE) +
+                coord_cartesian(xlim = ranges3a$x, ylim = ranges3a$y, expand = TRUE) +
                 geom_line(aes(colour = Depth), lwd=input$linesize+0.5) +
                 geom_line(lwd=input$linesize-0.5) +
                 scale_colour_gradientn("Depth", colours=rev(terrain.colors(length(spectra.line.table$Depth)))) +
@@ -2733,7 +2985,7 @@ shinyServer(function(input, output, session) {
                 ####Flipped X Axis
                 
                 black.time.series.reverse <- qplot(Interval, DEMA(Selected, input$smoothing), geom="line", data = spectra.timeseries.table) +
-                coord_cartesian(xlim = ranges3a$x, ylim = ranges3a$y, expand = FALSE) +
+                coord_cartesian(xlim = ranges3a$x, ylim = ranges3a$y, expand = TRUE) +
                 geom_line(colour = "black", lwd=input$linesize) +
                 theme_light() +
                 theme(axis.text.x = element_text(size=15)) +
@@ -2747,7 +2999,7 @@ shinyServer(function(input, output, session) {
                 scale_y_continuous(paste(trendy), label=comma)
                 
                 smooth.time.series.reverse <- qplot(spectra.timeseries.table$Interval, DEMA(spectra.timeseries.table$Selected, input$smoothing), geom="point") +
-                coord_cartesian(xlim = ranges3a$x, ylim = ranges3a$y, expand = FALSE) +
+                coord_cartesian(xlim = ranges3a$x, ylim = ranges3a$y, expand = TRUE) +
                 theme_light() +
                 stat_smooth() +
                 theme(axis.text.x = element_text(size=15)) +
@@ -2762,7 +3014,7 @@ shinyServer(function(input, output, session) {
                 
                 
                 ramp.time.series.reverse <- qplot(Interval, DEMA(Selected, input$smoothing), geom="line", data = spectra.timeseries.table) +
-                coord_cartesian(xlim = ranges3a$x, ylim = ranges3a$y, expand = FALSE) +
+                coord_cartesian(xlim = ranges3a$x, ylim = ranges3a$y, expand = TRUE) +
                 geom_line(aes(colour = Selected), lwd=input$linesize) +
                 theme_light() +
                 scale_colour_gradientn(colours=rainbow(7)) +
@@ -2778,7 +3030,7 @@ shinyServer(function(input, output, session) {
                 
                 
                 area.time.series.reverse <- ggplot(spectra.timeseries.table, aes(Interval)) +
-                coord_cartesian(xlim = ranges3a$x, ylim = ranges3a$y, expand = FALSE) +
+                coord_cartesian(xlim = ranges3a$x, ylim = ranges3a$y, expand = TRUE) +
                 theme_classic() +
                 geom_area(aes(y=Selected, colour="grey60", fill="grey60"), alpha=0.6) +
                 theme(axis.text.x = element_text(size=15)) +
@@ -2794,7 +3046,7 @@ shinyServer(function(input, output, session) {
                 
                 
                 cluster.time.series.reverse <- qplot(Interval, DEMA(Selected, input$smoothing),  geom="line", data = spectra.timeseries.table, alpha=0.6) +
-                coord_cartesian(xlim = ranges3a$x, ylim = ranges3a$y, expand = FALSE) +
+                coord_cartesian(xlim = ranges3a$x, ylim = ranges3a$y, expand = TRUE) +
                 geom_point(aes(colour = as.factor(Cluster)), size=input$pointsize, alpha=0.8) +
                 scale_colour_discrete("Cluster") +
                 theme_light() +
@@ -2809,7 +3061,7 @@ shinyServer(function(input, output, session) {
                 scale_y_continuous(paste(trendy), label=comma)
                 
                 climate.time.series.line.reverse <- qplot(Interval, DEMA(Selected, input$smoothing), geom="line", data = spectra.timeseries.table, colour = as.factor(Climate)) +
-                coord_cartesian(xlim = ranges3a$x, ylim = ranges3a$y, expand = FALSE) +
+                coord_cartesian(xlim = ranges3a$x, ylim = ranges3a$y, expand = TRUE) +
                 scale_colour_discrete("Climatic Period") +
                 theme_light() +
                 theme(axis.text.x = element_text(size=15)) +
@@ -2824,7 +3076,7 @@ shinyServer(function(input, output, session) {
                 
                 
                 qualitative.time.series.line.reverse <- qplot(Interval, DEMA(Selected, input$smoothing), geom="line", data = spectra.timeseries.table, colour = as.factor(Qualitative)) +
-                coord_cartesian(xlim = ranges3a$x, ylim = ranges3a$y, expand = FALSE) +
+                coord_cartesian(xlim = ranges3a$x, ylim = ranges3a$y, expand = TRUE) +
                 scale_colour_discrete("Qualitative") +
                 theme_light() +
                 theme(axis.text.x = element_text(size=15)) +
@@ -2838,7 +3090,7 @@ shinyServer(function(input, output, session) {
                 scale_y_continuous(paste(trendy), label=comma)
                 
                 qualitative.time.series.point.reverse <- qplot(Interval, DEMA(Selected, input$smoothing),  geom="line", data = spectra.timeseries.table) +
-                coord_cartesian(xlim = ranges3a$x, ylim = ranges3a$y, expand = FALSE) +
+                coord_cartesian(xlim = ranges3a$x, ylim = ranges3a$y, expand = TRUE) +
                 geom_point(aes(colour = as.factor(Qualitative)), lwd=input$pointsize) +
                 scale_colour_discrete("Qualitative") +
                 theme_light() +
@@ -2854,7 +3106,7 @@ shinyServer(function(input, output, session) {
                 
                 
                 depth.time.series.reverse <- qplot(Interval, DEMA(Selected, input$smoothing),  geom="line", data = spectra.timeseries.table) +
-                coord_cartesian(xlim = ranges3a$x, ylim = ranges3a$y, expand = FALSE) +
+                coord_cartesian(xlim = ranges3a$x, ylim = ranges3a$y, expand = TRUE) +
                 geom_line(aes(colour = Depth), lwd=input$linesize+0.5) +
                 geom_line(lwd=input$linesize-0.5) +
                 scale_colour_gradientn("Depth", colours=rev(terrain.colors(length(spectra.line.table$Depth)))) +
@@ -3102,7 +3354,7 @@ shinyServer(function(input, output, session) {
                 
                 
                 black.time.series <- qplot(Interval, DEMA(Selected, input$smoothing), geom="line", data = spectra.timeseries.table) +
-                coord_cartesian(xlim = ranges3b$x, ylim = ranges3b$y, expand = FALSE) +
+                coord_cartesian(xlim = ranges3b$x, ylim = ranges3b$y, expand = TRUE) +
                 geom_line(colour = "black", lwd=input$linesize) +
                 theme_light() +
                 theme(axis.text.x = element_text(size=15)) +
@@ -3116,7 +3368,7 @@ shinyServer(function(input, output, session) {
                 scale_y_continuous(paste(trendy), label=comma)
                 
                 smooth.time.series <- qplot(spectra.timeseries.table$Interval, DEMA(spectra.timeseries.table$Selected, input$smoothing), geom="point") +
-                coord_cartesian(xlim = ranges3b$x, ylim = ranges3b$y, expand = FALSE) +
+                coord_cartesian(xlim = ranges3b$x, ylim = ranges3b$y, expand = TRUE) +
                 theme_light() +
                 stat_smooth() +
                 theme(axis.text.x = element_text(size=15)) +
@@ -3131,7 +3383,7 @@ shinyServer(function(input, output, session) {
                 
                 
                 ramp.time.series <- qplot(Interval, DEMA(Selected, input$smoothing),  geom="line", data = spectra.timeseries.table) +
-                coord_cartesian(xlim = ranges3b$x, ylim = ranges3b$y, expand = FALSE) +
+                coord_cartesian(xlim = ranges3b$x, ylim = ranges3b$y, expand = TRUE) +
                 geom_line(aes(colour = Selected), lwd=input$linesize) +
                 theme_light() +
                 scale_colour_gradientn(colours=rainbow(7)) +
@@ -3147,7 +3399,7 @@ shinyServer(function(input, output, session) {
                 
                 
                 area.time.series <- ggplot(spectra.timeseries.table, aes(Interval)) +
-                coord_cartesian(xlim = ranges3b$x, ylim = ranges3b$y, expand = FALSE) +
+                coord_cartesian(xlim = ranges3b$x, ylim = ranges3b$y, expand = TRUE) +
                 theme_classic() +
                 geom_area(aes(y=Selected, colour="grey60", fill="grey60"), alpha=0.6) +
                 theme(axis.text.x = element_text(size=15)) +
@@ -3163,7 +3415,7 @@ shinyServer(function(input, output, session) {
                 
                 
                 cluster.time.series <- qplot(Interval, DEMA(Selected, input$smoothing),  geom="line", data = spectra.timeseries.table, alpha=0.6) +
-                coord_cartesian(xlim = ranges3b$x, ylim = ranges3b$y, expand = FALSE) +
+                coord_cartesian(xlim = ranges3b$x, ylim = ranges3b$y, expand = TRUE) +
                 geom_point(aes(colour = as.factor(Cluster)), size=input$pointsize, alpha=0.8) +
                 scale_colour_discrete("Cluster") +
                 theme_light() +
@@ -3178,7 +3430,7 @@ shinyServer(function(input, output, session) {
                 scale_y_continuous(paste(trendy), label=comma)
                 
                 climate.time.series.line <- qplot(Interval, DEMA(Selected, input$smoothing), geom="line", data = spectra.timeseries.table, colour = as.factor(Climate)) +
-                coord_cartesian(xlim = ranges3b$x, ylim = ranges3b$y, expand = FALSE) +
+                coord_cartesian(xlim = ranges3b$x, ylim = ranges3b$y, expand = TRUE) +
                 scale_colour_discrete("Climatic Period") +
                 theme_light() +
                 theme(axis.text.x = element_text(size=15)) +
@@ -3193,7 +3445,7 @@ shinyServer(function(input, output, session) {
                 
                 
                 qualitative.time.series.line <- qplot(Interval, DEMA(Selected, input$smoothing), geom="line", data = spectra.timeseries.table, colour = as.factor(Qualitative)) +
-                coord_cartesian(xlim = ranges3b$x, ylim = ranges3b$y, expand = FALSE) +
+                coord_cartesian(xlim = ranges3b$x, ylim = ranges3b$y, expand = TRUE) +
                 scale_colour_discrete("Qualitative") +
                 theme_light() +
                 theme(axis.text.x = element_text(size=15)) +
@@ -3207,7 +3459,7 @@ shinyServer(function(input, output, session) {
                 scale_y_continuous(paste(trendy), label=comma)
                 
                 qualitative.time.series.point <- qplot(Interval, DEMA(Selected, input$smoothing),  geom="line", data = spectra.timeseries.table) +
-                coord_cartesian(xlim = ranges3b$x, ylim = ranges3b$y, expand = FALSE) +
+                coord_cartesian(xlim = ranges3b$x, ylim = ranges3b$y, expand = TRUE) +
                 geom_point(aes(colour = as.factor(Qualitative)), lwd=input$pointsize) +
                 scale_colour_discrete("Qualitative") +
                 theme_light() +
@@ -3223,7 +3475,7 @@ shinyServer(function(input, output, session) {
                 
                 
                 depth.time.series <- qplot(Interval, DEMA(Selected, input$smoothing),  geom="line", data = spectra.timeseries.table) +
-                coord_cartesian(xlim = ranges3b$x, ylim = ranges3b$y, expand = FALSE) +
+                coord_cartesian(xlim = ranges3b$x, ylim = ranges3b$y, expand = TRUE) +
                 geom_line(aes(colour = Depth), lwd=input$linesize+0.5) +
                 geom_line(lwd=input$linesize-0.5) +
                 scale_colour_gradientn("Depth", colours=rev(terrain.colors(length(spectra.line.table$Depth)))) +
@@ -3242,7 +3494,7 @@ shinyServer(function(input, output, session) {
                 ####Flipped X Axis
                 
                 black.time.series.reverse <- qplot(Interval, DEMA(Selected, input$smoothing), geom="line", data = spectra.timeseries.table) +
-                coord_cartesian(xlim = ranges3b$x, ylim = ranges3b$y, expand = FALSE) +
+                coord_cartesian(xlim = ranges3b$x, ylim = ranges3b$y, expand = TRUE) +
                 geom_line(colour = "black", lwd=input$linesize) +
                 theme_light() +
                 theme(axis.text.x = element_text(size=15)) +
@@ -3256,7 +3508,7 @@ shinyServer(function(input, output, session) {
                 scale_y_continuous(paste(trendy), label=comma)
                 
                 smooth.time.series.reverse <- qplot(spectra.timeseries.table$Interval, DEMA(spectra.timeseries.table$Selected, input$smoothing), geom="point") +
-                coord_cartesian(xlim = ranges3b$x, ylim = ranges3b$y, expand = FALSE) +
+                coord_cartesian(xlim = ranges3b$x, ylim = ranges3b$y, expand = TRUE) +
                 theme_light() +
                 stat_smooth() +
                 theme(axis.text.x = element_text(size=15)) +
@@ -3271,7 +3523,7 @@ shinyServer(function(input, output, session) {
                 
                 
                 ramp.time.series.reverse <- qplot(Interval, DEMA(Selected, input$smoothing), geom="line", data = spectra.timeseries.table) +
-                coord_cartesian(xlim = ranges3b$x, ylim = ranges3b$y, expand = FALSE) +
+                coord_cartesian(xlim = ranges3b$x, ylim = ranges3b$y, expand = TRUE) +
                 geom_line(aes(colour = Selected), lwd=input$linesize) +
                 theme_light() +
                 scale_colour_gradientn(colours=rainbow(7)) +
@@ -3287,7 +3539,7 @@ shinyServer(function(input, output, session) {
                 
                 
                 area.time.series.reverse <- ggplot(spectra.timeseries.table, aes(Interval)) +
-                coord_cartesian(xlim = ranges3b$x, ylim = ranges3b$y, expand = FALSE) +
+                coord_cartesian(xlim = ranges3b$x, ylim = ranges3b$y, expand = TRUE) +
                 theme_classic() +
                 geom_area(aes(y=Selected, colour="grey60", fill="grey60"), alpha=0.6) +
                 theme(axis.text.x = element_text(size=15)) +
@@ -3303,7 +3555,7 @@ shinyServer(function(input, output, session) {
                 
                 
                 cluster.time.series.reverse <- qplot(Interval, DEMA(Selected, input$smoothing),  geom="line", data = spectra.timeseries.table, alpha=0.6) +
-                coord_cartesian(xlim = ranges3b$x, ylim = ranges3b$y, expand = FALSE) +
+                coord_cartesian(xlim = ranges3b$x, ylim = ranges3b$y, expand = TRUE) +
                 geom_point(aes(colour = as.factor(Cluster)), size=input$pointsize, alpha=0.8) +
                 scale_colour_discrete("Cluster") +
                 theme_light() +
@@ -3318,7 +3570,7 @@ shinyServer(function(input, output, session) {
                 scale_y_continuous(paste(trendy), label=comma)
                 
                 climate.time.series.line.reverse <- qplot(Interval, DEMA(Selected, input$smoothing), geom="line", data = spectra.timeseries.table, colour = as.factor(Climate)) +
-                coord_cartesian(xlim = ranges3b$x, ylim = ranges3b$y, expand = FALSE) +
+                coord_cartesian(xlim = ranges3b$x, ylim = ranges3b$y, expand = TRUE) +
                 scale_colour_discrete("Climatic Period") +
                 theme_light() +
                 theme(axis.text.x = element_text(size=15)) +
@@ -3333,7 +3585,7 @@ shinyServer(function(input, output, session) {
                 
                 
                 qualitative.time.series.line.reverse <- qplot(Interval, DEMA(Selected, input$smoothing), geom="line", data = spectra.timeseries.table, colour = as.factor(Qualitative)) +
-                coord_cartesian(xlim = ranges3b$x, ylim = ranges3b$y, expand = FALSE) +
+                coord_cartesian(xlim = ranges3b$x, ylim = ranges3b$y, expand = TRUE) +
                 scale_colour_discrete("Qualitative") +
                 theme_light() +
                 theme(axis.text.x = element_text(size=15)) +
@@ -3347,7 +3599,7 @@ shinyServer(function(input, output, session) {
                 scale_y_continuous(paste(trendy), label=comma)
                 
                 qualitative.time.series.point.reverse <- qplot(Interval, DEMA(Selected, input$smoothing),  geom="line", data = spectra.timeseries.table) +
-                coord_cartesian(xlim = ranges3b$x, ylim = ranges3b$y, expand = FALSE) +
+                coord_cartesian(xlim = ranges3b$x, ylim = ranges3b$y, expand = TRUE) +
                 geom_point(aes(colour = as.factor(Qualitative)), lwd=input$pointsize) +
                 scale_colour_discrete("Qualitative") +
                 theme_light() +
@@ -3363,7 +3615,7 @@ shinyServer(function(input, output, session) {
                 
                 
                 depth.time.series.reverse <- qplot(Interval, DEMA(Selected, input$smoothing),  geom="line", data = spectra.timeseries.table) +
-                coord_cartesian(xlim = ranges3b$x, ylim = ranges3b$y, expand = FALSE) +
+                coord_cartesian(xlim = ranges3b$x, ylim = ranges3b$y, expand = TRUE) +
                 geom_line(aes(colour = Depth), lwd=input$linesize+0.5) +
                 geom_line(lwd=input$linesize-0.5) +
                 scale_colour_gradientn("Depth", colours=rev(terrain.colors(length(spectra.line.table$Depth)))) +
@@ -3594,7 +3846,7 @@ shinyServer(function(input, output, session) {
                 
                 
                 black.time.series <- qplot(Interval, DEMA(Selected, input$smoothing), geom="line", data = spectra.timeseries.table) +
-                coord_cartesian(xlim = ranges3c$x, ylim = ranges3c$y, expand = FALSE) +
+                coord_cartesian(xlim = ranges3c$x, ylim = ranges3c$y, expand = TRUE) +
                 geom_line(colour = "black", lwd=input$linesize) +
                 theme_light() +
                 theme(axis.text.x = element_text(size=15)) +
@@ -3608,7 +3860,7 @@ shinyServer(function(input, output, session) {
                 scale_y_continuous(paste(trendy), label=comma)
                 
                 smooth.time.series <- qplot(spectra.timeseries.table$Interval, DEMA(spectra.timeseries.table$Selected, input$smoothing), geom="point") +
-                coord_cartesian(xlim = ranges3c$x, ylim = ranges3c$y, expand = FALSE) +
+                coord_cartesian(xlim = ranges3c$x, ylim = ranges3c$y, expand = TRUE) +
                 theme_light() +
                 stat_smooth() +
                 theme(axis.text.x = element_text(size=15)) +
@@ -3623,7 +3875,7 @@ shinyServer(function(input, output, session) {
                 
                 
                 ramp.time.series <- qplot(Interval, DEMA(Selected, input$smoothing),  geom="line", data = spectra.timeseries.table) +
-                coord_cartesian(xlim = ranges3c$x, ylim = ranges3c$y, expand = FALSE) +
+                coord_cartesian(xlim = ranges3c$x, ylim = ranges3c$y, expand = TRUE) +
                 geom_line(aes(colour = Selected), lwd=input$linesize) +
                 theme_light() +
                 scale_colour_gradientn(colours=rainbow(7)) +
@@ -3639,7 +3891,7 @@ shinyServer(function(input, output, session) {
                 
                 
                 area.time.series <- ggplot(spectra.timeseries.table, aes(Interval)) +
-                coord_cartesian(xlim = ranges3c$x, ylim = ranges3c$y, expand = FALSE) +
+                coord_cartesian(xlim = ranges3c$x, ylim = ranges3c$y, expand = TRUE) +
                 theme_classic() +
                 geom_area(aes(y=Selected, colour="grey60", fill="grey60"), alpha=0.6) +
                 theme(axis.text.x = element_text(size=15)) +
@@ -3655,7 +3907,7 @@ shinyServer(function(input, output, session) {
                 
                 
                 cluster.time.series <- qplot(Interval, DEMA(Selected, input$smoothing),  geom="line", data = spectra.timeseries.table, alpha=0.6) +
-                coord_cartesian(xlim = ranges3c$x, ylim = ranges3c$y, expand = FALSE) +
+                coord_cartesian(xlim = ranges3c$x, ylim = ranges3c$y, expand = TRUE) +
                 geom_point(aes(colour = as.factor(Cluster)), size=input$pointsize, alpha=0.8) +
                 scale_colour_discrete("Cluster") +
                 theme_light() +
@@ -3670,7 +3922,7 @@ shinyServer(function(input, output, session) {
                 scale_y_continuous(paste(trendy), label=comma)
                 
                 climate.time.series.line <- qplot(Interval, DEMA(Selected, input$smoothing), geom="line", data = spectra.timeseries.table, colour = as.factor(Climate)) +
-                coord_cartesian(xlim = ranges3c$x, ylim = ranges3c$y, expand = FALSE) +
+                coord_cartesian(xlim = ranges3c$x, ylim = ranges3c$y, expand = TRUE) +
                 scale_colour_discrete("Climatic Period") +
                 theme_light() +
                 theme(axis.text.x = element_text(size=15)) +
@@ -3685,7 +3937,7 @@ shinyServer(function(input, output, session) {
                 
                 
                 qualitative.time.series.line <- qplot(Interval, DEMA(Selected, input$smoothing), geom="line", data = spectra.timeseries.table, colour = as.factor(Qualitative)) +
-                coord_cartesian(xlim = ranges3c$x, ylim = ranges3c$y, expand = FALSE) +
+                coord_cartesian(xlim = ranges3c$x, ylim = ranges3c$y, expand = TRUE) +
                 scale_colour_discrete("Qualitative") +
                 theme_light() +
                 theme(axis.text.x = element_text(size=15)) +
@@ -3699,7 +3951,7 @@ shinyServer(function(input, output, session) {
                 scale_y_continuous(paste(trendy), label=comma)
                 
                 qualitative.time.series.point <- qplot(Interval, DEMA(Selected, input$smoothing),  geom="line", data = spectra.timeseries.table) +
-                coord_cartesian(xlim = ranges3c$x, ylim = ranges3c$y, expand = FALSE) +
+                coord_cartesian(xlim = ranges3c$x, ylim = ranges3c$y, expand = TRUE) +
                 geom_point(aes(colour = as.factor(Qualitative)), lwd=input$pointsize) +
                 scale_colour_discrete("Qualitative") +
                 theme_light() +
@@ -3715,7 +3967,7 @@ shinyServer(function(input, output, session) {
                 
                 
                 depth.time.series <- qplot(Interval, DEMA(Selected, input$smoothing),  geom="line", data = spectra.timeseries.table) +
-                coord_cartesian(xlim = ranges3c$x, ylim = ranges3c$y, expand = FALSE) +
+                coord_cartesian(xlim = ranges3c$x, ylim = ranges3c$y, expand = TRUE) +
                 geom_line(aes(colour = Depth), lwd=input$linesize+0.5) +
                 geom_line(lwd=input$linesize-0.5) +      scale_colour_gradientn("Depth", colours=rev(terrain.colors(length(spectra.line.table$Depth)))) +
                 theme_light() +
@@ -3732,7 +3984,7 @@ shinyServer(function(input, output, session) {
                 ####Flipped X Axis
                 
                 black.time.series.reverse <- qplot(Interval, DEMA(Selected, input$smoothing), geom="line", data = spectra.timeseries.table) +
-                coord_cartesian(xlim = ranges3c$x, ylim = ranges3c$y, expand = FALSE) +
+                coord_cartesian(xlim = ranges3c$x, ylim = ranges3c$y, expand = TRUE) +
                 geom_line(colour = "black", lwd=input$linesize) +
                 theme_light() +
                 theme(axis.text.x = element_text(size=15)) +
@@ -3746,7 +3998,7 @@ shinyServer(function(input, output, session) {
                 scale_y_continuous(paste(trendy), label=comma)
                 
                 smooth.time.series.reverse <- qplot(spectra.timeseries.table$Interval, DEMA(spectra.timeseries.table$Selected, input$smoothing), geom="point") +
-                coord_cartesian(xlim = ranges3c$x, ylim = ranges3c$y, expand = FALSE) +
+                coord_cartesian(xlim = ranges3c$x, ylim = ranges3c$y, expand = TRUE) +
                 theme_light() +
                 stat_smooth() +
                 theme(axis.text.x = element_text(size=15)) +
@@ -3761,7 +4013,7 @@ shinyServer(function(input, output, session) {
                 
                 
                 ramp.time.series.reverse <- qplot(Interval, DEMA(Selected, input$smoothing), geom="line", data = spectra.timeseries.table) +
-                coord_cartesian(xlim = ranges3c$x, ylim = ranges3c$y, expand = FALSE) +
+                coord_cartesian(xlim = ranges3c$x, ylim = ranges3c$y, expand = TRUE) +
                 geom_line(aes(colour = Selected), lwd=input$linesize) +
                 theme_light() +
                 scale_colour_gradientn(colours=rainbow(7)) +
@@ -3777,7 +4029,7 @@ shinyServer(function(input, output, session) {
                 
                 
                 area.time.series.reverse <- ggplot(spectra.timeseries.table, aes(Interval)) +
-                coord_cartesian(xlim = ranges3c$x, ylim = ranges3c$y, expand = FALSE) +
+                coord_cartesian(xlim = ranges3c$x, ylim = ranges3c$y, expand = TRUE) +
                 theme_classic() +
                 geom_area(aes(y=Selected, colour="grey60", fill="grey60"), alpha=0.6) +
                 theme(axis.text.x = element_text(size=15)) +
@@ -3793,7 +4045,7 @@ shinyServer(function(input, output, session) {
                 
                 
                 cluster.time.series.reverse <- qplot(Interval, DEMA(Selected, input$smoothing),  geom="line", data = spectra.timeseries.table, alpha=0.6) +
-                coord_cartesian(xlim = ranges3c$x, ylim = ranges3c$y, expand = FALSE) +
+                coord_cartesian(xlim = ranges3c$x, ylim = ranges3c$y, expand = TRUE) +
                 geom_point(aes(colour = as.factor(Cluster)), size=input$pointsize, alpha=0.8) +
                 scale_colour_discrete("Cluster") +
                 theme_light() +
@@ -3809,7 +4061,7 @@ shinyServer(function(input, output, session) {
                 
                 
                 climate.time.series.line.reverse <- qplot(Interval, DEMA(Selected, input$smoothing), geom="line", data = spectra.timeseries.table, colour = as.factor(Climate)) +
-                coord_cartesian(xlim = ranges3c$x, ylim = ranges3c$y, expand = FALSE) +
+                coord_cartesian(xlim = ranges3c$x, ylim = ranges3c$y, expand = TRUE) +
                 scale_colour_discrete("Climatic Period") +
                 theme_light() +
                 theme(axis.text.x = element_text(size=15)) +
@@ -3824,7 +4076,7 @@ shinyServer(function(input, output, session) {
                 
                 
                 qualitative.time.series.line.reverse <- qplot(Interval, DEMA(Selected, input$smoothing), geom="line", data = spectra.timeseries.table, colour = as.factor(Qualitative)) +
-                coord_cartesian(xlim = ranges3c$x, ylim = ranges3c$y, expand = FALSE) +
+                coord_cartesian(xlim = ranges3c$x, ylim = ranges3c$y, expand = TRUE) +
                 scale_colour_discrete("Qualitative") +
                 theme_light() +
                 theme(axis.text.x = element_text(size=15)) +
@@ -3838,7 +4090,7 @@ shinyServer(function(input, output, session) {
                 scale_y_continuous(paste(trendy), label=comma)
                 
                 qualitative.time.series.point.reverse <- qplot(Interval, DEMA(Selected, input$smoothing),  geom="line", data = spectra.timeseries.table) +
-                coord_cartesian(xlim = ranges3c$x, ylim = ranges3c$y, expand = FALSE) +
+                coord_cartesian(xlim = ranges3c$x, ylim = ranges3c$y, expand = TRUE) +
                 geom_point(aes(colour = as.factor(Qualitative)), lwd=input$pointsize) +
                 scale_colour_discrete("Qualitative") +
                 theme_light() +
@@ -3854,7 +4106,7 @@ shinyServer(function(input, output, session) {
                 
                 
                 depth.time.series.reverse <- qplot(Interval, DEMA(Selected, input$smoothing),  geom="line", data = spectra.timeseries.table) +
-                coord_cartesian(xlim = ranges3c$x, ylim = ranges3c$y, expand = FALSE) +
+                coord_cartesian(xlim = ranges3c$x, ylim = ranges3c$y, expand = TRUE) +
                 geom_line(aes(colour = Depth), lwd=input$linesize+0.5) +
                 geom_line(lwd=input$linesize-0.5) +      scale_colour_gradientn("Depth", colours=rev(terrain.colors(length(spectra.line.table$Depth)))) +
                 theme_light() +
@@ -4079,7 +4331,7 @@ shinyServer(function(input, output, session) {
                 
                 
                 black.time.series <- qplot(Interval, DEMA(Selected, input$smoothing), geom="line", data = spectra.timeseries.table) +
-                coord_cartesian(xlim = ranges3d$x, ylim = ranges3d$y, expand = FALSE) +
+                coord_cartesian(xlim = ranges3d$x, ylim = ranges3d$y, expand = TRUE) +
                 geom_line(colour = "black", lwd=input$linesize) +
                 theme_light() +
                 theme(axis.text.x = element_text(size=15)) +
@@ -4093,7 +4345,7 @@ shinyServer(function(input, output, session) {
                 scale_y_continuous(paste(trendy), label=comma)
                 
                 smooth.time.series <- qplot(spectra.timeseries.table$Interval, DEMA(spectra.timeseries.table$Selected, input$smoothing), geom="point") +
-                coord_cartesian(xlim = ranges3d$x, ylim = ranges3d$y, expand = FALSE) +
+                coord_cartesian(xlim = ranges3d$x, ylim = ranges3d$y, expand = TRUE) +
                 theme_light() +
                 stat_smooth() +
                 theme(axis.text.x = element_text(size=15)) +
@@ -4108,7 +4360,7 @@ shinyServer(function(input, output, session) {
                 
                 
                 ramp.time.series <- qplot(Interval, DEMA(Selected, input$smoothing),  geom="line", data = spectra.timeseries.table) +
-                coord_cartesian(xlim = ranges3d$x, ylim = ranges3d$y, expand = FALSE) +
+                coord_cartesian(xlim = ranges3d$x, ylim = ranges3d$y, expand = TRUE) +
                 geom_line(aes(colour = Selected), lwd=input$linesize) +
                 theme_light() +
                 scale_colour_gradientn(colours=rainbow(7)) +
@@ -4124,7 +4376,7 @@ shinyServer(function(input, output, session) {
                 
                 
                 area.time.series <- ggplot(spectra.timeseries.table, aes(Interval)) +
-                coord_cartesian(xlim = ranges3d$x, ylim = ranges3d$y, expand = FALSE) +
+                coord_cartesian(xlim = ranges3d$x, ylim = ranges3d$y, expand = TRUE) +
                 theme_classic() +
                 geom_area(aes(y=Selected, colour="grey60", fill="grey60"), alpha=0.6) +
                 theme(axis.text.x = element_text(size=15)) +
@@ -4140,7 +4392,7 @@ shinyServer(function(input, output, session) {
                 
                 
                 cluster.time.series <- qplot(Interval, DEMA(Selected, input$smoothing),  geom="line", data = spectra.timeseries.table, alpha=0.6) +
-                coord_cartesian(xlim = ranges3d$x, ylim = ranges3d$y, expand = FALSE) +
+                coord_cartesian(xlim = ranges3d$x, ylim = ranges3d$y, expand = TRUE) +
                 geom_point(aes(colour = as.factor(Cluster)), size=input$pointsize, alpha=0.8) +
                 scale_colour_discrete("Cluster") +
                 theme_light() +
@@ -4155,7 +4407,7 @@ shinyServer(function(input, output, session) {
                 scale_y_continuous(paste(trendy), label=comma)
                 
                 climate.time.series.line <- qplot(Interval, DEMA(Selected, input$smoothing), geom="line", data = spectra.timeseries.table, colour = as.factor(Climate)) +
-                coord_cartesian(xlim = ranges3d$x, ylim = ranges3d$y, expand = FALSE) +
+                coord_cartesian(xlim = ranges3d$x, ylim = ranges3d$y, expand = TRUE) +
                 scale_colour_discrete("Climatic Period") +
                 theme_light() +
                 theme(axis.text.x = element_text(size=15)) +
@@ -4170,7 +4422,7 @@ shinyServer(function(input, output, session) {
                 
                 
                 qualitative.time.series.line <- qplot(Interval, DEMA(Selected, input$smoothing), geom="line", data = spectra.timeseries.table, colour = as.factor(Qualitative)) +
-                coord_cartesian(xlim = ranges3d$x, ylim = ranges3d$y, expand = FALSE) +
+                coord_cartesian(xlim = ranges3d$x, ylim = ranges3d$y, expand = TRUE) +
                 scale_colour_discrete("Qualitative") +
                 theme_light() +
                 theme(axis.text.x = element_text(size=15)) +
@@ -4184,7 +4436,7 @@ shinyServer(function(input, output, session) {
                 scale_y_continuous(paste(trendy), label=comma)
                 
                 qualitative.time.series.point <- qplot(Interval, DEMA(Selected, input$smoothing),  geom="line", data = spectra.timeseries.table) +
-                coord_cartesian(xlim = ranges3d$x, ylim = ranges3d$y, expand = FALSE) +
+                coord_cartesian(xlim = ranges3d$x, ylim = ranges3d$y, expand = TRUE) +
                 geom_point(aes(colour = as.factor(Qualitative)), lwd=input$pointsize) +
                 scale_colour_discrete("Qualitative") +
                 theme_light() +
@@ -4200,7 +4452,7 @@ shinyServer(function(input, output, session) {
                 
                 
                 depth.time.series <- qplot(Interval, DEMA(Selected, input$smoothing),  geom="line", data = spectra.timeseries.table) +
-                coord_cartesian(xlim = ranges3d$x, ylim = ranges3d$y, expand = FALSE) +
+                coord_cartesian(xlim = ranges3d$x, ylim = ranges3d$y, expand = TRUE) +
                 geom_line(aes(colour = Depth), lwd=input$linesize+0.5) +
                 geom_line(lwd=input$linesize-0.5) +      scale_colour_gradientn("Depth", colours=rev(terrain.colors(length(spectra.line.table$Depth)))) +
                 theme_light() +
@@ -4220,7 +4472,7 @@ shinyServer(function(input, output, session) {
                 ####Flipped X Axis
                 
                 black.time.series.reverse <- qplot(Interval, DEMA(Selected, input$smoothing), geom="line", data = spectra.timeseries.table) +
-                coord_cartesian(xlim = ranges3d$x, ylim = ranges3d$y, expand = FALSE) +
+                coord_cartesian(xlim = ranges3d$x, ylim = ranges3d$y, expand = TRUE) +
                 geom_line(colour = "black", lwd=input$linesize) +
                 theme_light() +
                 theme(axis.text.x = element_text(size=15)) +
@@ -4234,7 +4486,7 @@ shinyServer(function(input, output, session) {
                 scale_y_continuous(paste(trendy), label=comma)
                 
                 smooth.time.series.reverse <- qplot(spectra.timeseries.table$Interval, DEMA(spectra.timeseries.table$Selected, input$smoothing), geom="point") +
-                coord_cartesian(xlim = ranges3d$x, ylim = ranges3d$y, expand = FALSE) +
+                coord_cartesian(xlim = ranges3d$x, ylim = ranges3d$y, expand = TRUE) +
                 theme_light() +
                 stat_smooth() +
                 theme(axis.text.x = element_text(size=15)) +
@@ -4249,7 +4501,7 @@ shinyServer(function(input, output, session) {
                 
                 
                 ramp.time.series.reverse <- qplot(Interval, DEMA(Selected, input$smoothing), geom="line", data = spectra.timeseries.table) +
-                coord_cartesian(xlim = ranges3d$x, ylim = ranges3d$y, expand = FALSE) +
+                coord_cartesian(xlim = ranges3d$x, ylim = ranges3d$y, expand = TRUE) +
                 geom_line(aes(colour = Selected), lwd=input$linesize) +
                 theme_light() +
                 scale_colour_gradientn(colours=rainbow(7)) +
@@ -4265,7 +4517,7 @@ shinyServer(function(input, output, session) {
                 
                 
                 area.time.series.reverse <- ggplot(spectra.timeseries.table, aes(Interval)) +
-                coord_cartesian(xlim = ranges3d$x, ylim = ranges3d$y, expand = FALSE) +
+                coord_cartesian(xlim = ranges3d$x, ylim = ranges3d$y, expand = TRUE) +
                 theme_classic() +
                 geom_area(aes(y=Selected, colour="grey60", fill="grey60"), alpha=0.6) +
                 theme(axis.text.x = element_text(size=15)) +
@@ -4281,7 +4533,7 @@ shinyServer(function(input, output, session) {
                 
                 
                 cluster.time.series.reverse <- qplot(Interval, DEMA(Selected, input$smoothing),  geom="line", data = spectra.timeseries.table, alpha=0.6) +
-                coord_cartesian(xlim = ranges3d$x, ylim = ranges3d$y, expand = FALSE) +
+                coord_cartesian(xlim = ranges3d$x, ylim = ranges3d$y, expand = TRUE) +
                 geom_point(aes(colour = as.factor(Cluster)), size=input$pointsize, alpha=0.8) +
                 scale_colour_discrete("Cluster") +
                 theme_light() +
@@ -4297,7 +4549,7 @@ shinyServer(function(input, output, session) {
                 
                 
                 climate.time.series.line.reverse <- qplot(Interval, DEMA(Selected, input$smoothing), geom="line", data = spectra.timeseries.table, colour = as.factor(Climate)) +
-                coord_cartesian(xlim = ranges3d$x, ylim = ranges3d$y, expand = FALSE) +
+                coord_cartesian(xlim = ranges3d$x, ylim = ranges3d$y, expand = TRUE) +
                 scale_colour_discrete("Climatic Period") +
                 theme_light() +
                 theme(axis.text.x = element_text(size=15)) +
@@ -4312,7 +4564,7 @@ shinyServer(function(input, output, session) {
                 
                 
                 qualitative.time.series.line.reverse <- qplot(Interval, DEMA(Selected, input$smoothing), geom="line", data = spectra.timeseries.table, colour = as.factor(Qualitative)) +
-                coord_cartesian(xlim = ranges3d$x, ylim = ranges3d$y, expand = FALSE) +
+                coord_cartesian(xlim = ranges3d$x, ylim = ranges3d$y, expand = TRUE) +
                 scale_colour_discrete("Qualitative") +
                 theme_light() +
                 theme(axis.text.x = element_text(size=15)) +
@@ -4326,7 +4578,7 @@ shinyServer(function(input, output, session) {
                 scale_y_continuous(paste(trendy), label=comma)
                 
                 qualitative.time.series.point.reverse <- qplot(Interval, DEMA(Selected, input$smoothing),  geom="line", data = spectra.timeseries.table) +
-                coord_cartesian(xlim = ranges3d$x, ylim = ranges3d$y, expand = FALSE) +
+                coord_cartesian(xlim = ranges3d$x, ylim = ranges3d$y, expand = TRUE) +
                 geom_point(aes(colour = as.factor(Qualitative)), lwd=input$pointsize) +
                 scale_colour_discrete("Qualitative") +
                 theme_light() +
@@ -4342,7 +4594,7 @@ shinyServer(function(input, output, session) {
                 
                 
                 depth.time.series.reverse <- qplot(Interval, DEMA(Selected, input$smoothing),  geom="line", data = spectra.timeseries.table) +
-                coord_cartesian(xlim = ranges3d$x, ylim = ranges3d$y, expand = FALSE) +
+                coord_cartesian(xlim = ranges3d$x, ylim = ranges3d$y, expand = TRUE) +
                 geom_line(aes(colour = Depth), lwd=input$linesize+0.5) +
                 geom_line(lwd=input$linesize-0.5) +
                 scale_colour_gradientn("Depth", colours=rev(terrain.colors(length(spectra.line.table$Depth)))) +
@@ -4577,7 +4829,7 @@ shinyServer(function(input, output, session) {
                 
                 
                 black.time.series <- qplot(Interval, DEMA(Selected, input$smoothing), geom="line", data = spectra.timeseries.table) +
-                coord_cartesian(xlim = ranges3e$x, ylim = ranges3e$y, expand = FALSE) +
+                coord_cartesian(xlim = ranges3e$x, ylim = ranges3e$y, expand = TRUE) +
                 geom_line(colour = "black", lwd=input$linesize) +
                 theme_light() +
                 theme(axis.text.x = element_text(size=15)) +
@@ -4591,7 +4843,7 @@ shinyServer(function(input, output, session) {
                 scale_y_continuous(paste(trendy), label=comma)
                 
                 smooth.time.series <- qplot(spectra.timeseries.table$Interval, DEMA(spectra.timeseries.table$Selected, input$smoothing), geom="point") +
-                coord_cartesian(xlim = ranges3e$x, ylim = ranges3e$y, expand = FALSE) +
+                coord_cartesian(xlim = ranges3e$x, ylim = ranges3e$y, expand = TRUE) +
                 theme_light() +
                 stat_smooth() +
                 theme(axis.text.x = element_text(size=15)) +
@@ -4606,7 +4858,7 @@ shinyServer(function(input, output, session) {
                 
                 
                 ramp.time.series <- qplot(Interval, DEMA(Selected, input$smoothing),  geom="line", data = spectra.timeseries.table) +
-                coord_cartesian(xlim = ranges3e$x, ylim = ranges3e$y, expand = FALSE) +
+                coord_cartesian(xlim = ranges3e$x, ylim = ranges3e$y, expand = TRUE) +
                 geom_line(aes(colour = Selected), lwd=input$linesize) +
                 theme_light() +
                 scale_colour_gradientn(colours=rainbow(7)) +
@@ -4622,7 +4874,7 @@ shinyServer(function(input, output, session) {
                 
                 
                 area.time.series <- ggplot(spectra.timeseries.table, aes(Interval)) +
-                coord_cartesian(xlim = ranges3e$x, ylim = ranges3e$y, expand = FALSE) +
+                coord_cartesian(xlim = ranges3e$x, ylim = ranges3e$y, expand = TRUE) +
                 theme_classic() +
                 geom_area(aes(y=Selected, colour="grey60", fill="grey60"), alpha=0.6) +
                 theme(axis.text.x = element_text(size=15)) +
@@ -4638,7 +4890,7 @@ shinyServer(function(input, output, session) {
                 
                 
                 cluster.time.series <- qplot(Interval, DEMA(Selected, input$smoothing),  geom="line", data = spectra.timeseries.table, alpha=0.6) +
-                coord_cartesian(xlim = ranges3e$x, ylim = ranges3e$y, expand = FALSE) +
+                coord_cartesian(xlim = ranges3e$x, ylim = ranges3e$y, expand = TRUE) +
                 geom_point(aes(colour = as.factor(Cluster)), size=input$pointsize, alpha=0.8) +
                 scale_colour_discrete("Cluster") +
                 theme_light() +
@@ -4653,7 +4905,7 @@ shinyServer(function(input, output, session) {
                 scale_y_continuous(paste(trendy), label=comma)
                 
                 climate.time.series.line <- qplot(Interval, DEMA(Selected, input$smoothing), geom="line", data = spectra.timeseries.table, colour = as.factor(Climate)) +
-                coord_cartesian(xlim = ranges3e$x, ylim = ranges3e$y, expand = FALSE) +
+                coord_cartesian(xlim = ranges3e$x, ylim = ranges3e$y, expand = TRUE) +
                 scale_colour_discrete("Climatic Period") +
                 theme_light() +
                 theme(axis.text.x = element_text(size=15)) +
@@ -4668,7 +4920,7 @@ shinyServer(function(input, output, session) {
                 
                 
                 qualitative.time.series.line <- qplot(Interval, DEMA(Selected, input$smoothing), geom="line", data = spectra.timeseries.table, colour = as.factor(Qualitative)) +
-                coord_cartesian(xlim = ranges3e$x, ylim = ranges3e$y, expand = FALSE) +
+                coord_cartesian(xlim = ranges3e$x, ylim = ranges3e$y, expand = TRUE) +
                 scale_colour_discrete("Qualitative") +
                 theme_light() +
                 theme(axis.text.x = element_text(size=15)) +
@@ -4682,7 +4934,7 @@ shinyServer(function(input, output, session) {
                 scale_y_continuous(paste(trendy), label=comma)
                 
                 qualitative.time.series.point <- qplot(Interval, DEMA(Selected, input$smoothing),  geom="line", data = spectra.timeseries.table) +
-                coord_cartesian(xlim = ranges3e$x, ylim = ranges3e$y, expand = FALSE) +
+                coord_cartesian(xlim = ranges3e$x, ylim = ranges3e$y, expand = TRUE) +
                 geom_point(aes(colour = as.factor(Qualitative)), lwd=input$pointsize) +
                 scale_colour_discrete("Qualitative") +
                 theme_light() +
@@ -4698,7 +4950,7 @@ shinyServer(function(input, output, session) {
                 
                 
                 depth.time.series <- qplot(Interval, DEMA(Selected, input$smoothing),  geom="line", data = spectra.timeseries.table) +
-                coord_cartesian(xlim = ranges3e$x, ylim = ranges3e$y, expand = FALSE) +
+                coord_cartesian(xlim = ranges3e$x, ylim = ranges3e$y, expand = TRUE) +
                 geom_line(aes(colour = Depth), lwd=input$linesize+0.5) +
                 geom_line(lwd=input$linesize-0.5) +
                 scale_colour_gradientn("Depth", colours=rev(terrain.colors(length(spectra.line.table$Depth)))) +
@@ -4718,7 +4970,7 @@ shinyServer(function(input, output, session) {
                 ####X Axis Flipped
                 
                 black.time.series.reverse <- qplot(Interval, DEMA(Selected, input$smoothing), geom="line", data = spectra.timeseries.table) +
-                coord_cartesian(xlim = ranges3e$x, ylim = ranges3e$y, expand = FALSE) +
+                coord_cartesian(xlim = ranges3e$x, ylim = ranges3e$y, expand = TRUE) +
                 geom_line(colour = "black", lwd=input$linesize) +
                 theme_light() +
                 theme(axis.text.x = element_text(size=15)) +
@@ -4732,7 +4984,7 @@ shinyServer(function(input, output, session) {
                 scale_y_continuous(paste(trendy), label=comma)
                 
                 smooth.time.series.reverse <- qplot(spectra.timeseries.table$Interval, DEMA(spectra.timeseries.table$Selected, input$smoothing), geom="point") +
-                coord_cartesian(xlim = ranges3e$x, ylim = ranges3e$y, expand = FALSE) +
+                coord_cartesian(xlim = ranges3e$x, ylim = ranges3e$y, expand = TRUE) +
                 theme_light() +
                 stat_smooth() +
                 theme(axis.text.x = element_text(size=15)) +
@@ -4747,7 +4999,7 @@ shinyServer(function(input, output, session) {
                 
                 
                 ramp.time.series.reverse <- qplot(Interval, DEMA(Selected, input$smoothing), geom="line", data = spectra.timeseries.table) +
-                coord_cartesian(xlim = ranges3e$x, ylim = ranges3e$y, expand = FALSE) +
+                coord_cartesian(xlim = ranges3e$x, ylim = ranges3e$y, expand = TRUE) +
                 geom_line(aes(colour = Selected), lwd=input$linesize) +
                 theme_light() +
                 scale_colour_gradientn(colours=rainbow(7)) +
@@ -4763,7 +5015,7 @@ shinyServer(function(input, output, session) {
                 
                 
                 area.time.series.reverse <- ggplot(spectra.timeseries.table, aes(Interval)) +
-                coord_cartesian(xlim = ranges3e$x, ylim = ranges3e$y, expand = FALSE) +
+                coord_cartesian(xlim = ranges3e$x, ylim = ranges3e$y, expand = TRUE) +
                 theme_classic() +
                 geom_area(aes(y=Selected, colour="grey60", fill="grey60"), alpha=0.6) +
                 theme(axis.text.x = element_text(size=15)) +
@@ -4779,7 +5031,7 @@ shinyServer(function(input, output, session) {
                 
                 
                 cluster.time.series.reverse <- qplot(Interval, DEMA(Selected, input$smoothing),  geom="line", data = spectra.timeseries.table, alpha=0.6) +
-                coord_cartesian(xlim = ranges3e$x, ylim = ranges3e$y, expand = FALSE) +
+                coord_cartesian(xlim = ranges3e$x, ylim = ranges3e$y, expand = TRUE) +
                 geom_point(aes(colour = as.factor(Cluster)), size=input$pointsize, alpha=0.8) +
                 scale_colour_discrete("Cluster") +
                 theme_light() +
@@ -4794,7 +5046,7 @@ shinyServer(function(input, output, session) {
                 scale_y_continuous(paste(trendy), label=comma)
                 
                 climate.time.series.line.reverse <- qplot(Interval, DEMA(Selected, input$smoothing), geom="line", data = spectra.timeseries.table, colour = as.factor(Climate)) +
-                coord_cartesian(xlim = ranges3e$x, ylim = ranges3e$y, expand = FALSE) +
+                coord_cartesian(xlim = ranges3e$x, ylim = ranges3e$y, expand = TRUE) +
                 scale_colour_discrete("Climatic Period") +
                 theme_light() +
                 theme(axis.text.x = element_text(size=15)) +
@@ -4809,7 +5061,7 @@ shinyServer(function(input, output, session) {
                 
                 
                 qualitative.time.series.line.reverse <- qplot(Interval, DEMA(Selected, input$smoothing), geom="line", data = spectra.timeseries.table, colour = as.factor(Qualitative)) +
-                coord_cartesian(xlim = ranges3e$x, ylim = ranges3e$y, expand = FALSE) +
+                coord_cartesian(xlim = ranges3e$x, ylim = ranges3e$y, expand = TRUE) +
                 scale_colour_discrete("Qualitative") +
                 theme_light() +
                 theme(axis.text.x = element_text(size=15)) +
@@ -4823,7 +5075,7 @@ shinyServer(function(input, output, session) {
                 scale_y_continuous(paste(trendy), label=comma)
                 
                 qualitative.time.series.point.reverse <- qplot(Interval, DEMA(Selected, input$smoothing),  geom="line", data = spectra.timeseries.table) +
-                coord_cartesian(xlim = ranges3e$x, ylim = ranges3e$y, expand = FALSE) +
+                coord_cartesian(xlim = ranges3e$x, ylim = ranges3e$y, expand = TRUE) +
                 geom_point(aes(colour = as.factor(Qualitative)), lwd=input$pointsize) +
                 scale_colour_discrete("Qualitative") +
                 theme_light() +
@@ -4839,7 +5091,7 @@ shinyServer(function(input, output, session) {
                 
                 
                 depth.time.series.reverse <- qplot(Interval, DEMA(Selected, input$smoothing),  geom="line", data = spectra.timeseries.table) +
-                coord_cartesian(xlim = ranges3e$x, ylim = ranges3e$y, expand = FALSE) +
+                coord_cartesian(xlim = ranges3e$x, ylim = ranges3e$y, expand = TRUE) +
                 geom_line(aes(colour = Depth), lwd=input$linesize+0.5) +
                 geom_line(lwd=input$linesize-0.5) +
                 scale_colour_gradientn("Depth", colours=rev(terrain.colors(length(spectra.line.table$Depth)))) +
@@ -5118,7 +5370,7 @@ shinyServer(function(input, output, session) {
                 
                 
                 black.ratio.plot <- qplot(X, Y, data=ratio.frame, xlab = ratio.names.x, ylab = ratio.names.y  ) +
-                coord_cartesian(xlim = rangesratio$x, ylim = rangesratio$y, expand = FALSE) +
+                coord_cartesian(xlim = rangesratio$x, ylim = rangesratio$y, expand = TRUE) +
                 geom_point(lwd=input$spotsize2) +
                 theme_light() +
                 theme(axis.text.x = element_text(size=15)) +
@@ -5132,7 +5384,7 @@ shinyServer(function(input, output, session) {
                 scale_y_continuous(ratio.names.y, label=comma)
                 
                 cluster.ratio.plot <- qplot(X, Y, data=ratio.frame, xlab = ratio.names.x, ylab = ratio.names.y ) +
-                coord_cartesian(xlim = rangesratio$x, ylim = rangesratio$y, expand = FALSE) +
+                coord_cartesian(xlim = rangesratio$x, ylim = rangesratio$y, expand = TRUE) +
                 geom_point(aes(colour=as.factor(ratio.frame$Cluster), shape=as.factor(ratio.frame$Cluster)), size=input$spotsize2+1) +
                 geom_point(colour="grey30", size=input$spotsize2-2) +
                 scale_shape_manual("Cluster", values=1:nlevels(as.factor(as.factor(ratio.frame$Cluster)))) +
@@ -5149,7 +5401,7 @@ shinyServer(function(input, output, session) {
                 scale_y_continuous(ratio.names.y, label=comma)
                 
                 cluster.ratio.ellipse.plot <- qplot(X, Y, data=ratio.frame, xlab = ratio.names.x, ylab = ratio.names.y  ) +
-                coord_cartesian(xlim = rangesratio$x, ylim = rangesratio$y, expand = FALSE) +
+                coord_cartesian(xlim = rangesratio$x, ylim = rangesratio$y, expand = TRUE) +
                 stat_ellipse(aes(ratio.frame$X, ratio.frame$Y, colour=as.factor(ratio.frame$Cluster))) +
                 geom_point(aes(colour=as.factor(ratio.frame$Cluster), shape=as.factor(ratio.frame$Cluster)), size=input$spotsize2+1) +
                 geom_point(colour="grey30", size=input$spotsize2-2) +
@@ -5168,7 +5420,7 @@ shinyServer(function(input, output, session) {
                 
                 
                 climate.ratio.plot <- qplot(X, Y, data=ratio.frame, xlab = ratio.names.x, ylab = ratio.names.y  ) +
-                coord_cartesian(xlim = rangesratio$x, ylim = rangesratio$y, expand = FALSE) +
+                coord_cartesian(xlim = rangesratio$x, ylim = rangesratio$y, expand = TRUE) +
                 geom_point(aes(colour=as.factor(ratio.frame$Climate), shape=as.factor(ratio.frame$Climate)), size=input$spotsize2+1) +
                 geom_point(colour="grey30", size=input$spotsize2-2) +
                 scale_shape_manual("Climatic Period", values=1:nlevels(ratio.frame$Climate)) +
@@ -5185,7 +5437,7 @@ shinyServer(function(input, output, session) {
                 scale_y_continuous(ratio.names.y, label=comma)
                 
                 climate.ratio.ellipse.plot <- qplot(X, Y, data=ratio.frame, xlab = ratio.names.x, ylab = ratio.names.y  ) +
-                coord_cartesian(xlim = rangesratio$x, ylim = rangesratio$y, expand = FALSE) +
+                coord_cartesian(xlim = rangesratio$x, ylim = rangesratio$y, expand = TRUE) +
                 stat_ellipse(aes(ratio.frame$X, ratio.frame$Y, colour=as.factor(ratio.frame$Climate))) +
                 geom_point(aes(colour=as.factor(ratio.frame$Climate), shape=as.factor(ratio.frame$Climate)), size=input$spotsize2+1) +
                 geom_point(colour="grey30", size=input$spotsize2-2) +
@@ -5204,7 +5456,7 @@ shinyServer(function(input, output, session) {
                 
                 
                 qualitative.ratio.plot <- qplot(X, Y, data=ratio.frame, xlab = ratio.names.x, ylab = ratio.names.y  ) +
-                coord_cartesian(xlim = rangesratio$x, ylim = rangesratio$y, expand = FALSE) +
+                coord_cartesian(xlim = rangesratio$x, ylim = rangesratio$y, expand = TRUE) +
                 geom_point(aes(colour=as.factor(ratio.frame$Qualitative), shape=as.factor(ratio.frame$Qualitative)), size=input$spotsize2+1) +
                 geom_point(colour="grey30", size=input$spotsize2-2) +
                 scale_shape_manual("Qualitative", values=1:nlevels(ratio.frame$Qualitative)) +
@@ -5221,7 +5473,7 @@ shinyServer(function(input, output, session) {
                 scale_y_continuous(ratio.names.y, label=comma)
                 
                 qualitative.ratio.ellipse.plot <- qplot(X, Y, data=ratio.frame, xlab = ratio.names.x, ylab = ratio.names.y  ) +
-                coord_cartesian(xlim = rangesratio$x, ylim = rangesratio$y, expand = FALSE) +
+                coord_cartesian(xlim = rangesratio$x, ylim = rangesratio$y, expand = TRUE) +
                 stat_ellipse(aes(ratio.frame$X, ratio.frame$Y, colour=as.factor(ratio.frame$Qualitative))) +
                 geom_point(aes(colour=as.factor(ratio.frame$Qualitative), shape=as.factor(ratio.frame$Qualitative)), size=input$spotsize2+1) +
                 geom_point(colour="grey30", size=input$spotsize2-2) +
@@ -5239,7 +5491,7 @@ shinyServer(function(input, output, session) {
                 scale_y_continuous(ratio.names.y, label=comma)
                 
                 depth.ratio.plot <- qplot(X, Y, data=ratio.frame, xlab = ratio.names.x, ylab = ratio.names.y  ) +
-                coord_cartesian(xlim = rangesratio$x, ylim = rangesratio$y, expand = FALSE) +
+                coord_cartesian(xlim = rangesratio$x, ylim = rangesratio$y, expand = TRUE) +
                 geom_point(aes(colour = ratio.frame$Depth), size=input$spotsize2+1) +
                 geom_point(size=input$spotsize2-2) +
                 scale_colour_gradientn("Depth", colours=rev(terrain.colors(length(ratio.frame$Depth)))) +
@@ -5255,7 +5507,7 @@ shinyServer(function(input, output, session) {
                 scale_y_continuous(ratio.names.y, label=comma)
                 
                 age.ratio.plot <- qplot(X, Y, data=ratio.frame, xlab = ratio.names.x, ylab = ratio.names.y  ) +
-                coord_cartesian(xlim = rangesratio$x, ylim = rangesratio$y, expand = FALSE) +
+                coord_cartesian(xlim = rangesratio$x, ylim = rangesratio$y, expand = TRUE) +
                 geom_point(aes(colour = ratio.frame$Age), size=input$spotsize2+1) +
                 geom_point(size=input$spotsize2-2) +
                 scale_colour_gradientn("Age", colours=terrain.colors(length(ratio.frame$Age))) +
@@ -7162,7 +7414,7 @@ shinyServer(function(input, output, session) {
                 
                 
                 black.time.series <- qplot(Interval, DEMA(Selected, input$smoothingeq), input$xaxistypeeq, geom="line", data = spectra.timeseries.table) +
-                coord_cartesian(xlim = ranges6a$x, ylim = ranges6a$y, expand = FALSE) +
+                coord_cartesian(xlim = ranges6a$x, ylim = ranges6a$y, expand = TRUE) +
                 geom_line(colour = "black", lwd=input$linesizeeq) +
                 theme_light() +
                 theme(axis.text.x = element_text(size=15)) +
@@ -7178,7 +7430,7 @@ shinyServer(function(input, output, session) {
                 
                 
                 smooth.time.series <- qplot(spectra.timeseries.table$Interval, DEMA(spectra.timeseries.table$Selected, input$smoothingeq),  geom="point") +
-                coord_cartesian(xlim = ranges6a$x, ylim = ranges6a$y, expand = FALSE) +
+                coord_cartesian(xlim = ranges6a$x, ylim = ranges6a$y, expand = TRUE) +
                 theme_light() +
                 stat_smooth() +
                 theme(axis.text.x = element_text(size=15)) +
@@ -7193,7 +7445,7 @@ shinyServer(function(input, output, session) {
                 
                 
                 ramp.time.series <- qplot(Interval, DEMA(Selected, input$smoothingeq),  geom="line", data = spectra.timeseries.table) +
-                coord_cartesian(xlim = ranges6a$x, ylim = ranges6a$y, expand = FALSE) +
+                coord_cartesian(xlim = ranges6a$x, ylim = ranges6a$y, expand = TRUE) +
                 geom_line(aes(colour = Selected), lwd=input$linesizeeq) +
                 theme_light() +
         scale_colour_gradientn(colours=terrain.colors(length(spectra.timeseries.table$Depth))) +
@@ -7209,7 +7461,7 @@ shinyServer(function(input, output, session) {
                 
                 
                 area.time.series <- ggplot(spectra.timeseries.table, aes(Interval)) +
-                coord_cartesian(xlim = ranges6a$x, ylim = ranges6a$y, expand = FALSE) +
+                coord_cartesian(xlim = ranges6a$x, ylim = ranges6a$y, expand = TRUE) +
                 theme_classic() +
                 geom_area(aes(y=Selected, colour="grey60", fill="grey60"), alpha=0.6) +
                 scale_x_continuous(input$xaxistypeeq) +
@@ -7226,7 +7478,7 @@ shinyServer(function(input, output, session) {
                 
                 
                 cluster.time.series <- qplot(Interval, DEMA(Selected, input$smoothingeq),  geom="line", data = spectra.timeseries.table, alpha=0.6) +
-                coord_cartesian(xlim = ranges6a$x, ylim = ranges6a$y, expand = FALSE) +
+                coord_cartesian(xlim = ranges6a$x, ylim = ranges6a$y, expand = TRUE) +
                 geom_point(aes(colour = as.factor(Cluster)), size=input$pointsizeeq, alpha=0.8) +
                 scale_colour_discrete("Cluster") +
                 theme_light() +
@@ -7241,7 +7493,7 @@ shinyServer(function(input, output, session) {
                 scale_y_continuous(input$yaxistype, label=comma)
                 
                 climate.time.series.line <- qplot(Interval, DEMA(Selected, input$smoothingeq),  geom="line", data = spectra.timeseries.table, colour = as.factor(Climate)) +
-                coord_cartesian(xlim = ranges6a$x, ylim = ranges6a$y, expand = FALSE) +
+                coord_cartesian(xlim = ranges6a$x, ylim = ranges6a$y, expand = TRUE) +
                 scale_colour_discrete("Climatic Period") +
                 theme_light() +
                 theme(axis.text.x = element_text(size=15)) +
@@ -7256,7 +7508,7 @@ shinyServer(function(input, output, session) {
                 
                 
                 qualitative.time.series.line <- qplot(Interval, DEMA(Selected, input$smoothingeq),  geom="line", data = spectra.timeseries.table, colour = as.factor(Qualitative)) +
-                coord_cartesian(xlim = ranges6a$x, ylim = ranges6a$y, expand = FALSE) +
+                coord_cartesian(xlim = ranges6a$x, ylim = ranges6a$y, expand = TRUE) +
                 scale_colour_discrete("Qualitative") +
                 theme_light() +
                 theme(axis.text.x = element_text(size=15)) +
@@ -7270,7 +7522,7 @@ shinyServer(function(input, output, session) {
                 scale_y_continuous(input$yaxistype, label=comma)
                 
                 qualitative.time.series.point <- qplot(Interval, DEMA(Selected, input$smoothingeq),  geom="line", data = spectra.timeseries.table) +
-                coord_cartesian(xlim = ranges6a$x, ylim = ranges6a$y, expand = FALSE) +
+                coord_cartesian(xlim = ranges6a$x, ylim = ranges6a$y, expand = TRUE) +
                 geom_point(aes(colour = as.factor(Qualitative)), lwd=input$pointsizeeq) +
                 scale_colour_discrete("Qualitative") +
                 theme_light() +
@@ -7286,7 +7538,7 @@ shinyServer(function(input, output, session) {
                 
                 
                 depth.time.series <- qplot(Interval, DEMA(Selected, input$smoothingeq),  geom="line", data = spectra.timeseries.table) +
-                coord_cartesian(xlim = ranges6a$x, ylim = ranges6a$y, expand = FALSE) +
+                coord_cartesian(xlim = ranges6a$x, ylim = ranges6a$y, expand = TRUE) +
                 geom_line(aes(colour = Depth), lwd=input$linesize+0.5) +
                 geom_line(lwd=input$linesize-0.5) +
                 scale_colour_gradientn("Depth", colours=rev(terrain.colors(length(spectra.line.table$Depth)))) +
@@ -7307,7 +7559,7 @@ shinyServer(function(input, output, session) {
                 
                 
                 black.time.series.reverse <- qplot(Interval, DEMA(Selected, input$smoothingeq), input$xaxistypeeq, geom="line", data = spectra.timeseries.table) +
-                coord_cartesian(xlim = ranges6a$x, ylim = ranges6a$y, expand = FALSE) +
+                coord_cartesian(xlim = ranges6a$x, ylim = ranges6a$y, expand = TRUE) +
                 geom_line(colour = "black", lwd=input$linesizeeq) +
                 theme_light() +
                 theme(axis.text.x = element_text(size=15)) +
@@ -7321,7 +7573,7 @@ shinyServer(function(input, output, session) {
                 scale_y_continuous(input$yaxistype, label=comma)
                 
                 smooth.time.series.reverse <- qplot(spectra.timeseries.table$Interval, DEMA(spectra.timeseries.table$Selected, input$smoothingeq),  geom="point") +
-                coord_cartesian(xlim = ranges6a$x, ylim = ranges6a$y, expand = FALSE) +
+                coord_cartesian(xlim = ranges6a$x, ylim = ranges6a$y, expand = TRUE) +
                 theme_light() +
                 stat_smooth() +
                 theme(axis.text.x = element_text(size=15)) +
@@ -7336,7 +7588,7 @@ shinyServer(function(input, output, session) {
                 
                 
                 ramp.time.series.reverse <- qplot(Interval, DEMA(Selected, input$smoothingeq),  geom="line", data = spectra.timeseries.table) +
-                coord_cartesian(xlim = ranges6a$x, ylim = ranges6a$y, expand = FALSE) +
+                coord_cartesian(xlim = ranges6a$x, ylim = ranges6a$y, expand = TRUE) +
                 geom_line(aes(colour = Selected), lwd=input$linesizeeq) +
                 theme_light() +
                 scale_colour_gradientn(colours=rev(terrain.colors(length(spectra.timeseries.table$Depth)))) +
@@ -7352,7 +7604,7 @@ shinyServer(function(input, output, session) {
                 
                 
                 area.time.series.reverse <- ggplot(spectra.timeseries.table, aes(Interval)) +
-                coord_cartesian(xlim = ranges6a$x, ylim = ranges6a$y, expand = FALSE) +
+                coord_cartesian(xlim = ranges6a$x, ylim = ranges6a$y, expand = TRUE) +
                 theme_classic() +
                 geom_area(aes(y=Selected, colour="grey60", fill="grey60"), alpha=0.6) +
                 scale_x_reverse(input$xaxistypeeq) +
@@ -7369,7 +7621,7 @@ shinyServer(function(input, output, session) {
                 
                 
                 cluster.time.series.reverse <- qplot(Interval, DEMA(Selected, input$smoothingeq),  geom="line", data = spectra.timeseries.table, alpha=0.6) +
-                coord_cartesian(xlim = ranges6a$x, ylim = ranges6a$y, expand = FALSE) +
+                coord_cartesian(xlim = ranges6a$x, ylim = ranges6a$y, expand = TRUE) +
                 geom_point(aes(colour = as.factor(Cluster)), size=input$pointsizeeq, alpha=0.8) +
                 scale_colour_discrete("Cluster") +
                 theme_light() +
@@ -7384,7 +7636,7 @@ shinyServer(function(input, output, session) {
                 scale_y_continuous(input$yaxistype, label=comma)
                 
                 climate.time.series.line.reverse <- qplot(Interval, DEMA(Selected, input$smoothingeq),  geom="line", data = spectra.timeseries.table, colour = as.factor(Climate)) +
-                coord_cartesian(xlim = ranges6a$x, ylim = ranges6a$y, expand = FALSE) +
+                coord_cartesian(xlim = ranges6a$x, ylim = ranges6a$y, expand = TRUE) +
                 scale_colour_discrete("Climatic Period") +
                 theme_light() +
                 theme(axis.text.x = element_text(size=15)) +
@@ -7399,7 +7651,7 @@ shinyServer(function(input, output, session) {
                 
                 
                 qualitative.time.series.line.reverse <- qplot(Interval, DEMA(Selected, input$smoothingeq),  geom="line", data = spectra.timeseries.table, colour = as.factor(Qualitative)) +
-                coord_cartesian(xlim = ranges6a$x, ylim = ranges6a$y, expand = FALSE) +
+                coord_cartesian(xlim = ranges6a$x, ylim = ranges6a$y, expand = TRUE) +
                 scale_colour_discrete("Qualitative") +
                 theme_light() +
                 theme(axis.text.x = element_text(size=15)) +
@@ -7413,7 +7665,7 @@ shinyServer(function(input, output, session) {
                 scale_y_continuous(input$yaxistype, label=comma)
                 
                 qualitative.time.series.point.reverse <- qplot(Interval, DEMA(Selected, input$smoothingeq),  geom="line", data = spectra.timeseries.table) +
-                coord_cartesian(xlim = ranges6a$x, ylim = ranges6a$y, expand = FALSE) +
+                coord_cartesian(xlim = ranges6a$x, ylim = ranges6a$y, expand = TRUE) +
                 geom_point(aes(colour = as.factor(Qualitative)), lwd=input$pointsizeeq) +
                 scale_colour_discrete("Qualitative") +
                 theme_light() +
@@ -7429,7 +7681,7 @@ shinyServer(function(input, output, session) {
                 
                 
                 depth.time.series.reverse <- qplot(Interval, DEMA(Selected, input$smoothingeq),  geom="line", data = spectra.timeseries.table) +
-                coord_cartesian(xlim = ranges6a$x, ylim = ranges6a$y, expand = FALSE) +
+                coord_cartesian(xlim = ranges6a$x, ylim = ranges6a$y, expand = TRUE) +
                 geom_line(aes(colour = Depth), lwd=input$linesize+0.5) +
                 geom_line(lwd=input$linesize-0.5) +
                 scale_colour_gradientn("Depth", colours=rev(terrain.colors(length(spectra.line.table$Depth)))) +
@@ -7634,7 +7886,7 @@ shinyServer(function(input, output, session) {
                 
                 
                 black.time.series <- qplot(Interval, DEMA(Selected, input$smoothingeq), input$xaxistypeeq, geom="line", data = spectra.timeseries.table) +
-                coord_cartesian(xlim = ranges6b$x, ylim = ranges6b$y, expand = FALSE) +
+                coord_cartesian(xlim = ranges6b$x, ylim = ranges6b$y, expand = TRUE) +
                 geom_line(colour = "black", lwd=input$linesizeeq) +
                 theme_light() +
                 theme(axis.text.x = element_text(size=15)) +
@@ -7648,7 +7900,7 @@ shinyServer(function(input, output, session) {
                 scale_y_continuous(input$yaxistype, label=comma)
                 
                 smooth.time.series <- qplot(spectra.timeseries.table$Interval, DEMA(spectra.timeseries.table$Selected, input$smoothingeq),  geom="point") +
-                coord_cartesian(xlim = ranges6b$x, ylim = ranges6b$y, expand = FALSE) +
+                coord_cartesian(xlim = ranges6b$x, ylim = ranges6b$y, expand = TRUE) +
                 theme_light() +
                 stat_smooth() +
                 theme(axis.text.x = element_text(size=15)) +
@@ -7663,7 +7915,7 @@ shinyServer(function(input, output, session) {
                 
                 
                 ramp.time.series <- qplot(Interval, DEMA(Selected, input$smoothingeq),  geom="line", data = spectra.timeseries.table) +
-                coord_cartesian(xlim = ranges6b$x, ylim = ranges6b$y, expand = FALSE) +
+                coord_cartesian(xlim = ranges6b$x, ylim = ranges6b$y, expand = TRUE) +
                 geom_line(aes(colour = Selected), lwd=input$linesizeeq) +
                 theme_light() +
                 scale_colour_gradientn(colours=rev(terrain.colors(length(spectra.timeseries.table$Depth)))) +
@@ -7679,7 +7931,7 @@ shinyServer(function(input, output, session) {
                 
                 
                 area.time.series <- ggplot(spectra.timeseries.table, aes(Interval)) +
-                coord_cartesian(xlim = ranges6b$x, ylim = ranges6b$y, expand = FALSE) +
+                coord_cartesian(xlim = ranges6b$x, ylim = ranges6b$y, expand = TRUE) +
                 theme_classic() +
                 geom_area(aes(y=Selected, colour="grey60", fill="grey60"), alpha=0.6) +
                 scale_x_continuous(input$xaxistypeeq) +
@@ -7696,7 +7948,7 @@ shinyServer(function(input, output, session) {
                 
                 
                 cluster.time.series <- qplot(Interval, DEMA(Selected, input$smoothingeq),  geom="line", data = spectra.timeseries.table, alpha=0.6) +
-                coord_cartesian(xlim = ranges6b$x, ylim = ranges6b$y, expand = FALSE) +
+                coord_cartesian(xlim = ranges6b$x, ylim = ranges6b$y, expand = TRUE) +
                 geom_point(aes(colour = as.factor(Cluster)), size=input$pointsizeeq, alpha=0.8) +
                 scale_colour_discrete("Cluster") +
                 theme_light() +
@@ -7711,7 +7963,7 @@ shinyServer(function(input, output, session) {
                 scale_y_continuous(input$yaxistype, label=comma)
                 
                 climate.time.series.line <- qplot(Interval, DEMA(Selected, input$smoothingeq),  geom="line", data = spectra.timeseries.table, colour = as.factor(Climate)) +
-                coord_cartesian(xlim = ranges6b$x, ylim = ranges6b$y, expand = FALSE) +
+                coord_cartesian(xlim = ranges6b$x, ylim = ranges6b$y, expand = TRUE) +
                 scale_colour_discrete("Climatic Period") +
                 theme_light() +
                 theme(axis.text.x = element_text(size=15)) +
@@ -7726,7 +7978,7 @@ shinyServer(function(input, output, session) {
                 
                 
                 qualitative.time.series.line <- qplot(Interval, DEMA(Selected, input$smoothingeq),  geom="line", data = spectra.timeseries.table, colour = as.factor(Qualitative)) +
-                coord_cartesian(xlim = ranges6b$x, ylim = ranges6b$y, expand = FALSE) +
+                coord_cartesian(xlim = ranges6b$x, ylim = ranges6b$y, expand = TRUE) +
                 scale_colour_discrete("Qualitative") +
                 theme_light() +
                 theme(axis.text.x = element_text(size=15)) +
@@ -7740,7 +7992,7 @@ shinyServer(function(input, output, session) {
                 scale_y_continuous(input$yaxistype, label=comma)
                 
                 qualitative.time.series.point <- qplot(Interval, DEMA(Selected, input$smoothingeq),  geom="line", data = spectra.timeseries.table) +
-                coord_cartesian(xlim = ranges6b$x, ylim = ranges6b$y, expand = FALSE) +
+                coord_cartesian(xlim = ranges6b$x, ylim = ranges6b$y, expand = TRUE) +
                 geom_point(aes(colour = as.factor(Qualitative)), lwd=input$pointsizeeq) +
                 scale_colour_discrete("Qualitative") +
                 theme_light() +
@@ -7756,7 +8008,7 @@ shinyServer(function(input, output, session) {
                 
                 
                 depth.time.series <- qplot(Interval, DEMA(Selected, input$smoothingeq),  geom="line", data = spectra.timeseries.table) +
-                coord_cartesian(xlim = ranges6b$x, ylim = ranges6b$y, expand = FALSE) +
+                coord_cartesian(xlim = ranges6b$x, ylim = ranges6b$y, expand = TRUE) +
                 geom_line(aes(colour = Depth), lwd=input$linesize+0.5) +
                 geom_line(lwd=input$linesize-0.5) +
                 scale_colour_gradientn("Depth", colours=rev(terrain.colors(length(spectra.line.table$Depth)))) +
@@ -7776,7 +8028,7 @@ shinyServer(function(input, output, session) {
                 
                 
                 black.time.series.reverse <- qplot(Interval, DEMA(Selected, input$smoothingeq), input$xaxistypeeq, geom="line", data = spectra.timeseries.table) +
-                coord_cartesian(xlim = ranges6b$x, ylim = ranges6b$y, expand = FALSE) +
+                coord_cartesian(xlim = ranges6b$x, ylim = ranges6b$y, expand = TRUE) +
                 geom_line(colour = "black", lwd=input$linesizeeq) +
                 theme_light() +
                 theme(axis.text.x = element_text(size=15)) +
@@ -7790,7 +8042,7 @@ shinyServer(function(input, output, session) {
                 scale_y_continuous(input$yaxistype, label=comma)
                 
                 smooth.time.series.reverse <- qplot(spectra.timeseries.table$Interval, DEMA(spectra.timeseries.table$Selected, input$smoothingeq),  geom="point") +
-                coord_cartesian(xlim = ranges6b$x, ylim = ranges6b$y, expand = FALSE) +
+                coord_cartesian(xlim = ranges6b$x, ylim = ranges6b$y, expand = TRUE) +
                 theme_light() +
                 stat_smooth() +
                 theme(axis.text.x = element_text(size=15)) +
@@ -7805,7 +8057,7 @@ shinyServer(function(input, output, session) {
                 
                 
                 ramp.time.series.reverse <- qplot(Interval, DEMA(Selected, input$smoothingeq),  geom="line", data = spectra.timeseries.table) +
-                coord_cartesian(xlim = ranges6b$x, ylim = ranges6b$y, expand = FALSE) +
+                coord_cartesian(xlim = ranges6b$x, ylim = ranges6b$y, expand = TRUE) +
                 geom_line(aes(colour = Selected), lwd=input$linesizeeq) +
                 theme_light() +
                 scale_colour_gradientn(colours=rev(terrain.colors(length(spectra.timeseries.table$Depth)))) +
@@ -7821,7 +8073,7 @@ shinyServer(function(input, output, session) {
                 
                 
                 area.time.series.reverse <- ggplot(spectra.timeseries.table, aes(Interval)) +
-                coord_cartesian(xlim = ranges6b$x, ylim = ranges6b$y, expand = FALSE) +
+                coord_cartesian(xlim = ranges6b$x, ylim = ranges6b$y, expand = TRUE) +
                 theme_classic() +
                 geom_area(aes(y=Selected, colour="grey60", fill="grey60"), alpha=0.6) +
                 scale_x_reverse(input$xaxistypeeq) +
@@ -7838,7 +8090,7 @@ shinyServer(function(input, output, session) {
                 
                 
                 cluster.time.series.reverse <- qplot(Interval, DEMA(Selected, input$smoothingeq),  geom="line", data = spectra.timeseries.table, alpha=0.6) +
-                coord_cartesian(xlim = ranges6b$x, ylim = ranges6b$y, expand = FALSE) +
+                coord_cartesian(xlim = ranges6b$x, ylim = ranges6b$y, expand = TRUE) +
                 geom_point(aes(colour = as.factor(Cluster)), size=input$pointsizeeq, alpha=0.8) +
                 scale_colour_discrete("Cluster") +
                 theme_light() +
@@ -7853,7 +8105,7 @@ shinyServer(function(input, output, session) {
                 scale_y_continuous(input$yaxistype, label=comma)
                 
                 climate.time.series.line.reverse <- qplot(Interval, DEMA(Selected, input$smoothingeq),  geom="line", data = spectra.timeseries.table, colour = as.factor(Climate)) +
-                coord_cartesian(xlim = ranges6b$x, ylim = ranges6b$y, expand = FALSE) +
+                coord_cartesian(xlim = ranges6b$x, ylim = ranges6b$y, expand = TRUE) +
                 scale_colour_discrete("Climatic Period") +
                 theme_light() +
                 theme(axis.text.x = element_text(size=15)) +
@@ -7868,7 +8120,7 @@ shinyServer(function(input, output, session) {
                 
                 
                 qualitative.time.series.line.reverse <- qplot(Interval, DEMA(Selected, input$smoothingeq),  geom="line", data = spectra.timeseries.table, colour = as.factor(Qualitative)) +
-                coord_cartesian(xlim = ranges6b$x, ylim = ranges6b$y, expand = FALSE) +
+                coord_cartesian(xlim = ranges6b$x, ylim = ranges6b$y, expand = TRUE) +
                 scale_colour_discrete("Qualitative") +
                 theme_light() +
                 theme(axis.text.x = element_text(size=15)) +
@@ -7882,7 +8134,7 @@ shinyServer(function(input, output, session) {
                 scale_y_continuous(input$yaxistype, label=comma)
                 
                 qualitative.time.series.point.reverse <- qplot(Interval, DEMA(Selected, input$smoothingeq),  geom="line", data = spectra.timeseries.table) +
-                coord_cartesian(xlim = ranges6b$x, ylim = ranges6b$y, expand = FALSE) +
+                coord_cartesian(xlim = ranges6b$x, ylim = ranges6b$y, expand = TRUE) +
                 geom_point(aes(colour = as.factor(Qualitative)), lwd=input$pointsizeeq) +
                 scale_colour_discrete("Qualitative") +
                 theme_light() +
@@ -7898,7 +8150,7 @@ shinyServer(function(input, output, session) {
                 
                 
                 depth.time.series.reverse <- qplot(Interval, DEMA(Selected, input$smoothingeq),  geom="line", data = spectra.timeseries.table) +
-                coord_cartesian(xlim = ranges6b$x, ylim = ranges6b$y, expand = FALSE) +
+                coord_cartesian(xlim = ranges6b$x, ylim = ranges6b$y, expand = TRUE) +
                 geom_line(aes(colour = Depth), lwd=input$linesize+0.5) +
                 geom_line(lwd=input$linesize-0.5) +
                 scale_colour_gradientn("Depth", colours=rev(terrain.colors(length(spectra.line.table$Depth)))) +
@@ -8107,7 +8359,7 @@ shinyServer(function(input, output, session) {
                 
                 
                 black.time.series <- qplot(Interval, DEMA(Selected, input$smoothingeq), input$xaxistypeeq, geom="line", data = spectra.timeseries.table) +
-                coord_cartesian(xlim = ranges6c$x, ylim = ranges6c$y, expand = FALSE) +
+                coord_cartesian(xlim = ranges6c$x, ylim = ranges6c$y, expand = TRUE) +
                 geom_line(colour = "black", lwd=input$linesizeeq) +
                 theme_light() +
                 theme(axis.text.x = element_text(size=15)) +
@@ -8121,7 +8373,7 @@ shinyServer(function(input, output, session) {
                 scale_y_continuous(input$yaxistype, label=comma)
                 
                 smooth.time.series <- qplot(spectra.timeseries.table$Interval, DEMA(spectra.timeseries.table$Selected, input$smoothingeq),  geom="point") +
-                coord_cartesian(xlim = ranges6c$x, ylim = ranges6c$y, expand = FALSE) +
+                coord_cartesian(xlim = ranges6c$x, ylim = ranges6c$y, expand = TRUE) +
                 theme_light() +
                 stat_smooth() +
                 theme(axis.text.x = element_text(size=15)) +
@@ -8136,7 +8388,7 @@ shinyServer(function(input, output, session) {
                 
                 
                 ramp.time.series <- qplot(Interval, DEMA(Selected, input$smoothingeq),  geom="line", data = spectra.timeseries.table) +
-                coord_cartesian(xlim = ranges6c$x, ylim = ranges6c$y, expand = FALSE) +
+                coord_cartesian(xlim = ranges6c$x, ylim = ranges6c$y, expand = TRUE) +
                 geom_line(aes(colour = Selected), lwd=input$linesizeeq) +
                 theme_light() +
                 scale_colour_gradientn(colours=rev(terrain.colors(length(spectra.timeseries.table$Depth)))) +
@@ -8152,7 +8404,7 @@ shinyServer(function(input, output, session) {
                 
                 
                 area.time.series <- ggplot(spectra.timeseries.table, aes(Interval)) +
-                coord_cartesian(xlim = ranges6c$x, ylim = ranges6c$y, expand = FALSE) +
+                coord_cartesian(xlim = ranges6c$x, ylim = ranges6c$y, expand = TRUE) +
                 theme_classic() +
                 geom_area(aes(y=Selected, colour="grey60", fill="grey60"), alpha=0.6) +
                 scale_x_continuous(input$xaxistypeeq) +
@@ -8169,7 +8421,7 @@ shinyServer(function(input, output, session) {
                 
                 
                 cluster.time.series <- qplot(Interval, DEMA(Selected, input$smoothingeq),  geom="line", data = spectra.timeseries.table, alpha=0.6) +
-                coord_cartesian(xlim = ranges6c$x, ylim = ranges6c$y, expand = FALSE) +
+                coord_cartesian(xlim = ranges6c$x, ylim = ranges6c$y, expand = TRUE) +
                 geom_point(aes(colour = as.factor(Cluster)), size=input$pointsizeeq, alpha=0.8) +
                 scale_colour_discrete("Cluster") +
                 theme_light() +
@@ -8184,7 +8436,7 @@ shinyServer(function(input, output, session) {
                 scale_y_continuous(input$yaxistype, label=comma)
                 
                 climate.time.series.line <- qplot(Interval, DEMA(Selected, input$smoothingeq),  geom="line", data = spectra.timeseries.table, colour = as.factor(Climate)) +
-                coord_cartesian(xlim = ranges6c$x, ylim = ranges6c$y, expand = FALSE) +
+                coord_cartesian(xlim = ranges6c$x, ylim = ranges6c$y, expand = TRUE) +
                 scale_colour_discrete("Climatic Period") +
                 theme_light() +
                 theme(axis.text.x = element_text(size=15)) +
@@ -8199,7 +8451,7 @@ shinyServer(function(input, output, session) {
                 
                 
                 qualitative.time.series.line <- qplot(Interval, DEMA(Selected, input$smoothingeq),  geom="line", data = spectra.timeseries.table, colour = as.factor(Qualitative)) +
-                coord_cartesian(xlim = ranges6c$x, ylim = ranges6c$y, expand = FALSE) +
+                coord_cartesian(xlim = ranges6c$x, ylim = ranges6c$y, expand = TRUE) +
                 scale_colour_discrete("Qualitative") +
                 theme_light() +
                 theme(axis.text.x = element_text(size=15)) +
@@ -8213,7 +8465,7 @@ shinyServer(function(input, output, session) {
                 scale_y_continuous(input$yaxistype, label=comma)
                 
                 qualitative.time.series.point <- qplot(Interval, DEMA(Selected, input$smoothingeq),  geom="line", data = spectra.timeseries.table) +
-                coord_cartesian(xlim = ranges6c$x, ylim = ranges6c$y, expand = FALSE) +
+                coord_cartesian(xlim = ranges6c$x, ylim = ranges6c$y, expand = TRUE) +
                 geom_point(aes(colour = as.factor(Qualitative)), lwd=input$pointsizeeq) +
                 scale_colour_discrete("Qualitative") +
                 theme_light() +
@@ -8229,7 +8481,7 @@ shinyServer(function(input, output, session) {
                 
                 
                 depth.time.series <- qplot(Interval, DEMA(Selected, input$smoothingeq),  geom="line", data = spectra.timeseries.table) +
-                coord_cartesian(xlim = ranges6c$x, ylim = ranges6c$y, expand = FALSE) +
+                coord_cartesian(xlim = ranges6c$x, ylim = ranges6c$y, expand = TRUE) +
                 geom_line(aes(colour = Depth), lwd=input$linesize+0.5) +
                 geom_line(lwd=input$linesize-0.5) +
                 scale_colour_gradientn("Depth", colours=rev(terrain.colors(length(spectra.line.table$Depth)))) +
@@ -8249,7 +8501,7 @@ shinyServer(function(input, output, session) {
                 
                 
                 black.time.series.reverse <- qplot(Interval, DEMA(Selected, input$smoothingeq), input$xaxistypeeq, geom="line", data = spectra.timeseries.table) +
-                coord_cartesian(xlim = ranges6c$x, ylim = ranges6c$y, expand = FALSE) +
+                coord_cartesian(xlim = ranges6c$x, ylim = ranges6c$y, expand = TRUE) +
                 geom_line(colour = "black", lwd=input$linesizeeq) +
                 theme_light() +
                 theme(axis.text.x = element_text(size=15)) +
@@ -8263,7 +8515,7 @@ shinyServer(function(input, output, session) {
                 scale_y_continuous(input$yaxistype, label=comma)
                 
                 smooth.time.series.reverse <- qplot(spectra.timeseries.table$Interval, DEMA(spectra.timeseries.table$Selected, input$smoothingeq),  geom="point") +
-                coord_cartesian(xlim = ranges6c$x, ylim = ranges6c$y, expand = FALSE) +
+                coord_cartesian(xlim = ranges6c$x, ylim = ranges6c$y, expand = TRUE) +
                 theme_light() +
                 stat_smooth() +
                 theme(axis.text.x = element_text(size=15)) +
@@ -8278,7 +8530,7 @@ shinyServer(function(input, output, session) {
                 
                 
                 ramp.time.series.reverse <- qplot(Interval, DEMA(Selected, input$smoothingeq),  geom="line", data = spectra.timeseries.table) +
-                coord_cartesian(xlim = ranges6c$x, ylim = ranges6c$y, expand = FALSE) +
+                coord_cartesian(xlim = ranges6c$x, ylim = ranges6c$y, expand = TRUE) +
                 geom_line(aes(colour = Selected), lwd=input$linesizeeq) +
                 theme_light() +
                 scale_colour_gradientn(colours=rev(terrain.colors(length(spectra.timeseries.table$Depth)))) +
@@ -8294,7 +8546,7 @@ shinyServer(function(input, output, session) {
                 
                 
                 area.time.series.reverse <- ggplot(spectra.timeseries.table, aes(Interval)) +
-                coord_cartesian(xlim = ranges6c$x, ylim = ranges6c$y, expand = FALSE) +
+                coord_cartesian(xlim = ranges6c$x, ylim = ranges6c$y, expand = TRUE) +
                 theme_classic() +
                 geom_area(aes(y=Selected, colour="grey60", fill="grey60"), alpha=0.6) +
                 scale_x_reverse(input$xaxistypeeq) +
@@ -8311,7 +8563,7 @@ shinyServer(function(input, output, session) {
                 
                 
                 cluster.time.series.reverse <- qplot(Interval, DEMA(Selected, input$smoothingeq),  geom="line", data = spectra.timeseries.table, alpha=0.6) +
-                coord_cartesian(xlim = ranges6c$x, ylim = ranges6c$y, expand = FALSE) +
+                coord_cartesian(xlim = ranges6c$x, ylim = ranges6c$y, expand = TRUE) +
                 geom_point(aes(colour = as.factor(Cluster)), size=input$pointsizeeq, alpha=0.8) +
                 scale_colour_discrete("Cluster") +
                 theme_light() +
@@ -8326,7 +8578,7 @@ shinyServer(function(input, output, session) {
                 scale_y_continuous(input$yaxistype, label=comma)
                 
                 climate.time.series.line.reverse <- qplot(Interval, DEMA(Selected, input$smoothingeq),  geom="line", data = spectra.timeseries.table, colour = as.factor(Climate)) +
-                coord_cartesian(xlim = ranges6c$x, ylim = ranges6c$y, expand = FALSE) +
+                coord_cartesian(xlim = ranges6c$x, ylim = ranges6c$y, expand = TRUE) +
                 scale_colour_discrete("Climatic Period") +
                 theme_light() +
                 theme(axis.text.x = element_text(size=15)) +
@@ -8341,7 +8593,7 @@ shinyServer(function(input, output, session) {
                 
                 
                 qualitative.time.series.line.reverse <- qplot(Interval, DEMA(Selected, input$smoothingeq),  geom="line", data = spectra.timeseries.table, colour = as.factor(Qualitative)) +
-                coord_cartesian(xlim = ranges6c$x, ylim = ranges6c$y, expand = FALSE) +
+                coord_cartesian(xlim = ranges6c$x, ylim = ranges6c$y, expand = TRUE) +
                 scale_colour_discrete("Qualitative") +
                 theme_light() +
                 theme(axis.text.x = element_text(size=15)) +
@@ -8355,7 +8607,7 @@ shinyServer(function(input, output, session) {
                 scale_y_continuous(input$yaxistype, label=comma)
                 
                 qualitative.time.series.point.reverse <- qplot(Interval, DEMA(Selected, input$smoothingeq),  geom="line", data = spectra.timeseries.table) +
-                coord_cartesian(xlim = ranges6c$x, ylim = ranges6c$y, expand = FALSE) +
+                coord_cartesian(xlim = ranges6c$x, ylim = ranges6c$y, expand = TRUE) +
                 geom_point(aes(colour = as.factor(Qualitative)), lwd=input$pointsizeeq) +
                 scale_colour_discrete("Qualitative") +
                 theme_light() +
@@ -8371,7 +8623,7 @@ shinyServer(function(input, output, session) {
                 
                 
                 depth.time.series.reverse <- qplot(Interval, DEMA(Selected, input$smoothingeq),  geom="line", data = spectra.timeseries.table) +
-                coord_cartesian(xlim = ranges6c$x, ylim = ranges6c$y, expand = FALSE) +
+                coord_cartesian(xlim = ranges6c$x, ylim = ranges6c$y, expand = TRUE) +
                 geom_line(aes(colour = Depth), lwd=input$linesize+0.5) +
                 geom_line(lwd=input$linesize-0.5) +
                 scale_colour_gradientn("Depth", colours=rev(terrain.colors(length(spectra.line.table$Depth)))) +
@@ -8575,7 +8827,7 @@ shinyServer(function(input, output, session) {
                 
                 
                 black.time.series <- qplot(Interval, DEMA(Selected, input$smoothingeq), input$xaxistypeeq, geom="line", data = spectra.timeseries.table) +
-                coord_cartesian(xlim = ranges6d$x, ylim = ranges6d$y, expand = FALSE) +
+                coord_cartesian(xlim = ranges6d$x, ylim = ranges6d$y, expand = TRUE) +
                 geom_line(colour = "black", lwd=input$linesizeeq) +
                 theme_light() +
                 theme(axis.text.x = element_text(size=15)) +
@@ -8589,7 +8841,7 @@ shinyServer(function(input, output, session) {
                 scale_y_continuous(input$yaxistype, label=comma)
                 
                 smooth.time.series <- qplot(spectra.timeseries.table$Interval, DEMA(spectra.timeseries.table$Selected, input$smoothingeq),  geom="point") +
-                coord_cartesian(xlim = ranges6d$x, ylim = ranges6d$y, expand = FALSE) +
+                coord_cartesian(xlim = ranges6d$x, ylim = ranges6d$y, expand = TRUE) +
                 theme_light() +
                 stat_smooth() +
                 theme(axis.text.x = element_text(size=15)) +
@@ -8604,7 +8856,7 @@ shinyServer(function(input, output, session) {
                 
                 
                 ramp.time.series <- qplot(Interval, DEMA(Selected, input$smoothingeq),  geom="line", data = spectra.timeseries.table) +
-                coord_cartesian(xlim = ranges6d$x, ylim = ranges6d$y, expand = FALSE) +
+                coord_cartesian(xlim = ranges6d$x, ylim = ranges6d$y, expand = TRUE) +
                 geom_line(aes(colour = Selected), lwd=input$linesizeeq) +
                 theme_light() +
                 scale_colour_gradientn(colours=rev(terrain.colors(length(spectra.timeseries.table$Depth)))) +
@@ -8620,7 +8872,7 @@ shinyServer(function(input, output, session) {
                 
                 
                 area.time.series <- ggplot(spectra.timeseries.table, aes(Interval)) +
-                coord_cartesian(xlim = ranges6d$x, ylim = ranges6d$y, expand = FALSE) +
+                coord_cartesian(xlim = ranges6d$x, ylim = ranges6d$y, expand = TRUE) +
                 theme_classic() +
                 geom_area(aes(y=Selected, colour="grey60", fill="grey60"), alpha=0.6) +
                 scale_x_continuous(input$xaxistypeeq) +
@@ -8637,7 +8889,7 @@ shinyServer(function(input, output, session) {
                 
                 
                 cluster.time.series <- qplot(Interval, DEMA(Selected, input$smoothingeq),  geom="line", data = spectra.timeseries.table, alpha=0.6) +
-                coord_cartesian(xlim = ranges6d$x, ylim = ranges6d$y, expand = FALSE) +
+                coord_cartesian(xlim = ranges6d$x, ylim = ranges6d$y, expand = TRUE) +
                 geom_point(aes(colour = as.factor(Cluster)), size=input$pointsizeeq, alpha=0.8) +
                 scale_colour_discrete("Cluster") +
                 theme_light() +
@@ -8652,7 +8904,7 @@ shinyServer(function(input, output, session) {
                 scale_y_continuous(input$yaxistype, label=comma)
                 
                 climate.time.series.line <- qplot(Interval, DEMA(Selected, input$smoothingeq),  geom="line", data = spectra.timeseries.table, colour = as.factor(Climate)) +
-                coord_cartesian(xlim = ranges6d$x, ylim = ranges6d$y, expand = FALSE) +
+                coord_cartesian(xlim = ranges6d$x, ylim = ranges6d$y, expand = TRUE) +
                 scale_colour_discrete("Climatic Period") +
                 theme_light() +
                 theme(axis.text.x = element_text(size=15)) +
@@ -8667,7 +8919,7 @@ shinyServer(function(input, output, session) {
                 
                 
                 qualitative.time.series.line <- qplot(Interval, DEMA(Selected, input$smoothingeq),  geom="line", data = spectra.timeseries.table, colour = as.factor(Qualitative)) +
-                coord_cartesian(xlim = ranges6d$x, ylim = ranges6d$y, expand = FALSE) +
+                coord_cartesian(xlim = ranges6d$x, ylim = ranges6d$y, expand = TRUE) +
                 scale_colour_discrete("Qualitative") +
                 theme_light() +
                 theme(axis.text.x = element_text(size=15)) +
@@ -8681,7 +8933,7 @@ shinyServer(function(input, output, session) {
                 scale_y_continuous(input$yaxistype, label=comma)
                 
                 qualitative.time.series.point <- qplot(Interval, DEMA(Selected, input$smoothingeq),  geom="line", data = spectra.timeseries.table) +
-                coord_cartesian(xlim = ranges6d$x, ylim = ranges6d$y, expand = FALSE) +
+                coord_cartesian(xlim = ranges6d$x, ylim = ranges6d$y, expand = TRUE) +
                 geom_point(aes(colour = as.factor(Qualitative)), lwd=input$pointsizeeq) +
                 scale_colour_discrete("Qualitative") +
                 theme_light() +
@@ -8697,7 +8949,7 @@ shinyServer(function(input, output, session) {
                 
                 
                 depth.time.series <- qplot(Interval, DEMA(Selected, input$smoothingeq),  geom="line", data = spectra.timeseries.table) +
-                coord_cartesian(xlim = ranges6d$x, ylim = ranges6d$y, expand = FALSE) +
+                coord_cartesian(xlim = ranges6d$x, ylim = ranges6d$y, expand = TRUE) +
                 geom_line(aes(colour = Depth), lwd=input$linesize+0.5) +
                 geom_line(lwd=input$linesize-0.5) +
                 scale_colour_gradientn("Depth", colours=rev(terrain.colors(length(spectra.line.table$Depth)))) +
@@ -8717,7 +8969,7 @@ shinyServer(function(input, output, session) {
                 
                 
                 black.time.series.reverse <- qplot(Interval, DEMA(Selected, input$smoothingeq), input$xaxistypeeq, geom="line", data = spectra.timeseries.table) +
-                coord_cartesian(xlim = ranges6d$x, ylim = ranges6d$y, expand = FALSE) +
+                coord_cartesian(xlim = ranges6d$x, ylim = ranges6d$y, expand = TRUE) +
                 geom_line(colour = "black", lwd=input$linesizeeq) +
                 theme_light() +
                 theme(axis.text.x = element_text(size=15)) +
@@ -8731,7 +8983,7 @@ shinyServer(function(input, output, session) {
                 scale_y_continuous(input$yaxistype, label=comma)
                 
                 smooth.time.series.reverse <- qplot(spectra.timeseries.table$Interval, DEMA(spectra.timeseries.table$Selected, input$smoothingeq),  geom="point") +
-                coord_cartesian(xlim = ranges6d$x, ylim = ranges6d$y, expand = FALSE) +
+                coord_cartesian(xlim = ranges6d$x, ylim = ranges6d$y, expand = TRUE) +
                 theme_light() +
                 stat_smooth() +
                 theme(axis.text.x = element_text(size=15)) +
@@ -8761,7 +9013,7 @@ shinyServer(function(input, output, session) {
                 
                 
                 area.time.series.reverse <- ggplot(spectra.timeseries.table, aes(Interval)) +
-                coord_cartesian(xlim = ranges6d$x, ylim = ranges6d$y, expand = FALSE) +
+                coord_cartesian(xlim = ranges6d$x, ylim = ranges6d$y, expand = TRUE) +
                 theme_classic() +
                 geom_area(aes(y=Selected, colour="grey60", fill="grey60"), alpha=0.6) +
                 scale_x_reverse(input$xaxistypeeq) +
@@ -8778,7 +9030,7 @@ shinyServer(function(input, output, session) {
                 
                 
                 cluster.time.series.reverse <- qplot(Interval, DEMA(Selected, input$smoothingeq),  geom="line", data = spectra.timeseries.table, alpha=0.6) +
-                coord_cartesian(xlim = ranges6d$x, ylim = ranges6d$y, expand = FALSE) +
+                coord_cartesian(xlim = ranges6d$x, ylim = ranges6d$y, expand = TRUE) +
                 geom_point(aes(colour = as.factor(Cluster)), size=input$pointsizeeq, alpha=0.8) +
                 scale_colour_discrete("Cluster") +
                 theme_light() +
@@ -8793,7 +9045,7 @@ shinyServer(function(input, output, session) {
                 scale_y_continuous(input$yaxistype, label=comma)
                 
                 climate.time.series.line.reverse <- qplot(Interval, DEMA(Selected, input$smoothingeq),  geom="line", data = spectra.timeseries.table, colour = as.factor(Climate)) +
-                coord_cartesian(xlim = ranges6d$x, ylim = ranges6d$y, expand = FALSE) +
+                coord_cartesian(xlim = ranges6d$x, ylim = ranges6d$y, expand = TRUE) +
                 scale_colour_discrete("Climatic Period") +
                 theme_light() +
                 theme(axis.text.x = element_text(size=15)) +
@@ -8808,7 +9060,7 @@ shinyServer(function(input, output, session) {
                 
                 
                 qualitative.time.series.line.reverse <- qplot(Interval, DEMA(Selected, input$smoothingeq),  geom="line", data = spectra.timeseries.table, colour = as.factor(Qualitative)) +
-                coord_cartesian(xlim = ranges6d$x, ylim = ranges6d$y, expand = FALSE) +
+                coord_cartesian(xlim = ranges6d$x, ylim = ranges6d$y, expand = TRUE) +
                 scale_colour_discrete("Qualitative") +
                 theme_light() +
                 theme(axis.text.x = element_text(size=15)) +
@@ -8822,7 +9074,7 @@ shinyServer(function(input, output, session) {
                 scale_y_continuous(input$yaxistype, label=comma)
                 
                 qualitative.time.series.point.reverse <- qplot(Interval, DEMA(Selected, input$smoothingeq),  geom="line", data = spectra.timeseries.table) +
-                coord_cartesian(xlim = ranges6d$x, ylim = ranges6d$y, expand = FALSE) +
+                coord_cartesian(xlim = ranges6d$x, ylim = ranges6d$y, expand = TRUE) +
                 geom_point(aes(colour = as.factor(Qualitative)), lwd=input$pointsizeeq) +
                 scale_colour_discrete("Qualitative") +
                 theme_light() +
@@ -8838,7 +9090,7 @@ shinyServer(function(input, output, session) {
                 
                 
                 depth.time.series.reverse <- qplot(Interval, DEMA(Selected, input$smoothingeq),  geom="line", data = spectra.timeseries.table) +
-                coord_cartesian(xlim = ranges6d$x, ylim = ranges6d$y, expand = FALSE) +
+                coord_cartesian(xlim = ranges6d$x, ylim = ranges6d$y, expand = TRUE) +
                 geom_line(aes(colour = Depth), lwd=input$linesize+0.5) +
                 geom_line(lwd=input$linesize-0.5) +
                 scale_colour_gradientn("Depth", colours=rev(terrain.colors(length(spectra.line.table$Depth)))) +
@@ -9048,7 +9300,7 @@ shinyServer(function(input, output, session) {
                 
                 
                 black.time.series <- qplot(Interval, DEMA(Selected, input$smoothingeq), input$xaxistypeeq, geom="line", data = spectra.timeseries.table) +
-                coord_cartesian(xlim = ranges6e$x, ylim = ranges6e$y, expand = FALSE) +
+                coord_cartesian(xlim = ranges6e$x, ylim = ranges6e$y, expand = TRUE) +
                 geom_line(colour = "black", lwd=input$linesizeeq) +
                 theme_light() +
                 theme(axis.text.x = element_text(size=15)) +
@@ -9062,7 +9314,7 @@ shinyServer(function(input, output, session) {
                 scale_y_continuous(input$yaxistype, label=comma)
                 
                 smooth.time.series <- qplot(spectra.timeseries.table$Interval, DEMA(spectra.timeseries.table$Selected, input$smoothingeq),  geom="point") +
-                coord_cartesian(xlim = ranges6e$x, ylim = ranges6e$y, expand = FALSE) +
+                coord_cartesian(xlim = ranges6e$x, ylim = ranges6e$y, expand = TRUE) +
                 theme_light() +
                 stat_smooth() +
                 theme(axis.text.x = element_text(size=15)) +
@@ -9077,7 +9329,7 @@ shinyServer(function(input, output, session) {
                 
                 
                 ramp.time.series <- qplot(Interval, DEMA(Selected, input$smoothingeq),  geom="line", data = spectra.timeseries.table) +
-                coord_cartesian(xlim = ranges6e$x, ylim = ranges6e$y, expand = FALSE) +
+                coord_cartesian(xlim = ranges6e$x, ylim = ranges6e$y, expand = TRUE) +
                 geom_line(aes(colour = Selected), lwd=input$linesizeeq) +
                 theme_light() +
                 scale_colour_gradientn(colours=rev(terrain.colors(length(spectra.timeseries.table$Depth)))) +
@@ -9093,7 +9345,7 @@ shinyServer(function(input, output, session) {
                 
                 
                 area.time.series <- ggplot(spectra.timeseries.table, aes(Interval)) +
-                coord_cartesian(xlim = ranges6e$x, ylim = ranges6e$y, expand = FALSE) +
+                coord_cartesian(xlim = ranges6e$x, ylim = ranges6e$y, expand = TRUE) +
                 theme_classic() +
                 geom_area(aes(y=Selected, colour="grey60", fill="grey60"), alpha=0.6) +
                 scale_x_continuous(input$xaxistypeeq) +
@@ -9110,7 +9362,7 @@ shinyServer(function(input, output, session) {
                 
                 
                 cluster.time.series <- qplot(Interval, DEMA(Selected, input$smoothingeq),  geom="line", data = spectra.timeseries.table, alpha=0.6) +
-                coord_cartesian(xlim = ranges6e$x, ylim = ranges6e$y, expand = FALSE) +
+                coord_cartesian(xlim = ranges6e$x, ylim = ranges6e$y, expand = TRUE) +
                 geom_point(aes(colour = as.factor(Cluster)), size=input$pointsizeeq, alpha=0.8) +
                 scale_colour_discrete("Cluster") +
                 theme_light() +
@@ -9126,7 +9378,7 @@ shinyServer(function(input, output, session) {
                 
                 climate.time.series.line <- qplot(Interval, DEMA(Selected, input$smoothingeq),  geom="line", data = spectra.timeseries.table, colour = as.factor(Climate)) +
                 scale_colour_discrete("Climatic Period") +
-                coord_cartesian(xlim = ranges6e$x, ylim = ranges6e$y, expand = FALSE) +
+                coord_cartesian(xlim = ranges6e$x, ylim = ranges6e$y, expand = TRUE) +
                 theme_light() +
                 theme(axis.text.x = element_text(size=15)) +
                 theme(axis.text.y = element_text(size=15)) +
@@ -9140,7 +9392,7 @@ shinyServer(function(input, output, session) {
                 
                 
                 qualitative.time.series.line <- qplot(Interval, DEMA(Selected, input$smoothingeq),  geom="line", data = spectra.timeseries.table, colour = as.factor(Qualitative)) +
-                coord_cartesian(xlim = ranges6e$x, ylim = ranges6e$y, expand = FALSE) +
+                coord_cartesian(xlim = ranges6e$x, ylim = ranges6e$y, expand = TRUE) +
                 scale_colour_discrete("Qualitative") +
                 theme_light() +
                 theme(axis.text.x = element_text(size=15)) +
@@ -9154,7 +9406,7 @@ shinyServer(function(input, output, session) {
                 scale_y_continuous(input$yaxistype, label=comma)
                 
                 qualitative.time.series.point <- qplot(Interval, DEMA(Selected, input$smoothingeq),  geom="line", data = spectra.timeseries.table) +
-                coord_cartesian(xlim = ranges6e$x, ylim = ranges6e$y, expand = FALSE) +
+                coord_cartesian(xlim = ranges6e$x, ylim = ranges6e$y, expand = TRUE) +
                 geom_point(aes(colour = as.factor(Qualitative)), lwd=input$pointsizeeq) +
                 scale_colour_discrete("Qualitative") +
                 theme_light() +
@@ -9170,7 +9422,7 @@ shinyServer(function(input, output, session) {
                 
                 
                 depth.time.series <- qplot(Interval, DEMA(Selected, input$smoothingeq),  geom="line", data = spectra.timeseries.table) +
-                coord_cartesian(xlim = ranges6e$x, ylim = ranges6e$y, expand = FALSE) +
+                coord_cartesian(xlim = ranges6e$x, ylim = ranges6e$y, expand = TRUE) +
                 geom_line(aes(colour = Depth), lwd=input$linesize+0.5) +
                 geom_line(lwd=input$linesize-0.5) +
                 scale_colour_gradientn("Depth", colours=rev(terrain.colors(length(spectra.line.table$Depth)))) +
@@ -9190,7 +9442,7 @@ shinyServer(function(input, output, session) {
                 
                 
                 black.time.series.reverse <- qplot(Interval, DEMA(Selected, input$smoothingeq), input$xaxistypeeq, geom="line", data = spectra.timeseries.table) +
-                coord_cartesian(xlim = ranges6e$x, ylim = ranges6e$y, expand = FALSE) +
+                coord_cartesian(xlim = ranges6e$x, ylim = ranges6e$y, expand = TRUE) +
                 geom_line(colour = "black", lwd=input$linesizeeq) +
                 theme_light() +
                 theme(axis.text.x = element_text(size=15)) +
@@ -9204,7 +9456,7 @@ shinyServer(function(input, output, session) {
                 scale_y_continuous(input$yaxistype, label=comma)
                 
                 smooth.time.series.reverse <- qplot(spectra.timeseries.table$Interval, DEMA(spectra.timeseries.table$Selected, input$smoothingeq),  geom="point") +
-                coord_cartesian(xlim = ranges6e$x, ylim = ranges6e$y, expand = FALSE) +
+                coord_cartesian(xlim = ranges6e$x, ylim = ranges6e$y, expand = TRUE) +
                 theme_light() +
                 stat_smooth() +
                 theme(axis.text.x = element_text(size=15)) +
@@ -9219,7 +9471,7 @@ shinyServer(function(input, output, session) {
                 
                 
                 ramp.time.series.reverse <- qplot(Interval, DEMA(Selected, input$smoothingeq),  geom="line", data = spectra.timeseries.table) +
-                coord_cartesian(xlim = ranges6e$x, ylim = ranges6e$y, expand = FALSE) +
+                coord_cartesian(xlim = ranges6e$x, ylim = ranges6e$y, expand = TRUE) +
                 geom_line(aes(colour = Selected), lwd=input$linesizeeq) +
                 theme_light() +
                 scale_colour_gradientn(colours=rev(terrain.colors(length(spectra.timeseries.table$Depth)))) +
@@ -9235,7 +9487,7 @@ shinyServer(function(input, output, session) {
                 
                 
                 area.time.series.reverse <- ggplot(spectra.timeseries.table, aes(Interval)) +
-                coord_cartesian(xlim = ranges6e$x, ylim = ranges6e$y, expand = FALSE) +
+                coord_cartesian(xlim = ranges6e$x, ylim = ranges6e$y, expand = TRUE) +
                 theme_classic() +
                 geom_area(aes(y=Selected, colour="grey60", fill="grey60"), alpha=0.6) +
                 scale_x_reverse(input$xaxistypeeq) +
@@ -9252,7 +9504,7 @@ shinyServer(function(input, output, session) {
                 
                 
                 cluster.time.series.reverse <- qplot(Interval, DEMA(Selected, input$smoothingeq),  geom="line", data = spectra.timeseries.table, alpha=0.6) +
-                coord_cartesian(xlim = ranges6e$x, ylim = ranges6e$y, expand = FALSE) +
+                coord_cartesian(xlim = ranges6e$x, ylim = ranges6e$y, expand = TRUE) +
                 geom_point(aes(colour = as.factor(Cluster)), size=input$pointsizeeq, alpha=0.8) +
                 scale_colour_discrete("Cluster") +
                 theme_light() +
@@ -9267,7 +9519,7 @@ shinyServer(function(input, output, session) {
                 scale_y_continuous(input$yaxistype, label=comma)
                 
                 climate.time.series.line.reverse <- qplot(Interval, DEMA(Selected, input$smoothingeq),  geom="line", data = spectra.timeseries.table, colour = as.factor(Climate)) +
-                coord_cartesian(xlim = ranges6e$x, ylim = ranges6e$y, expand = FALSE) +
+                coord_cartesian(xlim = ranges6e$x, ylim = ranges6e$y, expand = TRUE) +
                 scale_colour_discrete("Climatic Period") +
                 theme_light() +
                 theme(axis.text.x = element_text(size=15)) +
@@ -9282,7 +9534,7 @@ shinyServer(function(input, output, session) {
                 
                 
                 qualitative.time.series.line.reverse <- qplot(Interval, DEMA(Selected, input$smoothingeq),  geom="line", data = spectra.timeseries.table, colour = as.factor(Qualitative)) +
-                coord_cartesian(xlim = ranges6e$x, ylim = ranges6e$y, expand = FALSE) +
+                coord_cartesian(xlim = ranges6e$x, ylim = ranges6e$y, expand = TRUE) +
                 scale_colour_discrete("Qualitative") +
                 theme_light() +
                 theme(axis.text.x = element_text(size=15)) +
@@ -9296,7 +9548,7 @@ shinyServer(function(input, output, session) {
                 scale_y_continuous(input$yaxistype, label=comma)
                 
                 qualitative.time.series.point.reverse <- qplot(Interval, DEMA(Selected, input$smoothingeq),  geom="line", data = spectra.timeseries.table) +
-                coord_cartesian(xlim = ranges6e$x, ylim = ranges6e$y, expand = FALSE) +
+                coord_cartesian(xlim = ranges6e$x, ylim = ranges6e$y, expand = TRUE) +
                 geom_point(aes(colour = as.factor(Qualitative)), lwd=input$pointsizeeq) +
                 scale_colour_discrete("Qualitative") +
                 theme_light() +
@@ -9312,7 +9564,7 @@ shinyServer(function(input, output, session) {
                 
                 
                 depth.time.series.reverse <- qplot(Interval, DEMA(Selected, input$smoothingeq),  geom="line", data = spectra.timeseries.table) +
-                coord_cartesian(xlim = ranges6e$x, ylim = ranges6e$y, expand = FALSE) +
+                coord_cartesian(xlim = ranges6e$x, ylim = ranges6e$y, expand = TRUE) +
                 geom_line(aes(colour = Depth), lwd=input$linesize+0.5) +
                 geom_line(lwd=input$linesize-0.5) +
                 scale_colour_gradientn("Depth", colours=rev(terrain.colors(length(spectra.line.table$Depth)))) +
