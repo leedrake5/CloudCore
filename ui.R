@@ -596,7 +596,6 @@ downloadButton('downloadPlot4', "Plot")
 ),
 
 mainPanel(
-tabPanel("Element Ratios",
 div(
 style = "position:relative",
 plotOutput("elementratiotimeseries", height = 700,
@@ -604,7 +603,7 @@ hover = hoverOpts("plot_hoverratio", delay = 100, delayType = "debounce"),
 dblclick = "plot_ratio_dblclick",
 brush = brushOpts(id = "plot_ratio_brush", resetOnNew = TRUE)),
 uiOutput("hover_inforatio")
-)
+
 )
 
 )

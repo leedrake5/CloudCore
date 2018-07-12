@@ -2769,7 +2769,14 @@ shinyServer(function(input, output, session) {
                         
             
             
-            
+            elementhold <- reactiveValues()
+            observeEvent(input$timeseriesact1, {
+                
+                elementhold$elementtrenda <- input$elementtrend
+                elementhold$elementnorma <- input$elementnorm
+
+                
+            })
             
             
             
@@ -2804,25 +2811,37 @@ shinyServer(function(input, output, session) {
                 #spectra.timeseries.table <- data.frame(interval, spectra.line.table[c(input$elementtrend)]/spectra.line.table.norm[c(input$elementnorm)], spectra.line.table$Cluster, spectra.line.table$Qualitative, spectra.line.table$Depth)
                 #colnames(spectra.timeseries.table) <- c("Interval", "Selected", "Cluster", "Qualitative", "Depth")
                 
-                spectra.timeseries.table <- data.frame(spectra.line.table[c(input$xaxistype)], (spectra.line.table[c(input$elementtrend)]/spectra.line.table.norm[c(input$elementnorm)]*input$ymultiply), spectra.line.table$Cluster, spectra.line.table$Qualitative, spectra.line.table$Depth, spectra.line.table$Climate)
+                spectra.timeseries.table <- data.frame(spectra.line.table[,c(input$xaxistype)], (spectra.line.table[,c(elementhold$elementtrenda)]/spectra.line.table.norm[,c(elementhold$elementnorma)]*input$ymultiply), spectra.line.table$Cluster, spectra.line.table$Qualitative, spectra.line.table$Depth, spectra.line.table$Climate)
                 colnames(spectra.timeseries.table) <- c("Interval", "Selected", "Cluster", "Qualitative", "Depth", "Climate")
                 
+                element.trend.name <- if(elementhold$elementtrenda %in% elementLines){
+                    gsub("[.]", "", substr(elementhold$elementtrenda, 1, 2))
+                } else {
+                    elementhold$elementtrenda
+                }
                 
+                element.norm.name <- if(elementhold$elementnorma %in% elementLines){
+                    gsub("[.]", "", substr(elementhold$elementnorma, 1, 2))
+                } else {
+                    elementhold$elementnorma
+                }
                 
-                trendy <-  if(input$elementnorm=="None" && input$filetype=="Spectra" && input$usecalfile==FALSE && input$usecustumyaxis==FALSE) {
-                    paste(gsub("[.]", "", c(substr(input$elementtrend, 1, 2), " Counts per Second")), sep=",", collapse="")
-                } else if(input$elementnorm=="None" && input$filetype=="Spectra" && input$usecalfile==TRUE && input$usecustumyaxis==FALSE) {
-                    paste(gsub("[.]", "", c(substr(input$elementtrend, 1, 2), " ", calFileContentsFirst()[[2]])), sep=",", collapse="")
-                } else if(input$elementnorm=="None" && input$filetype=="Net" && input$usecalfile==FALSE && input$usecustumyaxis==FALSE) {
-                    paste(gsub("[.]", "", c(substr(input$elementtrend, 1, 2), " Net Counts")), sep=",", collapse="")
-                } else if(input$elementnorm=="None" && input$filetype=="Net" && input$usecalfile==TRUE && input$usecustumyaxis==FALSE) {
-                    paste(gsub("[.]", "", c(substr(input$elementtrend, 1, 2), " ", calFileContentsFirst()[[2]])), sep=",", collapse="")
-                } else if(input$elementnorm=="None" && input$filetype=="Artax Excel" && input$usecalfile==FALSE && input$usecustumyaxis==FALSE) {
-                    paste(gsub("[.]", "", c(substr(input$elementtrend, 1, 2), " Net Counts")), sep=",", collapse="")
-                } else if(input$elementnorm=="None" && input$filetype=="Artax Excel" && input$usecalfile==TRUE && input$usecustumyaxis==FALSE) {
-                    paste(gsub("[.]", "", c(substr(input$elementtrend, 1, 2), " ", calFileContentsFirst()[[2]])), sep=",", collapse="")
-                } else if(input$elementnorm!="None" && input$usecustumyaxis==FALSE){
-                    paste(gsub("[.]", "", c(substr(input$elementtrend, 1, 2), "/", substr(input$elementnorm, 1, 2))), sep=",", collapse="")
+                trendy <-  if(elementhold$elementnorma=="None" && input$filetype=="Spectra" && input$usecalfile==FALSE && input$usecustumyaxis==FALSE) {
+                    paste(element.trend.name, " Counts per Second", sep="")
+                } else if(elementhold$elementnorma=="None" && input$filetype=="Spectra" && input$usecalfile==TRUE && input$usecustumyaxis==FALSE) {
+                    paste(element.trend.name, " ", calFileContentsFirst()[[2]], sep="")
+                } else if(elementhold$elementnorma=="None" && input$filetype=="Spreadsheet" && input$usecalfile==FALSE && input$usecustumyaxis==FALSE) {
+                    paste(element.trend.name, " Counts per Second", sep="")
+                } else if(elementhold$elementnorma=="None" && input$filetype=="Net" && input$usecalfile==FALSE && input$usecustumyaxis==FALSE) {
+                    paste(element.trend.name, " Net Counts", sep="")
+                } else if(elementhold$elementnorma=="None" && input$filetype=="Net" && input$usecalfile==TRUE && input$usecustumyaxis==FALSE) {
+                    paste(element.trend.name, " ", calFileContentsFirst()[[2]], sep="")
+                } else if(elementhold$elementnorma=="None" && input$filetype=="Artax Excel" && input$usecalfile==FALSE && input$usecustumyaxis==FALSE) {
+                    paste(element.trend.name, " Net Counts", sep="")
+                } else if(elementhold$elementnorma=="None" && input$filetype=="Artax Excel" && input$usecalfile==TRUE && input$usecustumyaxis==FALSE) {
+                    paste(element.trend.name, " ", calFileContentsFirst()[[2]], sep="")
+                } else if(elementhold$elementnorma!="None" && input$usecustumyaxis==FALSE){
+                    paste(element.trend.name, "/", element.norm.name, sep="")
                 } else if(input$usecustumyaxis==TRUE) {
                     paste(input$customyaxis)
                 }
@@ -3166,18 +3185,13 @@ shinyServer(function(input, output, session) {
                 
             })
             
-            
-            observeEvent(input$timeseriesact1, {
-                
-            })
+
             
             output$timeseriesplot1 <- renderPlot({
-                input$timeseriesact1
-                isolate(plotInput3a())
+                plotInput3a()
             })
             
             hoverHold3a <- reactive({
-                input$timeseriesact1
                 
                 spectra.line.table <- ageData()
                 
@@ -3196,10 +3210,10 @@ shinyServer(function(input, output, session) {
                 #spectra.timeseries.table <- data.frame(interval, spectra.line.table[c(input$elementtrend)]/spectra.line.table.norm[c(input$elementnorm)], spectra.line.table$Cluster, spectra.line.table$Qualitative, spectra.line.table$Depth)
                 #colnames(spectra.timeseries.table) <- c("Interval", "Selected", "Cluster", "Qualitative", "Depth")
                 
-                spectra.timeseries.table <- data.frame(spectra.line.table[c(input$xaxistype)], DEMA(spectra.line.table[c(input$elementtrend)]/spectra.line.table.norm[c(input$elementnorm)]*input$ymultiply, input$smoothing), spectra.line.table$Cluster, spectra.line.table$Qualitative, spectra.line.table$Depth, spectra.line.table$Age, spectra.line.table$Climate)
+                spectra.timeseries.table <- data.frame(spectra.line.table[c(input$xaxistype)], DEMA(spectra.line.table[c(elementhold$elementtrenda)]/spectra.line.table.norm[c(elementhold$elementnorma)]*input$ymultiply, input$smoothing), spectra.line.table$Cluster, spectra.line.table$Qualitative, spectra.line.table$Depth, spectra.line.table$Age, spectra.line.table$Climate)
                 colnames(spectra.timeseries.table) <- c("Interval", "Selected", "Cluster", "Qualitative", "Depth", "Age", "Climate")
                 
-                isolate(spectra.timeseries.table)
+                spectra.timeseries.table
                 
             })
             
@@ -3234,25 +3248,49 @@ shinyServer(function(input, output, session) {
                 "left:", left_px + 2, "px; top:", top_px + 2, "px;")
                 
                 # actual tooltip created as wellPanel
-                wellPanel(
-                style = style,
-                p(HTML(paste0("<b> Spectrum: </b>", point$Spectrum, "<br/>",
-                "<b> Depth: </b>", point$Depth, "<br/>",
-                "<b> Age: </b>", point$Age, "<br/>"
-                
-                )))
-                )
+                if(input$ageon==TRUE){
+                    wellPanel(
+                    style = style,
+                    p(HTML(paste0(
+                    "<b> Depth: </b>", round(point$Depth, 2), "<br/>",
+                    "<b> Age: </b>", round(point$Age, 2), "<br/>"
+                    )))
+                    )
+                } else if(input$ageon==FALSE){
+                    wellPanel(
+                    style = style,
+                    p(HTML(paste0(
+                    "<b> Depth: </b>", round(point$Depth, 2), "<br/>"
+                    )))
+                    )
+                }
             })
             
-            trendPlot <- reactive({
-                trendy <-  if(input$elementnorm=="None" && input$filetype=="Spectra") {
-                    paste(gsub("[.]", "", c(substr(input$elementtrend, 1, 2), " CPS")), sep=",", collapse="")
-                } else if(input$elementnorm=="None" && input$filetype=="Net") {
-                    paste(gsub("[.]", "", c(substr(input$elementtrend, 1, 2), " NetCounts")), sep=",", collapse="")
-                }  else if(input$elementnorm=="None" && input$filetype=="Artax Excel") {
-                    paste(gsub("[.]", "", c(substr(input$elementtrend, 1, 2), " NetCounts")), sep=",", collapse="")
-                } else if(input$elementnorm!="None"){
-                    paste(gsub("[.]", "", c(substr(input$elementtrend, 1, 2), "/", substr(input$elementnorm, 1, 2))), sep=",", collapse="")
+            trendPlota <- reactive({
+                
+                element.trend.name <- if(elementhold$elementtrenda %in% elementLines){
+                    gsub("[.]", "", substr(elementhold$elementtrenda, 1, 2))
+                } else {
+                    elementhold$elementtrenda
+                }
+                
+                element.norm.name <- if(elementhold$elementnorma %in% elementLines){
+                    gsub("[.]", "", substr(elementhold$elementnorma, 1, 2))
+                } else {
+                    elementhold$elementnorma
+                }
+                
+                
+                trendy <-  if(elementhold$elementnorma=="None" && input$filetype=="Spectra") {
+                    paste(element.trend.name, " CPS", sep="")
+                } else if(elementhold$elementnorma=="None" && input$filetype=="Spreadsheet") {
+                    paste(element.trend.name, " CPS", sep="")
+                } else if(elementhold$elementnorma=="None" && input$filetype=="Net") {
+                    paste(element.trend.name, " NetCounts", sep="")
+                }  else if(elementhold$elementnorma=="None" && input$filetype=="Artax Excel") {
+                    paste(element.trend.name, " NetCounts", sep="")
+                } else if(elementhold$elementnorma!="None"){
+                    paste(element.trend.name, "-", element.norm.name, sep="")
                 }
                 
                 trendy.label <- paste(c(input$projectname, "_", trendy), collapse='')
@@ -3278,7 +3316,7 @@ shinyServer(function(input, output, session) {
             output$downloadPlot3a <- downloadHandler(
             
             
-            filename = function() { paste(trendPlot(), '.tiff', sep='') },
+            filename = function() { paste(trendPlota(), '.tiff', sep='') },
             content = function(file) {
                 ggsave(file,plotInput3a(), device="tiff", compression="lzw", type="cairo", dpi=300, width=12, height=7)
                 
@@ -3287,6 +3325,14 @@ shinyServer(function(input, output, session) {
             )
             
             
+            
+            observeEvent(input$timeseriesact2, {
+                
+                elementhold$elementtrendb <- input$elementtrend
+                elementhold$elementnormb <- input$elementnorm
+                
+                
+            })
             
             plotInput3b <- reactive({
                 
@@ -3318,28 +3364,41 @@ shinyServer(function(input, output, session) {
                 #spectra.timeseries.table <- data.frame(interval, spectra.line.table[c(input$elementtrend)]/spectra.line.table.norm[c(input$elementnorm)], spectra.line.table$Cluster, spectra.line.table$Qualitative, spectra.line.table$Depth)
                 #colnames(spectra.timeseries.table) <- c("Interval", "Selected", "Cluster", "Qualitative", "Depth")
                 
-                spectra.timeseries.table <- data.frame(spectra.line.table[c(input$xaxistype)], (spectra.line.table[c(input$elementtrend)]/spectra.line.table.norm[c(input$elementnorm)]*input$ymultiply), spectra.line.table$Cluster, spectra.line.table$Qualitative, spectra.line.table$Depth, spectra.line.table$Climate)
+                spectra.timeseries.table <- data.frame(spectra.line.table[c(input$xaxistype)], (spectra.line.table[c(elementhold$elementtrendb)]/spectra.line.table.norm[c(elementhold$elementnormb)]*input$ymultiply), spectra.line.table$Cluster, spectra.line.table$Qualitative, spectra.line.table$Depth, spectra.line.table$Climate)
                 colnames(spectra.timeseries.table) <- c("Interval", "Selected", "Cluster", "Qualitative", "Depth", "Climate")
                 
                 
-                trendy <-  if(input$elementnorm=="None" && input$filetype=="Spectra" && input$usecalfile==FALSE && input$usecustumyaxis==FALSE) {
-                    paste(gsub("[.]", "", c(substr(input$elementtrend, 1, 2), " Counts per Second")), sep=",", collapse="")
-                } else if(input$elementnorm=="None" && input$filetype=="Spectra" && input$usecalfile==TRUE && input$usecustumyaxis==FALSE) {
-                    paste(gsub("[.]", "", c(substr(input$elementtrend, 1, 2), " ", calFileContentsFirst()[[2]])), sep=",", collapse="")
-                } else if(input$elementnorm=="None" && input$filetype=="Net" && input$usecalfile==FALSE && input$usecustumyaxis==FALSE) {
-                    paste(gsub("[.]", "", c(substr(input$elementtrend, 1, 2), " Net Counts")), sep=",", collapse="")
-                } else if(input$elementnorm=="None" && input$filetype=="Net" && input$usecalfile==TRUE && input$usecustumyaxis==FALSE) {
-                    paste(gsub("[.]", "", c(substr(input$elementtrend, 1, 2), " ", calFileContentsFirst()[[2]])), sep=",", collapse="")
-                } else if(input$elementnorm=="None" && input$filetype=="Artax Excel" && input$usecalfile==FALSE && input$usecustumyaxis==FALSE) {
-                    paste(gsub("[.]", "", c(substr(input$elementtrend, 1, 2), " Net Counts")), sep=",", collapse="")
-                } else if(input$elementnorm=="None" && input$filetype=="Artax Excel" && input$usecalfile==TRUE && input$usecustumyaxis==FALSE) {
-                    paste(gsub("[.]", "", c(substr(input$elementtrend, 1, 2), " ", calFileContentsFirst()[[2]])), sep=",", collapse="")
-                } else if(input$elementnorm!="None" && input$usecustumyaxis==FALSE){
-                    paste(gsub("[.]", "", c(substr(input$elementtrend, 1, 2), "/", substr(input$elementnorm, 1, 2))), sep=",", collapse="")
+                element.trend.name <- if(elementhold$elementtrendb %in% elementLines){
+                    gsub("[.]", "", substr(elementhold$elementtrendb, 1, 2))
+                } else {
+                    elementhold$elementtrendb
+                }
+                
+                element.norm.name <- if(elementhold$elementnormb %in% elementLines){
+                    gsub("[.]", "", substr(elementhold$elementnormb, 1, 2))
+                } else {
+                    elementhold$elementnormb
+                }
+                
+                trendy <-  if(elementhold$elementnormb=="None" && input$filetype=="Spectra" && input$usecalfile==FALSE && input$usecustumyaxis==FALSE) {
+                    paste(element.trend.name, " Counts per Second", sep="")
+                } else if(elementhold$elementnormb=="None" && input$filetype=="Spectra" && input$usecalfile==TRUE && input$usecustumyaxis==FALSE) {
+                    paste(element.trend.name, " ", calFileContentsFirst()[[2]], sep="")
+                } else if(elementhold$elementnormb=="None" && input$filetype=="Spreadsheet" && input$usecalfile==FALSE && input$usecustumyaxis==FALSE) {
+                    paste(element.trend.name, " Counts per Second", sep="")
+                } else if(elementhold$elementnormb=="None" && input$filetype=="Net" && input$usecalfile==FALSE && input$usecustumyaxis==FALSE) {
+                    paste(element.trend.name, " Net Counts", collapse="")
+                } else if(elementhold$elementnormb=="None" && input$filetype=="Net" && input$usecalfile==TRUE && input$usecustumyaxis==FALSE) {
+                    paste(element.trend.name, " ", calFileContentsFirst()[[2]], sep="")
+                } else if(elementhold$elementnormb=="None" && input$filetype=="Artax Excel" && input$usecalfile==FALSE && input$usecustumyaxis==FALSE) {
+                    paste(element.trend.name, " Net Counts", sep="")
+                } else if(elementhold$elementnormb=="None" && input$filetype=="Artax Excel" && input$usecalfile==TRUE && input$usecustumyaxis==FALSE) {
+                    paste(element.trend.name, " ", calFileContentsFirst()[[2]], sep="")
+                } else if(elementhold$elementnormb!="None" && input$usecustumyaxis==FALSE){
+                    paste(element.trend.name, "/", element.norm.name, sep="")
                 } else if(input$usecustumyaxis==TRUE) {
                     paste(input$customyaxis)
                 }
-                
                 
                 
                 
@@ -3674,18 +3733,13 @@ shinyServer(function(input, output, session) {
             })
             
             
-            observeEvent(input$timeseriesact2, {
-                
-                
-            })
+
             output$timeseriesplot2 <- renderPlot({
-                input$timeseriesact2
-                isolate(plotInput3b())
+                plotInput3b()
             })
             
             
             hoverHold3b <- reactive({
-                input$timeseriesact2
                 
                 spectra.line.table <- ageData()
                 
@@ -3704,10 +3758,10 @@ shinyServer(function(input, output, session) {
                 #spectra.timeseries.table <- data.frame(interval, spectra.line.table[c(input$elementtrend)]/spectra.line.table.norm[c(input$elementnorm)], spectra.line.table$Cluster, spectra.line.table$Qualitative, spectra.line.table$Depth)
                 #colnames(spectra.timeseries.table) <- c("Interval", "Selected", "Cluster", "Qualitative", "Depth")
                 
-                spectra.timeseries.table <- data.frame(spectra.line.table[c(input$xaxistype)], DEMA(spectra.line.table[c(input$elementtrend)]/spectra.line.table.norm[c(input$elementnorm)]*input$ymultiply, input$smoothing), spectra.line.table$Cluster, spectra.line.table$Qualitative, spectra.line.table$Depth, spectra.line.table$Age, spectra.line.table$Climate)
+                spectra.timeseries.table <- data.frame(spectra.line.table[c(input$xaxistype)], DEMA(spectra.line.table[c(elementhold$elementtrendb)]/spectra.line.table.norm[c(elementhold$elementnormb)]*input$ymultiply, input$smoothing), spectra.line.table$Cluster, spectra.line.table$Qualitative, spectra.line.table$Depth, spectra.line.table$Age, spectra.line.table$Climate)
                 colnames(spectra.timeseries.table) <- c("Interval", "Selected", "Cluster", "Qualitative", "Depth", "Age", "Climate")
                 
-                isolate(spectra.timeseries.table)
+                spectra.timeseries.table
                 
             })
             
@@ -3742,14 +3796,22 @@ shinyServer(function(input, output, session) {
                 "left:", left_px + 2, "px; top:", top_px + 2, "px;")
                 
                 # actual tooltip created as wellPanel
-                wellPanel(
-                style = style,
-                p(HTML(paste0("<b> Spectrum: </b>", point$Spectrum, "<br/>",
-                "<b> Depth: </b>", point$Depth, "<br/>",
-                "<b> Age: </b>", point$Age, "<br/>"
-                
-                )))
-                )
+                if(input$ageon==TRUE){
+                    wellPanel(
+                    style = style,
+                    p(HTML(paste0(
+                    "<b> Depth: </b>", round(point$Depth, 2), "<br/>",
+                    "<b> Age: </b>", round(point$Age, 2), "<br/>"
+                    )))
+                    )
+                } else if(input$ageon==FALSE){
+                    wellPanel(
+                    style = style,
+                    p(HTML(paste0(
+                    "<b> Depth: </b>", round(point$Depth, 2), "<br/>"
+                    )))
+                    )
+                }
             })
             
             
@@ -3768,17 +3830,55 @@ shinyServer(function(input, output, session) {
                 }
             })
             
+            
+            trendPlotb <- reactive({
+                
+                element.trend.name <- if(elementhold$elementtrendb %in% elementLines){
+                    gsub("[.]", "", substr(elementhold$elementtrendb, 1, 2))
+                } else {
+                    elementhold$elementtrendb
+                }
+                
+                element.norm.name <- if(elementhold$elementnormb %in% elementLines){
+                    gsub("[.]", "", substr(elementhold$elementnormb, 1, 2))
+                } else {
+                    elementhold$elementnormb
+                }
+                
+                
+                trendy <-  if(elementhold$elementnormb=="None" && input$filetype=="Spectra") {
+                    paste(element.trend.name, " CPS", sep="")
+                } else if(elementhold$elementnormb=="None" && input$filetype=="Spreadsheet") {
+                    paste(element.trend.name, " CPS", sep="")
+                } else if(elementhold$elementnormb=="None" && input$filetype=="Net") {
+                    paste(element.trend.name, " NetCounts", sep="")
+                }  else if(elementhold$elementnormb=="None" && input$filetype=="Artax Excel") {
+                    paste(element.trend.name, " NetCounts", sep="")
+                } else if(elementhold$elementnormb!="None"){
+                    paste(element.trend.name, "-", element.norm.name, sep="")
+                }
+                
+                trendy.label <- paste(c(input$projectname, "_", trendy), collapse='')
+                trendy.label
+            })
+            
             output$downloadPlot3b <- downloadHandler(
             
             
             
-            filename = function() { paste(trendPlot(), '.tiff', sep='') },
+            filename = function() { paste(trendPlotb(), '.tiff', sep='') },
             content = function(file) {
                 ggsave(file,plotInput3b(), device="tiff", compression="lzw", type="cairo", dpi=300, width=12, height=7)
             }
             )
             
-            
+            observeEvent(input$timeseriesact3, {
+                
+                elementhold$elementtrendc <- input$elementtrend
+                elementhold$elementnormc <- input$elementnorm
+                
+                
+            })
             
             plotInput3c <- reactive({
                 
@@ -3810,24 +3910,38 @@ shinyServer(function(input, output, session) {
                 #spectra.timeseries.table <- data.frame(interval, spectra.line.table[c(input$elementtrend)]/spectra.line.table.norm[c(input$elementnorm)], spectra.line.table$Cluster, spectra.line.table$Qualitative, spectra.line.table$Depth)
                 #colnames(spectra.timeseries.table) <- c("Interval", "Selected", "Cluster", "Qualitative", "Depth")
                 
-                spectra.timeseries.table <- data.frame(spectra.line.table[c(input$xaxistype)], (spectra.line.table[c(input$elementtrend)]/spectra.line.table.norm[c(input$elementnorm)]*input$ymultiply), spectra.line.table$Cluster, spectra.line.table$Qualitative, spectra.line.table$Depth, spectra.line.table$Climate)
+                spectra.timeseries.table <- data.frame(spectra.line.table[c(input$xaxistype)], (spectra.line.table[c(elementhold$elementtrendc)]/spectra.line.table.norm[c(elementhold$elementnormc)]*input$ymultiply), spectra.line.table$Cluster, spectra.line.table$Qualitative, spectra.line.table$Depth, spectra.line.table$Climate)
                 colnames(spectra.timeseries.table) <- c("Interval", "Selected", "Cluster", "Qualitative", "Depth", "Climate")
                 
                 
-                trendy <-  if(input$elementnorm=="None" && input$filetype=="Spectra" && input$usecalfile==FALSE && input$usecustumyaxis==FALSE) {
-                    paste(gsub("[.]", "", c(substr(input$elementtrend, 1, 2), " Counts per Second")), sep=",", collapse="")
-                } else if(input$elementnorm=="None" && input$filetype=="Spectra" && input$usecalfile==TRUE && input$usecustumyaxis==FALSE) {
-                    paste(gsub("[.]", "", c(substr(input$elementtrend, 1, 2), " ", calFileContentsFirst()[[2]])), sep=",", collapse="")
-                } else if(input$elementnorm=="None" && input$filetype=="Net" && input$usecalfile==FALSE && input$usecustumyaxis==FALSE) {
-                    paste(gsub("[.]", "", c(substr(input$elementtrend, 1, 2), " Net Counts")), sep=",", collapse="")
-                } else if(input$elementnorm=="None" && input$filetype=="Net" && input$usecalfile==TRUE && input$usecustumyaxis==FALSE) {
-                    paste(gsub("[.]", "", c(substr(input$elementtrend, 1, 2), " ", calFileContentsFirst()[[2]])), sep=",", collapse="")
-                } else if(input$elementnorm=="None" && input$filetype=="Artax Excel" && input$usecalfile==FALSE && input$usecustumyaxis==FALSE) {
-                    paste(gsub("[.]", "", c(substr(input$elementtrend, 1, 2), " Net Counts")), sep=",", collapse="")
-                } else if(input$elementnorm=="None" && input$filetype=="Artax Excel" && input$usecalfile==TRUE && input$usecustumyaxis==FALSE) {
-                    paste(gsub("[.]", "", c(substr(input$elementtrend, 1, 2), " ", calFileContentsFirst()[[2]])), sep=",", collapse="")
-                } else if(input$elementnorm!="None" && input$usecustumyaxis==FALSE){
-                    paste(gsub("[.]", "", c(substr(input$elementtrend, 1, 2), "/", substr(input$elementnorm, 1, 2))), sep=",", collapse="")
+                element.trend.name <- if(elementhold$elementtrendc %in% elementLines){
+                    gsub("[.]", "", substr(elementhold$elementtrendc, 1, 2))
+                } else {
+                    elementhold$elementtrendc
+                }
+                
+                element.norm.name <- if(elementhold$elementnormc %in% elementLines){
+                    gsub("[.]", "", substr(elementhold$elementnormc, 1, 2))
+                } else {
+                    elementhold$elementnormc
+                }
+                
+                trendy <-  if(elementhold$elementnormc=="None" && input$filetype=="Spectra" && input$usecalfile==FALSE && input$usecustumyaxis==FALSE) {
+                    paste(element.trend.name, " Counts per Second", sep="")
+                } else if(elementhold$elementnormc=="None" && input$filetype=="Spectra" && input$usecalfile==TRUE && input$usecustumyaxis==FALSE) {
+                    paste(element.trend.name, " ", calFileContentsFirst()[[2]], sep="")
+                } else if(elementhold$elementnormc=="None" && input$filetype=="Spreadsheet" && input$usecalfile==FALSE && input$usecustumyaxis==FALSE) {
+                    paste(element.trend.name, " Counts per Second", sep="")
+                } else if(elementhold$elementnormc=="None" && input$filetype=="Net" && input$usecalfile==FALSE && input$usecustumyaxis==FALSE) {
+                    paste(element.trend.name, " Net Counts", sep="")
+                } else if(elementhold$elementnormc=="None" && input$filetype=="Net" && input$usecalfile==TRUE && input$usecustumyaxis==FALSE) {
+                    paste(element.trend.name, " ", calFileContentsFirst()[[2]], sep="")
+                } else if(elementhold$elementnormc=="None" && input$filetype=="Artax Excel" && input$usecalfile==FALSE && input$usecustumyaxis==FALSE) {
+                    paste(element.trend.name, " Net Counts", sep="")
+                } else if(elementhold$elementnormc=="None" && input$filetype=="Artax Excel" && input$usecalfile==TRUE && input$usecustumyaxis==FALSE) {
+                    paste(element.trend.name, " ", calFileContentsFirst()[[2]], sep="")
+                } else if(elementhold$elementnormc!="None" && input$usecustumyaxis==FALSE){
+                    paste(element.trend.name, "/", element.norm.name, sep="")
                 } else if(input$usecustumyaxis==TRUE) {
                     paste(input$customyaxis)
                 }
@@ -4163,18 +4277,15 @@ shinyServer(function(input, output, session) {
                 
             })
             
-            observeEvent(input$timeseriesact3, {
-            })
+
             
             output$timeseriesplot3 <- renderPlot({
-                input$timeseriesact3
-                
-                isolate(plotInput3c())
+            
+                plotInput3c()
                 
             })
             
             hoverHold3c <- reactive({
-                input$timeseriesact3
                 
                 spectra.line.table <- ageData()
                 
@@ -4193,10 +4304,10 @@ shinyServer(function(input, output, session) {
                 #spectra.timeseries.table <- data.frame(interval, spectra.line.table[c(input$elementtrend)]/spectra.line.table.norm[c(input$elementnorm)], spectra.line.table$Cluster, spectra.line.table$Qualitative, spectra.line.table$Depth)
                 #colnames(spectra.timeseries.table) <- c("Interval", "Selected", "Cluster", "Qualitative", "Depth")
                 
-                spectra.timeseries.table <- data.frame(spectra.line.table[c(input$xaxistype)], DEMA(spectra.line.table[c(input$elementtrend)]/spectra.line.table.norm[c(input$elementnorm)]*input$ymultiply, input$smoothing), spectra.line.table$Cluster, spectra.line.table$Qualitative, spectra.line.table$Depth, spectra.line.table$Age, spectra.line.table$Climate)
+                spectra.timeseries.table <- data.frame(spectra.line.table[c(input$xaxistype)], DEMA(spectra.line.table[c(elementhold$elementtrendc)]/spectra.line.table.norm[c(elementhold$elementnormc)]*input$ymultiply, input$smoothing), spectra.line.table$Cluster, spectra.line.table$Qualitative, spectra.line.table$Depth, spectra.line.table$Age, spectra.line.table$Climate)
                 colnames(spectra.timeseries.table) <- c("Interval", "Selected", "Cluster", "Qualitative", "Depth", "Age", "Climate")
                 
-                isolate(spectra.timeseries.table)
+                spectra.timeseries.table
                 
             })
             
@@ -4231,14 +4342,22 @@ shinyServer(function(input, output, session) {
                 "left:", left_px + 2, "px; top:", top_px + 2, "px;")
                 
                 # actual tooltip created as wellPanel
-                wellPanel(
-                style = style,
-                p(HTML(paste0("<b> Spectrum: </b>", point$Spectrum, "<br/>",
-                "<b> Depth: </b>", point$Depth, "<br/>",
-                "<b> Age: </b>", point$Age, "<br/>"
-                
-                )))
-                )
+                if(input$ageon==TRUE){
+                    wellPanel(
+                    style = style,
+                    p(HTML(paste0(
+                    "<b> Depth: </b>", round(point$Depth, 2), "<br/>",
+                    "<b> Age: </b>", round(point$Age, 2), "<br/>"
+                    )))
+                    )
+                } else if(input$ageon==FALSE){
+                    wellPanel(
+                    style = style,
+                    p(HTML(paste0(
+                    "<b> Depth: </b>", round(point$Depth, 2), "<br/>"
+                    )))
+                    )
+                }
             })
             
             
@@ -4257,15 +4376,56 @@ shinyServer(function(input, output, session) {
                 }
             })
             
+            
+            
+            trendPlotc <- reactive({
+                
+                element.trend.name <- if(elementhold$elementtrendc %in% elementLines){
+                    gsub("[.]", "", substr(elementhold$elementtrendc, 1, 2))
+                } else {
+                    elementhold$elementtrendc
+                }
+                
+                element.norm.name <- if(elementhold$elementnormc %in% elementLines){
+                    gsub("[.]", "", substr(elementhold$elementnormc, 1, 2))
+                } else {
+                    elementhold$elementnormc
+                }
+                
+                
+                trendy <-  if(elementhold$elementnormc=="None" && input$filetype=="Spectra") {
+                    paste(element.trend.name, " CPS", sep="")
+                } else if(elementhold$elementnormc=="None" && input$filetype=="Spreadsheet") {
+                    paste(element.trend.name, " CPS", sep="")
+                } else if(elementhold$elementnormc=="None" && input$filetype=="Net") {
+                    paste(element.trend.name, " NetCounts", sep="")
+                }  else if(elementhold$elementnormc=="None" && input$filetype=="Artax Excel") {
+                    paste(element.trend.name, " NetCounts", sep="")
+                } else if(elementhold$elementnormc!="None"){
+                    paste(element.trend.name, "-", element.norm.name, sep="")
+                }
+                
+                trendy.label <- paste(c(input$projectname, "_", trendy), collapse='')
+                trendy.label
+            })
+            
             output$downloadPlot3c <- downloadHandler(
             
             
-            filename = function() { paste(trendPlot(), '.tiff', sep='') },
+            filename = function() { paste(trendPlotc(), '.tiff', sep='') },
             content = function(file) {
                 ggsave(file,plotInput3c(), device="tiff", compression="lzw", type="cairo", dpi=300, width=12, height=7)
             }
             )
             
+            
+            observeEvent(input$timeseriesact4, {
+                
+                elementhold$elementtrendd <- input$elementtrend
+                elementhold$elementnormd <- input$elementnorm
+                
+                
+            })
             
             plotInput3d <- reactive({
                 
@@ -4295,24 +4455,38 @@ shinyServer(function(input, output, session) {
                 #spectra.timeseries.table <- data.frame(interval, spectra.line.table[c(input$elementtrend)]/spectra.line.table.norm[c(input$elementnorm)], spectra.line.table$Cluster, spectra.line.table$Qualitative, spectra.line.table$Depth)
                 #colnames(spectra.timeseries.table) <- c("Interval", "Selected", "Cluster", "Qualitative", "Depth")
                 
-                spectra.timeseries.table <- data.frame(spectra.line.table[c(input$xaxistype)], (spectra.line.table[c(input$elementtrend)]/spectra.line.table.norm[c(input$elementnorm)]*input$ymultiply), spectra.line.table$Cluster, spectra.line.table$Qualitative, spectra.line.table$Depth, spectra.line.table$Climate)
+                spectra.timeseries.table <- data.frame(spectra.line.table[c(input$xaxistype)], (spectra.line.table[c(elementhold$elementtrendd)]/spectra.line.table.norm[c(elementhold$elementnormd)]*input$ymultiply), spectra.line.table$Cluster, spectra.line.table$Qualitative, spectra.line.table$Depth, spectra.line.table$Climate)
                 colnames(spectra.timeseries.table) <- c("Interval", "Selected", "Cluster", "Qualitative", "Depth", "Climate")
                 
                 
-                trendy <-  if(input$elementnorm=="None" && input$filetype=="Spectra" && input$usecalfile==FALSE && input$usecustumyaxis==FALSE) {
-                    paste(gsub("[.]", "", c(substr(input$elementtrend, 1, 2), " Counts per Second")), sep=",", collapse="")
-                } else if(input$elementnorm=="None" && input$filetype=="Spectra" && input$usecalfile==TRUE && input$usecustumyaxis==FALSE) {
-                    paste(gsub("[.]", "", c(substr(input$elementtrend, 1, 2), " ", calFileContentsFirst()[[2]])), sep=",", collapse="")
-                } else if(input$elementnorm=="None" && input$filetype=="Net" && input$usecalfile==FALSE && input$usecustumyaxis==FALSE) {
-                    paste(gsub("[.]", "", c(substr(input$elementtrend, 1, 2), " Net Counts")), sep=",", collapse="")
-                } else if(input$elementnorm=="None" && input$filetype=="Net" && input$usecalfile==TRUE && input$usecustumyaxis==FALSE) {
-                    paste(gsub("[.]", "", c(substr(input$elementtrend, 1, 2), " ", calFileContentsFirst()[[2]])), sep=",", collapse="")
-                } else if(input$elementnorm=="None" && input$filetype=="Artax Excel" && input$usecalfile==FALSE && input$usecustumyaxis==FALSE) {
-                    paste(gsub("[.]", "", c(substr(input$elementtrend, 1, 2), " Net Counts")), sep=",", collapse="")
-                } else if(input$elementnorm=="None" && input$filetype=="Artax Excel" && input$usecalfile==TRUE && input$usecustumyaxis==FALSE) {
-                    paste(gsub("[.]", "", c(substr(input$elementtrend, 1, 2), " ", calFileContentsFirst()[[2]])), sep=",", collapse="")
-                } else if(input$elementnorm!="None" && input$usecustumyaxis==FALSE){
-                    paste(gsub("[.]", "", c(substr(input$elementtrend, 1, 2), "/", substr(input$elementnorm, 1, 2))), sep=",", collapse="")
+                element.trend.name <- if(elementhold$elementtrendd %in% elementLines){
+                    gsub("[.]", "", substr(elementhold$elementtrendd, 1, 2))
+                } else {
+                    input$elementtrend
+                }
+                
+                element.norm.name <- if(elementhold$elementnormd %in% elementLines){
+                    gsub("[.]", "", substr(elementhold$elementnormd, 1, 2))
+                } else {
+                    elementhold$elementnormd
+                }
+                
+                trendy <-  if(elementhold$elementnormd=="None" && input$filetype=="Spectra" && input$usecalfile==FALSE && input$usecustumyaxis==FALSE) {
+                    paste(element.trend.name, " Counts per Second", sep="")
+                } else if(elementhold$elementnormd=="None" && input$filetype=="Spectra" && input$usecalfile==TRUE && input$usecustumyaxis==FALSE) {
+                    paste(element.trend.name, " ", calFileContentsFirst()[[2]], sep="")
+                } else if(elementhold$elementnormd=="None" && input$filetype=="Spreadsheet" && input$usecalfile==FALSE && input$usecustumyaxis==FALSE) {
+                    paste(element.trend.name, " Counts per Second", sep="")
+                } else if(elementhold$elementnormd=="None" && input$filetype=="Net" && input$usecalfile==FALSE && input$usecustumyaxis==FALSE) {
+                    paste(element.trend.name, " Net Counts", sep="")
+                } else if(elementhold$elementnormdm=="None" && input$filetype=="Net" && input$usecalfile==TRUE && input$usecustumyaxis==FALSE) {
+                    paste(element.trend.name, " ", calFileContentsFirst()[[2]], sep="")
+                } else if(elementhold$elementnormd=="None" && input$filetype=="Artax Excel" && input$usecalfile==FALSE && input$usecustumyaxis==FALSE) {
+                    paste(element.trend.name, " Net Counts", sep="")
+                } else if(elementhold$elementnormd=="None" && input$filetype=="Artax Excel" && input$usecalfile==TRUE && input$usecustumyaxis==FALSE) {
+                    paste(element.trend.name, " ", calFileContentsFirst()[[2]], sep="")
+                } else if(elementhold$elementnormd!="None" && input$usecustumyaxis==FALSE){
+                    paste(element.trend.name, "/", element.norm.name, sep="")
                 } else if(input$usecustumyaxis==TRUE) {
                     paste(input$customyaxis)
                 }
@@ -4653,19 +4827,14 @@ shinyServer(function(input, output, session) {
                 
             })
             
-            observeEvent(input$timeseriesact4, {
-                
-            })
             
             
             
             output$timeseriesplot4 <- renderPlot({
-                input$timeseriesact4
-                isolate(plotInput3d())
+                plotInput3d()
             })
             
             hoverHold3d <- reactive({
-                input$timeseriesact4
                 
                 spectra.line.table <- ageData()
                 
@@ -4684,11 +4853,11 @@ shinyServer(function(input, output, session) {
                 #spectra.timeseries.table <- data.frame(interval, spectra.line.table[c(input$elementtrend)]/spectra.line.table.norm[c(input$elementnorm)], spectra.line.table$Cluster, spectra.line.table$Qualitative, spectra.line.table$Depth)
                 #colnames(spectra.timeseries.table) <- c("Interval", "Selected", "Cluster", "Qualitative", "Depth")
                 
-                spectra.timeseries.table <- data.frame(spectra.line.table[c(input$xaxistype)], DEMA(spectra.line.table[c(input$elementtrend)]/spectra.line.table.norm[c(input$elementnorm)]*input$ymultiply, input$smoothing), spectra.line.table$Cluster, spectra.line.table$Qualitative, spectra.line.table$Depth, spectra.line.table$Age, spectra.line.table$Climate)
+                spectra.timeseries.table <- data.frame(spectra.line.table[c(input$xaxistype)], DEMA(spectra.line.table[c(elementhold$elementtrendd)]/spectra.line.table.norm[c(elementhold$elementnormd)]*input$ymultiply, input$smoothing), spectra.line.table$Cluster, spectra.line.table$Qualitative, spectra.line.table$Depth, spectra.line.table$Age, spectra.line.table$Climate)
                 colnames(spectra.timeseries.table) <- c("Interval", "Selected", "Cluster", "Qualitative", "Depth", "Age", "Climate")
                 
-                isolate(spectra.timeseries.table)
-                
+                spectra.timeseries.table
+            
             })
             
             
@@ -4722,14 +4891,22 @@ shinyServer(function(input, output, session) {
                 "left:", left_px + 2, "px; top:", top_px + 2, "px;")
                 
                 # actual tooltip created as wellPanel
-                wellPanel(
-                style = style,
-                p(HTML(paste0("<b> Spectrum: </b>", point$Spectrum, "<br/>",
-                "<b> Depth: </b>", point$Depth, "<br/>",
-                "<b> Age: </b>", point$Age, "<br/>"
-                
-                )))
-                )
+                if(input$ageon==TRUE){
+                    wellPanel(
+                    style = style,
+                    p(HTML(paste0(
+                    "<b> Depth: </b>", round(point$Depth, 2), "<br/>",
+                    "<b> Age: </b>", round(point$Age, 2), "<br/>"
+                    )))
+                    )
+                } else if(input$ageon==FALSE){
+                    wellPanel(
+                    style = style,
+                    p(HTML(paste0(
+                    "<b> Depth: </b>", round(point$Depth, 2), "<br/>"
+                    )))
+                    )
+                }
             })
             
             
@@ -4747,18 +4924,57 @@ shinyServer(function(input, output, session) {
                 }
             })
             
+            
+            
+            trendPlotd <- reactive({
+                
+                element.trend.name <- if(elementhold$elementtrendd %in% elementLines){
+                    gsub("[.]", "", substr(elementhold$elementtrendd, 1, 2))
+                } else {
+                    elementhold$elementtrendd
+                }
+                
+                element.norm.name <- if(elementhold$elementnormd %in% elementLines){
+                    gsub("[.]", "", substr(elementhold$elementnormd, 1, 2))
+                } else {
+                    elementhold$elementnormd
+                }
+                
+                
+                trendy <-  if(elementhold$elementnormd=="None" && input$filetype=="Spectra") {
+                    paste(element.trend.name, " CPS", sep="")
+                } else if(elementhold$elementnormd=="None" && input$filetype=="Spreadsheet") {
+                    paste(element.trend.name, " CPS", sep="")
+                } else if(elementhold$elementnormd=="None" && input$filetype=="Net") {
+                    paste(element.trend.name, " NetCounts", sep="")
+                }  else if(elementhold$elementnormd=="None" && input$filetype=="Artax Excel") {
+                    paste(element.trend.name, " NetCounts", sep="")
+                } else if(elementhold$elementnormd!="None"){
+                    paste(element.trend.name, "-", element.norm.name, sep="")
+                }
+                
+                trendy.label <- paste(c(input$projectname, "_", trendy), collapse='')
+                trendy.label
+            })
+            
             output$downloadPlot3d <- downloadHandler(
             
             
             
-            filename = function() { paste(trendPlot(), '.tiff', sep='') },
+            filename = function() { paste(trendPlotd(), '.tiff', sep='') },
             content = function(file) {
                 ggsave(file,plotInput3d(), device="tiff", compression="lzw", type="cairo", dpi=300, width=12, height=7)
             }
             )
             
             
-            
+            observeEvent(input$timeseriesact5, {
+                
+                elementhold$elementtrende <- input$elementtrend
+                elementhold$elementnorme <- input$elementnorm
+                
+                
+            })
             
             
             plotInput3e <- reactive({
@@ -4793,28 +5009,41 @@ shinyServer(function(input, output, session) {
                 #spectra.timeseries.table <- data.frame(interval, spectra.line.table[c(input$elementtrend)]/spectra.line.table.norm[c(input$elementnorm)], spectra.line.table$Cluster, spectra.line.table$Qualitative, spectra.line.table$Depth)
                 #colnames(spectra.timeseries.table) <- c("Interval", "Selected", "Cluster", "Qualitative", "Depth")
                 
-                spectra.timeseries.table <- data.frame(spectra.line.table[c(input$xaxistype)], (spectra.line.table[c(input$elementtrend)]/spectra.line.table.norm[c(input$elementnorm)]*input$ymultiply), spectra.line.table$Cluster, spectra.line.table$Qualitative, spectra.line.table$Depth, spectra.line.table$Climate)
+                spectra.timeseries.table <- data.frame(spectra.line.table[c(input$xaxistype)], (spectra.line.table[c(elementhold$elementtrende)]/spectra.line.table.norm[c(elementhold$elementnorme)]*input$ymultiply), spectra.line.table$Cluster, spectra.line.table$Qualitative, spectra.line.table$Depth, spectra.line.table$Climate)
                 colnames(spectra.timeseries.table) <- c("Interval", "Selected", "Cluster", "Qualitative", "Depth", "Climate")
                 
                 
-                trendy <-  if(input$elementnorm=="None" && input$filetype=="Spectra" && input$usecalfile==FALSE && input$usecustumyaxis==FALSE) {
-                    paste(gsub("[.]", "", c(substr(input$elementtrend, 1, 2), " Counts per Second")), sep=",", collapse="")
-                } else if(input$elementnorm=="None" && input$filetype=="Spectra" && input$usecalfile==TRUE && input$usecustumyaxis==FALSE) {
-                    paste(gsub("[.]", "", c(substr(input$elementtrend, 1, 2), " ", calFileContentsFirst()[[2]])), sep=",", collapse="")
-                } else if(input$elementnorm=="None" && input$filetype=="Net" && input$usecalfile==FALSE && input$usecustumyaxis==FALSE) {
-                    paste(gsub("[.]", "", c(substr(input$elementtrend, 1, 2), " Net Counts")), sep=",", collapse="")
-                } else if(input$elementnorm=="None" && input$filetype=="Net" && input$usecalfile==TRUE && input$usecustumyaxis==FALSE) {
-                    paste(gsub("[.]", "", c(substr(input$elementtrend, 1, 2), " ", calFileContentsFirst()[[2]])), sep=",", collapse="")
-                } else if(input$elementnorm=="None" && input$filetype=="Artax Excel" && input$usecalfile==FALSE && input$usecustumyaxis==FALSE) {
-                    paste(gsub("[.]", "", c(substr(input$elementtrend, 1, 2), " Net Counts")), sep=",", collapse="")
-                } else if(input$elementnorm=="None" && input$filetype=="Artax Excel" && input$usecalfile==TRUE && input$usecustumyaxis==FALSE) {
-                    paste(gsub("[.]", "", c(substr(input$elementtrend, 1, 2), " ", calFileContentsFirst()[[2]])), sep=",", collapse="")
-                } else if(input$elementnorm!="None" && input$usecustumyaxis==FALSE){
-                    paste(gsub("[.]", "", c(substr(input$elementtrend, 1, 2), "/", substr(input$elementnorm, 1, 2))), sep=",", collapse="")
+                element.trend.name <- if(elementhold$elementtrende %in% elementLines){
+                    gsub("[.]", "", substr(elementhold$elementtrende, 1, 2))
+                } else {
+                    elementhold$elementtrende
+                }
+                
+                element.norm.name <- if(elementhold$elementnorme %in% elementLines){
+                    gsub("[.]", "", substr(elementhold$elementnorme, 1, 2))
+                } else {
+                    elementhold$elementnorme
+                }
+                
+                trendy <-  if(elementhold$elementnorme=="None" && input$filetype=="Spectra" && input$usecalfile==FALSE && input$usecustumyaxis==FALSE) {
+                    paste(element.trend.name, " Counts per Second", sep="")
+                } else if(elementhold$elementnorme=="None" && input$filetype=="Spectra" && input$usecalfile==TRUE && input$usecustumyaxis==FALSE) {
+                    paste(element.trend.name, " ", calFileContentsFirst()[[2]], sep="")
+                } else if(elementhold$elementnorme=="None" && input$filetype=="Spreadsheet" && input$usecalfile==FALSE && input$usecustumyaxis==FALSE) {
+                    paste(element.trend.name, " Counts per Second", sep="")
+                } else if(elementhold$elementnorme=="None" && input$filetype=="Net" && input$usecalfile==FALSE && input$usecustumyaxis==FALSE) {
+                    paste(element.trend.name, " Net Counts", sep="")
+                } else if(elementhold$elementnorme=="None" && input$filetype=="Net" && input$usecalfile==TRUE && input$usecustumyaxis==FALSE) {
+                    paste(element.trend.name, " ", calFileContentsFirst()[[2]], sep="")
+                } else if(elementhold$elementnorme=="None" && input$filetype=="Artax Excel" && input$usecalfile==FALSE && input$usecustumyaxis==FALSE) {
+                    paste(element.trend.name, " Net Counts", sep="")
+                } else if(elementhold$elementnorme=="None" && input$filetype=="Artax Excel" && input$usecalfile==TRUE && input$usecustumyaxis==FALSE) {
+                    paste(element.trend.name, " ", calFileContentsFirst()[[2]], sep="")
+                } else if(elementhold$elementnorme!="None" && input$usecustumyaxis==FALSE){
+                    paste(element.trend.name, "/", element.norm.name, sep="")
                 } else if(input$usecustumyaxis==TRUE) {
                     paste(input$customyaxis)
                 }
-                
                 
                 
                 
@@ -5150,21 +5379,16 @@ shinyServer(function(input, output, session) {
                 
             })
             
-            observeEvent(input$timeseriesact5, {
-                
-                
-            })
+
             
             output$timeseriesplot5 <- renderPlot({
-                input$timeseriesact5
                 
                 
                 
-                isolate(plotInput3e())
+                plotInput3e()
             })
             
             hoverHold3e <- reactive({
-                input$timeseriesact5
                 
                 spectra.line.table <- ageData()
                 
@@ -5183,10 +5407,10 @@ shinyServer(function(input, output, session) {
                 #spectra.timeseries.table <- data.frame(interval, spectra.line.table[c(input$elementtrend)]/spectra.line.table.norm[c(input$elementnorm)], spectra.line.table$Cluster, spectra.line.table$Qualitative, spectra.line.table$Depth)
                 #colnames(spectra.timeseries.table) <- c("Interval", "Selected", "Cluster", "Qualitative", "Depth")
                 
-                spectra.timeseries.table <- data.frame(spectra.line.table[c(input$xaxistype)], DEMA(spectra.line.table[c(input$elementtrend)]/spectra.line.table.norm[c(input$elementnorm)]*input$ymultiply, input$smoothing), spectra.line.table$Cluster, spectra.line.table$Qualitative, spectra.line.table$Depth, spectra.line.table$Age, spectra.line.table$Climate)
+                spectra.timeseries.table <- data.frame(spectra.line.table[c(input$xaxistype)], DEMA(spectra.line.table[c(elementhold$elementtrende)]/spectra.line.table.norm[c(elementhold$elementnorme)]*input$ymultiply, input$smoothing), spectra.line.table$Cluster, spectra.line.table$Qualitative, spectra.line.table$Depth, spectra.line.table$Age, spectra.line.table$Climate)
                 colnames(spectra.timeseries.table) <- c("Interval", "Selected", "Cluster", "Qualitative", "Depth", "Age", "Climate")
                 
-                isolate(spectra.timeseries.table)
+                spectra.timeseries.table
                 
             })
             
@@ -5221,14 +5445,22 @@ shinyServer(function(input, output, session) {
                 "left:", left_px + 2, "px; top:", top_px + 2, "px;")
                 
                 # actual tooltip created as wellPanel
-                wellPanel(
-                style = style,
-                p(HTML(paste0("<b> Spectrum: </b>", point$Spectrum, "<br/>",
-                "<b> Depth: </b>", point$Depth, "<br/>",
-                "<b> Age: </b>", point$Age, "<br/>"
-                
-                )))
-                )
+                if(input$ageon==TRUE){
+                    wellPanel(
+                    style = style,
+                    p(HTML(paste0(
+                    "<b> Depth: </b>", round(point$Depth, 2), "<br/>",
+                    "<b> Age: </b>", round(point$Age, 2), "<br/>"
+                    )))
+                    )
+                } else if(input$ageon==FALSE){
+                    wellPanel(
+                    style = style,
+                    p(HTML(paste0(
+                    "<b> Depth: </b>", round(point$Depth, 2), "<br/>"
+                    )))
+                    )
+                }
             })
             
             
@@ -5247,11 +5479,42 @@ shinyServer(function(input, output, session) {
             })
             
             
+            trendPlote <- reactive({
+                
+                element.trend.name <- if(elementhold$elementtrende %in% elementLines){
+                    gsub("[.]", "", substr(elementhold$elementtrende, 1, 2))
+                } else {
+                    elementhold$elementtrende
+                }
+                
+                element.norm.name <- if(elementhold$elementnorme %in% elementLines){
+                    gsub("[.]", "", substr(elementhold$elementnorme, 1, 2))
+                } else {
+                    elementhold$elementnorme
+                }
+                
+                
+                trendy <-  if(elementhold$elementnorme=="None" && input$filetype=="Spectra") {
+                    paste(element.trend.name, " CPS", sep="")
+                } else if(elementhold$elementnorme=="None" && input$filetype=="Spreadsheet") {
+                    paste(element.trend.name, " CPS", sep="")
+                } else if(elementhold$elementnorme=="None" && input$filetype=="Net") {
+                    paste(element.trend.name, " NetCounts", sep="")
+                }  else if(elementhold$elementnorme=="None" && input$filetype=="Artax Excel") {
+                    paste(element.trend.name, " NetCounts", sep="")
+                } else if(elementhold$elementnorme!="None"){
+                    paste(element.trend.name, "-", element.norm.name, sep="")
+                }
+                
+                trendy.label <- paste(c(input$projectname, "_", trendy), collapse='')
+                trendy.label
+            })
+            
             output$downloadPlot3e <- downloadHandler(
             
             
             
-            filename = function() { paste(trendPlot(), '.tiff', sep='') },
+            filename = function() { paste(trendPlote(), '.tiff', sep='') },
             content = function(file) {
                 ggsave(file,plotInput3e(), device="tiff", compression="lzw", type="cairo", dpi=300, width=12, height=7)
             }
@@ -5330,21 +5593,46 @@ shinyServer(function(input, output, session) {
             plotInput4 <- reactive({
                 
                 
+                first.ratio.name <- if(input$elementratioa %in% elementLines){
+                    gsub("[.]", "", substr(input$elementratioa, 1, 2))
+                } else {
+                    input$elementratioa
+                }
+                
+                second.ratio.name <- if(input$elementratiob %in% elementLines){
+                    gsub("[.]", "", substr(input$elementratiob, 1, 2))
+                } else {
+                    input$elementratiob
+                }
+                
+                third.ratio.name <- if(input$elementratioc %in% elementLines){
+                    gsub("[.]", "", substr(input$elementratioc, 1, 2))
+                } else {
+                    input$elementratioc
+                }
+                
+                fourth.ratio.name <- if(input$elementratiod %in% elementLines){
+                    gsub("[.]", "", substr(input$elementratiod, 1, 2))
+                } else {
+                    input$elementratiod
+                }
+                
+                
                 spectra.line.table <- ageData()
                 
                 unique.spec <- seq(1, length(spectra.line.table$Depth), 1)
                 null <- rep(1, length(unique.spec))
                 
                 
-                first.ratio <-spectra.line.table[input$elementratioa]
-                second.ratio <- spectra.line.table[input$elementratiob]
-                third.ratio <- spectra.line.table[input$elementratioc]
-                fourth.ratio <- spectra.line.table[input$elementratiod]
+                first.ratio <-spectra.line.table[,input$elementratioa]
+                second.ratio <- spectra.line.table[,input$elementratiob]
+                third.ratio <- spectra.line.table[,input$elementratioc]
+                fourth.ratio <- spectra.line.table[,input$elementratiod]
                 
                 
                 
                 ratio.frame <- data.frame(first.ratio, second.ratio, third.ratio, fourth.ratio, spectra.line.table$Cluster, spectra.line.table$Qualitative, spectra.line.table$Depth, spectra.line.table$Age, spectra.line.table$Climate)
-                colnames(ratio.frame) <- c(gsub("[.]", "", c(substr(input$elementratioa, 1, 2), substr(input$elementratiob, 1, 2), substr(input$elementratioc, 1, 2), substr(input$elementratiod, 1, 2), "Cluster", "Qualitative", "Depth", "Age", "Climate")))
+                colnames(ratio.frame) <- c(first.ratio.name, second.ratio.name, third.ratio.name, fourth.ratio.name, "Cluster", "Qualitative", "Depth", "Age", "Climate")
                 
                 
                 
@@ -5566,10 +5854,10 @@ shinyServer(function(input, output, session) {
                     spectra.line.table$Age <- rep(1, length(spectra.line.table$Depth))
                 }
                 
-                first.ratio <-spectra.line.table[input$elementratioa]
-                second.ratio <- spectra.line.table[input$elementratiob]
-                third.ratio <- spectra.line.table[input$elementratioc]
-                fourth.ratio <- spectra.line.table[input$elementratiod]
+                first.ratio <-spectra.line.table[,input$elementratioa]
+                second.ratio <- spectra.line.table[,input$elementratiob]
+                third.ratio <- spectra.line.table[,input$elementratioc]
+                fourth.ratio <- spectra.line.table[,input$elementratiod]
                 
                 first.ratio.norm <- first.ratio/sum(first.ratio)
                 second.ratio.norm <- second.ratio/sum(second.ratio)
@@ -5639,15 +5927,40 @@ shinyServer(function(input, output, session) {
             
             ratioTerm <- reactive({
                 
+                
+                first.ratio.name <- if(input$elementratioa %in% elementLines){
+                    gsub("[.]", "", substr(input$elementratioa, 1, 2))
+                } else {
+                    input$elementratioa
+                }
+                
+                second.ratio.name <- if(input$elementratiob %in% elementLines){
+                    gsub("[.]", "", substr(input$elementratiob, 1, 2))
+                } else {
+                    input$elementratiob
+                }
+                
+                third.ratio.name <- if(input$elementratioc %in% elementLines){
+                    gsub("[.]", "", substr(input$elementratioc, 1, 2))
+                } else {
+                    input$elementratioc
+                }
+                
+                fourth.ratio.name <- if(input$elementratiod %in% elementLines){
+                    gsub("[.]", "", substr(input$elementratiod, 1, 2))
+                } else {
+                    input$elementratiod
+                }
+                
                 ratio.names.x <- if(input$elementratiob!="None"){
-                    paste(substr(input$elementratioa, 1, 2), "-", substr(input$elementratiob, 1, 2), sep="", collapse="")
+                    paste(first.ratio.name, "-", second.ratio.name, sep="", collapse="")
                 } else if(input$elementratiob=="None"){
                     paste(substr(input$elementratioa, 1, 2))
                 }
                 
                 
                 ratio.names.y <- if(input$elementratiod!="None"){
-                    paste(substr(input$elementratioc, 1, 2), "-", substr(input$elementratiod, 1, 2), sep="", collapse="")
+                    paste(third.ratio.name, "-", fourth.ratio.name, sep="", collapse="")
                 } else if(input$elementratiod=="None"){
                     paste(substr(input$elementratioc, 1, 2))
                 }
@@ -5758,7 +6071,25 @@ shinyServer(function(input, output, session) {
                 
                 spectra.line.table <- ageData()
                 
+                first.axis.name <- if(input$axisa %in% elementLines){
+                    gsub("[.]", "", substr(input$axisa, 1, 2))
+                } else {
+                    input$axisa
+                }
                 
+                second.axis.name <- if(input$axisb %in% elementLines){
+                    gsub("[.]", "", substr(input$axisb, 1, 2))
+                } else {
+                    input$axisb
+                }
+                
+                third.axis.name <- if(input$axisc %in% elementLines){
+                    gsub("[.]", "", substr(input$axisc, 1, 2))
+                } else {
+                    input$axisc
+                }
+                
+
                 
                 unique.spec <- seq(1, length(spectra.line.table$Depth), 1)
                 null <- rep(1, length(unique.spec))
@@ -5772,11 +6103,11 @@ shinyServer(function(input, output, session) {
                 third.axis.norm <- third.axis/sum(third.axis)
                 
                 axis.frame <- data.frame(first.axis, second.axis, third.axis, spectra.line.table$Cluster, spectra.line.table$Qualitative, spectra.line.table$Depth, spectra.line.table$Age, spectra.line.table$Climate)
-                colnames(axis.frame) <- gsub("[.]", "", c(substr(input$axisa, 1, 2), substr(input$axisb, 1, 2), substr(input$axisc, 1, 2), "Cluster", "Qualitative", "Depth", "Age", "Climate"))
+                colnames(axis.frame) <- c(first.axis.name, second.axis.name, third.axis.name, "Cluster", "Qualitative", "Depth", "Age", "Climate")
                 
                 axis.frame.norm <- data.frame(first.axis.norm, second.axis.norm, third.axis.norm, spectra.line.table$Cluster, spectra.line.table$Qualitative, spectra.line.table$Depth, spectra.line.table$Age, spectra.line.table$Climate)
-                colnames(axis.frame.norm) <- gsub("[.]", "", c(substr(input$axisa, 1, 2), substr(input$axisb, 1, 2), substr(input$axisc, 1, 2), "Cluster", "Qualitative", "Depth", "Age", "Climate"))
-                
+                colnames(axis.frame.norm) <- c(first.axis.name, second.axis.name, third.axis.name, "Cluster", "Qualitative", "Depth", "Age", "Climate")
+
                 ternaryplot1 <- ggtern(data=axis.frame, aes_string(x = colnames(axis.frame)[1], y = colnames(axis.frame)[2], z = colnames(axis.frame)[3])) +
                 geom_point(size=input$ternpointsize) +
                 theme_light() +
@@ -6173,7 +6504,26 @@ shinyServer(function(input, output, session) {
             })
             
             axisTerm <- reactive({
-                axis.names.tern <- paste(gsub("[.]", "-", c(substr(input$axisa, 1, 2), substr(input$axisb, 1, 2), substr(input$axisc, 1, 2), "Ternary")), collapse='')
+                
+                first.axis.name <- if(input$axisa %in% elementLines){
+                    gsub("[.]", "", substr(input$axisa, 1, 2))
+                } else {
+                    input$axisa
+                }
+                
+                second.axis.name <- if(input$axisb %in% elementLines){
+                    gsub("[.]", "", substr(input$axisb, 1, 2))
+                } else {
+                    input$axisb
+                }
+                
+                third.axis.name <- if(input$axisc %in% elementLines){
+                    gsub("[.]", "", substr(input$axisc, 1, 2))
+                } else {
+                    input$axisc
+                }
+                
+                axis.names.tern <- paste(c(first.axis.name, second.axis.name, third.axis.name, "Ternary"), collapse='-')
                 axis.labels <- paste(c(input$projectname, "_", axis.names.tern), collapse='')
                 axis.labels
             })
