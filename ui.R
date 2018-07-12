@@ -298,12 +298,10 @@ sliderInput("spotsize", label = "Point Size", value=2, min=2, max=15),
 
 checkboxInput('elipseplot1', "Elipse"),
 
-tags$hr(),
+tags$hr()
 
 
-downloadButton('downloadPlot2', "Plot"),
-downloadButton('downloadPcaTable', "Results"),
-downloadButton('wsstable', "WSS")
+
 
 ),
 
@@ -322,8 +320,9 @@ hover = hoverOpts("plot_hoverpca", delay = 100, delayType = "debounce"),
 dblclick = "plot_pca_dblclick",
 brush = brushOpts(id = "plot_pca_brush", resetOnNew = TRUE)),
 uiOutput("hover_infopca")
-)
-
+),
+tags$hr(),
+downloadButton('downloadPlot2', "Plot")
 
 ),
 
@@ -332,10 +331,17 @@ div(
 style = "position:relative",
 plotOutput('optimalkplot',
 hover = hoverOpts("plot_hoveroptimalk", delay = 100, delayType = "debounce")),
-uiOutput("hover_infooptimalk"))
+uiOutput("hover_infooptimalk")),
+tags$hr(),
+downloadButton('wsstable', "WSS")
 ),
 
-tabPanel("Table", DT::dataTableOutput('xrfpcatable'))
+
+
+tabPanel("Table", DT::dataTableOutput('xrfpcatable'),
+tags$hr(),
+downloadButton('downloadPcaTable', "Results")
+)
 
 
 ))
@@ -360,13 +366,6 @@ actionButton('timeseriesact3', "3"),
 actionButton('timeseriesact4', "4"),
 actionButton('timeseriesact5', "5"),
 
-tags$hr(),
-
-downloadButton('downloadPlot3a', "1"),
-downloadButton('downloadPlot3b', "2"),
-downloadButton('downloadPlot3c', "3"),
-downloadButton('downloadPlot3d', "4"),
-downloadButton('downloadPlot3e', "5"),
 
 
 tags$hr(),
@@ -435,7 +434,9 @@ dblclick = "plot_3a_dblclick",
 brush = brushOpts(id = "plot_3a_brush", resetOnNew = TRUE),
 height = 700),
 uiOutput("hover_info3a")
-)
+),
+tags$hr(),
+downloadButton('downloadPlot3a', "Plot")
 ),
 
 tabPanel('Time Series 2',
@@ -447,7 +448,9 @@ dblclick = "plot_3b_dblclick",
 brush = brushOpts(id = "plot_3b_brush", resetOnNew = TRUE),
 height = 700),
 uiOutput("hover_info3b")
-)
+),
+tags$hr(),
+downloadButton('downloadPlot3b', "Plot")
 ),
 
 tabPanel('Time Series 3',
@@ -459,7 +462,9 @@ dblclick = "plot_3c_dblclick",
 brush = brushOpts(id = "plot_3c_brush", resetOnNew = TRUE),
 height = 700),
 uiOutput("hover_info3c")
-)
+),
+tags$hr(),
+downloadButton('downloadPlot3c', "Plot")
 ),
 
 tabPanel('Time Series 4',
@@ -471,7 +476,9 @@ dblclick = "plot_3d_dblclick",
 brush = brushOpts(id = "plot_3d_brush", resetOnNew = TRUE),
 height = 700),
 uiOutput("hover_info3d")
-)
+),
+tags$hr(),
+downloadButton('downloadPlot3d', "Plot")
 ),
 
 tabPanel('Time Series 5',
@@ -483,7 +490,9 @@ dblclick = "plot_3e_dblclick",
 brush = brushOpts(id = "plot_3e_brush", resetOnNew = TRUE),
 height = 700),
 uiOutput("hover_info3e")
-)
+),
+tags$hr(),
+downloadButton('downloadPlot3e', "Plot")
 )
 
 
@@ -527,11 +536,9 @@ checkboxInput('ternnormplot', "Normalize"),
 
 tags$hr(),
 
-sliderInput("ternpointsize", label = "Point Size", value=5, min=2, max=15),
+sliderInput("ternpointsize", label = "Point Size", value=5, min=2, max=15)
 
-tags$hr(),
 
-downloadButton('downloadPlot5', "Plot")
 
 ),
 
@@ -541,7 +548,11 @@ dblclick = "plot1_dblclick", height = 700,
 brush = brushOpts(
 id = "plot1_brush",
 resetOnNew = TRUE
-)))
+)),
+tags$hr(),
+
+downloadButton('downloadPlot5', "Plot")
+)
 
 
 ))
@@ -582,16 +593,7 @@ tags$hr(),
 sliderInput("spotsize2", label = "Point Size", value=5, min=2, max=15),
 
 
-checkboxInput('elipseplot2', "Elipse"),
-
-
-
-tags$hr(),
-
-
-downloadButton('downloadPlot4', "Plot")
-
-
+checkboxInput('elipseplot2', "Elipse")
 
 ),
 
@@ -604,7 +606,12 @@ dblclick = "plot_ratio_dblclick",
 brush = brushOpts(id = "plot_ratio_brush", resetOnNew = TRUE)),
 uiOutput("hover_inforatio")
 
-)
+),
+tags$hr(),
+
+
+downloadButton('downloadPlot4', "Plot")
+
 
 )
 )
@@ -631,13 +638,6 @@ actionButton('timeserieseq3', "3"),
 actionButton('timeserieseq4', "4"),
 actionButton('timeserieseq5', "5"),
 
-tags$hr(),
-
-downloadButton('downloadPlot6a', "1"),
-downloadButton('downloadPlot6b', "2"),
-downloadButton('downloadPlot6c', "3"),
-downloadButton('downloadPlot6d', "4"),
-downloadButton('downloadPlot6e', "5"),
 
 
 tags$hr(),
@@ -728,7 +728,9 @@ brush = brushOpts(id = "plot_6a_brush", resetOnNew = TRUE),
 height = 700
 ),
 uiOutput("hover_info6a")
-)
+),
+tags$hr(),
+downloadButton('downloadPlot6a', "Plot")
 ),
 
 tabPanel('Time Series 2',
@@ -740,7 +742,9 @@ dblclick = "plot_6b_dblclick",
 brush = brushOpts(id = "plot_6b_brush", resetOnNew = TRUE),
 height = 700),
 uiOutput("hover_info6b")
-)
+),
+tags$hr(),
+downloadButton('downloadPlot6b', "Plot")
 ),
 
 tabPanel('Time Series 3',
@@ -752,7 +756,9 @@ dblclick = "plot_6c_dblclick",
 brush = brushOpts(id = "plot_6c_brush", resetOnNew = TRUE),
 height = 700),
 uiOutput("hover_info6c")
-)
+),
+tags$hr(),
+downloadButton('downloadPlot6c', "Plot")
 ),
 
 tabPanel('Time Series 4',
@@ -764,7 +770,9 @@ dblclick = "plot_6d_dblclick",
 brush = brushOpts(id = "plot_6d_brush", resetOnNew = TRUE),
 height = 700),
 uiOutput("hover_info6d")
-)
+),
+tags$hr(),
+downloadButton('downloadPlot6d', "Plot")
 ),
 
 tabPanel('Time Series 5',
@@ -776,7 +784,9 @@ dblclick = "plot_6e_dblclick",
 brush = brushOpts(id = "plot_6e_brush", resetOnNew = TRUE),
 height = 700),
 uiOutput("hover_info6e")
-)
+),
+tags$hr(),
+downloadButton('downloadPlot6e', "Plot")
 )
 
 

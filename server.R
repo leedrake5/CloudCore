@@ -5535,14 +5535,7 @@ shinyServer(function(input, output, session) {
             
             
             ratioChooseB <- reactive({
-                spectra.line.table <- ageData()
-                spectra.line.names <- colnames(spectra.line.table)
-                
-                
-                standard <- spectra.line.names[3]
-                
-                
-                standard
+                "None"
                 
             })
             
@@ -5561,13 +5554,7 @@ shinyServer(function(input, output, session) {
             
             
             ratioChooseD <- reactive({
-                spectra.line.table <- ageData()
-                spectra.line.names <- colnames(spectra.line.table)
-                
-                standard <- spectra.line.names[5]
-                
-                
-                standard
+                    "None"
                 
             })
             
@@ -7721,7 +7708,13 @@ shinyServer(function(input, output, session) {
             
             
             
+            elementholdeq <- reactiveValues()
             
+            observeEvent(input$timeserieseq1, {
+                
+                elementholdeq$spectratable1 <- dataTransform()
+                
+            })
             
             
             plotInput6a <- reactive({
@@ -7743,7 +7736,7 @@ shinyServer(function(input, output, session) {
                 }
                 
                 
-                spectra.line.table <- dataTransform()
+                spectra.line.table <- elementholdeq$spectratable1
                 
                 #spectra.line.table <- subset(spectra.line.table, !(spectra.line.table[input$xaxistypeeq] <= input$xlimrangeeq[1] | spectra.line.table[input$xaxistypeeq] >= input$xlimrangeeq[2]))
                 
@@ -8093,16 +8086,14 @@ shinyServer(function(input, output, session) {
             
             
             output$timeserieseqplot1 <- renderPlot({
-                input$timeserieseq1
                 
-                isolate(plotInput6a())
+                plotInput6a()
             })
             
             hoverHold6a <- reactive({
-                input$timeserieseq1
                 
-                spectra.line.table <- dataTransform()
-                
+                spectra.line.table <- elementholdeq$spectratable1
+
                 #spectra.line.table <- subset(spectra.line.table, !(spectra.line.table[input$xaxistypeeq] <= input$xlimrangeeq[1] | spectra.line.table[input$xaxistypeeq] >= input$xlimrangeeq[2]))
                 
                 if(is.null(spectra.line.table$Age)==TRUE){
@@ -8112,7 +8103,7 @@ shinyServer(function(input, output, session) {
                 spectra.timeseries.table <- data.frame(spectra.line.table[c(input$xaxistypeeq)], DEMA(spectra.line.table$Selected, input$smoothingeq), spectra.line.table$Cluster, spectra.line.table$Qualitative, spectra.line.table$Depth, spectra.line.table$Climate, spectra.line.table$Age)
                 colnames(spectra.timeseries.table) <- c("Interval", "Selected", "Cluster", "Qualitative", "Depth", "Climate", "Age")
                 
-                isolate(spectra.timeseries.table)
+                spectra.timeseries.table
                 
             })
             
@@ -8146,14 +8137,22 @@ shinyServer(function(input, output, session) {
                 "left:", left_px + 2, "px; top:", top_px + 2, "px;")
                 
                 # actual tooltip created as wellPanel
-                wellPanel(
-                style = style,
-                p(HTML(paste0("<b> Spectrum: </b>", point$Spectrum, "<br/>",
-                "<b> Depth: </b>", point$Depth, "<br/>",
-                "<b> Age: </b>", point$Age, "<br/>"
-                
-                )))
-                )
+                if(input$ageon==TRUE){
+                    wellPanel(
+                    style = style,
+                    p(HTML(paste0(
+                    "<b> Depth: </b>", round(point$Depth, 2), "<br/>",
+                    "<b> Age: </b>", round(point$Age, 2), "<br/>"
+                    )))
+                    )
+                } else if(input$ageon==FALSE){
+                    wellPanel(
+                    style = style,
+                    p(HTML(paste0(
+                    "<b> Depth: </b>", round(point$Depth, 2), "<br/>"
+                    )))
+                    )
+                }
             })
             
             
@@ -8182,6 +8181,11 @@ shinyServer(function(input, output, session) {
             )
             
             
+            observeEvent(input$timeserieseq2, {
+                
+                elementholdeq$spectratable2 <- dataTransform()
+                
+            })
             
             plotInput6b <- reactive({
                 
@@ -8202,7 +8206,7 @@ shinyServer(function(input, output, session) {
                 
                 
                 
-                spectra.line.table <- dataTransform()
+                spectra.line.table <- elementholdeq$spectratable2
                 #spectra.line.table <- subset(spectra.line.table, !(spectra.line.table[input$xaxistypeeq] <= input$xlimrangeeq[1] | spectra.line.table[input$xaxistypeeq] >= input$xlimrangeeq[2]))
                 
                 
@@ -8557,20 +8561,15 @@ shinyServer(function(input, output, session) {
             })
             
             
-            observeEvent(input$timeserieseq2, {
-                
-                
-            })
+
             output$timeserieseqplot2 <- renderPlot({
-                input$timeserieseq2
-                isolate(plotInput6b())
+                plotInput6b()
             })
             
             hoverHold6b <- reactive({
-                input$timeserieseq2
                 
-                spectra.line.table <- dataTransform()
-                
+                spectra.line.table <- elementholdeq$spectratable2
+
                 #spectra.line.table <- subset(spectra.line.table, !(spectra.line.table[input$xaxistypeeq] <= input$xlimrangeeq[1] | spectra.line.table[input$xaxistypeeq] >= input$xlimrangeeq[2]))
                 
                 if(is.null(spectra.line.table$Age)==TRUE){
@@ -8580,7 +8579,7 @@ shinyServer(function(input, output, session) {
                 spectra.timeseries.table <- data.frame(spectra.line.table[c(input$xaxistypeeq)], DEMA(spectra.line.table$Selected, input$smoothingeq), spectra.line.table$Cluster, spectra.line.table$Qualitative, spectra.line.table$Depth, spectra.line.table$Climate, spectra.line.table$Age)
                 colnames(spectra.timeseries.table) <- c("Interval", "Selected", "Cluster", "Qualitative", "Depth", "Climate", "Age")
                 
-                isolate(spectra.timeseries.table)
+                spectra.timeseries.table
                 
             })
             
@@ -8615,14 +8614,22 @@ shinyServer(function(input, output, session) {
                 "left:", left_px + 2, "px; top:", top_px + 2, "px;")
                 
                 # actual tooltip created as wellPanel
-                wellPanel(
-                style = style,
-                p(HTML(paste0("<b> Spectrum: </b>", point$Spectrum, "<br/>",
-                "<b> Depth: </b>", point$Depth, "<br/>",
-                "<b> Age: </b>", point$Age, "<br/>"
-                
-                )))
-                )
+                if(input$ageon==TRUE){
+                    wellPanel(
+                    style = style,
+                    p(HTML(paste0(
+                    "<b> Depth: </b>", round(point$Depth, 2), "<br/>",
+                    "<b> Age: </b>", round(point$Age, 2), "<br/>"
+                    )))
+                    )
+                } else if(input$ageon==FALSE){
+                    wellPanel(
+                    style = style,
+                    p(HTML(paste0(
+                    "<b> Depth: </b>", round(point$Depth, 2), "<br/>"
+                    )))
+                    )
+                }
             })
             
             
@@ -8652,7 +8659,11 @@ shinyServer(function(input, output, session) {
             }
             )
             
-            
+            observeEvent(input$timeserieseq3, {
+                
+                elementholdeq$spectratable3 <- dataTransform()
+                
+            })
             
             plotInput6c <- reactive({
                 
@@ -8675,7 +8686,7 @@ shinyServer(function(input, output, session) {
                 
                 
                 
-                spectra.line.table <- dataTransform()
+                spectra.line.table <- elementholdeq$spectratable3
                 #spectra.line.table <- subset(spectra.line.table, !(spectra.line.table[input$xaxistypeeq] <= input$xlimrangeeq[1] | spectra.line.table[input$xaxistypeeq] >= input$xlimrangeeq[2]))
                 
                 
@@ -9030,18 +9041,15 @@ shinyServer(function(input, output, session) {
                 
             })
             
-            observeEvent(input$timeserieseq3, {
-            })
+
             
             output$timeserieseqplot3 <- renderPlot({
-                input$timeserieseq3
                 
-                isolate(plotInput6c())
+                plotInput6c()
                 
             })
             
             hoverHold6c <- reactive({
-                input$timeserieseq3
                 
                 spectra.line.table <- dataTransform()
                 
@@ -9054,7 +9062,7 @@ shinyServer(function(input, output, session) {
                 spectra.timeseries.table <- data.frame(spectra.line.table[c(input$xaxistypeeq)], DEMA(spectra.line.table$Selected, input$smoothingeq), spectra.line.table$Cluster, spectra.line.table$Qualitative, spectra.line.table$Depth, spectra.line.table$Climate, spectra.line.table$Age)
                 colnames(spectra.timeseries.table) <- c("Interval", "Selected", "Cluster", "Qualitative", "Depth", "Climate", "Age")
                 
-                isolate(spectra.timeseries.table)
+                spectra.timeseries.table
                 
             })
             
@@ -9088,14 +9096,22 @@ shinyServer(function(input, output, session) {
                 "left:", left_px + 2, "px; top:", top_px + 2, "px;")
                 
                 # actual tooltip created as wellPanel
-                wellPanel(
-                style = style,
-                p(HTML(paste0("<b> Spectrum: </b>", point$Spectrum, "<br/>",
-                "<b> Depth: </b>", point$Depth, "<br/>",
-                "<b> Age: </b>", point$Age, "<br/>"
-                
-                )))
-                )
+                if(input$ageon==TRUE){
+                    wellPanel(
+                    style = style,
+                    p(HTML(paste0(
+                    "<b> Depth: </b>", round(point$Depth, 2), "<br/>",
+                    "<b> Age: </b>", round(point$Age, 2), "<br/>"
+                    )))
+                    )
+                } else if(input$ageon==FALSE){
+                    wellPanel(
+                    style = style,
+                    p(HTML(paste0(
+                    "<b> Depth: </b>", round(point$Depth, 2), "<br/>"
+                    )))
+                    )
+                }
             })
             
             
@@ -9123,6 +9139,12 @@ shinyServer(function(input, output, session) {
             )
             
             
+            observeEvent(input$timeserieseq4, {
+                
+                elementholdeq$spectratable4 <- dataTransform()
+                
+            })
+            
             plotInput6d <- reactive({
                 
                 
@@ -9143,7 +9165,7 @@ shinyServer(function(input, output, session) {
                 
                 
                 
-                spectra.line.table <- dataTransform()
+                spectra.line.table <- elementholdeq$spectratable4
                 #spectra.line.table <- subset(spectra.line.table, !(spectra.line.table[input$xaxistypeeq] <= input$xlimrangeeq[1] | spectra.line.table[input$xaxistypeeq] >= input$xlimrangeeq[2]))
                 
                 
@@ -9496,20 +9518,15 @@ shinyServer(function(input, output, session) {
                 
             })
             
-            observeEvent(input$timeserieseq4, {
-                
-            })
             
             
             
             output$timeserieseqplot4 <- renderPlot({
-                input$timeserieseq4
-                isolate(plotInput6d())
+                plotInput6d()
             })
             
             
             hoverHold6d <- reactive({
-                input$timeserieseq4
                 
                 spectra.line.table <- dataTransform()
                 
@@ -9522,7 +9539,7 @@ shinyServer(function(input, output, session) {
                 spectra.timeseries.table <- data.frame(spectra.line.table[c(input$xaxistypeeq)], DEMA(spectra.line.table$Selected, input$smoothingeq), spectra.line.table$Cluster, spectra.line.table$Qualitative, spectra.line.table$Depth, spectra.line.table$Climate, spectra.line.table$Age)
                 colnames(spectra.timeseries.table) <- c("Interval", "Selected", "Cluster", "Qualitative", "Depth", "Climate", "Age")
                 
-                isolate(spectra.timeseries.table)
+                spectra.timeseries.table
                 
             })
             
@@ -9557,14 +9574,22 @@ shinyServer(function(input, output, session) {
                 "left:", left_px + 2, "px; top:", top_px + 2, "px;")
                 
                 # actual tooltip created as wellPanel
-                wellPanel(
-                style = style,
-                p(HTML(paste0("<b> Spectrum: </b>", point$Spectrum, "<br/>",
-                "<b> Depth: </b>", point$Depth, "<br/>",
-                "<b> Age: </b>", point$Age, "<br/>"
-                
-                )))
-                )
+                if(input$ageon==TRUE){
+                    wellPanel(
+                    style = style,
+                    p(HTML(paste0(
+                    "<b> Depth: </b>", round(point$Depth, 2), "<br/>",
+                    "<b> Age: </b>", round(point$Age, 2), "<br/>"
+                    )))
+                    )
+                } else if(input$ageon==FALSE){
+                    wellPanel(
+                    style = style,
+                    p(HTML(paste0(
+                    "<b> Depth: </b>", round(point$Depth, 2), "<br/>"
+                    )))
+                    )
+                }
             })
             
             
@@ -9593,7 +9618,11 @@ shinyServer(function(input, output, session) {
             )
             
             
-            
+            observeEvent(input$timeserieseq5, {
+                
+                elementholdeq$spectratable5 <- dataTransform()
+                
+            })
             
             
             plotInput6e <- reactive({
@@ -9617,7 +9646,7 @@ shinyServer(function(input, output, session) {
                 
                 
                 
-                spectra.line.table <- dataTransform()
+                spectra.line.table <- elementholdeq$spectratable5
                 #spectra.line.table <- subset(spectra.line.table, !(spectra.line.table[input$xaxistypeeq] <= input$xlimrangeeq[1] | spectra.line.table[input$xaxistypeeq] >= input$xlimrangeeq[2]))
                 
                 
@@ -9971,22 +10000,15 @@ shinyServer(function(input, output, session) {
                 
             })
             
-            observeEvent(input$timeserieseq5, {
-                
-                
-            })
+
             
             output$timeserieseqplot5 <- renderPlot({
-                input$timeserieseq5
-                
-                
-                
-                isolate(plotInput6e())
+
+                plotInput6e()
             })
             
             
             hoverHold6e <- reactive({
-                input$timeserieseq5
                 
                 spectra.line.table <- dataTransform()
                 
@@ -9999,7 +10021,7 @@ shinyServer(function(input, output, session) {
                 spectra.timeseries.table <- data.frame(spectra.line.table[c(input$xaxistypeeq)], DEMA(spectra.line.table$Selected, input$smoothingeq), spectra.line.table$Cluster, spectra.line.table$Qualitative, spectra.line.table$Depth, spectra.line.table$Climate, spectra.line.table$Age)
                 colnames(spectra.timeseries.table) <- c("Interval", "Selected", "Cluster", "Qualitative", "Depth", "Climate", "Age")
                 
-                isolate(spectra.timeseries.table)
+                spectra.timeseries.table
                 
             })
             
@@ -10034,14 +10056,22 @@ shinyServer(function(input, output, session) {
                 "left:", left_px + 2, "px; top:", top_px + 2, "px;")
                 
                 # actual tooltip created as wellPanel
-                wellPanel(
-                style = style,
-                p(HTML(paste0("<b> Spectrum: </b>", point$Spectrum, "<br/>",
-                "<b> Depth: </b>", point$Depth, "<br/>",
-                "<b> Age: </b>", point$Age, "<br/>"
-                
-                )))
-                )
+                if(input$ageon==TRUE){
+                    wellPanel(
+                    style = style,
+                    p(HTML(paste0(
+                    "<b> Depth: </b>", round(point$Depth, 2), "<br/>",
+                    "<b> Age: </b>", round(point$Age, 2), "<br/>"
+                    )))
+                    )
+                } else if(input$ageon==FALSE){
+                    wellPanel(
+                    style = style,
+                    p(HTML(paste0(
+                    "<b> Depth: </b>", round(point$Depth, 2), "<br/>"
+                    )))
+                    )
+                }
             })
             
             
