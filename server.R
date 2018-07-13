@@ -2364,8 +2364,31 @@ shinyServer(function(input, output, session) {
                 rep("8. Glacial", length(glacial))
                 )
                 
+                modern.level <- subset(spectra.line.table.age.unconstrained$Age, spectra.line.table.age.unconstrained$Age <= 10000 & spectra.line.table.age.unconstrained$Age > -1000)
+                
+                gilbert.level <- subset(spectra.line.table.age.unconstrained$Age, spectra.line.table.age.unconstrained$Age <= 12000 & spectra.line.table.age.unconstrained$Age > 10000)
+                
+                provo.level <- subset(spectra.line.table.age.unconstrained$Age, spectra.line.table.age.unconstrained$Age <= 15000 & spectra.line.table.age.unconstrained$Age > 12000)
+                
+                bonneville.level <- subset(spectra.line.table.age.unconstrained$Age, spectra.line.table.age.unconstrained$Age <= 25000 & spectra.line.table.age.unconstrained$Age > 15000)
+                
+                pre.bonneville.level <- subset(spectra.line.table.age.unconstrained$Age, spectra.line.table.age.unconstrained$Age <= 250000 & spectra.line.table.age.unconstrained$Age > 25000)
+                
+                
+                lakeperiods <- c(
+                rep("1. Modern", length(modern.level)),
+                rep("2. Gilbert", length(gilbert.level)),
+                rep("3. Provo", length(provo.level)),
+                rep("4. Bonneville", length(bonneville.level)),
+                rep("5. Pre-Bonneville", length(pre.bonneville.level))
+                )
+
+                
+                
+                
                 
                 spectra.line.table.age.unconstrained$Climate <- climateperiods
+                spectra.line.table.age.unconstrained$Lake <- lakeperiods
                 spectra.line.table.age.unconstrained$None <- rep(1, length(spectra.line.table.age.unconstrained$Depth))
                 
                 spectra.line.table.age.constrained <- subset(spectra.line.table.age.unconstrained, spectra.line.table.age.unconstrained$Depth > c14min)
@@ -2496,6 +2519,44 @@ shinyServer(function(input, output, session) {
                 scale_colour_discrete("Climatic Period")
                 
                 
+                lake.regular <- ggplot(data= spectra.line.table) +
+                coord_cartesian(xlim = rangespca$x, ylim = rangespca$y, expand = TRUE) +
+                geom_point(aes(PC1, PC2, colour=as.factor(Lake), shape=as.factor(Lake)), size = input$spotsize+1) +
+                geom_point(aes(PC1, PC2), colour="grey30", size=input$spotsize-2) +
+                scale_x_continuous("Principle Component 1") +
+                scale_y_continuous("Principle Component 2") +
+                theme_light() +
+                theme(axis.text.x = element_text(size=15)) +
+                theme(axis.text.y = element_text(size=15)) +
+                theme(axis.title.x = element_text(size=15)) +
+                theme(axis.title.y = element_text(size=15, angle=90)) +
+                theme(plot.title=element_text(size=20)) +
+                theme(legend.title=element_text(size=15)) +
+                theme(legend.text=element_text(size=15)) +
+                scale_shape_manual("Lake Level", values=1:nlevels(as.factor(spectra.line.table$Lake))) +
+                scale_colour_discrete("Lake Level")
+                
+                
+                lake.ellipse <- ggplot(data= spectra.line.table) +
+                coord_cartesian(xlim = rangespca$x, ylim = rangespca$y, expand = TRUE) +
+                geom_point(aes(PC1, PC2, colour=as.factor(Lake), shape=as.factor(Lake)), size = input$spotsize+1) +
+                geom_point(aes(PC1, PC2), colour="grey30", size=input$spotsize-2) +
+                scale_x_continuous("Principle Component 1") +
+                scale_y_continuous("Principle Component 2") +
+                theme_light() +
+                stat_ellipse(aes(PC1, PC2, colour=as.factor(Lake), linetype=as.factor(Lake))) +
+                theme(axis.text.x = element_text(size=15)) +
+                theme(axis.text.y = element_text(size=15)) +
+                theme(axis.title.x = element_text(size=15)) +
+                theme(axis.title.y = element_text(size=15, angle=90)) +
+                theme(plot.title=element_text(size=20)) +
+                theme(legend.title=element_text(size=15)) +
+                theme(legend.text=element_text(size=15)) +
+                guides(linetype=FALSE) +
+                scale_shape_manual("Lake Level", values=1:nlevels(as.factor(spectra.line.table$Lake))) +
+                scale_colour_discrete("Lake Level")
+                
+                
                 qual.regular <- ggplot(data= spectra.line.table) +
                 coord_cartesian(xlim = rangespca$x, ylim = rangespca$y, expand = TRUE) +
                 geom_point(aes(PC1, PC2, colour=as.factor(Qualitative), shape=as.factor(Qualitative)), size = input$spotsize+1) +
@@ -2560,6 +2621,10 @@ shinyServer(function(input, output, session) {
                     clim.ellipse
                 } else if (input$elipseplot1 == FALSE && input$pcacolour == "Climate") {
                     clim.regular
+                } else if (input$elipseplot1 == TRUE && input$pcacolour == "Lake") {
+                    lake.ellipse
+                } else if (input$elipseplot1 == FALSE && input$pcacolour == "Lake") {
+                    lake.regular
                 } else if (input$elipseplot1 == TRUE && input$pcacolour == "Qualitative") {
                     qual.ellipse
                 } else if (input$elipseplot1 == FALSE && input$pcacolour == "Qualitative") {
@@ -2593,7 +2658,7 @@ shinyServer(function(input, output, session) {
                 
                 if(is.null(point.table$Age)==TRUE){
                     point.table$Age <- rep(1, length(point.table$Spectrum))
-                }
+}
                 
                 hover <- input$plot_hoverpca
                 point <- nearPoints(point.table,  coordinfo=hover,   threshold = 5, maxpoints = 1, addDist = TRUE)
@@ -2619,13 +2684,22 @@ shinyServer(function(input, output, session) {
                 "left:", left_px + 2, "px; top:", top_px + 2, "px;")
                 
                 # actual tooltip created as wellPanel
-                wellPanel(
-                style = style,
-                p(HTML(paste0("<b> Depth: </b>", point$Depth, "<br/>",
-                "<b> Age: </b>", point$Age, "<br/>"
-                
-                )))
-                )
+                if(input$ageon==TRUE){
+                    wellPanel(
+                    style = style,
+                    p(HTML(paste0(
+                    "<b> Depth: </b>", round(point$Depth, 2), "<br/>",
+                    "<b> Age: </b>", round(point$Age, 2), "<br/>"
+                    )))
+                    )
+                } else if(input$ageon==FALSE){
+                    wellPanel(
+                    style = style,
+                    p(HTML(paste0(
+                    "<b> Depth: </b>", round(point$Depth, 2), "<br/>"
+                    )))
+                    )
+                }
             })
             
             rangespca <- reactiveValues(x = NULL, y = NULL)
@@ -2811,8 +2885,8 @@ shinyServer(function(input, output, session) {
                 #spectra.timeseries.table <- data.frame(interval, spectra.line.table[c(input$elementtrend)]/spectra.line.table.norm[c(input$elementnorm)], spectra.line.table$Cluster, spectra.line.table$Qualitative, spectra.line.table$Depth)
                 #colnames(spectra.timeseries.table) <- c("Interval", "Selected", "Cluster", "Qualitative", "Depth")
                 
-                spectra.timeseries.table <- data.frame(spectra.line.table[,c(input$xaxistype)], (spectra.line.table[,c(elementhold$elementtrenda)]/spectra.line.table.norm[,c(elementhold$elementnorma)]*input$ymultiply), spectra.line.table$Cluster, spectra.line.table$Qualitative, spectra.line.table$Depth, spectra.line.table$Climate)
-                colnames(spectra.timeseries.table) <- c("Interval", "Selected", "Cluster", "Qualitative", "Depth", "Climate")
+                spectra.timeseries.table <- data.frame(spectra.line.table[,c(input$xaxistype)], (spectra.line.table[,c(elementhold$elementtrenda)]/spectra.line.table.norm[,c(elementhold$elementnorma)]*input$ymultiply), spectra.line.table$Cluster, spectra.line.table$Qualitative, spectra.line.table$Depth, spectra.line.table$Climate, spectra.line.table$Lake)
+                colnames(spectra.timeseries.table) <- c("Interval", "Selected", "Cluster", "Qualitative", "Depth", "Climate", "Lake")
                 
                 element.trend.name <- if(elementhold$elementtrenda %in% elementLines){
                     gsub("[.]", "", substr(elementhold$elementtrenda, 1, 2))
@@ -2942,6 +3016,21 @@ shinyServer(function(input, output, session) {
                 climate.time.series.line <- qplot(Interval, DEMA(Selected, input$smoothing), geom="line", data = spectra.timeseries.table, colour = as.factor(Climate)) +
                 coord_cartesian(xlim = ranges3a$x, ylim = ranges3a$y, expand = TRUE) +
                 scale_colour_discrete("Climatic Period") +
+                theme_light() +
+                theme(axis.text.x = element_text(size=15)) +
+                theme(axis.text.y = element_text(size=15)) +
+                theme(axis.title.x = element_text(size=15)) +
+                theme(axis.title.y = element_text(size=15, angle=90)) +
+                theme(plot.title=element_text(size=20)) +
+                theme(legend.title=element_text(size=15)) +
+                theme(legend.text=element_text(size=15)) +
+                scale_x_continuous(paste(x.axis), label=comma) +
+                scale_y_continuous(paste(trendy), label=comma)
+                
+                
+                lake.time.series.line <- qplot(Interval, DEMA(Selected, input$smoothing), geom="line", data = spectra.timeseries.table, colour = as.factor(Lake)) +
+                coord_cartesian(xlim = ranges3a$x, ylim = ranges3a$y, expand = TRUE) +
+                scale_colour_discrete("Lake Level") +
                 theme_light() +
                 theme(axis.text.x = element_text(size=15)) +
                 theme(axis.text.y = element_text(size=15)) +
@@ -3094,6 +3183,21 @@ shinyServer(function(input, output, session) {
                 scale_y_continuous(paste(trendy), label=comma)
                 
                 
+                lake.time.series.line.reverse <- qplot(Interval, DEMA(Selected, input$smoothing), geom="line", data = spectra.timeseries.table, colour = as.factor(Lake)) +
+                coord_cartesian(xlim = ranges3e$x, ylim = ranges3e$y, expand = TRUE) +
+                scale_colour_discrete("Lake Level") +
+                theme_light() +
+                theme(axis.text.x = element_text(size=15)) +
+                theme(axis.text.y = element_text(size=15)) +
+                theme(axis.title.x = element_text(size=15)) +
+                theme(axis.title.y = element_text(size=15, angle=90)) +
+                theme(plot.title=element_text(size=20)) +
+                theme(legend.title=element_text(size=15)) +
+                theme(legend.text=element_text(size=15)) +
+                scale_x_reverse(paste(x.axis), label=comma) +
+                scale_y_continuous(paste(trendy), label=comma)
+                
+                
                 qualitative.time.series.line.reverse <- qplot(Interval, DEMA(Selected, input$smoothing), geom="line", data = spectra.timeseries.table, colour = as.factor(Qualitative)) +
                 coord_cartesian(xlim = ranges3a$x, ylim = ranges3a$y, expand = TRUE) +
                 scale_colour_discrete("Qualitative") +
@@ -3152,6 +3256,8 @@ shinyServer(function(input, output, session) {
                     cluster.time.series
                 } else if (input$timecolour == "Climate" && input$flipx==FALSE) {
                     climate.time.series.line
+                } else if (input$timecolour == "Lake" && input$flipx==FALSE) {
+                    lake.time.series.line
                 } else if (input$timecolour == "QualitativePoint" && input$flipx==FALSE) {
                     qualitative.time.series.point
                 } else if (input$timecolour == "QualitativeLine" && input$flipx==FALSE) {
@@ -3170,6 +3276,8 @@ shinyServer(function(input, output, session) {
                     cluster.time.series.reverse
                 } else if (input$timecolour == "Climate" && input$flipx==TRUE) {
                     climate.time.series.line.reverse
+                } else if (input$timecolour == "Lake" && input$flipx==TRUE) {
+                    lake.time.series.line.reverse
                 } else if (input$timecolour == "QualitativePoint" && input$flipx==TRUE) {
                     qualitative.time.series.point.reverse
                 } else if (input$timecolour == "QualitativeLine" && input$flipx==TRUE) {
@@ -3210,8 +3318,8 @@ shinyServer(function(input, output, session) {
                 #spectra.timeseries.table <- data.frame(interval, spectra.line.table[c(input$elementtrend)]/spectra.line.table.norm[c(input$elementnorm)], spectra.line.table$Cluster, spectra.line.table$Qualitative, spectra.line.table$Depth)
                 #colnames(spectra.timeseries.table) <- c("Interval", "Selected", "Cluster", "Qualitative", "Depth")
                 
-                spectra.timeseries.table <- data.frame(spectra.line.table[c(input$xaxistype)], DEMA(spectra.line.table[c(elementhold$elementtrenda)]/spectra.line.table.norm[c(elementhold$elementnorma)]*input$ymultiply, input$smoothing), spectra.line.table$Cluster, spectra.line.table$Qualitative, spectra.line.table$Depth, spectra.line.table$Age, spectra.line.table$Climate)
-                colnames(spectra.timeseries.table) <- c("Interval", "Selected", "Cluster", "Qualitative", "Depth", "Age", "Climate")
+                spectra.timeseries.table <- data.frame(spectra.line.table[,c(input$xaxistype)], (spectra.line.table[,c(elementhold$elementtrenda)]/spectra.line.table.norm[,c(elementhold$elementnorma)]*input$ymultiply), spectra.line.table$Cluster, spectra.line.table$Qualitative, spectra.line.table$Depth, spectra.line.table$Climate, spectra.line.table$Lake)
+                colnames(spectra.timeseries.table) <- c("Interval", "Selected", "Cluster", "Qualitative", "Depth", "Climate", "Lake")
                 
                 spectra.timeseries.table
                 
@@ -3364,8 +3472,8 @@ shinyServer(function(input, output, session) {
                 #spectra.timeseries.table <- data.frame(interval, spectra.line.table[c(input$elementtrend)]/spectra.line.table.norm[c(input$elementnorm)], spectra.line.table$Cluster, spectra.line.table$Qualitative, spectra.line.table$Depth)
                 #colnames(spectra.timeseries.table) <- c("Interval", "Selected", "Cluster", "Qualitative", "Depth")
                 
-                spectra.timeseries.table <- data.frame(spectra.line.table[c(input$xaxistype)], (spectra.line.table[c(elementhold$elementtrendb)]/spectra.line.table.norm[c(elementhold$elementnormb)]*input$ymultiply), spectra.line.table$Cluster, spectra.line.table$Qualitative, spectra.line.table$Depth, spectra.line.table$Climate)
-                colnames(spectra.timeseries.table) <- c("Interval", "Selected", "Cluster", "Qualitative", "Depth", "Climate")
+                spectra.timeseries.table <- data.frame(spectra.line.table[,c(input$xaxistype)], (spectra.line.table[,c(elementhold$elementtrenda)]/spectra.line.table.norm[,c(elementhold$elementnorma)]*input$ymultiply), spectra.line.table$Cluster, spectra.line.table$Qualitative, spectra.line.table$Depth, spectra.line.table$Climate, spectra.line.table$Lake)
+                colnames(spectra.timeseries.table) <- c("Interval", "Selected", "Cluster", "Qualitative", "Depth", "Climate", "Lake")
                 
                 
                 element.trend.name <- if(elementhold$elementtrendb %in% elementLines){
@@ -3491,6 +3599,21 @@ shinyServer(function(input, output, session) {
                 climate.time.series.line <- qplot(Interval, DEMA(Selected, input$smoothing), geom="line", data = spectra.timeseries.table, colour = as.factor(Climate)) +
                 coord_cartesian(xlim = ranges3b$x, ylim = ranges3b$y, expand = TRUE) +
                 scale_colour_discrete("Climatic Period") +
+                theme_light() +
+                theme(axis.text.x = element_text(size=15)) +
+                theme(axis.text.y = element_text(size=15)) +
+                theme(axis.title.x = element_text(size=15)) +
+                theme(axis.title.y = element_text(size=15, angle=90)) +
+                theme(plot.title=element_text(size=20)) +
+                theme(legend.title=element_text(size=15)) +
+                theme(legend.text=element_text(size=15)) +
+                scale_x_continuous(paste(x.axis), label=comma) +
+                scale_y_continuous(paste(trendy), label=comma)
+                
+                
+                lake.time.series.line <- qplot(Interval, DEMA(Selected, input$smoothing), geom="line", data = spectra.timeseries.table, colour = as.factor(Lake)) +
+                coord_cartesian(xlim = ranges3a$x, ylim = ranges3a$y, expand = TRUE) +
+                scale_colour_discrete("Lake Level") +
                 theme_light() +
                 theme(axis.text.x = element_text(size=15)) +
                 theme(axis.text.y = element_text(size=15)) +
@@ -3643,6 +3766,21 @@ shinyServer(function(input, output, session) {
                 scale_y_continuous(paste(trendy), label=comma)
                 
                 
+                lake.time.series.line.reverse <- qplot(Interval, DEMA(Selected, input$smoothing), geom="line", data = spectra.timeseries.table, colour = as.factor(Lake)) +
+                coord_cartesian(xlim = ranges3e$x, ylim = ranges3e$y, expand = TRUE) +
+                scale_colour_discrete("Lake Level") +
+                theme_light() +
+                theme(axis.text.x = element_text(size=15)) +
+                theme(axis.text.y = element_text(size=15)) +
+                theme(axis.title.x = element_text(size=15)) +
+                theme(axis.title.y = element_text(size=15, angle=90)) +
+                theme(plot.title=element_text(size=20)) +
+                theme(legend.title=element_text(size=15)) +
+                theme(legend.text=element_text(size=15)) +
+                scale_x_reverse(paste(x.axis), label=comma) +
+                scale_y_continuous(paste(trendy), label=comma)
+                
+                
                 qualitative.time.series.line.reverse <- qplot(Interval, DEMA(Selected, input$smoothing), geom="line", data = spectra.timeseries.table, colour = as.factor(Qualitative)) +
                 coord_cartesian(xlim = ranges3b$x, ylim = ranges3b$y, expand = TRUE) +
                 scale_colour_discrete("Qualitative") +
@@ -3700,6 +3838,8 @@ shinyServer(function(input, output, session) {
                     cluster.time.series
                 } else if (input$timecolour == "Climate" && input$flipx==FALSE) {
                     climate.time.series.line
+                } else if (input$timecolour == "Lake" && input$flipx==FALSE) {
+                    lake.time.series.line
                 } else if (input$timecolour == "QualitativePoint" && input$flipx==FALSE) {
                     qualitative.time.series.point
                 } else if (input$timecolour == "QualitativeLine" && input$flipx==FALSE) {
@@ -3718,6 +3858,8 @@ shinyServer(function(input, output, session) {
                     cluster.time.series.reverse
                 } else if (input$timecolour == "Climate" && input$flipx==TRUE) {
                     climate.time.series.line.reverse
+                } else if (input$timecolour == "Lake" && input$flipx==TRUE) {
+                    lake.time.series.line.reverse
                 } else if (input$timecolour == "QualitativePoint" && input$flipx==TRUE) {
                     qualitative.time.series.point.reverse
                 } else if (input$timecolour == "QualitativeLine" && input$flipx==TRUE) {
@@ -3758,8 +3900,8 @@ shinyServer(function(input, output, session) {
                 #spectra.timeseries.table <- data.frame(interval, spectra.line.table[c(input$elementtrend)]/spectra.line.table.norm[c(input$elementnorm)], spectra.line.table$Cluster, spectra.line.table$Qualitative, spectra.line.table$Depth)
                 #colnames(spectra.timeseries.table) <- c("Interval", "Selected", "Cluster", "Qualitative", "Depth")
                 
-                spectra.timeseries.table <- data.frame(spectra.line.table[c(input$xaxistype)], DEMA(spectra.line.table[c(elementhold$elementtrendb)]/spectra.line.table.norm[c(elementhold$elementnormb)]*input$ymultiply, input$smoothing), spectra.line.table$Cluster, spectra.line.table$Qualitative, spectra.line.table$Depth, spectra.line.table$Age, spectra.line.table$Climate)
-                colnames(spectra.timeseries.table) <- c("Interval", "Selected", "Cluster", "Qualitative", "Depth", "Age", "Climate")
+                spectra.timeseries.table <- data.frame(spectra.line.table[,c(input$xaxistype)], (spectra.line.table[,c(elementhold$elementtrenda)]/spectra.line.table.norm[,c(elementhold$elementnorma)]*input$ymultiply), spectra.line.table$Cluster, spectra.line.table$Qualitative, spectra.line.table$Depth, spectra.line.table$Climate, spectra.line.table$Lake)
+                colnames(spectra.timeseries.table) <- c("Interval", "Selected", "Cluster", "Qualitative", "Depth", "Climate", "Lake")
                 
                 spectra.timeseries.table
                 
@@ -3910,8 +4052,8 @@ shinyServer(function(input, output, session) {
                 #spectra.timeseries.table <- data.frame(interval, spectra.line.table[c(input$elementtrend)]/spectra.line.table.norm[c(input$elementnorm)], spectra.line.table$Cluster, spectra.line.table$Qualitative, spectra.line.table$Depth)
                 #colnames(spectra.timeseries.table) <- c("Interval", "Selected", "Cluster", "Qualitative", "Depth")
                 
-                spectra.timeseries.table <- data.frame(spectra.line.table[c(input$xaxistype)], (spectra.line.table[c(elementhold$elementtrendc)]/spectra.line.table.norm[c(elementhold$elementnormc)]*input$ymultiply), spectra.line.table$Cluster, spectra.line.table$Qualitative, spectra.line.table$Depth, spectra.line.table$Climate)
-                colnames(spectra.timeseries.table) <- c("Interval", "Selected", "Cluster", "Qualitative", "Depth", "Climate")
+                spectra.timeseries.table <- data.frame(spectra.line.table[,c(input$xaxistype)], (spectra.line.table[,c(elementhold$elementtrenda)]/spectra.line.table.norm[,c(elementhold$elementnorma)]*input$ymultiply), spectra.line.table$Cluster, spectra.line.table$Qualitative, spectra.line.table$Depth, spectra.line.table$Climate, spectra.line.table$Lake)
+                colnames(spectra.timeseries.table) <- c("Interval", "Selected", "Cluster", "Qualitative", "Depth", "Climate", "Lake")
                 
                 
                 element.trend.name <- if(elementhold$elementtrendc %in% elementLines){
@@ -4038,6 +4180,20 @@ shinyServer(function(input, output, session) {
                 climate.time.series.line <- qplot(Interval, DEMA(Selected, input$smoothing), geom="line", data = spectra.timeseries.table, colour = as.factor(Climate)) +
                 coord_cartesian(xlim = ranges3c$x, ylim = ranges3c$y, expand = TRUE) +
                 scale_colour_discrete("Climatic Period") +
+                theme_light() +
+                theme(axis.text.x = element_text(size=15)) +
+                theme(axis.text.y = element_text(size=15)) +
+                theme(axis.title.x = element_text(size=15)) +
+                theme(axis.title.y = element_text(size=15, angle=90)) +
+                theme(plot.title=element_text(size=20)) +
+                theme(legend.title=element_text(size=15)) +
+                theme(legend.text=element_text(size=15)) +
+                scale_x_continuous(paste(x.axis), label=comma) +
+                scale_y_continuous(paste(trendy), label=comma)
+                
+                lake.time.series.line <- qplot(Interval, DEMA(Selected, input$smoothing), geom="line", data = spectra.timeseries.table, colour = as.factor(Lake)) +
+                coord_cartesian(xlim = ranges3a$x, ylim = ranges3a$y, expand = TRUE) +
+                scale_colour_discrete("Lake Level") +
                 theme_light() +
                 theme(axis.text.x = element_text(size=15)) +
                 theme(axis.text.y = element_text(size=15)) +
@@ -4189,6 +4345,21 @@ shinyServer(function(input, output, session) {
                 scale_y_continuous(paste(trendy), label=comma)
                 
                 
+                lake.time.series.line.reverse <- qplot(Interval, DEMA(Selected, input$smoothing), geom="line", data = spectra.timeseries.table, colour = as.factor(Lake)) +
+                coord_cartesian(xlim = ranges3e$x, ylim = ranges3e$y, expand = TRUE) +
+                scale_colour_discrete("Lake Level") +
+                theme_light() +
+                theme(axis.text.x = element_text(size=15)) +
+                theme(axis.text.y = element_text(size=15)) +
+                theme(axis.title.x = element_text(size=15)) +
+                theme(axis.title.y = element_text(size=15, angle=90)) +
+                theme(plot.title=element_text(size=20)) +
+                theme(legend.title=element_text(size=15)) +
+                theme(legend.text=element_text(size=15)) +
+                scale_x_reverse(paste(x.axis), label=comma) +
+                scale_y_continuous(paste(trendy), label=comma)
+                
+                
                 qualitative.time.series.line.reverse <- qplot(Interval, DEMA(Selected, input$smoothing), geom="line", data = spectra.timeseries.table, colour = as.factor(Qualitative)) +
                 coord_cartesian(xlim = ranges3c$x, ylim = ranges3c$y, expand = TRUE) +
                 scale_colour_discrete("Qualitative") +
@@ -4244,6 +4415,8 @@ shinyServer(function(input, output, session) {
                     cluster.time.series
                 } else if (input$timecolour == "Climate" && input$flipx==FALSE) {
                     climate.time.series.line
+                } else if (input$timecolour == "Lake" && input$flipx==FALSE) {
+                    lake.time.series.line
                 } else if (input$timecolour == "QualitativePoint" && input$flipx==FALSE) {
                     qualitative.time.series.point
                 } else if (input$timecolour == "QualitativeLine" && input$flipx==FALSE) {
@@ -4262,6 +4435,8 @@ shinyServer(function(input, output, session) {
                     cluster.time.series.reverse
                 } else if (input$timecolour == "Climate" && input$flipx==TRUE) {
                     climate.time.series.line.reverse
+                } else if (input$timecolour == "Lake" && input$flipx==TRUE) {
+                    lake.time.series.line.reverse
                 } else if (input$timecolour == "QualitativePoint" && input$flipx==TRUE) {
                     qualitative.time.series.point.reverse
                 } else if (input$timecolour == "QualitativeLine" && input$flipx==TRUE) {
@@ -4304,8 +4479,8 @@ shinyServer(function(input, output, session) {
                 #spectra.timeseries.table <- data.frame(interval, spectra.line.table[c(input$elementtrend)]/spectra.line.table.norm[c(input$elementnorm)], spectra.line.table$Cluster, spectra.line.table$Qualitative, spectra.line.table$Depth)
                 #colnames(spectra.timeseries.table) <- c("Interval", "Selected", "Cluster", "Qualitative", "Depth")
                 
-                spectra.timeseries.table <- data.frame(spectra.line.table[c(input$xaxistype)], DEMA(spectra.line.table[c(elementhold$elementtrendc)]/spectra.line.table.norm[c(elementhold$elementnormc)]*input$ymultiply, input$smoothing), spectra.line.table$Cluster, spectra.line.table$Qualitative, spectra.line.table$Depth, spectra.line.table$Age, spectra.line.table$Climate)
-                colnames(spectra.timeseries.table) <- c("Interval", "Selected", "Cluster", "Qualitative", "Depth", "Age", "Climate")
+                spectra.timeseries.table <- data.frame(spectra.line.table[,c(input$xaxistype)], (spectra.line.table[,c(elementhold$elementtrenda)]/spectra.line.table.norm[,c(elementhold$elementnorma)]*input$ymultiply), spectra.line.table$Cluster, spectra.line.table$Qualitative, spectra.line.table$Depth, spectra.line.table$Climate, spectra.line.table$Lake)
+                colnames(spectra.timeseries.table) <- c("Interval", "Selected", "Cluster", "Qualitative", "Depth", "Climate", "Lake")
                 
                 spectra.timeseries.table
                 
@@ -4455,8 +4630,8 @@ shinyServer(function(input, output, session) {
                 #spectra.timeseries.table <- data.frame(interval, spectra.line.table[c(input$elementtrend)]/spectra.line.table.norm[c(input$elementnorm)], spectra.line.table$Cluster, spectra.line.table$Qualitative, spectra.line.table$Depth)
                 #colnames(spectra.timeseries.table) <- c("Interval", "Selected", "Cluster", "Qualitative", "Depth")
                 
-                spectra.timeseries.table <- data.frame(spectra.line.table[c(input$xaxistype)], (spectra.line.table[c(elementhold$elementtrendd)]/spectra.line.table.norm[c(elementhold$elementnormd)]*input$ymultiply), spectra.line.table$Cluster, spectra.line.table$Qualitative, spectra.line.table$Depth, spectra.line.table$Climate)
-                colnames(spectra.timeseries.table) <- c("Interval", "Selected", "Cluster", "Qualitative", "Depth", "Climate")
+                spectra.timeseries.table <- data.frame(spectra.line.table[,c(input$xaxistype)], (spectra.line.table[,c(elementhold$elementtrenda)]/spectra.line.table.norm[,c(elementhold$elementnorma)]*input$ymultiply), spectra.line.table$Cluster, spectra.line.table$Qualitative, spectra.line.table$Depth, spectra.line.table$Climate, spectra.line.table$Lake)
+                colnames(spectra.timeseries.table) <- c("Interval", "Selected", "Cluster", "Qualitative", "Depth", "Climate", "Lake")
                 
                 
                 element.trend.name <- if(elementhold$elementtrendd %in% elementLines){
@@ -4583,6 +4758,21 @@ shinyServer(function(input, output, session) {
                 climate.time.series.line <- qplot(Interval, DEMA(Selected, input$smoothing), geom="line", data = spectra.timeseries.table, colour = as.factor(Climate)) +
                 coord_cartesian(xlim = ranges3d$x, ylim = ranges3d$y, expand = TRUE) +
                 scale_colour_discrete("Climatic Period") +
+                theme_light() +
+                theme(axis.text.x = element_text(size=15)) +
+                theme(axis.text.y = element_text(size=15)) +
+                theme(axis.title.x = element_text(size=15)) +
+                theme(axis.title.y = element_text(size=15, angle=90)) +
+                theme(plot.title=element_text(size=20)) +
+                theme(legend.title=element_text(size=15)) +
+                theme(legend.text=element_text(size=15)) +
+                scale_x_continuous(paste(x.axis), label=comma) +
+                scale_y_continuous(paste(trendy), label=comma)
+                
+                
+                lake.time.series.line <- qplot(Interval, DEMA(Selected, input$smoothing), geom="line", data = spectra.timeseries.table, colour = as.factor(Lake)) +
+                coord_cartesian(xlim = ranges3a$x, ylim = ranges3a$y, expand = TRUE) +
+                scale_colour_discrete("Lake Level") +
                 theme_light() +
                 theme(axis.text.x = element_text(size=15)) +
                 theme(axis.text.y = element_text(size=15)) +
@@ -4737,6 +4927,21 @@ shinyServer(function(input, output, session) {
                 scale_y_continuous(paste(trendy), label=comma)
                 
                 
+                lake.time.series.line.reverse <- qplot(Interval, DEMA(Selected, input$smoothing), geom="line", data = spectra.timeseries.table, colour = as.factor(Lake)) +
+                coord_cartesian(xlim = ranges3e$x, ylim = ranges3e$y, expand = TRUE) +
+                scale_colour_discrete("Lake Level") +
+                theme_light() +
+                theme(axis.text.x = element_text(size=15)) +
+                theme(axis.text.y = element_text(size=15)) +
+                theme(axis.title.x = element_text(size=15)) +
+                theme(axis.title.y = element_text(size=15, angle=90)) +
+                theme(plot.title=element_text(size=20)) +
+                theme(legend.title=element_text(size=15)) +
+                theme(legend.text=element_text(size=15)) +
+                scale_x_reverse(paste(x.axis), label=comma) +
+                scale_y_continuous(paste(trendy), label=comma)
+                
+                
                 qualitative.time.series.line.reverse <- qplot(Interval, DEMA(Selected, input$smoothing), geom="line", data = spectra.timeseries.table, colour = as.factor(Qualitative)) +
                 coord_cartesian(xlim = ranges3d$x, ylim = ranges3d$y, expand = TRUE) +
                 scale_colour_discrete("Qualitative") +
@@ -4794,6 +4999,8 @@ shinyServer(function(input, output, session) {
                     cluster.time.series
                 } else if (input$timecolour == "Climate" && input$flipx==FALSE) {
                     climate.time.series.line
+                } else if (input$timecolour == "Lake" && input$flipx==FALSE) {
+                    lake.time.series.line
                 } else if (input$timecolour == "QualitativePoint" && input$flipx==FALSE) {
                     qualitative.time.series.point
                 } else if (input$timecolour == "QualitativeLine" && input$flipx==FALSE) {
@@ -4812,6 +5019,8 @@ shinyServer(function(input, output, session) {
                     cluster.time.series.reverse
                 } else if (input$timecolour == "Climate" && input$flipx==TRUE) {
                     climate.time.series.line.reverse
+                } else if (input$timecolour == "Lake" && input$flipx==TRUE) {
+                    lake.time.series.line.reverse
                 } else if (input$timecolour == "QualitativePoint" && input$flipx==TRUE) {
                     qualitative.time.series.point.reverse
                 } else if (input$timecolour == "QualitativeLine" && input$flipx==TRUE) {
@@ -4853,8 +5062,8 @@ shinyServer(function(input, output, session) {
                 #spectra.timeseries.table <- data.frame(interval, spectra.line.table[c(input$elementtrend)]/spectra.line.table.norm[c(input$elementnorm)], spectra.line.table$Cluster, spectra.line.table$Qualitative, spectra.line.table$Depth)
                 #colnames(spectra.timeseries.table) <- c("Interval", "Selected", "Cluster", "Qualitative", "Depth")
                 
-                spectra.timeseries.table <- data.frame(spectra.line.table[c(input$xaxistype)], DEMA(spectra.line.table[c(elementhold$elementtrendd)]/spectra.line.table.norm[c(elementhold$elementnormd)]*input$ymultiply, input$smoothing), spectra.line.table$Cluster, spectra.line.table$Qualitative, spectra.line.table$Depth, spectra.line.table$Age, spectra.line.table$Climate)
-                colnames(spectra.timeseries.table) <- c("Interval", "Selected", "Cluster", "Qualitative", "Depth", "Age", "Climate")
+                spectra.timeseries.table <- data.frame(spectra.line.table[,c(input$xaxistype)], (spectra.line.table[,c(elementhold$elementtrenda)]/spectra.line.table.norm[,c(elementhold$elementnorma)]*input$ymultiply), spectra.line.table$Cluster, spectra.line.table$Qualitative, spectra.line.table$Depth, spectra.line.table$Climate, spectra.line.table$Lake)
+                colnames(spectra.timeseries.table) <- c("Interval", "Selected", "Cluster", "Qualitative", "Depth", "Climate", "Lake")
                 
                 spectra.timeseries.table
             
@@ -5009,8 +5218,8 @@ shinyServer(function(input, output, session) {
                 #spectra.timeseries.table <- data.frame(interval, spectra.line.table[c(input$elementtrend)]/spectra.line.table.norm[c(input$elementnorm)], spectra.line.table$Cluster, spectra.line.table$Qualitative, spectra.line.table$Depth)
                 #colnames(spectra.timeseries.table) <- c("Interval", "Selected", "Cluster", "Qualitative", "Depth")
                 
-                spectra.timeseries.table <- data.frame(spectra.line.table[c(input$xaxistype)], (spectra.line.table[c(elementhold$elementtrende)]/spectra.line.table.norm[c(elementhold$elementnorme)]*input$ymultiply), spectra.line.table$Cluster, spectra.line.table$Qualitative, spectra.line.table$Depth, spectra.line.table$Climate)
-                colnames(spectra.timeseries.table) <- c("Interval", "Selected", "Cluster", "Qualitative", "Depth", "Climate")
+                spectra.timeseries.table <- data.frame(spectra.line.table[,c(input$xaxistype)], (spectra.line.table[,c(elementhold$elementtrenda)]/spectra.line.table.norm[,c(elementhold$elementnorma)]*input$ymultiply), spectra.line.table$Cluster, spectra.line.table$Qualitative, spectra.line.table$Depth, spectra.line.table$Climate, spectra.line.table$Lake)
+                colnames(spectra.timeseries.table) <- c("Interval", "Selected", "Cluster", "Qualitative", "Depth", "Climate", "Lake")
                 
                 
                 element.trend.name <- if(elementhold$elementtrende %in% elementLines){
@@ -5136,6 +5345,20 @@ shinyServer(function(input, output, session) {
                 climate.time.series.line <- qplot(Interval, DEMA(Selected, input$smoothing), geom="line", data = spectra.timeseries.table, colour = as.factor(Climate)) +
                 coord_cartesian(xlim = ranges3e$x, ylim = ranges3e$y, expand = TRUE) +
                 scale_colour_discrete("Climatic Period") +
+                theme_light() +
+                theme(axis.text.x = element_text(size=15)) +
+                theme(axis.text.y = element_text(size=15)) +
+                theme(axis.title.x = element_text(size=15)) +
+                theme(axis.title.y = element_text(size=15, angle=90)) +
+                theme(plot.title=element_text(size=20)) +
+                theme(legend.title=element_text(size=15)) +
+                theme(legend.text=element_text(size=15)) +
+                scale_x_continuous(paste(x.axis), label=comma) +
+                scale_y_continuous(paste(trendy), label=comma)
+                
+                lake.time.series.line <- qplot(Interval, DEMA(Selected, input$smoothing), geom="line", data = spectra.timeseries.table, colour = as.factor(Lake)) +
+                coord_cartesian(xlim = ranges3a$x, ylim = ranges3a$y, expand = TRUE) +
+                scale_colour_discrete("Lake Level") +
                 theme_light() +
                 theme(axis.text.x = element_text(size=15)) +
                 theme(axis.text.y = element_text(size=15)) +
@@ -5289,6 +5512,21 @@ shinyServer(function(input, output, session) {
                 scale_y_continuous(paste(trendy), label=comma)
                 
                 
+                lake.time.series.line.reverse <- qplot(Interval, DEMA(Selected, input$smoothing), geom="line", data = spectra.timeseries.table, colour = as.factor(Lake)) +
+                coord_cartesian(xlim = ranges3e$x, ylim = ranges3e$y, expand = TRUE) +
+                scale_colour_discrete("Lake Level") +
+                theme_light() +
+                theme(axis.text.x = element_text(size=15)) +
+                theme(axis.text.y = element_text(size=15)) +
+                theme(axis.title.x = element_text(size=15)) +
+                theme(axis.title.y = element_text(size=15, angle=90)) +
+                theme(plot.title=element_text(size=20)) +
+                theme(legend.title=element_text(size=15)) +
+                theme(legend.text=element_text(size=15)) +
+                scale_x_reverse(paste(x.axis), label=comma) +
+                scale_y_continuous(paste(trendy), label=comma)
+                
+                
                 qualitative.time.series.line.reverse <- qplot(Interval, DEMA(Selected, input$smoothing), geom="line", data = spectra.timeseries.table, colour = as.factor(Qualitative)) +
                 coord_cartesian(xlim = ranges3e$x, ylim = ranges3e$y, expand = TRUE) +
                 scale_colour_discrete("Qualitative") +
@@ -5346,6 +5584,8 @@ shinyServer(function(input, output, session) {
                     cluster.time.series
                 } else if (input$timecolour == "Climate" && input$flipx==FALSE) {
                     climate.time.series.line
+                } else if (input$timecolour == "Lake" && input$flipx==FALSE) {
+                    lake.time.series.line
                 } else if (input$timecolour == "QualitativePoint" && input$flipx==FALSE) {
                     qualitative.time.series.point
                 } else if (input$timecolour == "QualitativeLine" && input$flipx==FALSE) {
@@ -5364,6 +5604,8 @@ shinyServer(function(input, output, session) {
                     cluster.time.series.reverse
                 } else if (input$timecolour == "Climate" && input$flipx==TRUE) {
                     climate.time.series.line.reverse
+                } else if (input$timecolour == "Lake" && input$flipx==TRUE) {
+                    lake.time.series.line.reverse
                 } else if (input$timecolour == "QualitativePoint" && input$flipx==TRUE) {
                     qualitative.time.series.point.reverse
                 } else if (input$timecolour == "QualitativeLine" && input$flipx==TRUE) {
@@ -5407,8 +5649,8 @@ shinyServer(function(input, output, session) {
                 #spectra.timeseries.table <- data.frame(interval, spectra.line.table[c(input$elementtrend)]/spectra.line.table.norm[c(input$elementnorm)], spectra.line.table$Cluster, spectra.line.table$Qualitative, spectra.line.table$Depth)
                 #colnames(spectra.timeseries.table) <- c("Interval", "Selected", "Cluster", "Qualitative", "Depth")
                 
-                spectra.timeseries.table <- data.frame(spectra.line.table[c(input$xaxistype)], DEMA(spectra.line.table[c(elementhold$elementtrende)]/spectra.line.table.norm[c(elementhold$elementnorme)]*input$ymultiply, input$smoothing), spectra.line.table$Cluster, spectra.line.table$Qualitative, spectra.line.table$Depth, spectra.line.table$Age, spectra.line.table$Climate)
-                colnames(spectra.timeseries.table) <- c("Interval", "Selected", "Cluster", "Qualitative", "Depth", "Age", "Climate")
+                spectra.timeseries.table <- data.frame(spectra.line.table[,c(input$xaxistype)], (spectra.line.table[,c(elementhold$elementtrenda)]/spectra.line.table.norm[,c(elementhold$elementnorma)]*input$ymultiply), spectra.line.table$Cluster, spectra.line.table$Qualitative, spectra.line.table$Depth, spectra.line.table$Climate, spectra.line.table$Lake)
+                colnames(spectra.timeseries.table) <- c("Interval", "Selected", "Cluster", "Qualitative", "Depth", "Climate", "Lake")
                 
                 spectra.timeseries.table
                 
@@ -5618,8 +5860,8 @@ shinyServer(function(input, output, session) {
                 
                 
                 
-                ratio.frame <- data.frame(first.ratio, second.ratio, third.ratio, fourth.ratio, spectra.line.table$Cluster, spectra.line.table$Qualitative, spectra.line.table$Depth, spectra.line.table$Age, spectra.line.table$Climate)
-                colnames(ratio.frame) <- c(first.ratio.name, second.ratio.name, third.ratio.name, fourth.ratio.name, "Cluster", "Qualitative", "Depth", "Age", "Climate")
+                ratio.frame <- data.frame(first.ratio, second.ratio, third.ratio, fourth.ratio, spectra.line.table$Cluster, spectra.line.table$Qualitative, spectra.line.table$Depth, spectra.line.table$Age, spectra.line.table$Climate, spectra.line.table$Lake)
+                colnames(ratio.frame) <- c(first.ratio.name, second.ratio.name, third.ratio.name, fourth.ratio.name, "Cluster", "Qualitative", "Depth", "Age", "Climate", "Lake")
                 
                 
                 
@@ -5730,6 +5972,42 @@ shinyServer(function(input, output, session) {
                 scale_y_continuous(ratio.names.y, label=comma)
                 
                 
+                lake.ratio.plot <- qplot(X, Y, data=ratio.frame, xlab = ratio.names.x, ylab = ratio.names.y  ) +
+                coord_cartesian(xlim = rangesratio$x, ylim = rangesratio$y, expand = TRUE) +
+                geom_point(aes(colour=as.factor(ratio.frame$Lake), shape=as.factor(ratio.frame$Lake)), size=input$spotsize2+1) +
+                geom_point(colour="grey30", size=input$spotsize2-2) +
+                scale_shape_manual("Lake Level", values=1:nlevels(ratio.frame$Lake)) +
+                scale_colour_discrete("Lake Level") +
+                theme_light() +
+                theme(axis.text.x = element_text(size=15)) +
+                theme(axis.text.y = element_text(size=15)) +
+                theme(axis.title.x = element_text(size=15)) +
+                theme(axis.title.y = element_text(size=15, angle=90)) +
+                theme(plot.title=element_text(size=20)) +
+                theme(legend.title=element_text(size=15)) +
+                theme(legend.text=element_text(size=15))+
+                scale_x_continuous(ratio.names.x, label=comma) +
+                scale_y_continuous(ratio.names.y, label=comma)
+                
+                lake.ratio.ellipse.plot <- qplot(X, Y, data=ratio.frame, xlab = ratio.names.x, ylab = ratio.names.y  ) +
+                coord_cartesian(xlim = rangesratio$x, ylim = rangesratio$y, expand = TRUE) +
+                stat_ellipse(aes(ratio.frame$X, ratio.frame$Y, colour=as.factor(ratio.frame$Lake))) +
+                geom_point(aes(colour=as.factor(ratio.frame$Lake), shape=as.factor(ratio.frame$Lake)), size=input$spotsize2+1) +
+                geom_point(colour="grey30", size=input$spotsize2-2) +
+                scale_shape_manual("Lake Level", values=1:nlevels(ratio.frame$Lake)) +
+                scale_colour_discrete("Lake Level") +
+                theme_light() +
+                theme(axis.text.x = element_text(size=15)) +
+                theme(axis.text.y = element_text(size=15)) +
+                theme(axis.title.x = element_text(size=15)) +
+                theme(axis.title.y = element_text(size=15, angle=90)) +
+                theme(plot.title=element_text(size=20)) +
+                theme(legend.title=element_text(size=15)) +
+                theme(legend.text=element_text(size=15))+
+                scale_x_continuous(ratio.names.x, label=comma) +
+                scale_y_continuous(ratio.names.y, label=comma)
+                
+                
                 qualitative.ratio.plot <- qplot(X, Y, data=ratio.frame, xlab = ratio.names.x, ylab = ratio.names.y  ) +
                 coord_cartesian(xlim = rangesratio$x, ylim = rangesratio$y, expand = TRUE) +
                 geom_point(aes(colour=as.factor(ratio.frame$Qualitative), shape=as.factor(ratio.frame$Qualitative)), size=input$spotsize2+1) +
@@ -5813,6 +6091,10 @@ shinyServer(function(input, output, session) {
                     climate.ratio.plot
                 } else if (input$ratiocolour == "Climate" && input$elipseplot2==TRUE ) {
                     climate.ratio.ellipse.plot
+                } else if (input$ratiocolour == "Lake" && input$elipseplot2==FALSE) {
+                    lake.ratio.plot
+                } else if (input$ratiocolour == "Lake" && input$elipseplot2==TRUE ) {
+                    lake.ratio.ellipse.plot
                 } else if (input$ratiocolour == "Qualitative" && input$elipseplot2==FALSE) {
                     qualitative.ratio.plot
                 } else if (input$ratiocolour == "Qualitative" && input$elipseplot2==TRUE ) {
@@ -6089,11 +6371,11 @@ shinyServer(function(input, output, session) {
                 second.axis.norm <- second.axis/sum(second.axis)
                 third.axis.norm <- third.axis/sum(third.axis)
                 
-                axis.frame <- data.frame(first.axis, second.axis, third.axis, spectra.line.table$Cluster, spectra.line.table$Qualitative, spectra.line.table$Depth, spectra.line.table$Age, spectra.line.table$Climate)
-                colnames(axis.frame) <- c(first.axis.name, second.axis.name, third.axis.name, "Cluster", "Qualitative", "Depth", "Age", "Climate")
+                axis.frame <- data.frame(first.axis, second.axis, third.axis, spectra.line.table$Cluster, spectra.line.table$Qualitative, spectra.line.table$Depth, spectra.line.table$Age, spectra.line.table$Climate, spectra.line.table$Lake)
+                colnames(axis.frame) <- c(first.axis.name, second.axis.name, third.axis.name, "Cluster", "Qualitative", "Depth", "Age", "Climate", "Lake")
                 
-                axis.frame.norm <- data.frame(first.axis.norm, second.axis.norm, third.axis.norm, spectra.line.table$Cluster, spectra.line.table$Qualitative, spectra.line.table$Depth, spectra.line.table$Age, spectra.line.table$Climate)
-                colnames(axis.frame.norm) <- c(first.axis.name, second.axis.name, third.axis.name, "Cluster", "Qualitative", "Depth", "Age", "Climate")
+                axis.frame.norm <- data.frame(first.axis.norm, second.axis.norm, third.axis.norm, spectra.line.table$Cluster, spectra.line.table$Qualitative, spectra.line.table$Depth, spectra.line.table$Age, spectra.line.table$Climate, spectra.line.table$Lake)
+                colnames(axis.frame.norm) <- c(first.axis.name, second.axis.name, third.axis.name, "Cluster", "Qualitative", "Depth", "Age", "Climate", "Lake")
 
                 ternaryplot1 <- ggtern(data=axis.frame, aes_string(x = colnames(axis.frame)[1], y = colnames(axis.frame)[2], z = colnames(axis.frame)[3])) +
                 geom_point(size=input$ternpointsize) +
@@ -6167,6 +6449,36 @@ shinyServer(function(input, output, session) {
                 geom_point(colour="grey30", size=input$ternpointsize-2) +
                 scale_shape_manual("Climatic Period", values=1:nlevels(axis.frame$Climate)) +
                 scale_colour_discrete("Climatic Period") +
+                theme_light() +
+                theme(axis.text.x = element_text(size=15)) +
+                theme(axis.text.y = element_text(size=15)) +
+                theme(axis.title.x = element_text(size=15)) +
+                theme(axis.title.y = element_text(size=15, angle=90)) +
+                theme(plot.title=element_text(size=20)) +
+                theme(legend.title=element_text(size=15)) +
+                theme(legend.text=element_text(size=15))
+                
+                
+                ternaryplotlake <- ggtern(data=axis.frame, aes_string(x = colnames(axis.frame)[1], y = colnames(axis.frame)[2], z = colnames(axis.frame)[3])) +
+                geom_point(aes(colour = as.factor(Lake), shape=as.factor(Lake)), size=input$ternpointsize+1) +
+                geom_point(colour="grey30", size=input$ternpointsize-2) +
+                scale_shape_manual("Lake Level", values=1:nlevels(axis.frame$Lake)) +
+                scale_colour_discrete("Lake Level") +
+                theme_light() +
+                theme(axis.text.x = element_text(size=15)) +
+                theme(axis.text.y = element_text(size=15)) +
+                theme(axis.title.x = element_text(size=15)) +
+                theme(axis.title.y = element_text(size=15, angle=90)) +
+                theme(plot.title=element_text(size=20)) +
+                theme(legend.title=element_text(size=15)) +
+                theme(legend.text=element_text(size=15))
+                
+                ternaryplotlakeellipse <- ggtern(data=axis.frame, aes_string(x = colnames(axis.frame)[1], y = colnames(axis.frame)[2], z = colnames(axis.frame)[3])) +
+                geom_density_tern() +
+                geom_point(aes(colour = as.factor(Lake), shape=as.factor(Lake)), size=input$ternpointsize+1) +
+                geom_point(colour="grey30", size=input$ternpointsize-2) +
+                scale_shape_manual("Lake Level", values=1:nlevels(axis.frame$Lake)) +
+                scale_colour_discrete("Lake Level") +
                 theme_light() +
                 theme(axis.text.x = element_text(size=15)) +
                 theme(axis.text.y = element_text(size=15)) +
@@ -6347,6 +6659,37 @@ shinyServer(function(input, output, session) {
                 theme(legend.title=element_text(size=15)) +
                 theme(legend.text=element_text(size=15))
                 
+                
+                
+                ternaryplotlake.norm <- ggtern(data=axis.frame.norm, aes_string(x = colnames(axis.frame.norm)[1], y = colnames(axis.frame.norm)[2], z = colnames(axis.frame.norm)[3])) +
+                geom_point(aes(colour = as.factor(Lake), shape=as.factor(Lake)), size=input$ternpointsize+1) +
+                geom_point(colour="grey30", size=input$ternpointsize-2) +
+                scale_shape_manual("Lake Level", values=1:nlevels(axis.frame$Lake)) +
+                scale_colour_discrete("Lake Level") +
+                theme_light() +
+                theme(axis.text.x = element_text(size=15)) +
+                theme(axis.text.y = element_text(size=15)) +
+                theme(axis.title.x = element_text(size=15)) +
+                theme(axis.title.y = element_text(size=15, angle=90)) +
+                theme(plot.title=element_text(size=20)) +
+                theme(legend.title=element_text(size=15)) +
+                theme(legend.text=element_text(size=15))
+                
+                ternaryplotlakeellipse.norm <- ggtern(data=axis.frame.norm, aes_string(x = colnames(axis.frame.norm)[1], y = colnames(axis.frame.norm)[2], z = colnames(axis.frame.norm)[3])) +
+                geom_density_tern() +
+                geom_point(aes(colour = as.factor(Lake), shape=as.factor(Lake)), size=input$ternpointsize+1) +
+                geom_point(colour="grey30", size=input$ternpointsize-2) +
+                scale_shape_manual("Lake Level", values=1:nlevels(axis.frame$Lake)) +
+                scale_colour_discrete("Lake Level") +
+                theme_light() +
+                theme(axis.text.x = element_text(size=15)) +
+                theme(axis.text.y = element_text(size=15)) +
+                theme(axis.title.x = element_text(size=15)) +
+                theme(axis.title.y = element_text(size=15, angle=90)) +
+                theme(plot.title=element_text(size=20)) +
+                theme(legend.title=element_text(size=15)) +
+                theme(legend.text=element_text(size=15))
+                
                 ternaryplotqualitative.norm <- ggtern(data=axis.frame.norm, aes_string(x = colnames(axis.frame.norm)[1], y = colnames(axis.frame.norm)[2], z = colnames(axis.frame.norm)[3])) +
                 geom_point(aes(colour = as.factor(Qualitative), shape=as.factor(Qualitative)), size=input$ternpointsize+1) +
                 geom_point(colour="grey30", size=input$ternpointsize-2) +
@@ -6447,6 +6790,10 @@ shinyServer(function(input, output, session) {
                     ternaryplotclimate
                 } else if (input$ternarycolour == "Climate" && input$terndensityplot==TRUE && input$ternnormplot==FALSE) {
                     ternaryplotclimateellipse
+                } else if (input$ternarycolour == "Lake" && input$terndensityplot==FALSE && input$ternnormplot==FALSE) {
+                    ternaryplotlake
+                } else if (input$ternarycolour == "Lake" && input$terndensityplot==TRUE && input$ternnormplot==FALSE) {
+                    ternaryplotlakeellipse
                 } else if (input$ternarycolour == "Depth" && input$terndensityplot==FALSE && input$ternnormplot==FALSE) {
                     ternaryplotdepth
                 } else if (input$ternarycolour == "Depth" && input$terndensityplot==TRUE && input$ternnormplot==FALSE) {
@@ -6467,6 +6814,10 @@ shinyServer(function(input, output, session) {
                     ternaryplotclimate.norm
                 } else if (input$ternarycolour == "Climate" && input$terndensityplot==TRUE && input$ternnormplot==TRUE) {
                     ternaryplotclimateellipse.norm
+                } else if (input$ternarycolour == "Lake" && input$terndensityplot==FALSE && input$ternnormplot==TRUE) {
+                    ternaryplotlake.norm
+                } else if (input$ternarycolour == "Lake" && input$terndensityplot==TRUE && input$ternnormplot==TRUE) {
+                    ternaryplotlakeellipse.norm
                 } else if (input$ternarycolour == "Qualitative" && input$terndensityplot==FALSE && input$ternnormplot==TRUE) {
                     ternaryplotqualitative.norm
                 } else if (input$ternarycolour == "Qualitative" && input$terndensityplot==TRUE && input$ternnormplot==TRUE) {
@@ -7752,8 +8103,8 @@ shinyServer(function(input, output, session) {
                 #spectra.timeseries.table <- data.frame(interval, spectra.line.table[c(input$elementtrend)]/spectra.line.table.norm[c(input$elementnorm)], spectra.line.table$Cluster, spectra.line.table$Qualitative, spectra.line.table$Depth)
                 #colnames(spectra.timeseries.table) <- c("Interval", "Selected", "Cluster", "Qualitative", "Depth")
                 
-                spectra.timeseries.table <- data.frame(spectra.line.table[c(input$xaxistypeeq)], spectra.line.table$Selected, spectra.line.table$Cluster, spectra.line.table$Qualitative, spectra.line.table$Depth, spectra.line.table$Climate)
-                colnames(spectra.timeseries.table) <- c("Interval", "Selected", "Cluster", "Qualitative", "Depth", "Climate")
+                spectra.timeseries.table <- data.frame(spectra.line.table[c(input$xaxistypeeq)], spectra.line.table$Selected, spectra.line.table$Cluster, spectra.line.table$Qualitative, spectra.line.table$Depth, spectra.line.table$Climate, spectra.line.table$Lake)
+                colnames(spectra.timeseries.table) <- c("Interval", "Selected", "Cluster", "Qualitative", "Depth", "Climate", "Lake")
                 
                 
                 black.time.series <- qplot(Interval, DEMA(Selected, input$smoothingeq), input$xaxistypeeq, geom="line", data = spectra.timeseries.table) +
@@ -7838,6 +8189,21 @@ shinyServer(function(input, output, session) {
                 climate.time.series.line <- qplot(Interval, DEMA(Selected, input$smoothingeq),  geom="line", data = spectra.timeseries.table, colour = as.factor(Climate)) +
                 coord_cartesian(xlim = ranges6a$x, ylim = ranges6a$y, expand = TRUE) +
                 scale_colour_discrete("Climatic Period") +
+                theme_light() +
+                theme(axis.text.x = element_text(size=15)) +
+                theme(axis.text.y = element_text(size=15)) +
+                theme(axis.title.x = element_text(size=15)) +
+                theme(axis.title.y = element_text(size=15, angle=90)) +
+                theme(plot.title=element_text(size=20)) +
+                theme(legend.title=element_text(size=15)) +
+                theme(legend.text=element_text(size=15)) +
+                scale_x_continuous(paste(x.axis), label=comma) +
+                scale_y_continuous(input$yaxistype, label=comma)
+                
+                
+                lake.time.series.line <- qplot(Interval, DEMA(Selected, input$smoothingeq),  geom="line", data = spectra.timeseries.table, colour = as.factor(Lake)) +
+                coord_cartesian(xlim = ranges6a$x, ylim = ranges6a$y, expand = TRUE) +
+                scale_colour_discrete("Lake Level") +
                 theme_light() +
                 theme(axis.text.x = element_text(size=15)) +
                 theme(axis.text.y = element_text(size=15)) +
@@ -7992,6 +8358,20 @@ shinyServer(function(input, output, session) {
                 scale_x_reverse(paste(x.axis), label=comma) +
                 scale_y_continuous(input$yaxistype, label=comma)
                 
+                lake.time.series.line.reverse <- qplot(Interval, DEMA(Selected, input$smoothingeq),  geom="line", data = spectra.timeseries.table, colour = as.factor(Lake)) +
+                coord_cartesian(xlim = ranges6a$x, ylim = ranges6a$y, expand = TRUE) +
+                scale_colour_discrete("Lake Level") +
+                theme_light() +
+                theme(axis.text.x = element_text(size=15)) +
+                theme(axis.text.y = element_text(size=15)) +
+                theme(axis.title.x = element_text(size=15)) +
+                theme(axis.title.y = element_text(size=15, angle=90)) +
+                theme(plot.title=element_text(size=20)) +
+                theme(legend.title=element_text(size=15)) +
+                theme(legend.text=element_text(size=15)) +
+                scale_x_reverse(paste(x.axis), label=comma) +
+                scale_y_continuous(input$yaxistype, label=comma)
+                
                 
                 qualitative.time.series.line.reverse <- qplot(Interval, DEMA(Selected, input$smoothingeq),  geom="line", data = spectra.timeseries.table, colour = as.factor(Qualitative)) +
                 coord_cartesian(xlim = ranges6a$x, ylim = ranges6a$y, expand = TRUE) +
@@ -8052,12 +8432,14 @@ shinyServer(function(input, output, session) {
                     cluster.time.series
                 } else if (input$timecoloureq == "Climate" && input$flipxeq==FALSE) {
                     climate.time.series.line
+                } else if (input$timecoloureq == "Lake" && input$flipxeq==FALSE) {
+                    lake.time.series.line
                 } else if (input$timecoloureq == "QualitativePoint" && input$flipxeq==FALSE) {
                     qualitative.time.series.point
                 } else if (input$timecoloureq == "QualitativeLine" && input$flipxeq==FALSE) {
                     qualitative.time.series.line
                 } else if (input$timecoloureq == "Depth" && input$flipxeq==FALSE) {
-                    depth.time.series
+                    Depth.time.series
                 } else if (input$timecoloureq == "Black" && input$flipxeq==TRUE) {
                     black.time.series.reverse
                 } else if (input$timecoloureq == "Smooth" && input$flipxeq==TRUE) {
@@ -8068,6 +8450,8 @@ shinyServer(function(input, output, session) {
                     cluster.time.series.reverse
                 } else if (input$timecoloureq == "Climate" && input$flipxeq==TRUE) {
                     climate.time.series.line.reverse
+                } else if (input$timecoloureq == "Lake" && input$flipxeq==TRUE) {
+                    lake.time.series.line.reverse
                 } else if (input$timecoloureq == "QualitativePoint" && input$flipxeq==TRUE) {
                     qualitative.time.series.point.reverse
                 } else if (input$timecoloureq == "QualitativeLine" && input$flipxeq==TRUE) {
@@ -8100,8 +8484,8 @@ shinyServer(function(input, output, session) {
                     spectra.line.table$Age <- rep(1, length(spectra.line.table$Depth))
                 }
                 
-                spectra.timeseries.table <- data.frame(spectra.line.table[c(input$xaxistypeeq)], DEMA(spectra.line.table$Selected, input$smoothingeq), spectra.line.table$Cluster, spectra.line.table$Qualitative, spectra.line.table$Depth, spectra.line.table$Climate, spectra.line.table$Age)
-                colnames(spectra.timeseries.table) <- c("Interval", "Selected", "Cluster", "Qualitative", "Depth", "Climate", "Age")
+                spectra.timeseries.table <- data.frame(spectra.line.table[c(input$xaxistypeeq)], DEMA(spectra.line.table$Selected, input$smoothingeq), spectra.line.table$Cluster, spectra.line.table$Qualitative, spectra.line.table$Depth, spectra.line.table$Climate, spectra.line.table$Lake, spectra.line.table$Age)
+                colnames(spectra.timeseries.table) <- c("Interval", "Selected", "Cluster", "Qualitative", "Depth", "Climate", "Lake", "Age")
                 
                 spectra.timeseries.table
                 
@@ -8221,8 +8605,8 @@ shinyServer(function(input, output, session) {
                 #spectra.timeseries.table <- data.frame(interval, spectra.line.table[c(input$elementtrend)]/spectra.line.table.norm[c(input$elementnorm)], spectra.line.table$Cluster, spectra.line.table$Qualitative, spectra.line.table$Depth)
                 #colnames(spectra.timeseries.table) <- c("Interval", "Selected", "Cluster", "Qualitative", "Depth")
                 
-                spectra.timeseries.table <- data.frame(spectra.line.table[c(input$xaxistypeeq)], spectra.line.table$Selected, spectra.line.table$Cluster, spectra.line.table$Qualitative, spectra.line.table$Depth, spectra.line.table$Climate)
-                colnames(spectra.timeseries.table) <- c("Interval", "Selected", "Cluster", "Qualitative", "Depth", "Climate")
+                spectra.timeseries.table <- data.frame(spectra.line.table[c(input$xaxistypeeq)], spectra.line.table$Selected, spectra.line.table$Cluster, spectra.line.table$Qualitative, spectra.line.table$Depth, spectra.line.table$Climate, spectra.line.table$Lake)
+                colnames(spectra.timeseries.table) <- c("Interval", "Selected", "Cluster", "Qualitative", "Depth", "Climate", "Lake")
                 
                 
                 
@@ -8319,6 +8703,20 @@ shinyServer(function(input, output, session) {
                 climate.time.series.line <- qplot(Interval, DEMA(Selected, input$smoothingeq),  geom="line", data = spectra.timeseries.table, colour = as.factor(Climate)) +
                 coord_cartesian(xlim = ranges6b$x, ylim = ranges6b$y, expand = TRUE) +
                 scale_colour_discrete("Climatic Period") +
+                theme_light() +
+                theme(axis.text.x = element_text(size=15)) +
+                theme(axis.text.y = element_text(size=15)) +
+                theme(axis.title.x = element_text(size=15)) +
+                theme(axis.title.y = element_text(size=15, angle=90)) +
+                theme(plot.title=element_text(size=20)) +
+                theme(legend.title=element_text(size=15)) +
+                theme(legend.text=element_text(size=15)) +
+                scale_x_continuous(paste(x.axis), label=comma) +
+                scale_y_continuous(input$yaxistype, label=comma)
+                
+                lake.time.series.line <- qplot(Interval, DEMA(Selected, input$smoothingeq),  geom="line", data = spectra.timeseries.table, colour = as.factor(Lake)) +
+                coord_cartesian(xlim = ranges6a$x, ylim = ranges6a$y, expand = TRUE) +
+                scale_colour_discrete("Lake Level") +
                 theme_light() +
                 theme(axis.text.x = element_text(size=15)) +
                 theme(axis.text.y = element_text(size=15)) +
@@ -8473,6 +8871,21 @@ shinyServer(function(input, output, session) {
                 scale_y_continuous(input$yaxistype, label=comma)
                 
                 
+                lake.time.series.line.reverse <- qplot(Interval, DEMA(Selected, input$smoothingeq),  geom="line", data = spectra.timeseries.table, colour = as.factor(Lake)) +
+                coord_cartesian(xlim = ranges6a$x, ylim = ranges6a$y, expand = TRUE) +
+                scale_colour_discrete("Lake Level") +
+                theme_light() +
+                theme(axis.text.x = element_text(size=15)) +
+                theme(axis.text.y = element_text(size=15)) +
+                theme(axis.title.x = element_text(size=15)) +
+                theme(axis.title.y = element_text(size=15, angle=90)) +
+                theme(plot.title=element_text(size=20)) +
+                theme(legend.title=element_text(size=15)) +
+                theme(legend.text=element_text(size=15)) +
+                scale_x_reverse(paste(x.axis), label=comma) +
+                scale_y_continuous(input$yaxistype, label=comma)
+                
+                
                 qualitative.time.series.line.reverse <- qplot(Interval, DEMA(Selected, input$smoothingeq),  geom="line", data = spectra.timeseries.table, colour = as.factor(Qualitative)) +
                 coord_cartesian(xlim = ranges6b$x, ylim = ranges6b$y, expand = TRUE) +
                 scale_colour_discrete("Qualitative") +
@@ -8531,6 +8944,8 @@ shinyServer(function(input, output, session) {
                     cluster.time.series
                 } else if (input$timecoloureq == "Climate" && input$flipxeq==FALSE) {
                     climate.time.series.line
+                } else if (input$timecoloureq == "Lake" && input$flipxeq==FALSE) {
+                    lake.time.series.line
                 } else if (input$timecoloureq == "QualitativePoint" && input$flipxeq==FALSE) {
                     qualitative.time.series.point
                 } else if (input$timecoloureq == "QualitativeLine" && input$flipxeq==FALSE) {
@@ -8547,6 +8962,8 @@ shinyServer(function(input, output, session) {
                     cluster.time.series.reverse
                 } else if (input$timecoloureq == "Climate" && input$flipxeq==TRUE) {
                     climate.time.series.line.reverse
+                } else if (input$timecoloureq == "Lake" && input$flipxeq==TRUE) {
+                    lake.time.series.line.reverse
                 } else if (input$timecoloureq == "QualitativePoint" && input$flipxeq==TRUE) {
                     qualitative.time.series.point.reverse
                 } else if (input$timecoloureq == "QualitativeLine" && input$flipxeq==TRUE) {
@@ -8576,8 +8993,8 @@ shinyServer(function(input, output, session) {
                     spectra.line.table$Age <- rep(1, length(spectra.line.table$Depth))
                 }
                 
-                spectra.timeseries.table <- data.frame(spectra.line.table[c(input$xaxistypeeq)], DEMA(spectra.line.table$Selected, input$smoothingeq), spectra.line.table$Cluster, spectra.line.table$Qualitative, spectra.line.table$Depth, spectra.line.table$Climate, spectra.line.table$Age)
-                colnames(spectra.timeseries.table) <- c("Interval", "Selected", "Cluster", "Qualitative", "Depth", "Climate", "Age")
+                spectra.timeseries.table <- data.frame(spectra.line.table[c(input$xaxistypeeq)], DEMA(spectra.line.table$Selected, input$smoothingeq), spectra.line.table$Cluster, spectra.line.table$Qualitative, spectra.line.table$Depth, spectra.line.table$Climate, spectra.line.table$Lake, spectra.line.table$Age)
+                colnames(spectra.timeseries.table) <- c("Interval", "Selected", "Cluster", "Qualitative", "Depth", "Climate", "Lake", "Age")
                 
                 spectra.timeseries.table
                 
@@ -8700,8 +9117,8 @@ shinyServer(function(input, output, session) {
                 #spectra.timeseries.table <- data.frame(interval, spectra.line.table[c(input$elementtrend)]/spectra.line.table.norm[c(input$elementnorm)], spectra.line.table$Cluster, spectra.line.table$Qualitative, spectra.line.table$Depth)
                 #colnames(spectra.timeseries.table) <- c("Interval", "Selected", "Cluster", "Qualitative", "Depth")
                 
-                spectra.timeseries.table <- data.frame(spectra.line.table[c(input$xaxistypeeq)], spectra.line.table$Selected, spectra.line.table$Cluster, spectra.line.table$Qualitative, spectra.line.table$Depth, spectra.line.table$Climate)
-                colnames(spectra.timeseries.table) <- c("Interval", "Selected", "Cluster", "Qualitative", "Depth", "Climate")
+                spectra.timeseries.table <- data.frame(spectra.line.table[c(input$xaxistypeeq)], spectra.line.table$Selected, spectra.line.table$Cluster, spectra.line.table$Qualitative, spectra.line.table$Depth, spectra.line.table$Climate, spectra.line.table$Lake)
+                colnames(spectra.timeseries.table) <- c("Interval", "Selected", "Cluster", "Qualitative", "Depth", "Climate", "Lake")
                 
                 
                 
@@ -8799,6 +9216,21 @@ shinyServer(function(input, output, session) {
                 climate.time.series.line <- qplot(Interval, DEMA(Selected, input$smoothingeq),  geom="line", data = spectra.timeseries.table, colour = as.factor(Climate)) +
                 coord_cartesian(xlim = ranges6c$x, ylim = ranges6c$y, expand = TRUE) +
                 scale_colour_discrete("Climatic Period") +
+                theme_light() +
+                theme(axis.text.x = element_text(size=15)) +
+                theme(axis.text.y = element_text(size=15)) +
+                theme(axis.title.x = element_text(size=15)) +
+                theme(axis.title.y = element_text(size=15, angle=90)) +
+                theme(plot.title=element_text(size=20)) +
+                theme(legend.title=element_text(size=15)) +
+                theme(legend.text=element_text(size=15)) +
+                scale_x_continuous(paste(x.axis), label=comma) +
+                scale_y_continuous(input$yaxistype, label=comma)
+                
+                
+                lake.time.series.line <- qplot(Interval, DEMA(Selected, input$smoothingeq),  geom="line", data = spectra.timeseries.table, colour = as.factor(Lake)) +
+                coord_cartesian(xlim = ranges6a$x, ylim = ranges6a$y, expand = TRUE) +
+                scale_colour_discrete("Lake Level") +
                 theme_light() +
                 theme(axis.text.x = element_text(size=15)) +
                 theme(axis.text.y = element_text(size=15)) +
@@ -8953,6 +9385,21 @@ shinyServer(function(input, output, session) {
                 scale_y_continuous(input$yaxistype, label=comma)
                 
                 
+                lake.time.series.line.reverse <- qplot(Interval, DEMA(Selected, input$smoothingeq),  geom="line", data = spectra.timeseries.table, colour = as.factor(Lake)) +
+                coord_cartesian(xlim = ranges6a$x, ylim = ranges6a$y, expand = TRUE) +
+                scale_colour_discrete("Lake Level") +
+                theme_light() +
+                theme(axis.text.x = element_text(size=15)) +
+                theme(axis.text.y = element_text(size=15)) +
+                theme(axis.title.x = element_text(size=15)) +
+                theme(axis.title.y = element_text(size=15, angle=90)) +
+                theme(plot.title=element_text(size=20)) +
+                theme(legend.title=element_text(size=15)) +
+                theme(legend.text=element_text(size=15)) +
+                scale_x_reverse(paste(x.axis), label=comma) +
+                scale_y_continuous(input$yaxistype, label=comma)
+                
+                
                 qualitative.time.series.line.reverse <- qplot(Interval, DEMA(Selected, input$smoothingeq),  geom="line", data = spectra.timeseries.table, colour = as.factor(Qualitative)) +
                 coord_cartesian(xlim = ranges6c$x, ylim = ranges6c$y, expand = TRUE) +
                 scale_colour_discrete("Qualitative") +
@@ -9011,6 +9458,8 @@ shinyServer(function(input, output, session) {
                     cluster.time.series
                 } else if (input$timecoloureq == "Climate" && input$flipxeq==FALSE) {
                     climate.time.series.line
+                } else if (input$timecoloureq == "Lake" && input$flipxeq==FALSE) {
+                    lake.time.series.line
                 } else if (input$timecoloureq == "QualitativePoint" && input$flipxeq==FALSE) {
                     qualitative.time.series.point
                 } else if (input$timecoloureq == "QualitativeLine" && input$flipxeq==FALSE) {
@@ -9027,6 +9476,8 @@ shinyServer(function(input, output, session) {
                     cluster.time.series.reverse
                 } else if (input$timecoloureq == "Climate" && input$flipxeq==TRUE) {
                     climate.time.series.line.reverse
+                } else if (input$timecoloureq == "Lake" && input$flipxeq==TRUE) {
+                    lake.time.series.line.reverse
                 } else if (input$timecoloureq == "QualitativePoint" && input$flipxeq==TRUE) {
                     qualitative.time.series.point.reverse
                 } else if (input$timecoloureq == "QualitativeLine" && input$flipxeq==TRUE) {
@@ -9059,8 +9510,8 @@ shinyServer(function(input, output, session) {
                     spectra.line.table$Age <- rep(1, length(spectra.line.table$Depth))
                 }
                 
-                spectra.timeseries.table <- data.frame(spectra.line.table[c(input$xaxistypeeq)], DEMA(spectra.line.table$Selected, input$smoothingeq), spectra.line.table$Cluster, spectra.line.table$Qualitative, spectra.line.table$Depth, spectra.line.table$Climate, spectra.line.table$Age)
-                colnames(spectra.timeseries.table) <- c("Interval", "Selected", "Cluster", "Qualitative", "Depth", "Climate", "Age")
+                spectra.timeseries.table <- data.frame(spectra.line.table[c(input$xaxistypeeq)], DEMA(spectra.line.table$Selected, input$smoothingeq), spectra.line.table$Cluster, spectra.line.table$Qualitative, spectra.line.table$Depth, spectra.line.table$Climate, spectra.line.table$Lake, spectra.line.table$Age)
+                colnames(spectra.timeseries.table) <- c("Interval", "Selected", "Cluster", "Qualitative", "Depth", "Climate", "Lake", "Age")
                 
                 spectra.timeseries.table
                 
@@ -9180,8 +9631,8 @@ shinyServer(function(input, output, session) {
                 #spectra.timeseries.table <- data.frame(interval, spectra.line.table[c(input$elementtrend)]/spectra.line.table.norm[c(input$elementnorm)], spectra.line.table$Cluster, spectra.line.table$Qualitative, spectra.line.table$Depth)
                 #colnames(spectra.timeseries.table) <- c("Interval", "Selected", "Cluster", "Qualitative", "Depth")
                 
-                spectra.timeseries.table <- data.frame(spectra.line.table[c(input$xaxistypeeq)], spectra.line.table$Selected, spectra.line.table$Cluster, spectra.line.table$Qualitative, spectra.line.table$Depth, spectra.line.table$Climate)
-                colnames(spectra.timeseries.table) <- c("Interval", "Selected", "Cluster", "Qualitative", "Depth", "Climate")
+                spectra.timeseries.table <- data.frame(spectra.line.table[c(input$xaxistypeeq)], spectra.line.table$Selected, spectra.line.table$Cluster, spectra.line.table$Qualitative, spectra.line.table$Depth, spectra.line.table$Climate, spectra.line.table$Lake)
+                colnames(spectra.timeseries.table) <- c("Interval", "Selected", "Cluster", "Qualitative", "Depth", "Climate", "Lake")
                 
                 
                 
@@ -9289,6 +9740,20 @@ shinyServer(function(input, output, session) {
                 scale_x_continuous(paste(x.axis), label=comma) +
                 scale_y_continuous(input$yaxistype, label=comma)
                 
+                
+                lake.time.series.line <- qplot(Interval, DEMA(Selected, input$smoothingeq),  geom="line", data = spectra.timeseries.table, colour = as.factor(Lake)) +
+                coord_cartesian(xlim = ranges6a$x, ylim = ranges6a$y, expand = TRUE) +
+                scale_colour_discrete("Lake Level") +
+                theme_light() +
+                theme(axis.text.x = element_text(size=15)) +
+                theme(axis.text.y = element_text(size=15)) +
+                theme(axis.title.x = element_text(size=15)) +
+                theme(axis.title.y = element_text(size=15, angle=90)) +
+                theme(plot.title=element_text(size=20)) +
+                theme(legend.title=element_text(size=15)) +
+                theme(legend.text=element_text(size=15)) +
+                scale_x_continuous(paste(x.axis), label=comma) +
+                scale_y_continuous(input$yaxistype, label=comma)
                 
                 qualitative.time.series.line <- qplot(Interval, DEMA(Selected, input$smoothingeq),  geom="line", data = spectra.timeseries.table, colour = as.factor(Qualitative)) +
                 coord_cartesian(xlim = ranges6d$x, ylim = ranges6d$y, expand = TRUE) +
@@ -9431,6 +9896,21 @@ shinyServer(function(input, output, session) {
                 scale_y_continuous(input$yaxistype, label=comma)
                 
                 
+                lake.time.series.line.reverse <- qplot(Interval, DEMA(Selected, input$smoothingeq),  geom="line", data = spectra.timeseries.table, colour = as.factor(Lake)) +
+                coord_cartesian(xlim = ranges6a$x, ylim = ranges6a$y, expand = TRUE) +
+                scale_colour_discrete("Lake Level") +
+                theme_light() +
+                theme(axis.text.x = element_text(size=15)) +
+                theme(axis.text.y = element_text(size=15)) +
+                theme(axis.title.x = element_text(size=15)) +
+                theme(axis.title.y = element_text(size=15, angle=90)) +
+                theme(plot.title=element_text(size=20)) +
+                theme(legend.title=element_text(size=15)) +
+                theme(legend.text=element_text(size=15)) +
+                scale_x_reverse(paste(x.axis), label=comma) +
+                scale_y_continuous(input$yaxistype, label=comma)
+                
+                
                 qualitative.time.series.line.reverse <- qplot(Interval, DEMA(Selected, input$smoothingeq),  geom="line", data = spectra.timeseries.table, colour = as.factor(Qualitative)) +
                 coord_cartesian(xlim = ranges6d$x, ylim = ranges6d$y, expand = TRUE) +
                 scale_colour_discrete("Qualitative") +
@@ -9489,6 +9969,8 @@ shinyServer(function(input, output, session) {
                     cluster.time.series
                 } else if (input$timecoloureq == "Climate" && input$flipxeq==FALSE) {
                     climate.time.series.line
+                } else if (input$timecoloureq == "Lake" && input$flipxeq==FALSE) {
+                    lake.time.series.line
                 } else if (input$timecoloureq == "QualitativePoint" && input$flipxeq==FALSE) {
                     qualitative.time.series.point
                 } else if (input$timecoloureq == "QualitativeLine" && input$flipxeq==FALSE) {
@@ -9505,6 +9987,8 @@ shinyServer(function(input, output, session) {
                     cluster.time.series.reverse
                 } else if (input$timecoloureq == "Climate" && input$flipxeq==TRUE) {
                     climate.time.series.line.reverse
+                } else if (input$timecoloureq == "Lake" && input$flipxeq==TRUE) {
+                    lake.time.series.line.reverse
                 } else if (input$timecoloureq == "QualitativePoint" && input$flipxeq==TRUE) {
                     qualitative.time.series.point.reverse
                 } else if (input$timecoloureq == "QualitativeLine" && input$flipxeq==TRUE) {
@@ -9536,8 +10020,8 @@ shinyServer(function(input, output, session) {
                     spectra.line.table$Age <- rep(1, length(spectra.line.table$Depth))
                 }
                 
-                spectra.timeseries.table <- data.frame(spectra.line.table[c(input$xaxistypeeq)], DEMA(spectra.line.table$Selected, input$smoothingeq), spectra.line.table$Cluster, spectra.line.table$Qualitative, spectra.line.table$Depth, spectra.line.table$Climate, spectra.line.table$Age)
-                colnames(spectra.timeseries.table) <- c("Interval", "Selected", "Cluster", "Qualitative", "Depth", "Climate", "Age")
+                spectra.timeseries.table <- data.frame(spectra.line.table[c(input$xaxistypeeq)], DEMA(spectra.line.table$Selected, input$smoothingeq), spectra.line.table$Cluster, spectra.line.table$Qualitative, spectra.line.table$Depth, spectra.line.table$Climate, spectra.line.table$Lake, spectra.line.table$Age)
+                colnames(spectra.timeseries.table) <- c("Interval", "Selected", "Cluster", "Qualitative", "Depth", "Climate", "Lake", "Age")
                 
                 spectra.timeseries.table
                 
@@ -9660,8 +10144,8 @@ shinyServer(function(input, output, session) {
                 #spectra.timeseries.table <- data.frame(interval, spectra.line.table[c(input$elementtrend)]/spectra.line.table.norm[c(input$elementnorm)], spectra.line.table$Cluster, spectra.line.table$Qualitative, spectra.line.table$Depth)
                 #colnames(spectra.timeseries.table) <- c("Interval", "Selected", "Cluster", "Qualitative", "Depth")
                 
-                spectra.timeseries.table <- data.frame(spectra.line.table[c(input$xaxistypeeq)], spectra.line.table$Selected, spectra.line.table$Cluster, spectra.line.table$Qualitative, spectra.line.table$Depth, spectra.line.table$Climate)
-                colnames(spectra.timeseries.table) <- c("Interval", "Selected", "Cluster", "Qualitative", "Depth", "Climate")
+                spectra.timeseries.table <- data.frame(spectra.line.table[c(input$xaxistypeeq)], spectra.line.table$Selected, spectra.line.table$Cluster, spectra.line.table$Qualitative, spectra.line.table$Depth, spectra.line.table$Climate, spectra.line.table$Lake)
+                colnames(spectra.timeseries.table) <- c("Interval", "Selected", "Cluster", "Qualitative", "Depth", "Climate", "Lake")
                 
                 
                 
@@ -9758,6 +10242,21 @@ shinyServer(function(input, output, session) {
                 climate.time.series.line <- qplot(Interval, DEMA(Selected, input$smoothingeq),  geom="line", data = spectra.timeseries.table, colour = as.factor(Climate)) +
                 scale_colour_discrete("Climatic Period") +
                 coord_cartesian(xlim = ranges6e$x, ylim = ranges6e$y, expand = TRUE) +
+                theme_light() +
+                theme(axis.text.x = element_text(size=15)) +
+                theme(axis.text.y = element_text(size=15)) +
+                theme(axis.title.x = element_text(size=15)) +
+                theme(axis.title.y = element_text(size=15, angle=90)) +
+                theme(plot.title=element_text(size=20)) +
+                theme(legend.title=element_text(size=15)) +
+                theme(legend.text=element_text(size=15)) +
+                scale_x_continuous(paste(x.axis), label=comma) +
+                scale_y_continuous(input$yaxistype, label=comma)
+                
+                
+                lake.time.series.line <- qplot(Interval, DEMA(Selected, input$smoothingeq),  geom="line", data = spectra.timeseries.table, colour = as.factor(Lake)) +
+                coord_cartesian(xlim = ranges6a$x, ylim = ranges6a$y, expand = TRUE) +
+                scale_colour_discrete("Lake Level") +
                 theme_light() +
                 theme(axis.text.x = element_text(size=15)) +
                 theme(axis.text.y = element_text(size=15)) +
@@ -9912,6 +10411,21 @@ shinyServer(function(input, output, session) {
                 scale_y_continuous(input$yaxistype, label=comma)
                 
                 
+                lake.time.series.line.reverse <- qplot(Interval, DEMA(Selected, input$smoothingeq),  geom="line", data = spectra.timeseries.table, colour = as.factor(Lake)) +
+                coord_cartesian(xlim = ranges6a$x, ylim = ranges6a$y, expand = TRUE) +
+                scale_colour_discrete("Lake Level") +
+                theme_light() +
+                theme(axis.text.x = element_text(size=15)) +
+                theme(axis.text.y = element_text(size=15)) +
+                theme(axis.title.x = element_text(size=15)) +
+                theme(axis.title.y = element_text(size=15, angle=90)) +
+                theme(plot.title=element_text(size=20)) +
+                theme(legend.title=element_text(size=15)) +
+                theme(legend.text=element_text(size=15)) +
+                scale_x_reverse(paste(x.axis), label=comma) +
+                scale_y_continuous(input$yaxistype, label=comma)
+                
+                
                 qualitative.time.series.line.reverse <- qplot(Interval, DEMA(Selected, input$smoothingeq),  geom="line", data = spectra.timeseries.table, colour = as.factor(Qualitative)) +
                 coord_cartesian(xlim = ranges6e$x, ylim = ranges6e$y, expand = TRUE) +
                 scale_colour_discrete("Qualitative") +
@@ -9970,6 +10484,8 @@ shinyServer(function(input, output, session) {
                     cluster.time.series
                 } else if (input$timecoloureq == "Climate" && input$flipxeq==FALSE) {
                     climate.time.series.line
+                } else if (input$timecoloureq == "Lake" && input$flipxeq==FALSE) {
+                    lake.time.series.line
                 } else if (input$timecoloureq == "QualitativePoint" && input$flipxeq==FALSE) {
                     qualitative.time.series.point
                 } else if (input$timecoloureq == "QualitativeLine" && input$flipxeq==FALSE) {
@@ -9986,6 +10502,8 @@ shinyServer(function(input, output, session) {
                     cluster.time.series.reverse
                 } else if (input$timecoloureq == "Climate" && input$flipxeq==TRUE) {
                     climate.time.series.line.reverse
+                } else if (input$timecoloureq == "Lake" && input$flipxeq==TRUE) {
+                    lake.time.series.line.reverse
                 } else if (input$timecoloureq == "QualitativePoint" && input$flipxeq==TRUE) {
                     qualitative.time.series.point.reverse
                 } else if (input$timecoloureq == "QualitativeLine" && input$flipxeq==TRUE) {
@@ -10018,8 +10536,8 @@ shinyServer(function(input, output, session) {
                     spectra.line.table$Age <- rep(1, length(spectra.line.table$Depth))
                 }
                 
-                spectra.timeseries.table <- data.frame(spectra.line.table[c(input$xaxistypeeq)], DEMA(spectra.line.table$Selected, input$smoothingeq), spectra.line.table$Cluster, spectra.line.table$Qualitative, spectra.line.table$Depth, spectra.line.table$Climate, spectra.line.table$Age)
-                colnames(spectra.timeseries.table) <- c("Interval", "Selected", "Cluster", "Qualitative", "Depth", "Climate", "Age")
+                spectra.timeseries.table <- data.frame(spectra.line.table[c(input$xaxistypeeq)], DEMA(spectra.line.table$Selected, input$smoothingeq), spectra.line.table$Cluster, spectra.line.table$Qualitative, spectra.line.table$Depth, spectra.line.table$Climate, spectra.line.table$Lake, spectra.line.table$Age)
+                colnames(spectra.timeseries.table) <- c("Interval", "Selected", "Cluster", "Qualitative", "Depth", "Climate", "Lake", "Age")
                 
                 spectra.timeseries.table
                 
