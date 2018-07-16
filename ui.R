@@ -192,10 +192,12 @@ downloadButton('ageresults', "Age Results Table"),
 tags$hr(),
 checkboxInput("ageon", label="Age Model On", FALSE),
 checkboxInput("constrainage", label="Constrain Chronology", FALSE),
-fileInput('agemodelfile', 'Load Age Model', accept='.txt', multiple=FALSE),
+fileInput('agemodelfile', 'Load Bacon', accept='.txt', multiple=FALSE),
 
 
 selectInput('curvetype', "Choose Calibration", choices=c("intcal13", "marine13", "shcal13", "normal"), selected="intcal13")
+#selectInput('modeltype', "Choose Model", choices=c("Bchron", "Bacon"), selected="Bacon")
+
 
 
 

@@ -1787,45 +1787,45 @@ shinyServer(function(input, output, session) {
             })
             
             
+            readBacon <- reactive({
+                inFile <- input$agemodelfile
+                
+                read.table(inFile$datapath, header=TRUE)
+                
+            })
+            
+            
             ageResults <- reactive({
                 
-                input$hotableprocess3
                 
-                
+           
                 
                 DF3 <- values[["DF2"]]
                 DF4 <- subset(DF3, !DF3$Sigma==0)
                 DF5 <- as.data.frame(DF4)
                 
-                isolate(
-                if(input$ageon==TRUE){
+                if(input$ageon==TRUE && is.null(input$agemodelfile)){
                     Bchronology(ages=as.numeric(as.vector(DF5[,2])), ageSds=as.numeric(as.vector(DF5[,3])), positions=as.numeric(as.vector(DF5[,1])), positionThickness=rep(0.5, length(DF5$Sigma)), calCurves=rep(input$curvetype, length(DF5[,1])), burn=2000, jitterPositions=TRUE)
-                }else if(input$ageon==FALSE){
+                } else if(input$ageon==TRUE && !is.null(input$agemodelfile)){
+                    readBacon()
+                } else if(input$ageon==FALSE){
                     NULL
                 }
                 
                 
                 
-                )
                 
             })
             
             
             
-            ageImport <- reactive({
-                
-                
-                
-            })
+
             
             
-            agePredict <- reactive({
+            agePredictBchron <- reactive({
                 
-                age.math <- if(is.null(input$agemodelfile)){
-                    ageResults()
-                } else if(is.null(input$agemodelfile)){
-                    
-                }
+                age.math <- ageResults()
+
                 
                 spectra.line.table <- myData()
                 
@@ -1870,18 +1870,37 @@ shinyServer(function(input, output, session) {
                 
             })
             
+            
+            agePredictBacon <- reactive({
+                
+                readBacon()
+                
+            })
+            
+            
+            agePredict <- reactive({
+                
+                if(is.null(input$agemodelfile)){
+                    agePredictBchron()
+                } else if(!is.null(input$agemodelfile)){
+                    agePredictBacon()
+                }
+                
+            })
+            
             ageTable <- reactive({
                 
-                age.results <- agePredict()
-                
-                age.frame <- data.frame(age.results$Depth, age.results$Age, age.results$Sd, age.results$MinSd2, age.results$MinSd1, age.results$MaxSd1, age.results$MaxSd2)
-                colnames(age.frame) <- c("Depth", "Age", "Sd", "MinSd2", "MinSd1", "MaxSd1", "MaxSd2")
+                age.frame <- if(is.null(input$agemodelfile)){
+                data.frame(Depth=agePredictBchron()$Depth, Age=agePredictBchron()$Age, Sd=agePredictBchron()$Sd, MinSd2=agePredictBchron()$MinSd2, MinSd1=agePredictBchron()$MinSd1, MaxSd1=agePredictBchron()$MaxSd1, MaxSd2=agePredictBchron()$MaxSd2)
+                } else if(!is.null(input$agemodelfile)){
+                    data.frame(Depth=readBacon()$depth*10, Age=readBacon()$median, Mean=readBacon()$mean,Min=readBacon()$min, Max=readBacon()$max)
+                }
                 
                 age.frame
                 
             })
             
-            agePlot <- reactive({
+            agePlotBchron <- reactive({
                 
                 age.math <- ageResults()
                 
@@ -1889,6 +1908,32 @@ shinyServer(function(input, output, session) {
                 
                 age.plot
             })
+            
+            agePlotBacon <- reactive({
+                
+                age.math <- ageTable()
+                
+                age.plot <- ggplot(age.math, aes(Depth, Age)) +
+                geom_ribbon(aes(x=Depth, ymin=Min, ymax=Max), alpha=0.3, colour="grey80") +
+                geom_line() +
+                scale_x_continuous("Depth (mm)") +
+                scale_y_continuous("Cal yr BP") +
+                theme_light()
+                
+                age.plot
+            })
+            
+            
+            agePlot <- reactive({
+                
+                if(is.null(input$agemodelfile)){
+                    agePlotBchron()
+                } else if(!is.null(input$agemodelfile)){
+                    agePlotBacon()
+                }
+                
+            })
+            
             
             output$allagemodel <- renderTable({
                 
@@ -1899,7 +1944,7 @@ shinyServer(function(input, output, session) {
             
             output$agemodcurve <- renderPlot({
                 
-                print(agePlot())
+                agePlot()
                 
                 
             })
@@ -2329,7 +2374,7 @@ shinyServer(function(input, output, session) {
                 c14min <- min(c14ages$Depth)
                 c14max <- max(c14ages$Depth)
                 
-                ages <- agePredict()
+                ages <- ageTable()
                 
                 
                 
