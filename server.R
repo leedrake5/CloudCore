@@ -2413,9 +2413,9 @@ shinyServer(function(input, output, session) {
                 
                 gilbert.level <- subset(spectra.line.table.age.unconstrained$Age, spectra.line.table.age.unconstrained$Age <= 12000 & spectra.line.table.age.unconstrained$Age > 10000)
                 
-                provo.level <- subset(spectra.line.table.age.unconstrained$Age, spectra.line.table.age.unconstrained$Age <= 15000 & spectra.line.table.age.unconstrained$Age > 12000)
+                provo.level <- subset(spectra.line.table.age.unconstrained$Age, spectra.line.table.age.unconstrained$Age <= 14500 & spectra.line.table.age.unconstrained$Age > 12000)
                 
-                bonneville.level <- subset(spectra.line.table.age.unconstrained$Age, spectra.line.table.age.unconstrained$Age <= 25000 & spectra.line.table.age.unconstrained$Age > 15000)
+                bonneville.level <- subset(spectra.line.table.age.unconstrained$Age, spectra.line.table.age.unconstrained$Age <= 25000 & spectra.line.table.age.unconstrained$Age > 14500)
                 
                 pre.bonneville.level <- subset(spectra.line.table.age.unconstrained$Age, spectra.line.table.age.unconstrained$Age <= 250000 & spectra.line.table.age.unconstrained$Age > 25000)
                 
@@ -3517,7 +3517,7 @@ shinyServer(function(input, output, session) {
                 #spectra.timeseries.table <- data.frame(interval, spectra.line.table[c(input$elementtrend)]/spectra.line.table.norm[c(input$elementnorm)], spectra.line.table$Cluster, spectra.line.table$Qualitative, spectra.line.table$Depth)
                 #colnames(spectra.timeseries.table) <- c("Interval", "Selected", "Cluster", "Qualitative", "Depth")
                 
-                spectra.timeseries.table <- data.frame(spectra.line.table[,c(input$xaxistype)], (spectra.line.table[,c(elementhold$elementtrenda)]/spectra.line.table.norm[,c(elementhold$elementnorma)]*input$ymultiply), spectra.line.table$Cluster, spectra.line.table$Qualitative, spectra.line.table$Depth, spectra.line.table$Age, spectra.line.table$Climate, spectra.line.table$Lake)
+                spectra.timeseries.table <- data.frame(spectra.line.table[,c(input$xaxistype)], (spectra.line.table[,c(elementhold$elementtrendb)]/spectra.line.table.norm[,c(elementhold$elementnormb)]*input$ymultiply), spectra.line.table$Cluster, spectra.line.table$Qualitative, spectra.line.table$Depth, spectra.line.table$Age, spectra.line.table$Climate, spectra.line.table$Lake)
                 colnames(spectra.timeseries.table) <- c("Interval", "Selected", "Cluster", "Qualitative", "Depth", "Age", "Climate", "Lake")
                 
                 
@@ -3945,7 +3945,7 @@ shinyServer(function(input, output, session) {
                 #spectra.timeseries.table <- data.frame(interval, spectra.line.table[c(input$elementtrend)]/spectra.line.table.norm[c(input$elementnorm)], spectra.line.table$Cluster, spectra.line.table$Qualitative, spectra.line.table$Depth)
                 #colnames(spectra.timeseries.table) <- c("Interval", "Selected", "Cluster", "Qualitative", "Depth")
                 
-                spectra.timeseries.table <- data.frame(spectra.line.table[,c(input$xaxistype)], (spectra.line.table[,c(elementhold$elementtrenda)]/spectra.line.table.norm[,c(elementhold$elementnorma)]*input$ymultiply), spectra.line.table$Cluster, spectra.line.table$Qualitative, spectra.line.table$Depth, spectra.line.table$Age, spectra.line.table$Climate, spectra.line.table$Lake)
+                spectra.timeseries.table <- data.frame(spectra.line.table[,c(input$xaxistype)], (spectra.line.table[,c(elementhold$elementtrendb)]/spectra.line.table.norm[,c(elementhold$elementnormb)]*input$ymultiply), spectra.line.table$Cluster, spectra.line.table$Qualitative, spectra.line.table$Depth, spectra.line.table$Age, spectra.line.table$Climate, spectra.line.table$Lake)
                 colnames(spectra.timeseries.table) <- c("Interval", "Selected", "Cluster", "Qualitative", "Depth", "Age", "Climate", "Lake")
                 
                 spectra.timeseries.table
@@ -4097,7 +4097,7 @@ shinyServer(function(input, output, session) {
                 #spectra.timeseries.table <- data.frame(interval, spectra.line.table[c(input$elementtrend)]/spectra.line.table.norm[c(input$elementnorm)], spectra.line.table$Cluster, spectra.line.table$Qualitative, spectra.line.table$Depth)
                 #colnames(spectra.timeseries.table) <- c("Interval", "Selected", "Cluster", "Qualitative", "Depth")
                 
-                spectra.timeseries.table <- data.frame(spectra.line.table[,c(input$xaxistype)], (spectra.line.table[,c(elementhold$elementtrenda)]/spectra.line.table.norm[,c(elementhold$elementnorma)]*input$ymultiply), spectra.line.table$Cluster, spectra.line.table$Qualitative, spectra.line.table$Depth, spectra.line.table$Age, spectra.line.table$Climate, spectra.line.table$Lake)
+                spectra.timeseries.table <- data.frame(spectra.line.table[,c(input$xaxistype)], (spectra.line.table[,c(elementhold$elementtrendc)]/spectra.line.table.norm[,c(elementhold$elementnormc)]*input$ymultiply), spectra.line.table$Cluster, spectra.line.table$Qualitative, spectra.line.table$Depth, spectra.line.table$Age, spectra.line.table$Climate, spectra.line.table$Lake)
                 colnames(spectra.timeseries.table) <- c("Interval", "Selected", "Cluster", "Qualitative", "Depth", "Age", "Climate", "Lake")
                 
                 
@@ -4524,7 +4524,7 @@ shinyServer(function(input, output, session) {
                 #spectra.timeseries.table <- data.frame(interval, spectra.line.table[c(input$elementtrend)]/spectra.line.table.norm[c(input$elementnorm)], spectra.line.table$Cluster, spectra.line.table$Qualitative, spectra.line.table$Depth)
                 #colnames(spectra.timeseries.table) <- c("Interval", "Selected", "Cluster", "Qualitative", "Depth")
                 
-                spectra.timeseries.table <- data.frame(spectra.line.table[,c(input$xaxistype)], (spectra.line.table[,c(elementhold$elementtrenda)]/spectra.line.table.norm[,c(elementhold$elementnorma)]*input$ymultiply), spectra.line.table$Cluster, spectra.line.table$Qualitative, spectra.line.table$Depth, spectra.line.table$Age, spectra.line.table$Climate, spectra.line.table$Lake)
+                spectra.timeseries.table <- data.frame(spectra.line.table[,c(input$xaxistype)], (spectra.line.table[,c(elementhold$elementtrendc)]/spectra.line.table.norm[,c(elementhold$elementnormc)]*input$ymultiply), spectra.line.table$Cluster, spectra.line.table$Qualitative, spectra.line.table$Depth, spectra.line.table$Age, spectra.line.table$Climate, spectra.line.table$Lake)
                 colnames(spectra.timeseries.table) <- c("Interval", "Selected", "Cluster", "Qualitative", "Depth", "Age", "Climate", "Lake")
                 
                 spectra.timeseries.table
@@ -4675,7 +4675,7 @@ shinyServer(function(input, output, session) {
                 #spectra.timeseries.table <- data.frame(interval, spectra.line.table[c(input$elementtrend)]/spectra.line.table.norm[c(input$elementnorm)], spectra.line.table$Cluster, spectra.line.table$Qualitative, spectra.line.table$Depth)
                 #colnames(spectra.timeseries.table) <- c("Interval", "Selected", "Cluster", "Qualitative", "Depth")
                 
-                spectra.timeseries.table <- data.frame(spectra.line.table[,c(input$xaxistype)], (spectra.line.table[,c(elementhold$elementtrenda)]/spectra.line.table.norm[,c(elementhold$elementnorma)]*input$ymultiply), spectra.line.table$Cluster, spectra.line.table$Qualitative, spectra.line.table$Depth, spectra.line.table$Age, spectra.line.table$Climate, spectra.line.table$Lake)
+                spectra.timeseries.table <- data.frame(spectra.line.table[,c(input$xaxistype)], (spectra.line.table[,c(elementhold$elementtrendd)]/spectra.line.table.norm[,c(elementhold$elementnormd)]*input$ymultiply), spectra.line.table$Cluster, spectra.line.table$Qualitative, spectra.line.table$Depth, spectra.line.table$Age, spectra.line.table$Climate, spectra.line.table$Lake)
                 colnames(spectra.timeseries.table) <- c("Interval", "Selected", "Cluster", "Qualitative", "Depth", "Age", "Climate", "Lake")
                 
                 
@@ -5108,7 +5108,7 @@ shinyServer(function(input, output, session) {
                 #colnames(spectra.timeseries.table) <- c("Interval", "Selected", "Cluster", "Qualitative", "Depth")
                 
                 
-                spectra.timeseries.table <- data.frame(spectra.line.table[,c(input$xaxistype)], (spectra.line.table[,c(elementhold$elementtrenda)]/spectra.line.table.norm[,c(elementhold$elementnorma)]*input$ymultiply), spectra.line.table$Cluster, spectra.line.table$Qualitative, spectra.line.table$Depth, spectra.line.table$Age, spectra.line.table$Climate, spectra.line.table$Lake)
+                spectra.timeseries.table <- data.frame(spectra.line.table[,c(input$xaxistype)], (spectra.line.table[,c(elementhold$elementtrendd)]/spectra.line.table.norm[,c(elementhold$elementnormd)]*input$ymultiply), spectra.line.table$Cluster, spectra.line.table$Qualitative, spectra.line.table$Depth, spectra.line.table$Age, spectra.line.table$Climate, spectra.line.table$Lake)
                 colnames(spectra.timeseries.table) <- c("Interval", "Selected", "Cluster", "Qualitative", "Depth", "Age", "Climate", "Lake")
                 
                 spectra.timeseries.table
@@ -5264,7 +5264,7 @@ shinyServer(function(input, output, session) {
                 #spectra.timeseries.table <- data.frame(interval, spectra.line.table[c(input$elementtrend)]/spectra.line.table.norm[c(input$elementnorm)], spectra.line.table$Cluster, spectra.line.table$Qualitative, spectra.line.table$Depth)
                 #colnames(spectra.timeseries.table) <- c("Interval", "Selected", "Cluster", "Qualitative", "Depth")
                 
-                spectra.timeseries.table <- data.frame(spectra.line.table[,c(input$xaxistype)], (spectra.line.table[,c(elementhold$elementtrenda)]/spectra.line.table.norm[,c(elementhold$elementnorma)]*input$ymultiply), spectra.line.table$Cluster, spectra.line.table$Qualitative, spectra.line.table$Depth, spectra.line.table$Age, spectra.line.table$Climate, spectra.line.table$Lake)
+                spectra.timeseries.table <- data.frame(spectra.line.table[,c(input$xaxistype)], (spectra.line.table[,c(elementhold$elementtrende)]/spectra.line.table.norm[,c(elementhold$elementnorme)]*input$ymultiply), spectra.line.table$Cluster, spectra.line.table$Qualitative, spectra.line.table$Depth, spectra.line.table$Age, spectra.line.table$Climate, spectra.line.table$Lake)
                 colnames(spectra.timeseries.table) <- c("Interval", "Selected", "Cluster", "Qualitative", "Depth", "Age", "Climate", "Lake")
                 
                 
@@ -5695,7 +5695,7 @@ shinyServer(function(input, output, session) {
                 #spectra.timeseries.table <- data.frame(interval, spectra.line.table[c(input$elementtrend)]/spectra.line.table.norm[c(input$elementnorm)], spectra.line.table$Cluster, spectra.line.table$Qualitative, spectra.line.table$Depth)
                 #colnames(spectra.timeseries.table) <- c("Interval", "Selected", "Cluster", "Qualitative", "Depth")
                 
-                spectra.timeseries.table <- data.frame(spectra.line.table[,c(input$xaxistype)], (spectra.line.table[,c(elementhold$elementtrenda)]/spectra.line.table.norm[,c(elementhold$elementnorma)]*input$ymultiply), spectra.line.table$Cluster, spectra.line.table$Qualitative, spectra.line.table$Depth, spectra.line.table$Age, spectra.line.table$Climate, spectra.line.table$Lake)
+                spectra.timeseries.table <- data.frame(spectra.line.table[,c(input$xaxistype)], (spectra.line.table[,c(elementhold$elementtrende)]/spectra.line.table.norm[,c(elementhold$elementnorme)]*input$ymultiply), spectra.line.table$Cluster, spectra.line.table$Qualitative, spectra.line.table$Depth, spectra.line.table$Age, spectra.line.table$Climate, spectra.line.table$Lake)
                 colnames(spectra.timeseries.table) <- c("Interval", "Selected", "Cluster", "Qualitative", "Depth", "Age", "Climate", "Lake")
                 
                 spectra.timeseries.table
