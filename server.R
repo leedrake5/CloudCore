@@ -3229,7 +3229,7 @@ shinyServer(function(input, output, session) {
                 
                 
                 lake.time.series.line.reverse <- qplot(Interval, DEMA(Selected, input$smoothing), geom="line", data = spectra.timeseries.table, colour = as.factor(Lake)) +
-                coord_cartesian(xlim = ranges3e$x, ylim = ranges3e$y, expand = TRUE) +
+                coord_cartesian(xlim = ranges3a$x, ylim = ranges3a$y, expand = TRUE) +
                 scale_colour_discrete("Lake Level") +
                 theme_light() +
                 theme(axis.text.x = element_text(size=15)) +
@@ -3657,7 +3657,7 @@ shinyServer(function(input, output, session) {
                 
                 
                 lake.time.series.line <- qplot(Interval, DEMA(Selected, input$smoothing), geom="line", data = spectra.timeseries.table, colour = as.factor(Lake)) +
-                coord_cartesian(xlim = ranges3a$x, ylim = ranges3a$y, expand = TRUE) +
+                coord_cartesian(xlim = ranges3b$x, ylim = ranges3b$y, expand = TRUE) +
                 scale_colour_discrete("Lake Level") +
                 theme_light() +
                 theme(axis.text.x = element_text(size=15)) +
@@ -3812,7 +3812,7 @@ shinyServer(function(input, output, session) {
                 
                 
                 lake.time.series.line.reverse <- qplot(Interval, DEMA(Selected, input$smoothing), geom="line", data = spectra.timeseries.table, colour = as.factor(Lake)) +
-                coord_cartesian(xlim = ranges3e$x, ylim = ranges3e$y, expand = TRUE) +
+                coord_cartesian(xlim = ranges3b$x, ylim = ranges3b$y, expand = TRUE) +
                 scale_colour_discrete("Lake Level") +
                 theme_light() +
                 theme(axis.text.x = element_text(size=15)) +
@@ -4237,7 +4237,7 @@ shinyServer(function(input, output, session) {
                 scale_y_continuous(paste(trendy), label=comma)
                 
                 lake.time.series.line <- qplot(Interval, DEMA(Selected, input$smoothing), geom="line", data = spectra.timeseries.table, colour = as.factor(Lake)) +
-                coord_cartesian(xlim = ranges3a$x, ylim = ranges3a$y, expand = TRUE) +
+                coord_cartesian(xlim = ranges3c$x, ylim = ranges3c$y, expand = TRUE) +
                 scale_colour_discrete("Lake Level") +
                 theme_light() +
                 theme(axis.text.x = element_text(size=15)) +
@@ -4391,7 +4391,7 @@ shinyServer(function(input, output, session) {
                 
                 
                 lake.time.series.line.reverse <- qplot(Interval, DEMA(Selected, input$smoothing), geom="line", data = spectra.timeseries.table, colour = as.factor(Lake)) +
-                coord_cartesian(xlim = ranges3e$x, ylim = ranges3e$y, expand = TRUE) +
+                coord_cartesian(xlim = ranges3c$x, ylim = ranges3c$y, expand = TRUE) +
                 scale_colour_discrete("Lake Level") +
                 theme_light() +
                 theme(axis.text.x = element_text(size=15)) +
@@ -4816,7 +4816,7 @@ shinyServer(function(input, output, session) {
                 
                 
                 lake.time.series.line <- qplot(Interval, DEMA(Selected, input$smoothing), geom="line", data = spectra.timeseries.table, colour = as.factor(Lake)) +
-                coord_cartesian(xlim = ranges3a$x, ylim = ranges3a$y, expand = TRUE) +
+                coord_cartesian(xlim = ranges3d$x, ylim = ranges3d$y, expand = TRUE) +
                 scale_colour_discrete("Lake Level") +
                 theme_light() +
                 theme(axis.text.x = element_text(size=15)) +
@@ -4973,7 +4973,7 @@ shinyServer(function(input, output, session) {
                 
                 
                 lake.time.series.line.reverse <- qplot(Interval, DEMA(Selected, input$smoothing), geom="line", data = spectra.timeseries.table, colour = as.factor(Lake)) +
-                coord_cartesian(xlim = ranges3e$x, ylim = ranges3e$y, expand = TRUE) +
+                coord_cartesian(xlim = ranges3d$x, ylim = ranges3d$y, expand = TRUE) +
                 scale_colour_discrete("Lake Level") +
                 theme_light() +
                 theme(axis.text.x = element_text(size=15)) +
@@ -5403,7 +5403,7 @@ shinyServer(function(input, output, session) {
                 scale_y_continuous(paste(trendy), label=comma)
                 
                 lake.time.series.line <- qplot(Interval, DEMA(Selected, input$smoothing), geom="line", data = spectra.timeseries.table, colour = as.factor(Lake)) +
-                coord_cartesian(xlim = ranges3a$x, ylim = ranges3a$y, expand = TRUE) +
+                coord_cartesian(xlim = ranges3e$x, ylim = ranges3e$y, expand = TRUE) +
                 scale_colour_discrete("Lake Level") +
                 theme_light() +
                 theme(axis.text.x = element_text(size=15)) +

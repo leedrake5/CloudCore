@@ -1,10 +1,10 @@
-name: cloudCore
+name: CloudCore
 title:
 username:
 account: bleedrake
 server: shinyapps.io
 hostUrl: https://api.shinyapps.io/v1
 appId: 211951
-bundleId: 972129
+bundleId: 1483373
 url: https://bleedrake.shinyapps.io/cloudCore/
-when: 1504825353.91706
+when: 1531781208.60688
