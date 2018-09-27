@@ -21,18 +21,23 @@ actionButton("actionprocessdepth", label = "Enter Depths"),
 actionButton("actionplot", label = "Plot Spectrum"),
 downloadButton('downloadPlot', "Plot"),
 
+tags$hr(),
+
+checkboxInput('advanced', "Advanced", value=FALSE),
+uiOutput('gainshiftui'),
+uiOutput('binaryui'),
 
 tags$hr(),
 
 fileInput('file1', 'Light Element Spectra', multiple=TRUE,
-accept=c('.csv', '.zip')),
+accept=c('.csv', '.zip', '.pdz', '.xlsx')),
 
 fileInput('file2', 'Trace Element Spectra', multiple=TRUE,
-accept=c('.csv', '.zip')),
+accept=c('.csv', '.zip', '.pdz', '.xlsx')),
 
 #checkboxInput('useall', "Match Light and Trace scans", value=TRUE),
 
-selectInput("filetype", label=NULL, c("Spectra", "Net", "Artax Excel", "Spreadsheet"), selected="Spectra"),
+selectInput("filetype", label=NULL, c("Spectra", "PDZ", "Net", "Artax Excel", "Spreadsheet"), selected="Spectra"),
 
 numericInput("aggregationfactor", label="Aggregation", value=5, min=1, max=100),
 
@@ -411,6 +416,7 @@ textInput('customxaxis', label="Custom X Axis"),
 checkboxInput('flipx', label="Flip X Axis", value=FALSE),
 radioButtons('lengthunit', label=NULL, c("mm", "cm", "m", "inches", "feet"), selected="mm"),
 numericInput('startmm', label = "Start Point (mm)", value=0),
+sliderInput('xdigits', label="Digits", min=0, max=4, value=0),
 radioButtons('timetype', label=NULL, c("AD", "BC", "BC/AD", "BP"), selected="BP"),
 tooltip = tooltipOptions(title = "Click for X-axis options")
 ),

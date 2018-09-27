@@ -8,6 +8,16 @@ list.of.packages <- c("pbapply", "reshape2", "TTR", "dplyr", "ggtern", "ggplot2"
 new.packages <- list.of.packages[!(list.of.packages %in% installed.packages()[,"Package"])]
 if(length(new.packages)) install.packages(new.packages)
 
+if("rPDZ" %in% installed.packages()[,"Package"]==FALSE && get_os()=="windows"){
+    install.packages("http://www.xrf.guru/packages/rPDZ_1.0.zip", repos=NULL, type="win.binary")
+} else if ("rPDZ" %in% installed.packages()[,"Package"]==FALSE && get_os()=="osx"){
+    install.packages("http://www.xrf.guru/packages/rPDZ_1.0.tgz", repos=NULL)
+} else if ("rPDZ" %in% installed.packages()[,"Package"]==FALSE && get_os()=="linux"){
+    install.packages("http://www.xrf.guru/packages/rPDZ_1.0.tar.gz", repos=NULL)
+}
+
+library(rPDZ)
+
 testb <- 5
 
 
@@ -20,6 +30,7 @@ library(ggplot2)
 library(shiny)
 library(DT)
 library(gRbase)
+library(rPDZ)
 
 plot_dim2 <- function(dim = c(NA, NA), scale = 1, units = c("in", "cm", "mm"),
 limitsize = TRUE) {
@@ -167,6 +178,134 @@ read_csv_net <- function(filepath) {
     colnames(simple.transpose) <- eline
     
     simple.transpose
+    
+}
+
+
+
+
+readPDZ25DataExpiremental <- function(filepath, filename){
+    
+    filename <- gsub(".pdz", "", filename)
+    filename.vector <- rep(filename, 2048)
+    
+    nbrOfRecords <- 3000
+    integers <- int_to_unit(readBin(con=filepath, what= "int", n=3000, endian="little"))
+    floats <- readBin(con=filepath, what="float", size=4, n=nbrOfRecords, endian="little")
+    integer.sub <- integers[124:2171]
+    
+    sequence <- seq(1, length(integer.sub), 1)
+    
+    time.est <- integers[144]/10
+    
+    channels <- sequence
+    energy <- sequence*.02
+    counts <- integer.sub/(integers[144]/10)
+    
+    unfold(data.frame(Energy=energy, CPS=counts, Spectrum=filename.vector))
+    
+}
+
+
+readPDZ24DataExpiremental <- function(filepath, filename){
+    
+    filename <- gsub(".pdz", "", filename)
+    filename.vector <- rep(filename, 2048)
+    
+    nbrOfRecords <- 3000
+    integers <- int_to_unit(readBin(con=filepath, what= "int", n=3000, endian="little"))
+    floats <- readBin(con=filepath, what="float", size=4, n=nbrOfRecords, endian="little")
+    integer.sub <- integers[90:2137]
+    sequence <- seq(1, length(integer.sub), 1)
+    
+    time.est <- integer.sub[21]
+    
+    channels <- sequence
+    energy <- sequence*.02
+    counts <- integer.sub/(integer.sub[21]/10)
+    
+    unfold(data.frame(Energy=energy, CPS=counts, Spectrum=filename.vector))
+    
+}
+
+
+#Rcpp::sourceCpp("pdz.cpp")
+
+readPDZ25Data <- function(filepath, filename){
+    
+    filename <- gsub(".pdz", "", filename)
+    filename.vector <- rep(filename, 2020)
+    
+    nbrOfRecords <- 2020
+    integers <- readPDZ25(filepath, start=481, size=nbrOfRecords)
+    
+    sequence <- seq(1, length(integers), 1)
+    
+    time.est <- integers[21]
+    
+    channels <- sequence
+    energy <- sequence*.02
+    counts <- integers/(integers[144]/10)
+    
+    data.frame(Energy=energy, CPS=counts, Spectrum=filename.vector)
+    
+}
+
+
+readPDZ25DataManual <- function(filepath, filename, binaryshift){
+    
+    filename <- gsub(".pdz", "", filename)
+    filename.vector <- rep(filename, 2020)
+    
+    nbrOfRecords <- 2020
+    integers <- readPDZ25(filepath, start=binaryshift, size=nbrOfRecords)
+    
+    sequence <- seq(1, length(integers), 1)
+    
+    time.est <- integers[21]
+    
+    channels <- sequence
+    energy <- sequence*.02
+    counts <- integers/(integers[144]/10)
+    
+    data.frame(Energy=energy, CPS=counts, Spectrum=filename.vector)
+    
+}
+
+
+readPDZ24Data<- function(filepath, filename){
+    
+    filename <- gsub(".pdz", "", filename)
+    filename.vector <- rep(filename, 2020)
+    
+    nbrOfRecords <- 2020
+    integers <- readPDZ24(filepath, start=361, size=nbrOfRecords)
+    sequence <- seq(1, length(integers), 1)
+    
+    time.est <- integers[21]
+    
+    channels <- sequence
+    energy <- sequence*.02
+    counts <- integers/(integers[21]/10)
+    
+    data.frame(Energy=energy, CPS=counts, Spectrum=filename.vector)
+    
+}
+
+
+
+readPDZData <- function(filepath, filename) {
+    nbrOfRecords <- 10000
+    
+    
+    floats <- readBin(con=filepath, what="float", size=4, n=nbrOfRecords, endian="little")
+    
+    if(floats[[9]]=="5"){
+        readPDZ25Data(filepath, filename)
+    }else {
+        readPDZ24Data(filepath, filename)
+    }
+    
     
 }
 
@@ -4058,16 +4197,28 @@ spectra.line.table.norm
 
 
 
-spectralLines <- c("Ne.K.alpha", "Ne.K.beta", "Na.K.alpha", "Na.K.beta", "Mg.K.alpha", "Mg.K.beta", "Al.K.alpha", "Al.K.beta", "Si.K.alpha", "Si.K.beta", "P.K.alpha", "P.K.beta", "S.K.alpha", "S.K.beta", "Cl.K.alpha", "Cl.K.beta", "Ar.K.alpha", "Ar.K.beta", "K.K.alpha", "K.K.beta", "Ca.K.alpha", "Ca.K.beta", "Sc.K.alpha", "Sc.K.beta", "Ti.K.alpha", "Ti.K.beta", "V.K.alpha", "V.K.beta", "Cr.K.alpha", "Cr.K.beta", "Mn.K.alpha", "Mn.K.beta", "Fe.K.alpha", "Fe.K.beta", "Co.K.alpha", "Co.K.beta", "Ni.K.alpha", "Ni.K.beta", "Cu.K.alpha", "Cu.K.beta", "Zn.K.alpha", "Zn.K.beta", "Ga.K.alpha", "Ga.K.beta", "Ge.K.alpha", "Ge.K.beta", "As.K.alpha", "As.K.beta", "Se.K.alpha", "Se.K.beta", "Br.K.alpha", "Br.K.beta", "Kr.K.alpha", "Kr.K.beta", "Rb.K.alpha", "Rb.K.beta", "Sr.K.alpha", "Sr.K.beta", "Y.K.alpha", "Y.K.beta", "Zr.K.alpha", "Zr.K.beta", "Nb.K.alpha", "Nb.K.beta", "Mo.K.alpha", "Mo.K.beta", "Mo.L.alpha", "Mo.L.beta", "Ru.K.alpha", "Ru.K.beta", "Ru.L.alpha", "Ru.L.beta", "Rh.K.alpha", "Rh.K.beta", "Rh.L.alpha", "Rh.L.beta", "Pd.K.alpha", "Pd.K.beta", "Pd.L.alpha", "Pd.L.beta", "Ag.K.alpha", "Ag.K.beta", "Ag.L.alpha", "Ag.L.beta", "Cd.K.alpha", "Cd.K.beta", "Cd.L.alpha", "Cd.L.beta", " In.K.alpha", "In.K.beta", "In.L.alpha", "Sn.K.alpha", "Sn.K.beta", "Sn.L.alpha", "Sn.L.beta", "Sb.K.alpha", "Sb.K.beta", "Sb.L.alpha", "Sb.L.beta", "Te.K.alpha", "Te.K.beta", "Te.L.alpha", "Te.L.beta", "I.K.alpha", "I.K.beta", "I.L.alpha", "I.L.beta", "Xe.K.alpha", "Xe.K.beta", "Xe.L.alpha", "Xe.L.beta", "Cs.K.alpha", "Cs.K.beta", "Cs.L.alpha", "Cs.L.beta", "Ba.K.alpha", "Ba.K.beta", "Ba.L.alpha", "Ba.L.beta", "La.K.alpha", "La.K.beta", "La.L.alpha", "La.L.beta", "Ce.K.alpha", "Ce.K.beta", "Ce.L.alpha", "Ce.L.beta", "Pr.K.alpha", "Pr.K.beta", "Pr.L.alpha", "Pr.L.beta", "Nd.K.alpha", "Nd.K.beta", "Nd.L.alpha", "Nd.L.beta", "Pm.L.alpha", "Pm.L.beta", "Sm.L.alpha", "Sm.L.beta", "Eu.L.alpha", "Eu.L.beta", "Gd.L.alpha", "Gd.L.beta", "Tb.L.alpha", "Tb.L.beta", "Dy.L.alpha", "Dy.L.beta", "Ho.L.alpha", "Ho.L.beta", "Er.L.alpha", "Er.L.beta", "Tm.L.alpha", "Tm.L.beta", "Yb.L.alpha", "Yb.L.beta", "Lu.L.alpha", "Lu.L.beta", "Hf.L.alpha", "Hf.L.beta", "Ta.L.alpha", "Ta.L.beta", "W.L.alpha", "W.L.beta", "Re.L.alpha", "Re.L.beta", "Os.L.alpha", "Os.L.beta", "Ir.L.alpha", "Ir.L.beta", "Pt.L.alpha", "Pt.L.beta", "Au.L.alpha", "Au.L.beta", "Hg.L.alpha", "Hg.L.beta", "Tl.L.alpha", "Tl.L.beta", "Pb.L.alpha", "Pb.L.beta", "Bi.L.alpha", "Bi.L.beta", "Po.L.alpha", "Po.L.beta", "At.L.alpha", "At.L.beta", "Rn.L.alpha", "Rn.L.beta", "Fr.L.alpha", "Fr.L.beta", "Ra.L.alpha", "Ra.L.beta", "Ac.L.alpha", "Ac.L.beta", "Th.L.alpha", "Th.L.beta", "Pa.L.alpha", "Pa.L.beta", "U.L.alpha", "U.L.beta", "Pu.L.alpha", "Pu.L.beta", "Compton", "Rayleigh")
+spectralLines <- c("Ne.K.alpha", "Ne.K.beta", "Na.K.alpha", "Na.K.beta", "Mg.K.alpha", "Mg.K.beta", "Al.K.alpha", "Al.K.beta", "Si.K.alpha", "Si.K.beta", "P.K.alpha", "P.K.beta", "S.K.alpha", "S.K.beta", "Cl.K.alpha", "Cl.K.beta", "Ar.K.alpha", "Ar.K.beta", "K.K.alpha", "K.K.beta", "Ca.K.alpha", "Ca.K.beta", "Sc.K.alpha", "Sc.K.beta", "Ti.K.alpha", "Ti.K.beta", "V.K.alpha", "V.K.beta", "Cr.K.alpha", "Cr.K.beta", "Mn.K.alpha", "Mn.K.beta", "Fe.K.alpha", "Fe.K.beta", "Co.K.alpha", "Co.K.beta", "Ni.K.alpha", "Ni.K.beta", "Cu.K.alpha", "Cu.K.beta", "Zn.K.alpha", "Zn.K.beta", "Ga.K.alpha", "Ga.K.beta", "Ge.K.alpha", "Ge.K.beta", "As.K.alpha", "As.K.beta", "Se.K.alpha", "Se.K.beta", "Br.K.alpha", "Br.K.beta", "Kr.K.alpha", "Kr.K.beta", "Rb.K.alpha", "Rb.K.beta", "Sr.K.alpha", "Sr.K.beta", "Y.K.alpha", "Y.K.beta", "Zr.K.alpha", "Zr.K.beta", "Nb.K.alpha", "Nb.K.beta", "Mo.K.alpha", "Mo.K.beta", "Mo.L.alpha", "Mo.L.beta", "Ru.K.alpha", "Ru.K.beta", "Ru.L.alpha", "Ru.L.beta", "Rh.K.alpha", "Rh.K.beta", "Rh.L.alpha", "Rh.L.beta", "Pd.K.alpha", "Pd.K.beta", "Pd.L.alpha", "Pd.L.beta", "Ag.K.alpha", "Ag.K.beta", "Ag.L.alpha", "Ag.L.beta", "Cd.K.alpha", "Cd.K.beta", "Cd.L.alpha", "Cd.L.beta", "In.K.alpha", "In.K.beta", "In.L.alpha", "Sn.K.alpha", "Sn.K.beta", "Sn.L.alpha", "Sn.L.beta", "Sb.K.alpha", "Sb.K.beta", "Sb.L.alpha", "Sb.L.beta", "Te.K.alpha", "Te.K.beta", "Te.L.alpha", "Te.L.beta", "I.K.alpha", "I.K.beta", "I.L.alpha", "I.L.beta", "Xe.K.alpha", "Xe.K.beta", "Xe.L.alpha", "Xe.L.beta", "Cs.K.alpha", "Cs.K.beta", "Cs.L.alpha", "Cs.L.beta", "Ba.K.alpha", "Ba.K.beta", "Ba.L.alpha", "Ba.L.beta", "La.K.alpha", "La.K.beta", "La.L.alpha", "La.L.beta", "Ce.K.alpha", "Ce.K.beta", "Ce.L.alpha", "Ce.L.beta", "Pr.K.alpha", "Pr.K.beta", "Pr.L.alpha", "Pr.L.beta", "Nd.K.alpha", "Nd.K.beta", "Nd.L.alpha", "Nd.L.beta", "Pm.L.alpha", "Pm.L.beta", "Sm.L.alpha", "Sm.L.beta", "Eu.L.alpha", "Eu.L.beta", "Gd.L.alpha", "Gd.L.beta", "Tb.L.alpha", "Tb.L.beta", "Dy.L.alpha", "Dy.L.beta", "Ho.L.alpha", "Ho.L.beta", "Er.L.alpha", "Er.L.beta", "Tm.L.alpha", "Tm.L.beta", "Yb.L.alpha", "Yb.L.beta", "Lu.L.alpha", "Lu.L.beta", "Hf.L.alpha", "Hf.L.beta", "Ta.L.alpha", "Ta.L.beta", "W.L.alpha", "W.L.beta", "Re.L.alpha", "Re.L.beta", "Os.L.alpha", "Os.L.beta", "Ir.L.alpha", "Ir.L.beta", "Pt.L.alpha", "Pt.L.beta", "Au.L.alpha", "Au.L.beta", "Hg.L.alpha", "Hg.L.beta", "Tl.L.alpha", "Tl.L.beta", "Pb.L.alpha", "Pb.L.beta", "Bi.L.alpha", "Bi.L.beta", "Po.L.alpha", "Po.L.beta", "At.L.alpha", "At.L.beta", "Rn.L.alpha", "Rn.L.beta", "Fr.L.alpha", "Fr.L.beta", "Ra.L.alpha", "Ra.L.beta", "Ac.L.alpha", "Ac.L.beta", "Th.L.alpha", "Th.L.beta", "Pa.L.alpha", "Pa.L.beta", "U.L.alpha", "U.L.beta", "Pu.L.alpha", "Pu.L.beta", "Compton", "Rayleigh")
 
-elementLines <- c("Ne.K.alpha", "Ne.K.beta", "Na.K.alpha", "Na.K.beta", "Mg.K.alpha", "Mg.K.beta", "Al.K.alpha", "Al.K.beta", "Si.K.alpha", "Si.K.beta", "P.K.alpha", "P.K.beta", "S.K.alpha", "S.K.beta", "Cl.K.alpha", "Cl.K.beta", "Ar.K.alpha", "Ar.K.beta", "K.K.alpha", "K.K.beta", "Ca.K.alpha", "Ca.K.beta", "Sc.K.alpha", "Sc.K.beta", "Ti.K.alpha", "Ti.K.beta", "V.K.alpha", "V.K.beta", "Cr.K.alpha", "Cr.K.beta", "Mn.K.alpha", "Mn.K.beta", "Fe.K.alpha", "Fe.K.beta", "Co.K.alpha", "Co.K.beta", "Ni.K.alpha", "Ni.K.beta", "Cu.K.alpha", "Cu.K.beta", "Zn.K.alpha", "Zn.K.beta", "Ga.K.alpha", "Ga.K.beta", "Ge.K.alpha", "Ge.K.beta", "As.K.alpha", "As.K.beta", "Se.K.alpha", "Se.K.beta", "Br.K.alpha", "Br.K.beta", "Kr.K.alpha", "Kr.K.beta", "Rb.K.alpha", "Rb.K.beta", "Sr.K.alpha", "Sr.K.beta", "Y.K.alpha", "Y.K.beta", "Zr.K.alpha", "Zr.K.beta", "Nb.K.alpha", "Nb.K.beta", "Mo.K.alpha", "Mo.K.beta", "Mo.L.alpha", "Mo.L.beta", "Ru.K.alpha", "Ru.K.beta", "Ru.L.alpha", "Ru.L.beta", "Rh.K.alpha", "Rh.K.beta", "Rh.L.alpha", "Rh.L.beta", "Pd.K.alpha", "Pd.K.beta", "Pd.L.alpha", "Pd.L.beta", "Ag.K.alpha", "Ag.K.beta", "Ag.L.alpha", "Ag.L.beta", "Cd.K.alpha", "Cd.K.beta", "Cd.L.alpha", "Cd.L.beta", " In.K.alpha", "In.K.beta", "In.L.alpha", "Sn.K.alpha", "Sn.K.beta", "Sn.L.alpha", "Sn.L.beta", "Sb.K.alpha", "Sb.K.beta", "Sb.L.alpha", "Sb.L.beta", "Te.K.alpha", "Te.K.beta", "Te.L.alpha", "Te.L.beta", "I.K.alpha", "I.K.beta", "I.L.alpha", "I.L.beta", "Xe.K.alpha", "Xe.K.beta", "Xe.L.alpha", "Xe.L.beta", "Cs.K.alpha", "Cs.K.beta", "Cs.L.alpha", "Cs.L.beta", "Ba.K.alpha", "Ba.K.beta", "Ba.L.alpha", "Ba.L.beta", "La.K.alpha", "La.K.beta", "La.L.alpha", "La.L.beta", "Ce.K.alpha", "Ce.K.beta", "Ce.L.alpha", "Ce.L.beta", "Pr.K.alpha", "Pr.K.beta", "Pr.L.alpha", "Pr.L.beta", "Nd.K.alpha", "Nd.K.beta", "Nd.L.alpha", "Nd.L.beta", "Pm.L.alpha", "Pm.L.beta", "Sm.L.alpha", "Sm.L.beta", "Eu.L.alpha", "Eu.L.beta", "Gd.L.alpha", "Gd.L.beta", "Tb.L.alpha", "Tb.L.beta", "Dy.L.alpha", "Dy.L.beta", "Ho.L.alpha", "Ho.L.beta", "Er.L.alpha", "Er.L.beta", "Tm.L.alpha", "Tm.L.beta", "Yb.L.alpha", "Yb.L.beta", "Lu.L.alpha", "Lu.L.beta", "Hf.L.alpha", "Hf.L.beta", "Ta.L.alpha", "Ta.L.beta", "W.L.alpha", "W.L.beta", "Re.L.alpha", "Re.L.beta", "Os.L.alpha", "Os.L.beta", "Ir.L.alpha", "Ir.L.beta", "Pt.L.alpha", "Pt.L.beta", "Au.L.alpha", "Au.L.beta", "Hg.L.alpha", "Hg.L.beta", "Tl.L.alpha", "Tl.L.beta", "Pb.L.alpha", "Pb.L.beta", "Bi.L.alpha", "Bi.L.beta", "Po.L.alpha", "Po.L.beta", "At.L.alpha", "At.L.beta", "Rn.L.alpha", "Rn.L.beta", "Fr.L.alpha", "Fr.L.beta", "Ra.L.alpha", "Ra.L.beta", "Ac.L.alpha", "Ac.L.beta", "Th.L.alpha", "Th.L.beta", "Pa.L.alpha", "Pa.L.beta", "U.L.alpha", "U.L.beta", "Pu.L.alpha", "Pu.L.beta")
+elementLines <- c("Ne.K.alpha", "Ne.K.beta", "Na.K.alpha", "Na.K.beta", "Mg.K.alpha", "Mg.K.beta", "Al.K.alpha", "Al.K.beta", "Si.K.alpha", "Si.K.beta", "P.K.alpha", "P.K.beta", "S.K.alpha", "S.K.beta", "Cl.K.alpha", "Cl.K.beta", "Ar.K.alpha", "Ar.K.beta", "K.K.alpha", "K.K.beta", "Ca.K.alpha", "Ca.K.beta", "Sc.K.alpha", "Sc.K.beta", "Ti.K.alpha", "Ti.K.beta", "V.K.alpha", "V.K.beta", "Cr.K.alpha", "Cr.K.beta", "Mn.K.alpha", "Mn.K.beta", "Fe.K.alpha", "Fe.K.beta", "Co.K.alpha", "Co.K.beta", "Ni.K.alpha", "Ni.K.beta", "Cu.K.alpha", "Cu.K.beta", "Zn.K.alpha", "Zn.K.beta", "Ga.K.alpha", "Ga.K.beta", "Ge.K.alpha", "Ge.K.beta", "As.K.alpha", "As.K.beta", "Se.K.alpha", "Se.K.beta", "Br.K.alpha", "Br.K.beta", "Kr.K.alpha", "Kr.K.beta", "Rb.K.alpha", "Rb.K.beta", "Sr.K.alpha", "Sr.K.beta", "Y.K.alpha", "Y.K.beta", "Zr.K.alpha", "Zr.K.beta", "Nb.K.alpha", "Nb.K.beta", "Mo.K.alpha", "Mo.K.beta", "Mo.L.alpha", "Mo.L.beta", "Ru.K.alpha", "Ru.K.beta", "Ru.L.alpha", "Ru.L.beta", "Rh.K.alpha", "Rh.K.beta", "Rh.L.alpha", "Rh.L.beta", "Pd.K.alpha", "Pd.K.beta", "Pd.L.alpha", "Pd.L.beta", "Ag.K.alpha", "Ag.K.beta", "Ag.L.alpha", "Ag.L.beta", "Cd.K.alpha", "Cd.K.beta", "Cd.L.alpha", "Cd.L.beta", "In.K.alpha", "In.K.beta", "In.L.alpha", "Sn.K.alpha", "Sn.K.beta", "Sn.L.alpha", "Sn.L.beta", "Sb.K.alpha", "Sb.K.beta", "Sb.L.alpha", "Sb.L.beta", "Te.K.alpha", "Te.K.beta", "Te.L.alpha", "Te.L.beta", "I.K.alpha", "I.K.beta", "I.L.alpha", "I.L.beta", "Xe.K.alpha", "Xe.K.beta", "Xe.L.alpha", "Xe.L.beta", "Cs.K.alpha", "Cs.K.beta", "Cs.L.alpha", "Cs.L.beta", "Ba.K.alpha", "Ba.K.beta", "Ba.L.alpha", "Ba.L.beta", "La.K.alpha", "La.K.beta", "La.L.alpha", "La.L.beta", "Ce.K.alpha", "Ce.K.beta", "Ce.L.alpha", "Ce.L.beta", "Pr.K.alpha", "Pr.K.beta", "Pr.L.alpha", "Pr.L.beta", "Nd.K.alpha", "Nd.K.beta", "Nd.L.alpha", "Nd.L.beta", "Pm.L.alpha", "Pm.L.beta", "Sm.L.alpha", "Sm.L.beta", "Eu.L.alpha", "Eu.L.beta", "Gd.L.alpha", "Gd.L.beta", "Tb.L.alpha", "Tb.L.beta", "Dy.L.alpha", "Dy.L.beta", "Ho.L.alpha", "Ho.L.beta", "Er.L.alpha", "Er.L.beta", "Tm.L.alpha", "Tm.L.beta", "Yb.L.alpha", "Yb.L.beta", "Lu.L.alpha", "Lu.L.beta", "Hf.L.alpha", "Hf.L.beta", "Ta.L.alpha", "Ta.L.beta", "W.L.alpha", "W.L.beta", "Re.L.alpha", "Re.L.beta", "Os.L.alpha", "Os.L.beta", "Ir.L.alpha", "Ir.L.beta", "Pt.L.alpha", "Pt.L.beta", "Au.L.alpha", "Au.L.beta", "Hg.L.alpha", "Hg.L.beta", "Tl.L.alpha", "Tl.L.beta", "Pb.L.alpha", "Pb.L.beta", "Bi.L.alpha", "Bi.L.beta", "Po.L.alpha", "Po.L.beta", "At.L.alpha", "At.L.beta", "Rn.L.alpha", "Rn.L.beta", "Fr.L.alpha", "Fr.L.beta", "Ra.L.alpha", "Ra.L.beta", "Ac.L.alpha", "Ac.L.beta", "Th.L.alpha", "Th.L.beta", "Pa.L.alpha", "Pa.L.beta", "U.L.alpha", "U.L.beta", "Pu.L.alpha", "Pu.L.beta")
 
 
 spectralLinesLight <- c("Na.K.alpha", "Na.K.beta", "Mg.K.alpha", "Mg.K.beta", "Al.K.alpha", "Al.K.beta", "Si.K.alpha", "Si.K.beta", "P.K.alpha", "P.K.beta", "S.K.alpha", "S.K.beta", "Cl.K.alpha", "Cl.K.beta", "Ar.K.alpha", "Ar.K.beta", "K.K.alpha", "K.K.beta", "Ca.K.alpha", "Ca.K.beta")
 
-spectralLinesTrace <- c("Sc.K.alpha", "Sc.K.beta", "Ti.K.alpha", "Ti.K.beta", "Rh.L.alpha", "Rh.L.Beta", "Ba.L.alpha", "Ba.L.beta", "V.K.alpha", "V.K.beta", "Cr.K.alpha", "Cr.K.beta", "Mn.K.alpha", "Mn.K.beta", "Fe.K.alpha", "Fe.K.beta", "Co.K.alpha", "Co.K.beta", "Ni.K.alpha", "Ni.K.beta", "Cu.K.alpha", "Cu.K.beta", "Zn.K.alpha", "Zn.K.beta", "Ga.K.alpha", "Ga.K.beta", "Ge.K.alpha", "Ge.K.beta", "As.K.alpha", "As.K.beta", "Se.K.alpha", "Se.K.beta", "Br.K.alpha", "Br.K.beta", "Kr.K.alpha", "Kr.K.beta", "Rb.K.alpha", "Rb.K.beta", "Sr.K.alpha", "Sr.K.beta", "Y.K.alpha", "Y.K.beta", "Zr.K.alpha", "Zr.K.beta", "Nb.K.alpha", "Nb.K.beta", "Mo.K.alpha", "Mo.K.beta", "Mo.L.alpha", "Mo.L.beta", "Ru.K.alpha", "Ru.K.beta", "Ru.L.alpha", "Ru.L.beta", "Rh.K.alpha", "Rh.K.beta", "Pd.K.alpha", "Pd.K.beta", "Pd.L.alpha", "Pd.L.beta", "Ag.K.alpha", "Ag.K.beta", "Ag.L.alpha", "Ag.L.beta", "Cd.K.alpha", "Cd.K.beta", "Cd.L.alpha", "Cd.L.beta", " In.K.alpha", "In.K.beta", "In.L.alpha", "Sn.K.alpha", "Sn.K.beta", "Sn.L.alpha", "Sn.L.beta", "Sb.K.alpha", "Sb.K.beta", "Sb.L.alpha", "Sb.L.beta", "Te.K.alpha", "Te.K.beta", "Te.L.alpha", "Te.L.beta", "I.K.alpha", "I.K.beta", "I.L.alpha", "I.L.beta", "Xe.K.alpha", "Xe.K.beta", "Xe.L.alpha", "Xe.L.beta", "Cs.K.alpha", "Cs.K.beta", "Cs.L.alpha", "Cs.L.beta", "Ba.K.alpha", "Ba.K.beta", "La.K.alpha", "La.K.beta", "La.L.alpha", "La.L.beta", "Ce.K.alpha", "Ce.K.beta", "Ce.L.alpha", "Ce.L.beta", "Pr.K.alpha", "Pr.K.beta", "Pr.L.alpha", "Pr.L.beta", "Nd.K.alpha", "Nd.K.beta", "Nd.L.alpha", "Nd.L.beta", "Pm.L.alpha", "Pm.L.beta", "Sm.L.alpha", "Sm.L.beta", "Eu.L.alpha", "Eu.L.beta", "Gd.L.alpha", "Gd.L.beta", "Tb.L.alpha", "Tb.L.beta", "Dy.L.alpha", "Dy.L.beta", "Ho.L.alpha", "Ho.L.beta", "Er.L.alpha", "Er.L.beta", "Tm.L.alpha", "Tm.L.beta", "Yb.L.alpha", "Yb.L.beta", "Lu.L.alpha", "Lu.L.beta", "Hf.L.alpha", "Hf.L.beta", "Ta.L.alpha", "Ta.L.beta", "W.L.alpha", "W.L.beta", "Re.L.alpha", "Re.L.beta", "Os.L.alpha", "Os.L.beta", "Ir.L.alpha", "Ir.L.beta", "Pt.L.alpha", "Pt.L.beta", "Au.L.alpha", "Au.L.beta", "Hg.L.alpha", "Hg.L.beta", "Tl.L.alpha", "Tl.L.beta", "Pb.L.alpha", "Pb.L.beta", "Bi.L.alpha", "Bi.L.beta", "Po.L.alpha", "Po.L.beta", "At.L.alpha", "At.L.beta", "Rn.L.alpha", "Rn.L.beta", "Fr.L.alpha", "Fr.L.beta", "Ra.L.alpha", "Ra.L.beta", "Ac.L.alpha", "Ac.L.beta", "Th.L.alpha", "Th.L.beta", "Pa.L.alpha", "Pa.L.beta", "U.L.alpha", "U.L.beta", "Pu.L.alpha", "Pu.L.beta", "Compton", "Rayleigh")
+spectralLinesTrace <- c("Sc.K.alpha", "Sc.K.beta", "Ti.K.alpha", "Ti.K.beta", "Rh.L.alpha", "Rh.L.Beta", "Ba.L.alpha", "Ba.L.beta", "V.K.alpha", "V.K.beta", "Cr.K.alpha", "Cr.K.beta", "Mn.K.alpha", "Mn.K.beta", "Fe.K.alpha", "Fe.K.beta", "Co.K.alpha", "Co.K.beta", "Ni.K.alpha", "Ni.K.beta", "Cu.K.alpha", "Cu.K.beta", "Zn.K.alpha", "Zn.K.beta", "Ga.K.alpha", "Ga.K.beta", "Ge.K.alpha", "Ge.K.beta", "As.K.alpha", "As.K.beta", "Se.K.alpha", "Se.K.beta", "Br.K.alpha", "Br.K.beta", "Kr.K.alpha", "Kr.K.beta", "Rb.K.alpha", "Rb.K.beta", "Sr.K.alpha", "Sr.K.beta", "Y.K.alpha", "Y.K.beta", "Zr.K.alpha", "Zr.K.beta", "Nb.K.alpha", "Nb.K.beta", "Mo.K.alpha", "Mo.K.beta", "Mo.L.alpha", "Mo.L.beta", "Ru.K.alpha", "Ru.K.beta", "Ru.L.alpha", "Ru.L.beta", "Rh.K.alpha", "Rh.K.beta", "Pd.K.alpha", "Pd.K.beta", "Pd.L.alpha", "Pd.L.beta", "Ag.K.alpha", "Ag.K.beta", "Ag.L.alpha", "Ag.L.beta", "Cd.K.alpha", "Cd.K.beta", "Cd.L.alpha", "Cd.L.beta", "In.K.alpha", "In.K.beta", "In.L.alpha", "Sn.K.alpha", "Sn.K.beta", "Sn.L.alpha", "Sn.L.beta", "Sb.K.alpha", "Sb.K.beta", "Sb.L.alpha", "Sb.L.beta", "Te.K.alpha", "Te.K.beta", "Te.L.alpha", "Te.L.beta", "I.K.alpha", "I.K.beta", "I.L.alpha", "I.L.beta", "Xe.K.alpha", "Xe.K.beta", "Xe.L.alpha", "Xe.L.beta", "Cs.K.alpha", "Cs.K.beta", "Cs.L.alpha", "Cs.L.beta", "Ba.K.alpha", "Ba.K.beta", "La.K.alpha", "La.K.beta", "La.L.alpha", "La.L.beta", "Ce.K.alpha", "Ce.K.beta", "Ce.L.alpha", "Ce.L.beta", "Pr.K.alpha", "Pr.K.beta", "Pr.L.alpha", "Pr.L.beta", "Nd.K.alpha", "Nd.K.beta", "Nd.L.alpha", "Nd.L.beta", "Pm.L.alpha", "Pm.L.beta", "Sm.L.alpha", "Sm.L.beta", "Eu.L.alpha", "Eu.L.beta", "Gd.L.alpha", "Gd.L.beta", "Tb.L.alpha", "Tb.L.beta", "Dy.L.alpha", "Dy.L.beta", "Ho.L.alpha", "Ho.L.beta", "Er.L.alpha", "Er.L.beta", "Tm.L.alpha", "Tm.L.beta", "Yb.L.alpha", "Yb.L.beta", "Lu.L.alpha", "Lu.L.beta", "Hf.L.alpha", "Hf.L.beta", "Ta.L.alpha", "Ta.L.beta", "W.L.alpha", "W.L.beta", "Re.L.alpha", "Re.L.beta", "Os.L.alpha", "Os.L.beta", "Ir.L.alpha", "Ir.L.beta", "Pt.L.alpha", "Pt.L.beta", "Au.L.alpha", "Au.L.beta", "Hg.L.alpha", "Hg.L.beta", "Tl.L.alpha", "Tl.L.beta", "Pb.L.alpha", "Pb.L.beta", "Bi.L.alpha", "Bi.L.beta", "Po.L.alpha", "Po.L.beta", "At.L.alpha", "At.L.beta", "Rn.L.alpha", "Rn.L.beta", "Fr.L.alpha", "Fr.L.beta", "Ra.L.alpha", "Ra.L.beta", "Ac.L.alpha", "Ac.L.beta", "Th.L.alpha", "Th.L.beta", "Pa.L.alpha", "Pa.L.beta", "U.L.alpha", "U.L.beta", "Pu.L.alpha", "Pu.L.beta", "Compton", "Rayleigh")
 
+spectralLines <- c("Ne.K.alpha", "Ne.K.beta", "Na.K.alpha", "Na.K.beta", "Mg.K.alpha", "Mg.K.beta", "Al.K.alpha", "Al.K.beta", "Si.K.alpha", "Si.K.beta", "P.K.alpha", "P.K.beta", "S.K.alpha", "S.K.beta", "Cl.K.alpha", "Cl.K.beta", "Ar.K.alpha", "Ar.K.beta", "K.K.alpha", "K.K.beta", "Ca.K.alpha", "Ca.K.beta", "Sc.K.alpha", "Sc.K.beta", "Ti.K.alpha", "Ti.K.beta", "V.K.alpha", "V.K.beta", "Cr.K.alpha", "Cr.K.beta", "Mn.K.alpha", "Mn.K.beta", "Fe.K.alpha", "Fe.K.beta", "Co.K.alpha", "Co.K.beta", "Ni.K.alpha", "Ni.K.beta", "Cu.K.alpha", "Cu.K.beta", "Zn.K.alpha", "Zn.K.beta", "Ga.K.alpha", "Ga.K.beta", "Ge.K.alpha", "Ge.K.beta", "As.K.alpha", "As.K.beta", "Se.K.alpha", "Se.K.beta", "Br.K.alpha", "Br.K.beta", "Kr.K.alpha", "Kr.K.beta", "Rb.K.alpha", "Rb.K.beta", "Sr.K.alpha", "Sr.K.beta", "Y.K.alpha", "Y.K.beta", "Zr.K.alpha", "Zr.K.beta", "Nb.K.alpha", "Nb.K.beta", "Mo.K.alpha", "Mo.K.beta", "Mo.L.alpha", "Mo.L.beta", "Ru.K.alpha", "Ru.K.beta", "Ru.L.alpha", "Ru.L.beta", "Rh.K.alpha", "Rh.K.beta", "Rh.L.alpha", "Rh.L.beta", "Pd.K.alpha", "Pd.K.beta", "Pd.L.alpha", "Pd.L.beta", "Ag.K.alpha", "Ag.K.beta", "Ag.L.alpha", "Ag.L.beta", "Cd.K.alpha", "Cd.K.beta", "Cd.L.alpha", "Cd.L.beta", "In.K.alpha", "In.K.beta", "In.L.alpha", "Sn.K.alpha", "Sn.K.beta", "Sn.L.alpha", "Sn.L.beta", "Sb.K.alpha", "Sb.K.beta", "Sb.L.alpha", "Sb.L.beta", "Te.K.alpha", "Te.K.beta", "Te.L.alpha", "Te.L.beta", "I.K.alpha", "I.K.beta", "I.L.alpha", "I.L.beta", "Xe.K.alpha", "Xe.K.beta", "Xe.L.alpha", "Xe.L.beta", "Cs.K.alpha", "Cs.K.beta", "Cs.L.alpha", "Cs.L.beta", "Ba.K.alpha", "Ba.K.beta", "Ba.L.alpha", "Ba.L.beta", "La.K.alpha", "La.K.beta", "La.L.alpha", "La.L.beta", "Ce.K.alpha", "Ce.K.beta", "Ce.L.alpha", "Ce.L.beta", "Pr.K.alpha", "Pr.K.beta", "Pr.L.alpha", "Pr.L.beta", "Nd.K.alpha", "Nd.K.beta", "Nd.L.alpha", "Nd.L.beta", "Pm.L.alpha", "Pm.L.beta", "Sm.L.alpha", "Sm.L.beta", "Eu.L.alpha", "Eu.L.beta", "Gd.L.alpha", "Gd.L.beta", "Tb.L.alpha", "Tb.L.beta", "Dy.L.alpha", "Dy.L.beta", "Ho.L.alpha", "Ho.L.beta", "Er.L.alpha", "Er.L.beta", "Tm.L.alpha", "Tm.L.beta", "Yb.L.alpha", "Yb.L.beta", "Lu.L.alpha", "Lu.L.beta", "Hf.L.alpha", "Hf.L.beta", "Ta.L.alpha", "Ta.L.beta", "W.L.alpha", "W.L.beta", "Re.L.alpha", "Re.L.beta", "Os.L.alpha", "Os.L.beta", "Ir.L.alpha", "Ir.L.beta", "Pt.L.alpha", "Pt.L.beta", "Au.L.alpha", "Au.L.beta", "Hg.L.alpha", "Hg.L.beta", "Tl.L.alpha", "Tl.L.beta", "Pb.L.alpha", "Pb.L.beta", "Bi.L.alpha", "Bi.L.beta", "Po.L.alpha", "Po.L.beta", "At.L.alpha", "At.L.beta", "Rn.L.alpha", "Rn.L.beta", "Fr.L.alpha", "Fr.L.beta", "Ra.L.alpha", "Ra.L.beta", "Ac.L.alpha", "Ac.L.beta", "Th.L.alpha", "Th.L.beta", "Pa.L.alpha", "Pa.L.beta", "U.L.alpha", "U.L.beta", "Pu.L.alpha", "Pu.L.beta", "Au.M.line", "Hg.M.line", "Pb.M.line", "U.M.line")
 
+standard <- c("Spectrum", "Ca.K.alpha", "Ti.K.alpha", "Fe.K.alpha")
+
+kalphaLines <- c("Na"="Na.K.alpha",  "Mg"="Mg.K.alpha", "Al"="Al.K.alpha", "Si"="Si.K.alpha", "P"="P.K.alpha", "S"="S.K.alpha", "Cl"="Cl.K.alpha", "Ar"="Ar.K.alpha", "K"="K.K.alpha", "Ca"="Ca.K.alpha", "Sc"="Sc.K.alpha", "Ti"="Ti.K.alpha", "V"="V.K.alpha", "Cr"="Cr.K.alpha", "Mn"="Mn.K.alpha", "Fe"="Fe.K.alpha", "Co"="Co.K.alpha", "Ni"="Ni.K.alpha", "Cu"="Cu.K.alpha", "Zn"="Zn.K.alpha", "Ga"="Ga.K.alpha", "Ge"="Ge.K.alpha", "As"="As.K.alpha", "Se"="Se.K.alpha", "Br"="Br.K.alpha", "Kr"="Kr.K.alpha", "Rb"="Rb.K.alpha", "Sr"="Sr.K.alpha", "Y"="Y.K.alpha", "Zr"="Zr.K.alpha", "Nb"="Nb.K.alpha", "Mo"="Mo.K.alpha", "Ru"="Ru.K.alpha", "Rh"="Rh.K.alpha", "Pd"="Pd.K.alpha", "Ag"="Ag.K.alpha", "Cd"="Cd.K.alpha", "In"="In.K.alpha", "Sn"="Sn.K.alpha", "Sb"="Sb.K.alpha", "Te"="Te.K.alpha", "I"="I.K.alpha", "Xe"="Xe.K.alpha", "Cs"="Cs.K.alpha", "Ba"="Ba.K.alpha", "La"="La.K.alpha", "Ce"="Ce.K.alpha", "Pr"="Pr.K.alpha", "Nd"="Nd.K.alpha")
+
+kbetaLines <- c("Na"="Na.K.beta",  "Mg"="Mg.K.beta", "Al"="Al.K.beta", "Si"="Si.K.beta", "P"="P.K.beta", "S"="S.K.beta", "Cl"="Cl.K.beta", "Ar"="Ar.K.beta", "K"="K.K.beta", "Ca"="Ca.K.beta", "Sc"="Sc.K.beta", "Ti"="Ti.K.beta", "V"="V.K.beta", "Cr"="Cr.K.beta", "Mn"="Mn.K.beta", "Fe"="Fe.K.beta", "Co"="Co.K.beta", "Ni"="Ni.K.beta", "Cu"="Cu.K.beta", "Zn"="Zn.K.beta", "Ga"="Ga.K.beta", "Ge"="Ge.K.beta", "As"="As.K.beta", "Se"="Se.K.beta", "Br"="Br.K.beta", "Kr"="Kr.K.beta", "Rb"="Rb.K.beta", "Sr"="Sr.K.beta", "Y"="Y.K.beta", "Zr"="Zr.K.beta", "Nb"="Nb.K.beta", "Mo"="Mo.K.beta", "Ru"="Ru.K.beta", "Rh"="Rh.K.beta", "Pd"="Pd.K.beta", "Ag"="Ag.K.beta", "Cd"="Cd.K.beta", "In"="In.K.beta", "Sn"="Sn.K.beta", "Sb"="Sb.K.beta", "Te"="Te.K.beta", "I"="I.K.beta", "Xe"="Xe.K.beta", "Cs"="Cs.K.beta", "Ba"="Ba.K.beta", "La"="La.K.beta", "Ce"="Ce.K.beta", "Pr"="Pr.K.beta", "Nd"="Nd.K.beta")
+
+lalphaLines <- c("Mo"="Mo.L.alpha", "Ru"="Ru.L.alpha", "Rh"="Rh.L.alpha", "Pd"="Pd.L.alpha", "Ag"="Ag.L.alpha", "Cd"="Cd.L.alpha", "In"="In.L.alpha", "Sn"="Sn.L.alpha", "Sb"="Sb.L.alpha", "Te"="Te.L.alpha", "I"="I.L.alpha", "Xe"="Xe.L.alpha", "Cs"="Cs.L.alpha", "Ba"="Ba.L.alpha", "La"="La.L.alpha", "Ce"="Ce.L.alpha", "Pr"="Pr.L.alpha", "Nd"="Nd.L.alpha", "Pm"="Pm.L.alpha", "Sm"="Sm.L.alpha", "Eu"="Eu.L.alpha", "Gd"="Gd.L.alpha", "Tb"="Tb.L.alpha", "Dy"="Dy.L.alpha", "Ho"="Ho.L.alpha", "Er"="Er.L.alpha", "Tm"="Tm.L.alpha", "Yb"="Yb.L.alpha", "Lu"="Lu.L.alpha", "Hf"="Hf.L.alpha", "Ta"="Ta.L.alpha", "W"="W.L.alpha", "Re"="Re.L.alpha", "Os"="Os.L.alpha", "Ir"="Ir.L.alpha", "Pt"="Pt.L.alpha", "Au"="Au.L.alpha", "Hg"="Hg.L.alpha", "Tl"="Tl.L.alpha", "Pb"="Pb.L.alpha", "Bi"="Bi.L.alpha", "Po"="Po.L.alpha", "At"="At.L.alpha", "Rn"="Rn.L.alpha", "Fr"="Fr.L.alpha", "Ra"="Ra.L.alpha", "Ac"="Ac.L.alpha", "Th"="Th.L.alpha", "Pa"="Pa.L.alpha", "U"="U.L.alpha")
+
+lbetaLines <- c("Mo"="Mo.L.beta", "Ru"="Ru.L.beta", "Rh"="Rh.L.beta", "Pd"="Pd.L.beta", "Ag"="Ag.L.beta", "Cd"="Cd.L.beta", "In"="In.L.beta", "Sn"="Sn.L.beta", "Sb"="Sb.L.beta", "Te"="Te.L.beta", "I"="I.L.beta", "Xe"="Xe.L.beta", "Cs"="Cs.L.beta", "Ba"="Ba.L.beta", "La"="La.L.beta", "Ce"="Ce.L.beta", "Pr"="Pr.L.beta", "Nd"="Nd.L.beta", "Pm"="Pm.L.beta", "Sm"="Sm.L.beta", "Eu"="Eu.L.beta", "Gd"="Gd.L.beta", "Tb"="Tb.L.beta", "Dy"="Dy.L.beta", "Ho"="Ho.L.beta", "Er"="Er.L.beta", "Tm"="Tm.L.beta", "Yb"="Yb.L.beta", "Lu"="Lu.L.beta", "Hf"="Hf.L.beta", "Ta"="Ta.L.beta", "W"="W.L.beta", "Re"="Re.L.beta", "Os"="Os.L.beta", "Ir"="Ir.L.beta", "Pt"="Pt.L.beta", "Au"="Au.L.beta", "Hg"="Hg.L.beta", "Tl"="Tl.L.beta", "Pb"="Pb.L.beta", "Bi"="Bi.L.beta", "Po"="Po.L.beta", "At"="At.L.beta", "Rn"="Rn.L.beta", "Fr"="Fr.L.beta", "Ra"="Ra.L.beta", "Ac"="Ac.L.beta", "Th"="Th.L.beta", "Pa"="Pa.L.beta", "U"="U.L.beta")
+
+mLines <- c("Au"="Au.M.line","Hg"="Hg.M.line", "Pb"="Pb.M.line", "U"="U.M.line")
 
 elementGrabKalpha <- function(element, data) {
     
@@ -4089,9 +4240,18 @@ elementGrabKbeta <- function(element, data) {
     
     elementLine <- subset(fluorescence.lines, fluorescence.lines$Symbol==element)
     
+    hold.cps <- if(elementLine[8][1,]!=0){
+        subset(data$CPS, !(data$Energy < elementLine[7][1,]-0.02 | data$Energy > elementLine[8][1,]+0.02))
+    } else if(elementLine[8][1,]==0){
+        subset(data$CPS, !(data$Energy < elementLine[7][1,]-0.02 | data$Energy > elementLine[7][1,]+0.02))
+    }
     
-    hold.cps <- subset(data$CPS, !(data$Energy < elementLine[7][1,]-0.02 | data$Energy > elementLine[8][1,]+0.02))
-    hold.file <- subset(data$Spectrum, !(data$Energy < elementLine[7][1,]-0.02 | data$Energy > elementLine[8][1,]+0.02))
+    
+    hold.file <- if(elementLine[8][1,]!=0){
+        subset(data$Spectrum, !(data$Energy < elementLine[7][1,]-0.02 | data$Energy > elementLine[8][1,]+0.02))
+    } else if(elementLine[8][1,]==0){
+        subset(data$Spectrum, !(data$Energy < elementLine[7][1,]-0.02 | data$Energy > elementLine[7][1,]+0.02))
+    }
     hold.frame <- data.frame(is.0(hold.cps, hold.file))
     colnames(hold.frame) <- c("Counts", "Spectrum")
     hold.ag <- aggregate(list(hold.frame$Counts), by=list(hold.frame$Spectrum), FUN="sum")
@@ -4134,13 +4294,29 @@ elementGrabLbeta <- function(element, data) {
     
 }
 
-elementGrab <- function(element.line, data) {
+elementGrabMalpha <- function(element, data) {
+    
+    elementLine <- subset(fluorescence.lines, fluorescence.lines$Symbol==element)
+    
+    
+    hold.cps <- subset(data$CPS, !(data$Energy < elementLine[20][1,]-0.02 | data$Energy > elementLine[22][1,]+0.02))
+    hold.file <- subset(data$Spectrum, !(data$Energy < elementLine[20][1,]-0.02 | data$Energy > elementLine[22][,1]+0.02))
+    hold.frame <- data.frame(is.0(hold.cps, hold.file))
+    colnames(hold.frame) <- c("Counts", "Spectrum")
+    hold.ag <- aggregate(list(hold.frame$Counts), by=list(hold.frame$Spectrum), FUN="sum")
+    colnames(hold.ag) <- c("Spectrum", paste(element, "M-line", sep=" "))
+    
+    hold.ag
+    
+}
+
+elementGrabpre <- function(element.line, data) {
     
     element <- strsplit(x=element.line, split="\\.")[[1]][1]
     destination <- strsplit(x=element.line, split="\\.")[[1]][2]
     distance <- strsplit(x=element.line, split="\\.")[[1]][3]
     
-    elementSelection <- if(destination=="K" && distance=="alpha"){
+    if(destination=="K" && distance=="alpha"){
         elementGrabKalpha(element, data)
     } else if(destination=="K" && distance=="beta"){
         elementGrabKbeta(element, data)
@@ -4148,9 +4324,94 @@ elementGrab <- function(element.line, data) {
         elementGrabLalpha(element, data)
     } else if (destination=="L" && distance=="beta"){
         elementGrabLbeta(element, data)
+    } else if (destination=="M" && distance=="line"){
+        elementGrabMalpha(element, data)
     }
     
-    elementSelection
+}
+
+
+
+
+range_subset_xrf <- function(range.frame, data){
+    
+    new.data <- subset(data, Energy >= range.frame$EnergyMin & Energy <= range.frame$EnergyMax, drop=TRUE)
+    newer.data <- aggregate(new.data, by=list(new.data$Spectrum), FUN=mean, na.rm=TRUE)[,c("Group.1", "CPS")]
+    colnames(newer.data) <- c("Spectrum", as.character(range.frame$Name))
+    newer.data
+}
+
+xrf_parse <- function(range.table, data){
+    
+    choice.lines <- range.table[complete.cases(range.table),]
+    
+    choice.list <- split(choice.lines, f=choice.lines$Name)
+    names(choice.list) <- choice.lines[,"Name"]
+    
+    index <- choice.lines[,"Name"]
+    
+    selected.list <- lapply(index, function(x) range_subset_xrf(range.frame=choice.list[[x]], data=data))
+    
+    Reduce(function(...) merge(..., all=T), selected.list)
+}
+
+
+
+elementGrab <- function(element.line, data, range.table){
+    
+    is.element <- element.line %in% spectralLines
+    
+    if(is.element==TRUE){
+        elementGrabpre(element.line, data)
+    } else if(is.element==FALSE){
+        xrf_parse(range.table, data)
+    }
+    
+    
+}
+
+
+elementFrame <- function(data, elements){
+    
+    spectra.line.list <- lapply(elements, function(x) elementGrab(element.line=x, data=data))
+    element.count.list <- lapply(spectra.line.list, '[', 2)
+    
+    spectra.line.vector <- as.numeric(unlist(element.count.list))
+    
+    dim(spectra.line.vector) <- c(length(spectra.line.list[[1]]$Spectrum), length(elements))
+    
+    spectra.line.frame <- data.frame(spectra.line.list[[1]]$Spectrum, spectra.line.vector)
+    
+    colnames(spectra.line.frame) <- c("Spectrum", elements)
+    
+    spectra.line.frame <- as.data.frame(spectra.line.frame)
+    
+    spectra.line.frame <- spectra.line.frame[order(as.character(spectra.line.frame$Spectrum)),]
+    
+    spectra.line.frame$Spectrum <- gsub(".pdz", "", spectra.line.frame$Spectrum)
+    spectra.line.frame$Spectrum <- gsub(".csv", "", spectra.line.frame$Spectrum)
+    spectra.line.frame$Spectrum <- gsub(".CSV", "", spectra.line.frame$Spectrum)
+    spectra.line.frame$Spectrum <- gsub(".spt", "", spectra.line.frame$Spectrum)
+    spectra.line.frame$Spectrum <- gsub(".mca", "", spectra.line.frame$Spectrum)
+    spectra.line.frame$Spectrum <- gsub(".spx", "", spectra.line.frame$Spectrum)
+    
+    
+    spectra.line.frame
+    
+}
+
+
+####Normalize
+
+element_norm <- function(data, element, min, max) {
+    
+    compton.norm <- subset(data$CPS, !(data$Energy < input$min | data$max > input$comptonmax))
+    compton.file <- subset(data$Spectrum, !(data$Energy < input$min | data$Energy > input$max))
+    compton.frame <- data.frame(is.0(compton.norm, compton.file))
+    colnames(compton.frame) <- c("Compton", "Spectrum")
+    compton.frame.ag <- aggregate(list(compton.frame$Compton), by=list(compton.frame$Spectrum), FUN="sum")
+    colnames(compton.frame.ag) <- c("Spectrum", "Compton")
+    
     
 }
 
@@ -4675,3 +4936,30 @@ accepted.net.combined <- c("Na.K12", "Mg.K12", "Al.K12", "Si.K12", "P.K12", "S.K
 
 preference.light <- c("Na.K12", "Mg.K12", "Al.K12", "Si.K12", "P.K12", "S.K12", "Cl.K12", "K.K12", "Ca.K12", "Rh.L1", "Na.K.alpha", "Mg.K.alpha", "Al.K.alpha", "Si.K.alpha", "P.K.alpha", "S.K.alpha", "Cl.K.alpha", "K.K.alpha", "Ca.K.alpha", "Rh.L.alpha")
 preference.trace <- c("Ti.K12", "V.K12", "Ba.L1", "Cr.K12", "Mn.K12", "Fe.K12", "Co.K12", "Ni.K12", "Cu.K12", "Zn.K12", "Ga.K12", "Br.K12", "Se.K12", "Rb.K12", "Sr.K12", "Y.K12", "Zr.K12", "Nb.K12", "Mo.K12", "Ag.K12", "Cd.K12", "Sn.K12", "Sb.K12", "Ba.K12", "Au.L1", "Hg.L1", "Pb.L1", "Th.L1", "U.L1", "Rh.K12", "Ti.K.alpha", "V.K.alpha", "Ba.L.alpha", "Cr.K.alpha", "Mn.K.alpha", "Fe.K.alpha", "Co.K.alpha", "Ni.K.alpha", "Cu.K.alpha", "Zn.K.alpha", "Ga.K.alpha", "Br.K.alpha", "Se.K.alpha", "Rb.K.alpha", "Sr.K.alpha", "Y.K.alpha", "Zr.K.alpha", "Nb.K.alpha", "Mo.K.alpha", "Ag.K.alpha", "Cd.K.alpha", "Sn.K.alpha", "Sb.K.alpha", "Ba.K.alpha", "Au.L.alpha", "Hg.L.alpha", "Pb.L.beta", "Th.L.alpha", "U.L.alpha", "Rh.K.alpha", "Compton", "Rayleigh")
+
+
+
+####Custom Lines
+
+
+range_subset <- function(range.frame, data){
+    
+    new.data <- subset(data, Energy >= range.frame$EnergyMin & Energy <= range.frame$EnergyMax, drop=TRUE)
+    newer.data <- aggregate(new.data, by=list(new.data$Spectrum), FUN=mean, na.rm=TRUE)[,c("Group.1", "CPS")]
+    colnames(newer.data) <- c("Spectrum", as.character(range.frame$Name))
+    newer.data
+}
+
+xrf_parse <- function(range.table, data){
+    
+    choice.lines <- range.table[complete.cases(range.table),]
+    
+    choice.list <- split(choice.lines, f=choice.lines$Name)
+    names(choice.list) <- choice.lines[,"Name"]
+    
+    index <- choice.lines[,"Name"]
+    
+    selected.list <- lapply(index, function(x) range_subset(range.frame=choice.list[[x]], data=data))
+    
+    Reduce(function(...) merge(..., all=T), selected.list)
+}
