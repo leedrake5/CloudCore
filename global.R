@@ -1,10 +1,12 @@
+source("CloudCal-API.R", chdir=TRUE)
+
 list.of.bioconductor <- c("graph", "RBGL", "Rgraphviz")
 new.bioconductor <- list.of.bioconductor[!(list.of.bioconductor %in% installed.packages()[,"Package"])]
 if(length(new.bioconductor)) source("https://bioconductor.org/biocLite.R")
 if(length(new.bioconductor)) biocLite(new.bioconductor)
 
 
-list.of.packages <- c("pbapply", "reshape2", "TTR", "dplyr", "ggtern", "ggplot2", "shiny", "rhandsontable", "random", "data.table", "DT", "shinythemes", "Cairo", "Bchron", "zoo", "scales", "gRbase", "randomForest", "shinyWidgets")
+list.of.packages <- c("pbapply", "reshape2", "TTR", "dplyr", "ggtern", "ggplot2", "shiny", "rhandsontable", "random", "data.table", "DT", "shinythemes", "Cairo", "Bchron", "zoo", "scales", "randomForest", "shinyWidgets")
 new.packages <- list.of.packages[!(list.of.packages %in% installed.packages()[,"Package"])]
 if(length(new.packages)) install.packages(new.packages)
 
@@ -29,7 +31,6 @@ library(ggtern)
 library(ggplot2)
 library(shiny)
 library(DT)
-library(gRbase)
 library(rPDZ)
 
 plot_dim2 <- function(dim = c(NA, NA), scale = 1, units = c("in", "cm", "mm"),
@@ -4962,4 +4963,1113 @@ xrf_parse <- function(range.table, data){
     selected.list <- lapply(index, function(x) range_subset(range.frame=choice.list[[x]], data=data))
     
     Reduce(function(...) merge(..., all=T), selected.list)
+}
+
+
+dataTransformer <- function(spectra.line.table, elementnum1, elementnum2, elementnum3, elementden1, elementden2, elementden3, transform1, transform2, transform3, transform4){
+    if(transform1=="None" && elementnum2=="None" && elementden1=="None") {
+        spectra.line.table[,elementnum1]
+        ########Two Numerators
+    } else if(transform1=="+" && elementnum2!="None" && elementden1=="None"){
+        spectra.line.table[elementnum1] + spectra.line.table[elementnum2]
+    } else if(transform1=="-" && elementnum2!="None" && elementden1=="None"){
+        spectra.line.table[elementnum1] - spectra.line.table[elementnum2]
+    } else if(transform1=="*" && elementnum2!="None" && elementden1=="None"){
+        spectra.line.table[elementnum1] * spectra.line.table[elementnum2]
+    } else if(transform1=="/" && elementnum2!="None" && elementden1=="None"){
+        spectra.line.table[elementnum1] / spectra.line.table[elementnum2]
+        ######Addition Third Numerator
+    } else if(transform1=="+" && elementnum2!="None" && transform2=="+" && elementnum3!="None" && elementden1=="None"){
+        spectra.line.table[elementnum1] + spectra.line.table[elementnum2] + spectra.line.table[elementnum3]
+    } else if(transform1=="-" && elementnum2!="None" && transform2=="+" && elementnum3!="None" && elementden1=="None"){
+        spectra.line.table[elementnum1] - spectra.line.table[elementnum2] + spectra.line.table[elementnum3]
+    } else if(transform1=="*" && elementnum2!="None" && transform2=="+" && elementnum3!="None" && elementden1=="None"){
+        spectra.line.table[elementnum1] * spectra.line.table[elementnum2] + spectra.line.table[elementnum3]
+    } else if(transform1=="/" && elementnum2!="None" && transform2=="+" && elementnum3!="None" && elementden1=="None"){
+        spectra.line.table[elementnum1] / spectra.line.table[elementnum2] + spectra.line.table[elementnum3]
+        ######Subtraction Third Numerator
+    } else if(transform1=="+" && elementnum2!="None" && transform2=="-" && elementnum3!="None" && elementden1=="None"){
+        spectra.line.table[elementnum1] + spectra.line.table[elementnum2] - spectra.line.table[elementnum3]
+    } else if(transform1=="-" && elementnum2!="None" && transform2=="-" && elementnum3!="None" && elementden1=="None"){
+        spectra.line.table[elementnum1] - spectra.line.table[elementnum2] - spectra.line.table[elementnum3]
+    } else if(transform1=="*" && elementnum2!="None" && transform2=="-" && elementnum3!="None" && elementden1=="None"){
+        spectra.line.table[elementnum1] * spectra.line.table[elementnum2] - spectra.line.table[elementnum3]
+    } else if(transform1=="/" && elementnum2!="None" && transform2=="-" && elementnum3!="None" && elementden1=="None"){
+        spectra.line.table[elementnum1] / spectra.line.table[elementnum2] - spectra.line.table[elementnum3]
+        ######Multiplication Third Numerator
+    } else if(transform1=="+" && elementnum2!="None" && transform2=="*" && elementnum3!="None" && elementden1=="None"){
+        spectra.line.table[elementnum1] + spectra.line.table[elementnum2] * spectra.line.table[elementnum3]
+    } else if(transform1=="-" && elementnum2!="None" && transform2=="*" && elementnum3!="None" && elementden1=="None"){
+        spectra.line.table[elementnum1] - spectra.line.table[elementnum2] * spectra.line.table[elementnum3]
+    } else if(transform1=="*" && elementnum2!="None" && transform2=="*" && elementnum3!="None" && elementden1=="None"){
+        spectra.line.table[elementnum1] * spectra.line.table[elementnum2] * spectra.line.table[elementnum3]
+    } else if(transform1=="/" && elementnum2!="None" && transform2=="*" && elementnum3!="None" && elementden1=="None"){
+        spectra.line.table[elementnum1] / spectra.line.table[elementnum2] * spectra.line.table[elementnum3]
+        ######Division Third Numerator
+    } else if(transform1=="+" && elementnum2!="None" && transform2=="/" && elementnum3!="None" && elementden1=="None"){
+        spectra.line.table[elementnum1] + spectra.line.table[elementnum2] / spectra.line.table[elementnum3]
+    } else if(transform1=="-" && elementnum2!="None" && transform2=="/" && elementnum3!="None" && elementden1=="None"){
+        spectra.line.table[elementnum1] - spectra.line.table[elementnum2] / spectra.line.table[elementnum3]
+    } else if(transform1=="*" && elementnum2!="None" && transform2=="/" && elementnum3!="None" && elementden1=="None"){
+        spectra.line.table[elementnum1] * spectra.line.table[elementnum2] / spectra.line.table[elementnum3]
+    } else if(transform1=="/" && elementnum2!="None" && transform2=="/" && elementnum3!="None" && elementden1=="None"){
+        spectra.line.table[elementnum1] / spectra.line.table[elementnum2] / spectra.line.table[elementnum3]
+        ##########################
+        #####One Denominator######
+        ##########################
+    } else if (transform1=="None" && elementden1!="None" && transform3=="None" ){
+        spectra.line.table[elementnum1]/spectra.line.table[elementden1]
+    } else if(transform1=="+" && elementnum2!="None" && elementden1!="None" && elementden2=="None"){
+        (spectra.line.table[elementnum1] + spectra.line.table[elementnum2])/spectra.line.table[elementden1]
+    } else if(transform1=="-" && elementnum2!="None" && elementden1!="None" && elementden2=="None"){
+        (spectra.line.table[elementnum1] - spectra.line.table[elementnum2])/spectra.line.table[elementden1]
+    } else if(transform1=="*" && elementnum2!="None" && elementden1!="None" && elementden2=="None"){
+        (spectra.line.table[elementnum1] * spectra.line.table[elementnum2])/spectra.line.table[elementden1]
+    } else if(transform1=="/" && elementnum2!="None" && elementden1!="None" && elementden2=="None"){
+        (spectra.line.table[elementnum1] / spectra.line.table[elementnum2])/spectra.line.table[elementden1]
+        ######Addition Third Variable
+    } else if(transform1=="+" && elementnum2!="None" && transform2=="+" && elementnum3!="None" && elementden1!="None" && elementden2=="None"){
+        (spectra.line.table[elementnum1] + spectra.line.table[elementnum2] + spectra.line.table[elementnum3])/spectra.line.table[elementden1]
+    } else if(transform1=="-" && elementnum2!="None" && transform2=="+" && elementnum3!="None" && elementden1!="None" && elementden2=="None"){
+        (spectra.line.table[elementnum1] - spectra.line.table[elementnum2] + spectra.line.table[elementnum3])/spectra.line.table[elementden1]
+    } else if(transform1=="*" && elementnum2!="None" && transform2=="+" && elementnum3!="None" && elementden1!="None" && elementden2=="None"){
+        (spectra.line.table[elementnum1] * spectra.line.table[elementnum2] + spectra.line.table[elementnum3])/spectra.line.table[elementden1]
+    } else if(transform1=="/" && elementnum2!="None" && transform2=="+" && elementnum3!="None" && elementden1!="None" && elementden2=="None"){
+        (spectra.line.table[elementnum1] / spectra.line.table[elementnum2] + spectra.line.table[elementnum3])/spectra.line.table[elementden1]
+        ######Subtraction Third Variable
+    } else if(transform1=="+" && elementnum2!="None" && transform2=="-" && elementnum3!="None" && elementden1!="None" && elementden2=="None"){
+        (spectra.line.table[elementnum1] + spectra.line.table[elementnum2] - spectra.line.table[elementnum3])/spectra.line.table[elementden1]
+    } else if(transform1=="-" && elementnum2!="None" && transform2=="-" && elementnum3!="None" && elementden1!="None" && elementden2=="None"){
+        (spectra.line.table[elementnum1] - spectra.line.table[elementnum2] - spectra.line.table[elementnum3])/spectra.line.table[elementden1]
+    } else if(transform1=="*" && elementnum2!="None" && transform2=="-" && elementnum3!="None" && elementden1!="None" && elementden2=="None"){
+        (spectra.line.table[elementnum1] * spectra.line.table[elementnum2] - spectra.line.table[elementnum3])/spectra.line.table[elementden1]
+    } else if(transform1=="/" && elementnum2!="None" && transform2=="-" && elementnum3!="None" && elementden1!="None" && elementden2=="None"){
+        (spectra.line.table[elementnum1] / spectra.line.table[elementnum2] - spectra.line.table[elementnum3])/spectra.line.table[elementden1]
+        ######Multiplication Third Variable
+    } else if(transform1=="+" && elementnum2!="None" && transform2=="*" && elementnum3!="None" && elementden1!="None" && elementden2=="None"){
+        (spectra.line.table[elementnum1] + spectra.line.table[elementnum2] * spectra.line.table[elementnum3])/spectra.line.table[elementden1]
+    } else if(transform1=="-" && elementnum2!="None" && transform2=="*" && elementnum3!="None" && elementden1!="None" && elementden2=="None"){
+        (spectra.line.table[elementnum1] - spectra.line.table[elementnum2] * spectra.line.table[elementnum3])/spectra.line.table[elementden1]
+    } else if(transform1=="*" && elementnum2!="None" && transform2=="*" && elementnum3!="None" && elementden1!="None" && elementden2=="None"){
+        (spectra.line.table[elementnum1] * spectra.line.table[elementnum2] * spectra.line.table[elementnum3])/spectra.line.table[elementden1]
+    } else if(transform1=="/" && elementnum2!="None" && transform2=="*" && elementnum3!="None" && elementden1!="None" && elementden2=="None"){
+        (spectra.line.table[elementnum1] / spectra.line.table[elementnum2] * spectra.line.table[elementnum3])/spectra.line.table[elementden1]
+        ######Division Third Variable
+    } else if(transform1=="+" && elementnum2!="None" && transform2=="/" && elementnum3!="None" && elementden1!="None" && elementden2=="None"){
+        (spectra.line.table[elementnum1] + spectra.line.table[elementnum2] / spectra.line.table[elementnum3])/spectra.line.table[elementden1]
+    } else if(transform1=="-" && elementnum2!="None" && transform2=="/" && elementnum3!="None" && elementden1!="None" && elementden2=="None"){
+        (spectra.line.table[elementnum1] - spectra.line.table[elementnum2] / spectra.line.table[elementnum3])/spectra.line.table[elementden1]
+    } else if(transform1=="*" && elementnum2!="None" && transform2=="/" && elementnum3!="None" && elementden1!="None" && elementden2=="None"){
+        (spectra.line.table[elementnum1] * spectra.line.table[elementnum2] / spectra.line.table[elementnum3])/spectra.line.table[elementden1]
+    } else if(transform1=="/" && elementnum2!="None" && transform2=="/" && elementnum3!="None" && elementden1!="None" && elementden2=="None"){
+        (spectra.line.table[elementnum1] / spectra.line.table[elementnum2] / spectra.line.table[elementnum3])/spectra.line.table[elementden1]
+        ####################################
+        #####Addition Two Denominators######
+        ####################################
+    } else if (transform1=="None" && elementden1!="None" && transform3=="+" && elementden2!="None"){
+        spectra.line.table[elementnum1]/(spectra.line.table[elementden1] + spectra.line.table[elementden2])
+    } else if(transform1=="+" && elementnum2!="None" && elementden1!="None" && transform3=="+" && elementden2!="None" && elementden3=="None"){
+        (spectra.line.table[elementnum1] + spectra.line.table[elementnum2])/(spectra.line.table[elementden1] + spectra.line.table[elementden2])
+    } else if(transform1=="-" && elementnum2!="None" && elementden1!="None" && transform3=="+" && elementden2!="None" && elementden3=="None"){
+        (spectra.line.table[elementnum1] - spectra.line.table[elementnum2])/(spectra.line.table[elementden1] + spectra.line.table[elementden2])
+    } else if(transform1=="*" && elementnum2!="None" && elementden1!="None" && transform3=="+" && elementden2!="None" && elementden3=="None"){
+        (spectra.line.table[elementnum1] * spectra.line.table[elementnum2])/(spectra.line.table[elementden1] + spectra.line.table[elementden2])
+    } else if(transform1=="/" && elementnum2!="None" && elementden1!="None" && transform3=="+" && elementden2!="None" && elementden3=="None"){
+        (spectra.line.table[elementnum1] / spectra.line.table[elementnum2])/(spectra.line.table[elementden1] + spectra.line.table[elementden2])
+        ######Addition Third Variable
+    } else if(transform1=="+" && elementnum2!="None" && transform2=="+" && elementnum3!="None" && elementden1!="None" && transform3=="+" && elementden2!="None" && elementden3=="None"){
+        (spectra.line.table[elementnum1] + spectra.line.table[elementnum2] + spectra.line.table[elementnum3])/(spectra.line.table[elementden1] + spectra.line.table[elementden2])
+    } else if(transform1=="-" && elementnum2!="None" && transform2=="+" && elementnum3!="None" && elementden1!="None" && transform3=="+" && elementden2!="None" && elementden3=="None"){
+        (spectra.line.table[elementnum1] - spectra.line.table[elementnum2] + spectra.line.table[elementnum3])/(spectra.line.table[elementden1] + spectra.line.table[elementden2])
+    } else if(transform1=="*" && elementnum2!="None" && transform2=="+" && elementnum3!="None" && elementden1!="None" && transform3=="+" && elementden2!="None" && elementden3=="None"){
+        (spectra.line.table[elementnum1] * spectra.line.table[elementnum2] + spectra.line.table[elementnum3])/(spectra.line.table[elementden1] + spectra.line.table[elementden2])
+    } else if(transform1=="/" && elementnum2!="None" && transform2=="+" && elementnum3!="None" && elementden1!="None" && transform3=="+" && elementden2!="None" && elementden3=="None"){
+        (spectra.line.table[elementnum1] / spectra.line.table[elementnum2] + spectra.line.table[elementnum3])/(spectra.line.table[elementden1] + spectra.line.table[elementden2])
+        ######Subtraction Third Variable
+    } else if (transform1=="None" && elementden1!="None" && transform3=="-" && elementden2!="None"){
+        spectra.line.table[elementnum1]/(spectra.line.table[elementden1] - spectra.line.table[elementden2])
+    } else if(transform1=="+" && elementnum2!="None" && transform2=="-" && elementnum3!="None" && elementden1!="None" && transform3=="+" && elementden2!="None" && elementden3=="None"){
+        (spectra.line.table[elementnum1] + spectra.line.table[elementnum2] - spectra.line.table[elementnum3])/(spectra.line.table[elementden1] + spectra.line.table[elementden2])
+    } else if(transform1=="-" && elementnum2!="None" && transform2=="-" && elementnum3!="None" && elementden1!="None" && transform3=="+" && elementden2!="None" && elementden3=="None"){
+        (spectra.line.table[elementnum1] - spectra.line.table[elementnum2] - spectra.line.table[elementnum3])/(spectra.line.table[elementden1] + spectra.line.table[elementden2])
+    } else if(transform1=="*" && elementnum2!="None" && transform2=="-" && elementnum3!="None" && elementden1!="None" && transform3=="+" && elementden2!="None" && elementden3=="None"){
+        (spectra.line.table[elementnum1] * spectra.line.table[elementnum2] - spectra.line.table[elementnum3])/(spectra.line.table[elementden1] + spectra.line.table[elementden2])
+    } else if(transform1=="/" && elementnum2!="None" && transform2=="-" && elementnum3!="None" && elementden1!="None" && transform3=="+" && elementden2!="None" && elementden3=="None"){
+        (spectra.line.table[elementnum1] / spectra.line.table[elementnum2] - spectra.line.table[elementnum3])/(spectra.line.table[elementden1] + spectra.line.table[elementden2])
+        ######Multiplication Third Variable
+    } else if (transform1=="None" && elementden1!="None" && transform3=="*" && elementden2!="None"){
+        spectra.line.table[elementnum1]/(spectra.line.table[elementden1] * spectra.line.table[elementden2])
+    } else if(transform1=="+" && elementnum2!="None" && transform2=="*" && elementnum3!="None" && elementden1!="None" && transform3=="+" && elementden2!="None" && elementden3=="None"){
+        (spectra.line.table[elementnum1] + spectra.line.table[elementnum2] * spectra.line.table[elementnum3])/(spectra.line.table[elementden1] + spectra.line.table[elementden2])
+    } else if(transform1=="-" && elementnum2!="None" && transform2=="*" && elementnum3!="None" && elementden1!="None" && transform3=="+" && elementden2!="None" && elementden3=="None"){
+        (spectra.line.table[elementnum1] - spectra.line.table[elementnum2] * spectra.line.table[elementnum3])/(spectra.line.table[elementden1] + spectra.line.table[elementden2])
+    } else if(transform1=="*" && elementnum2!="None" && transform2=="*" && elementnum3!="None" && elementden1!="None" && transform3=="+" && elementden2!="None" && elementden3=="None"){
+        (spectra.line.table[elementnum1] * spectra.line.table[elementnum2] * spectra.line.table[elementnum3])/(spectra.line.table[elementden1] + spectra.line.table[elementden2])
+    } else if(transform1=="/" && elementnum2!="None" && transform2=="*" && elementnum3!="None" && elementden1!="None" && transform3=="+" && elementden2!="None" && elementden3=="None"){
+        (spectra.line.table[elementnum1] / spectra.line.table[elementnum2] * spectra.line.table[elementnum3])/(spectra.line.table[elementden1] + spectra.line.table[elementden2])
+        ######Division Third Variable
+    } else if(transform1=="+" && elementnum2!="None" && transform2=="/" && elementnum3!="None" && elementden1!="None" && transform3=="+" && elementden2!="None" && elementden3=="None"){
+        (spectra.line.table[elementnum1] + spectra.line.table[elementnum2] / spectra.line.table[elementnum3])/(spectra.line.table[elementden1] + spectra.line.table[elementden2])
+    } else if(transform1=="-" && elementnum2!="None" && transform2=="/" && elementnum3!="None" && elementden1!="None" && transform3=="+" && elementden2!="None" && elementden3=="None"){
+        (spectra.line.table[elementnum1] - spectra.line.table[elementnum2] / spectra.line.table[elementnum3])/(spectra.line.table[elementden1] + spectra.line.table[elementden2])
+    } else if(transform1=="*" && elementnum2!="None" && transform2=="/" && elementnum3!="None" && elementden1!="None" && transform3=="+" && elementden2!="None" && elementden3=="None"){
+        (spectra.line.table[elementnum1] * spectra.line.table[elementnum2] / spectra.line.table[elementnum3])/(spectra.line.table[elementden1] + spectra.line.table[elementden2])
+    } else if(transform1=="/" && elementnum2!="None" && transform2=="/" && elementnum3!="None" && elementden1!="None" && transform3=="+" && elementden2!="None" && elementden3=="None"){
+        (spectra.line.table[elementnum1] / spectra.line.table[elementnum2] / spectra.line.table[elementnum3])/(spectra.line.table[elementden1] + spectra.line.table[elementden2])
+        ####################################
+        #####Subtraction Two Denominators######
+        ####################################
+    } else if (transform1=="None" && elementden1!="None" && transform3=="-" && elementden2!="None"){
+        spectra.line.table[elementnum1]/(spectra.line.table[elementden1] - spectra.line.table[elementden2])
+    } else if(transform1=="+" && elementnum2!="None" && elementden1!="None" && transform3=="-" && elementden2!="None" && elementden3=="None"){
+        (spectra.line.table[elementnum1] + spectra.line.table[elementnum2])/(spectra.line.table[elementden1] - spectra.line.table[elementden2])
+    } else if(transform1=="-" && elementnum2!="None" && elementden1!="None" && transform3=="-" && elementden2!="None" && elementden3=="None"){
+        (spectra.line.table[elementnum1] - spectra.line.table[elementnum2])/(spectra.line.table[elementden1] - spectra.line.table[elementden2])
+    } else if(transform1=="*" && elementnum2!="None" && elementden1!="None" && transform3=="-" && elementden2!="None" && elementden3=="None"){
+        (spectra.line.table[elementnum1] * spectra.line.table[elementnum2])/(spectra.line.table[elementden1] - spectra.line.table[elementden2])
+    } else if(transform1=="/" && elementnum2!="None" && elementden1!="None" && transform3=="-" && elementden2!="None" && elementden3=="None"){
+        (spectra.line.table[elementnum1] / spectra.line.table[elementnum2])/(spectra.line.table[elementden1] - spectra.line.table[elementden2])
+        ######Addition Third Variable
+    } else if(transform1=="+" && elementnum2!="None" && transform2=="+" && elementnum3!="None" && elementden1!="None" && transform3=="-" && elementden2!="None" && elementden3=="None"){
+        (spectra.line.table[elementnum1] + spectra.line.table[elementnum2] + spectra.line.table[elementnum3])/(spectra.line.table[elementden1] - spectra.line.table[elementden2])
+    } else if(transform1=="-" && elementnum2!="None" && transform2=="+" && elementnum3!="None" && elementden1!="None" && transform3=="-" && elementden2!="None" && elementden3=="None"){
+        (spectra.line.table[elementnum1] - spectra.line.table[elementnum2] + spectra.line.table[elementnum3])/(spectra.line.table[elementden1] - spectra.line.table[elementden2])
+    } else if(transform1=="*" && elementnum2!="None" && transform2=="+" && elementnum3!="None" && elementden1!="None" && transform3=="-" && elementden2!="None" && elementden3=="None"){
+        (spectra.line.table[elementnum1] * spectra.line.table[elementnum2] + spectra.line.table[elementnum3])/(spectra.line.table[elementden1] - spectra.line.table[elementden2])
+    } else if(transform1=="/" && elementnum2!="None" && transform2=="+" && elementnum3!="None" && elementden1!="None" && transform3=="-" && elementden2!="None" && elementden3=="None"){
+        (spectra.line.table[elementnum1] / spectra.line.table[elementnum2] + spectra.line.table[elementnum3])/(spectra.line.table[elementden1] - spectra.line.table[elementden2])
+        ######Subtraction Third Variable
+    } else if(transform1=="+" && elementnum2!="None" && transform2=="-" && elementnum3!="None" && elementden1!="None" && transform3=="-" && elementden2!="None" && elementden3=="None"){
+        (spectra.line.table[elementnum1] + spectra.line.table[elementnum2] - spectra.line.table[elementnum3])/(spectra.line.table[elementden1] - spectra.line.table[elementden2])
+    } else if(transform1=="-" && elementnum2!="None" && transform2=="-" && elementnum3!="None" && elementden1!="None" && transform3=="-" && elementden2!="None" && elementden3=="None"){
+        (spectra.line.table[elementnum1] - spectra.line.table[elementnum2] - spectra.line.table[elementnum3])/(spectra.line.table[elementden1] - spectra.line.table[elementden2])
+    } else if(transform1=="*" && elementnum2!="None" && transform2=="-" && elementnum3!="None" && elementden1!="None" && transform3=="-" && elementden2!="None" && elementden3=="None"){
+        (spectra.line.table[elementnum1] * spectra.line.table[elementnum2] - spectra.line.table[elementnum3])/(spectra.line.table[elementden1] - spectra.line.table[elementden2])
+    } else if(transform1=="/" && elementnum2!="None" && transform2=="-" && elementnum3!="None" && elementden1!="None" && transform3=="-" && elementden2!="None" && elementden3=="None"){
+        (spectra.line.table[elementnum1] / spectra.line.table[elementnum2] - spectra.line.table[elementnum3])/(spectra.line.table[elementden1] - spectra.line.table[elementden2])
+        ######Multiplication Third Variable
+    } else if(transform1=="+" && elementnum2!="None" && transform2=="*" && elementnum3!="None" && elementden1!="None" && transform3=="-" && elementden2!="None" && elementden3=="None"){
+        (spectra.line.table[elementnum1] + spectra.line.table[elementnum2] * spectra.line.table[elementnum3])/(spectra.line.table[elementden1] - spectra.line.table[elementden2])
+    } else if(transform1=="-" && elementnum2!="None" && transform2=="*" && elementnum3!="None" && elementden1!="None" && transform3=="-" && elementden2!="None" && elementden3=="None"){
+        (spectra.line.table[elementnum1] - spectra.line.table[elementnum2] * spectra.line.table[elementnum3])/(spectra.line.table[elementden1] - spectra.line.table[elementden2])
+    } else if(transform1=="*" && elementnum2!="None" && transform2=="*" && elementnum3!="None" && elementden1!="None" && transform3=="-" && elementden2!="None" && elementden3=="None"){
+        (spectra.line.table[elementnum1] * spectra.line.table[elementnum2] * spectra.line.table[elementnum3])/(spectra.line.table[elementden1] - spectra.line.table[elementden2])
+    } else if(transform1=="/" && elementnum2!="None" && transform2=="*" && elementnum3!="None" && elementden1!="None" && transform3=="-" && elementden2!="None" && elementden3=="None"){
+        (spectra.line.table[elementnum1] / spectra.line.table[elementnum2] * spectra.line.table[elementnum3])/(spectra.line.table[elementden1] - spectra.line.table[elementden2])
+        ######Division Third Variable
+    } else if(transform1=="+" && elementnum2!="None" && transform2=="/" && elementnum3!="None" && elementden1!="None" && transform3=="-" && elementden2!="None" && elementden3=="None"){
+        (spectra.line.table[elementnum1] + spectra.line.table[elementnum2] / spectra.line.table[elementnum3])/(spectra.line.table[elementden1] - spectra.line.table[elementden2])
+    } else if(transform1=="-" && elementnum2!="None" && transform2=="/" && elementnum3!="None" && elementden1!="None" && transform3=="-" && elementden2!="None" && elementden3=="None"){
+        (spectra.line.table[elementnum1] - spectra.line.table[elementnum2] / spectra.line.table[elementnum3])/(spectra.line.table[elementden1] - spectra.line.table[elementden2])
+    } else if(transform1=="*" && elementnum2!="None" && transform2=="/" && elementnum3!="None" && elementden1!="None" && transform3=="-" && elementden2!="None" && elementden3=="None"){
+        (spectra.line.table[elementnum1] * spectra.line.table[elementnum2] / spectra.line.table[elementnum3])/(spectra.line.table[elementden1] - spectra.line.table[elementden2])
+    } else if(transform1=="/" && elementnum2!="None" && transform2=="/" && elementnum3!="None" && elementden1!="None" && transform3=="-" && elementden2!="None" && elementden3=="None"){
+        (spectra.line.table[elementnum1] / spectra.line.table[elementnum2] / spectra.line.table[elementnum3])/(spectra.line.table[elementden1] - spectra.line.table[elementden2])
+        ####################################
+        #####Multiplication Two Denominators######
+        ####################################
+    } else if (transform1=="None" && elementden1!="None" && transform3=="*" && elementden2!="None"){
+        spectra.line.table[elementnum1]/(spectra.line.table[elementden1] * spectra.line.table[elementden2])
+    } else if(transform1=="+" && elementnum2!="None" && elementden1!="None" && transform3=="*" && elementden2!="None" && elementden3=="None"){
+        (spectra.line.table[elementnum1] + spectra.line.table[elementnum2])/(spectra.line.table[elementden1] * spectra.line.table[elementden2])
+    } else if(transform1=="-" && elementnum2!="None" && elementden1!="None" && transform3=="*" && elementden2!="None" && elementden3=="None"){
+        (spectra.line.table[elementnum1] - spectra.line.table[elementnum2])/(spectra.line.table[elementden1] * spectra.line.table[elementden2])
+    } else if(transform1=="*" && elementnum2!="None" && elementden1!="None" && transform3=="*" && elementden2!="None" && elementden3=="None"){
+        (spectra.line.table[elementnum1] * spectra.line.table[elementnum2])/(spectra.line.table[elementden1] * spectra.line.table[elementden2])
+    } else if(transform1=="/" && elementnum2!="None" && elementden1!="None" && transform3=="*" && elementden2!="None" && elementden3=="None"){
+        (spectra.line.table[elementnum1] / spectra.line.table[elementnum2])/(spectra.line.table[elementden1] * spectra.line.table[elementden2])
+        ######Addition Third Variable
+    } else if(transform1=="+" && elementnum2!="None" && transform2=="+" && elementnum3!="None" && elementden1!="None" && transform3=="*" && elementden2!="None" && elementden3=="None"){
+        (spectra.line.table[elementnum1] + spectra.line.table[elementnum2] + spectra.line.table[elementnum3])/(spectra.line.table[elementden1] * spectra.line.table[elementden2])
+    } else if(transform1=="-" && elementnum2!="None" && transform2=="+" && elementnum3!="None" && elementden1!="None" && transform3=="*" && elementden2!="None" && elementden3=="None"){
+        (spectra.line.table[elementnum1] - spectra.line.table[elementnum2] + spectra.line.table[elementnum3])/(spectra.line.table[elementden1] * spectra.line.table[elementden2])
+    } else if(transform1=="*" && elementnum2!="None" && transform2=="+" && elementnum3!="None" && elementden1!="None" && transform3=="*" && elementden2!="None" && elementden3=="None"){
+        (spectra.line.table[elementnum1] * spectra.line.table[elementnum2] + spectra.line.table[elementnum3])/(spectra.line.table[elementden1] * spectra.line.table[elementden2])
+    } else if(transform1=="/" && elementnum2!="None" && transform2=="+" && elementnum3!="None" && elementden1!="None" && transform3=="*" && elementden2!="None" && elementden3=="None"){
+        (spectra.line.table[elementnum1] / spectra.line.table[elementnum2] + spectra.line.table[elementnum3])/(spectra.line.table[elementden1] * spectra.line.table[elementden2])
+        ######Subtraction Third Variable
+    } else if(transform1=="+" && elementnum2!="None" && transform2=="-" && elementnum3!="None" && elementden1!="None" && transform3=="*" && elementden2!="None" && elementden3=="None"){
+        (spectra.line.table[elementnum1] + spectra.line.table[elementnum2] - spectra.line.table[elementnum3])/(spectra.line.table[elementden1] * spectra.line.table[elementden2])
+    } else if(transform1=="-" && elementnum2!="None" && transform2=="-" && elementnum3!="None" && elementden1!="None" && transform3=="*" && elementden2!="None" && elementden3=="None"){
+        (spectra.line.table[elementnum1] - spectra.line.table[elementnum2] - spectra.line.table[elementnum3])/(spectra.line.table[elementden1] * spectra.line.table[elementden2])
+    } else if(transform1=="*" && elementnum2!="None" && transform2=="-" && elementnum3!="None" && elementden1!="None" && transform3=="*" && elementden2!="None" && elementden3=="None"){
+        (spectra.line.table[elementnum1] * spectra.line.table[elementnum2] - spectra.line.table[elementnum3])/(spectra.line.table[elementden1] * spectra.line.table[elementden2])
+    } else if(transform1=="/" && elementnum2!="None" && transform2=="-" && elementnum3!="None" && elementden1!="None" && transform3=="*" && elementden2!="None" && elementden3=="None"){
+        (spectra.line.table[elementnum1] / spectra.line.table[elementnum2] - spectra.line.table[elementnum3])/(spectra.line.table[elementden1] * spectra.line.table[elementden2])
+        ######Multiplication Third Variable
+    } else if(transform1=="+" && elementnum2!="None" && transform2=="*" && elementnum3!="None" && elementden1!="None" && transform3=="*" && elementden2!="None" && elementden3=="None"){
+        (spectra.line.table[elementnum1] + spectra.line.table[elementnum2] * spectra.line.table[elementnum3])/(spectra.line.table[elementden1] * spectra.line.table[elementden2])
+    } else if(transform1=="-" && elementnum2!="None" && transform2=="*" && elementnum3!="None" && elementden1!="None" && transform3=="*" && elementden2!="None" && elementden3=="None"){
+        (spectra.line.table[elementnum1] - spectra.line.table[elementnum2] * spectra.line.table[elementnum3])/(spectra.line.table[elementden1] * spectra.line.table[elementden2])
+    } else if(transform1=="*" && elementnum2!="None" && transform2=="*" && elementnum3!="None" && elementden1!="None" && transform3=="*" && elementden2!="None" && elementden3=="None"){
+        (spectra.line.table[elementnum1] * spectra.line.table[elementnum2] * spectra.line.table[elementnum3])/(spectra.line.table[elementden1] * spectra.line.table[elementden2])
+    } else if(transform1=="/" && elementnum2!="None" && transform2=="*" && elementnum3!="None" && elementden1!="None" && transform3=="*" && elementden2!="None" && elementden3=="None"){
+        (spectra.line.table[elementnum1] / spectra.line.table[elementnum2] * spectra.line.table[elementnum3])/(spectra.line.table[elementden1] * spectra.line.table[elementden2])
+        ######Division Third Variable
+    } else if(transform1=="+" && elementnum2!="None" && transform2=="/" && elementnum3!="None" && elementden1!="None" && transform3=="*" && elementden2!="None" && elementden3=="None"){
+        (spectra.line.table[elementnum1] + spectra.line.table[elementnum2] / spectra.line.table[elementnum3])/(spectra.line.table[elementden1] * spectra.line.table[elementden2])
+    } else if(transform1=="-" && elementnum2!="None" && transform2=="/" && elementnum3!="None" && elementden1!="None" && transform3=="*" && elementden2!="None" && elementden3=="None"){
+        (spectra.line.table[elementnum1] - spectra.line.table[elementnum2] / spectra.line.table[elementnum3])/(spectra.line.table[elementden1] * spectra.line.table[elementden2])
+    } else if(transform1=="*" && elementnum2!="None" && transform2=="/" && elementnum3!="None" && elementden1!="None" && transform3=="*" && elementden2!="None" && elementden3=="None"){
+        (spectra.line.table[elementnum1] * spectra.line.table[elementnum2] / spectra.line.table[elementnum3])/(spectra.line.table[elementden1] * spectra.line.table[elementden2])
+    } else if(transform1=="/" && elementnum2!="None" && transform2=="/" && elementnum3!="None" && elementden1!="None" && transform3=="*" && elementden2!="None" && elementden3=="None"){
+        (spectra.line.table[elementnum1] / spectra.line.table[elementnum2] / spectra.line.table[elementnum3])/(spectra.line.table[elementden1] * spectra.line.table[elementden2])
+        ####################################
+        #####Division Two Denominators######
+        ####################################
+    } else if (transform1=="None" && elementden1!="None" && transform3=="/" && elementden2!="None"){
+        spectra.line.table[elementnum1]/(spectra.line.table[elementden1] / spectra.line.table[elementden2])
+    } else if(transform1=="+" && elementnum2!="None" && elementden1!="None" && transform3=="/" && elementden2!="None" && elementden3=="None"){
+        (spectra.line.table[elementnum1] + spectra.line.table[elementnum2])/(spectra.line.table[elementden1] / spectra.line.table[elementden2])
+    } else if(transform1=="-" && elementnum2!="None" && elementden1!="None" && transform3=="/" && elementden2!="None" && elementden3=="None"){
+        (spectra.line.table[elementnum1] - spectra.line.table[elementnum2])/(spectra.line.table[elementden1] / spectra.line.table[elementden2])
+    } else if(transform1=="*" && elementnum2!="None" && elementden1!="None" && transform3=="/" && elementden2!="None" && elementden3=="None"){
+        (spectra.line.table[elementnum1] * spectra.line.table[elementnum2])/(spectra.line.table[elementden1] / spectra.line.table[elementden2])
+    } else if(transform1=="/" && elementnum2!="None" && elementden1!="None" && transform3=="/" && elementden2!="None" && elementden3=="None"){
+        (spectra.line.table[elementnum1] / spectra.line.table[elementnum2])/(spectra.line.table[elementden1] / spectra.line.table[elementden2])
+        ######Addition Third Variable
+    } else if(transform1=="+" && elementnum2!="None" && transform2=="+" && elementnum3!="None" && elementden1!="None" && transform3=="/" && elementden2!="None" && elementden3=="None"){
+        (spectra.line.table[elementnum1] + spectra.line.table[elementnum2] + spectra.line.table[elementnum3])/(spectra.line.table[elementden1] / spectra.line.table[elementden2])
+    } else if(transform1=="-" && elementnum2!="None" && transform2=="+" && elementnum3!="None" && elementden1!="None" && transform3=="/" && elementden2!="None" && elementden3=="None"){
+        (spectra.line.table[elementnum1] - spectra.line.table[elementnum2] + spectra.line.table[elementnum3])/(spectra.line.table[elementden1] / spectra.line.table[elementden2])
+    } else if(transform1=="*" && elementnum2!="None" && transform2=="+" && elementnum3!="None" && elementden1!="None" && transform3=="/" && elementden2!="None" && elementden3=="None"){
+        (spectra.line.table[elementnum1] * spectra.line.table[elementnum2] + spectra.line.table[elementnum3])/(spectra.line.table[elementden1] / spectra.line.table[elementden2])
+    } else if(transform1=="/" && elementnum2!="None" && transform2=="+" && elementnum3!="None" && elementden1!="None" && transform3=="/" && elementden2!="None" && elementden3=="None"){
+        (spectra.line.table[elementnum1] / spectra.line.table[elementnum2] + spectra.line.table[elementnum3])/(spectra.line.table[elementden1] / spectra.line.table[elementden2])
+        ######Subtraction Third Variable
+    } else if(transform1=="+" && elementnum2!="None" && transform2=="-" && elementnum3!="None" && elementden1!="None" && transform3=="/" && elementden2!="None" && elementden3=="None"){
+        (spectra.line.table[elementnum1] + spectra.line.table[elementnum2] - spectra.line.table[elementnum3])/(spectra.line.table[elementden1] / spectra.line.table[elementden2])
+    } else if(transform1=="-" && elementnum2!="None" && transform2=="-" && elementnum3!="None" && elementden1!="None" && transform3=="/" && elementden2!="None" && elementden3=="None"){
+        (spectra.line.table[elementnum1] - spectra.line.table[elementnum2] - spectra.line.table[elementnum3])/(spectra.line.table[elementden1] / spectra.line.table[elementden2])
+    } else if(transform1=="*" && elementnum2!="None" && transform2=="-" && elementnum3!="None" && elementden1!="None" && transform3=="/" && elementden2!="None" && elementden3=="None"){
+        (spectra.line.table[elementnum1] * spectra.line.table[elementnum2] - spectra.line.table[elementnum3])/(spectra.line.table[elementden1] / spectra.line.table[elementden2])
+    } else if(transform1=="/" && elementnum2!="None" && transform2=="-" && elementnum3!="None" && elementden1!="None" && transform3=="/" && elementden2!="None" && elementden3=="None"){
+        (spectra.line.table[elementnum1] / spectra.line.table[elementnum2] - spectra.line.table[elementnum3])/(spectra.line.table[elementden1] / spectra.line.table[elementden2])
+        ######Multiplication Third Variable
+    } else if(transform1=="+" && elementnum2!="None" && transform2=="*" && elementnum3!="None" && elementden1!="None" && transform3=="/" && elementden2!="None" && elementden3=="None"){
+        (spectra.line.table[elementnum1] + spectra.line.table[elementnum2] * spectra.line.table[elementnum3])/(spectra.line.table[elementden1] / spectra.line.table[elementden2])
+    } else if(transform1=="-" && elementnum2!="None" && transform2=="*" && elementnum3!="None" && elementden1!="None" && transform3=="/" && elementden2!="None" && elementden3=="None"){
+        (spectra.line.table[elementnum1] - spectra.line.table[elementnum2] * spectra.line.table[elementnum3])/(spectra.line.table[elementden1] / spectra.line.table[elementden2])
+    } else if(transform1=="*" && elementnum2!="None" && transform2=="*" && elementnum3!="None" && elementden1!="None" && transform3=="/" && elementden2!="None" && elementden3=="None"){
+        (spectra.line.table[elementnum1] * spectra.line.table[elementnum2] * spectra.line.table[elementnum3])/(spectra.line.table[elementden1] / spectra.line.table[elementden2])
+    } else if(transform1=="/" && elementnum2!="None" && transform2=="*" && elementnum3!="None" && elementden1!="None" && transform3=="/" && elementden2!="None" && elementden3=="None"){
+        (spectra.line.table[elementnum1] / spectra.line.table[elementnum2] * spectra.line.table[elementnum3])/(spectra.line.table[elementden1] / spectra.line.table[elementden2])
+        ######Division Third Variable
+    } else if(transform1=="+" && elementnum2!="None" && transform2=="/" && elementnum3!="None" && elementden1!="None" && transform3=="/" && elementden2!="None" && elementden3=="None"){
+        (spectra.line.table[elementnum1] + spectra.line.table[elementnum2] / spectra.line.table[elementnum3])/(spectra.line.table[elementden1] / spectra.line.table[elementden2])
+    } else if(transform1=="-" && elementnum2!="None" && transform2=="/" && elementnum3!="None" && elementden1!="None" && transform3=="/" && elementden2!="None" && elementden3=="None"){
+        (spectra.line.table[elementnum1] - spectra.line.table[elementnum2] / spectra.line.table[elementnum3])/(spectra.line.table[elementden1] / spectra.line.table[elementden2])
+    } else if(transform1=="*" && elementnum2!="None" && transform2=="/" && elementnum3!="None" && elementden1!="None" && transform3=="/" && elementden2!="None" && elementden3=="None"){
+        (spectra.line.table[elementnum1] * spectra.line.table[elementnum2] / spectra.line.table[elementnum3])/(spectra.line.table[elementden1] / spectra.line.table[elementden2])
+    } else if(transform1=="/" && elementnum2!="None" && transform2=="/" && elementnum3!="None" && elementden1!="None" && transform3=="/" && elementden2!="None" && elementden3=="None"){
+        (spectra.line.table[elementnum1] / spectra.line.table[elementnum2] / spectra.line.table[elementnum3])/(spectra.line.table[elementden1] / spectra.line.table[elementden2])
+        #######################################
+        #######################################
+        ########################################
+        ####Addition Third Denominator#########
+        #######################################
+        #######################################
+        ####################################
+        #####Addition Two Denominators######
+        ####################################
+    } else if (transform1=="None" && elementden1!="None" && transform3=="+" && elementden2!="None" && transform4=="+" && elementden3!="None"){
+        spectra.line.table[elementnum1]/(spectra.line.table[elementden1] + spectra.line.table[elementden2] + spectra.line.table[elementden3])
+    } else if(transform1=="+" && elementnum2!="None" && elementden1!="None" && transform3=="+" && elementden2!="None" && transform4=="+" && elementden3!="None"){
+        (spectra.line.table[elementnum1] + spectra.line.table[elementden2] + spectra.line.table[elementden3])/(spectra.line.table[elementden1] + spectra.line.table[elementden2] + spectra.line.table[elementden3])
+    } else if(transform1=="-" && elementnum2!="None" && elementden1!="None" && transform3=="+" && elementden2!="None" && transform4=="+" && elementden3!="None"){
+        (spectra.line.table[elementnum1] - spectra.line.table[elementden2] + spectra.line.table[elementden3])/(spectra.line.table[elementden1] + spectra.line.table[elementden2] + spectra.line.table[elementden3])
+    } else if(transform1=="*" && elementnum2!="None" && elementden1!="None" && transform3=="+" && elementden2!="None" && transform4=="+" && elementden3!="None"){
+        (spectra.line.table[elementnum1] * spectra.line.table[elementden2] + spectra.line.table[elementden3])/(spectra.line.table[elementden1] + spectra.line.table[elementden2] + spectra.line.table[elementden3])
+    } else if(transform1=="/" && elementnum2!="None" && elementden1!="None" && transform3=="+" && elementden2!="None" && transform4=="+" && elementden3!="None"){
+        (spectra.line.table[elementnum1] / spectra.line.table[elementden2] + spectra.line.table[elementden3])/(spectra.line.table[elementden1] + spectra.line.table[elementden2] + spectra.line.table[elementden3])
+        ######Addition Third Variable
+    } else if(transform1=="+" && elementnum2!="None" && transform2=="+" && elementnum3!="None" && elementden1!="None" && transform3=="+" && elementden2!="None" && transform4=="+" && elementden3!="None"){
+        (spectra.line.table[elementnum1] + spectra.line.table[elementnum2] + spectra.line.table[elementnum3])/(spectra.line.table[elementden1] + spectra.line.table[elementden2] + spectra.line.table[elementden3])
+    } else if(transform1=="-" && elementnum2!="None" && transform2=="+" && elementnum3!="None" && elementden1!="None" && transform3=="+" && elementden2!="None" && transform4=="+" && elementden3!="None"){
+        (spectra.line.table[elementnum1] - spectra.line.table[elementnum2] + spectra.line.table[elementnum3])/(spectra.line.table[elementden1] + spectra.line.table[elementden2] + spectra.line.table[elementden3])
+    } else if(transform1=="*" && elementnum2!="None" && transform2=="+" && elementnum3!="None" && elementden1!="None" && transform3=="+" && elementden2!="None" && transform4=="+" && elementden3!="None"){
+        (spectra.line.table[elementnum1] * spectra.line.table[elementnum2] + spectra.line.table[elementnum3])/(spectra.line.table[elementden1] + spectra.line.table[elementden2] + spectra.line.table[elementden3])
+    } else if(transform1=="/" && elementnum2!="None" && transform2=="+" && elementnum3!="None" && elementden1!="None" && transform3=="+" && elementden2!="None" && transform4=="+" && elementden3!="None"){
+        (spectra.line.table[elementnum1] / spectra.line.table[elementnum2] + spectra.line.table[elementnum3])/(spectra.line.table[elementden1] + spectra.line.table[elementden2] + spectra.line.table[elementden3])
+        ######Subtraction Third Variable
+    } else if(transform1=="+" && elementnum2!="None" && transform2=="-" && elementnum3!="None" && elementden1!="None" && transform3=="+" && elementden2!="None" && transform4=="+" && elementden3!="None"){
+        (spectra.line.table[elementnum1] + spectra.line.table[elementnum2] - spectra.line.table[elementnum3])/(spectra.line.table[elementden1] + spectra.line.table[elementden2] + spectra.line.table[elementden3])
+    } else if(transform1=="-" && elementnum2!="None" && transform2=="-" && elementnum3!="None" && elementden1!="None" && transform3=="+" && elementden2!="None" && transform4=="+" && elementden3!="None"){
+        (spectra.line.table[elementnum1] - spectra.line.table[elementnum2] - spectra.line.table[elementnum3])/(spectra.line.table[elementden1] + spectra.line.table[elementden2] + spectra.line.table[elementden3])
+    } else if(transform1=="*" && elementnum2!="None" && transform2=="-" && elementnum3!="None" && elementden1!="None" && transform3=="+" && elementden2!="None" && transform4=="+" && elementden3!="None"){
+        (spectra.line.table[elementnum1] * spectra.line.table[elementnum2] - spectra.line.table[elementnum3])/(spectra.line.table[elementden1] + spectra.line.table[elementden2] + spectra.line.table[elementden3])
+    } else if(transform1=="/" && elementnum2!="None" && transform2=="-" && elementnum3!="None" && elementden1!="None" && transform3=="+" && elementden2!="None" && transform4=="+" && elementden3!="None"){
+        (spectra.line.table[elementnum1] / spectra.line.table[elementnum2] - spectra.line.table[elementnum3])/(spectra.line.table[elementden1] + spectra.line.table[elementden2] + spectra.line.table[elementden3])
+        ######Multiplication Third Variable
+    } else if(transform1=="+" && elementnum2!="None" && transform2=="*" && elementnum3!="None" && elementden1!="None" && transform3=="+" && elementden2!="None" && transform4=="+" && elementden3!="None"){
+        (spectra.line.table[elementnum1] + spectra.line.table[elementnum2] * spectra.line.table[elementnum3])/(spectra.line.table[elementden1] + spectra.line.table[elementden2] + spectra.line.table[elementden3])
+    } else if(transform1=="-" && elementnum2!="None" && transform2=="*" && elementnum3!="None" && elementden1!="None" && transform3=="+" && elementden2!="None" && transform4=="+" && elementden3!="None"){
+        (spectra.line.table[elementnum1] - spectra.line.table[elementnum2] * spectra.line.table[elementnum3])/(spectra.line.table[elementden1] + spectra.line.table[elementden2] + spectra.line.table[elementden3])
+    } else if(transform1=="*" && elementnum2!="None" && transform2=="*" && elementnum3!="None" && elementden1!="None" && transform3=="+" && elementden2!="None" && transform4=="+" && elementden3!="None"){
+        (spectra.line.table[elementnum1] * spectra.line.table[elementnum2] * spectra.line.table[elementnum3])/(spectra.line.table[elementden1] + spectra.line.table[elementden2] + spectra.line.table[elementden3])
+    } else if(transform1=="/" && elementnum2!="None" && transform2=="*" && elementnum3!="None" && elementden1!="None" && transform3=="+" && elementden2!="None" && transform4=="+" && elementden3!="None"){
+        (spectra.line.table[elementnum1] / spectra.line.table[elementnum2] * spectra.line.table[elementnum3])/(spectra.line.table[elementden1] + spectra.line.table[elementden2] + spectra.line.table[elementden3])
+        ######Division Third Variable
+    } else if(transform1=="+" && elementnum2!="None" && transform2=="/" && elementnum3!="None" && elementden1!="None" && transform3=="+" && elementden2!="None" && transform4=="+" && elementden3!="None"){
+        (spectra.line.table[elementnum1] + spectra.line.table[elementnum2] / spectra.line.table[elementnum3])/(spectra.line.table[elementden1] + spectra.line.table[elementden2] + spectra.line.table[elementden3])
+    } else if(transform1=="-" && elementnum2!="None" && transform2=="/" && elementnum3!="None" && elementden1!="None" && transform3=="+" && elementden2!="None" && transform4=="+" && elementden3!="None"){
+        (spectra.line.table[elementnum1] - spectra.line.table[elementnum2] / spectra.line.table[elementnum3])/(spectra.line.table[elementden1] + spectra.line.table[elementden2] + spectra.line.table[elementden3])
+    } else if(transform1=="*" && elementnum2!="None" && transform2=="/" && elementnum3!="None" && elementden1!="None" && transform3=="+" && elementden2!="None" && transform4=="+" && elementden3!="None"){
+        (spectra.line.table[elementnum1] * spectra.line.table[elementnum2] / spectra.line.table[elementnum3])/(spectra.line.table[elementden1] + spectra.line.table[elementden2] + spectra.line.table[elementden3])
+    } else if(transform1=="/" && elementnum2!="None" && transform2=="/" && elementnum3!="None" && elementden1!="None" && transform3=="+" && elementden2!="None" && transform4=="+" && elementden3!="None"){
+        (spectra.line.table[elementnum1] / spectra.line.table[elementnum2] / spectra.line.table[elementnum3])/(spectra.line.table[elementden1] + spectra.line.table[elementden2] + spectra.line.table[elementden3])
+        ####################################
+        #####Subtraction Two Denominators######
+        ####################################
+    } else if (transform1=="None" && elementden1!="None" && transform3=="-" && elementden2!="None" && transform4=="+" && elementden3!="None"){
+        spectra.line.table[elementnum1]/(spectra.line.table[elementden1] - spectra.line.table[elementden2] + spectra.line.table[elementden3])
+    } else if(transform1=="+" && elementnum2!="None" && elementden1!="None" && transform3=="-" && elementden2!="None" && transform4=="+" && elementden3!="None"){
+        (spectra.line.table[elementnum1] + spectra.line.table[elementden2] + spectra.line.table[elementden3])/(spectra.line.table[elementden1] - spectra.line.table[elementden2] + spectra.line.table[elementden3])
+    } else if(transform1=="-" && elementnum2!="None" && elementden1!="None" && transform3=="-" && elementden2!="None" && transform4=="+" && elementden3!="None"){
+        (spectra.line.table[elementnum1] - spectra.line.table[elementden2] + spectra.line.table[elementden3])/(spectra.line.table[elementden1] - spectra.line.table[elementden2] + spectra.line.table[elementden3])
+    } else if(transform1=="*" && elementnum2!="None" && elementden1!="None" && transform3=="-" && elementden2!="None" && transform4=="+" && elementden3!="None"){
+        (spectra.line.table[elementnum1] * spectra.line.table[elementden2] + spectra.line.table[elementden3])/(spectra.line.table[elementden1] - spectra.line.table[elementden2] + spectra.line.table[elementden3])
+    } else if(transform1=="/" && elementnum2!="None" && elementden1!="None" && transform3=="-" && elementden2!="None" && transform4=="+" && elementden3!="None"){
+        (spectra.line.table[elementnum1] / spectra.line.table[elementden2] + spectra.line.table[elementden3])/(spectra.line.table[elementden1] - spectra.line.table[elementden2] + spectra.line.table[elementden3])
+        ######Addition Third Variable
+    } else if(transform1=="+" && elementnum2!="None" && transform2=="+" && elementnum3!="None" && elementden1!="None" && transform3=="-" && elementden2!="None" && transform4=="+" && elementden3!="None"){
+        (spectra.line.table[elementnum1] + spectra.line.table[elementnum2] + spectra.line.table[elementnum3])/(spectra.line.table[elementden1] - spectra.line.table[elementden2] + spectra.line.table[elementden3])
+    } else if(transform1=="-" && elementnum2!="None" && transform2=="+" && elementnum3!="None" && elementden1!="None" && transform3=="-" && elementden2!="None" && transform4=="+" && elementden3!="None"){
+        (spectra.line.table[elementnum1] - spectra.line.table[elementnum2] + spectra.line.table[elementnum3])/(spectra.line.table[elementden1] - spectra.line.table[elementden2] + spectra.line.table[elementden3])
+    } else if(transform1=="*" && elementnum2!="None" && transform2=="+" && elementnum3!="None" && elementden1!="None" && transform3=="-" && elementden2!="None" && transform4=="+" && elementden3!="None"){
+        (spectra.line.table[elementnum1] * spectra.line.table[elementnum2] + spectra.line.table[elementnum3])/(spectra.line.table[elementden1] - spectra.line.table[elementden2] + spectra.line.table[elementden3])
+    } else if(transform1=="/" && elementnum2!="None" && transform2=="+" && elementnum3!="None" && elementden1!="None" && transform3=="-" && elementden2!="None" && transform4=="+" && elementden3!="None"){
+        (spectra.line.table[elementnum1] / spectra.line.table[elementnum2] + spectra.line.table[elementnum3])/(spectra.line.table[elementden1] - spectra.line.table[elementden2] + spectra.line.table[elementden3])
+        ######Subtraction Third Variable
+    } else if(transform1=="+" && elementnum2!="None" && transform2=="-" && elementnum3!="None" && elementden1!="None" && transform3=="-" && elementden2!="None" && transform4=="+" && elementden3!="None"){
+        (spectra.line.table[elementnum1] + spectra.line.table[elementnum2] - spectra.line.table[elementnum3])/(spectra.line.table[elementden1] - spectra.line.table[elementden2] + spectra.line.table[elementden3])
+    } else if(transform1=="-" && elementnum2!="None" && transform2=="-" && elementnum3!="None" && elementden1!="None" && transform3=="-" && elementden2!="None" && transform4=="+" && elementden3!="None"){
+        (spectra.line.table[elementnum1] - spectra.line.table[elementnum2] - spectra.line.table[elementnum3])/(spectra.line.table[elementden1] - spectra.line.table[elementden2] + spectra.line.table[elementden3])
+    } else if(transform1=="*" && elementnum2!="None" && transform2=="-" && elementnum3!="None" && elementden1!="None" && transform3=="-" && elementden2!="None" && transform4=="+" && elementden3!="None"){
+        (spectra.line.table[elementnum1] * spectra.line.table[elementnum2] - spectra.line.table[elementnum3])/(spectra.line.table[elementden1] - spectra.line.table[elementden2] + spectra.line.table[elementden3])
+    } else if(transform1=="/" && elementnum2!="None" && transform2=="-" && elementnum3!="None" && elementden1!="None" && transform3=="-" && elementden2!="None" && transform4=="+" && elementden3!="None"){
+        (spectra.line.table[elementnum1] / spectra.line.table[elementnum2] - spectra.line.table[elementnum3])/(spectra.line.table[elementden1] - spectra.line.table[elementden2] + spectra.line.table[elementden3])
+        ######Multiplication Third Variable
+    } else if(transform1=="+" && elementnum2!="None" && transform2=="*" && elementnum3!="None" && elementden1!="None" && transform3=="-" && elementden2!="None" && transform4=="+" && elementden3!="None"){
+        (spectra.line.table[elementnum1] + spectra.line.table[elementnum2] * spectra.line.table[elementnum3])/(spectra.line.table[elementden1] - spectra.line.table[elementden2] + spectra.line.table[elementden3])
+    } else if(transform1=="-" && elementnum2!="None" && transform2=="*" && elementnum3!="None" && elementden1!="None" && transform3=="-" && elementden2!="None" && transform4=="+" && elementden3!="None"){
+        (spectra.line.table[elementnum1] - spectra.line.table[elementnum2] * spectra.line.table[elementnum3])/(spectra.line.table[elementden1] - spectra.line.table[elementden2] + spectra.line.table[elementden3])
+    } else if(transform1=="*" && elementnum2!="None" && transform2=="*" && elementnum3!="None" && elementden1!="None" && transform3=="-" && elementden2!="None" && transform4=="+" && elementden3!="None"){
+        (spectra.line.table[elementnum1] * spectra.line.table[elementnum2] * spectra.line.table[elementnum3])/(spectra.line.table[elementden1] - spectra.line.table[elementden2] + spectra.line.table[elementden3])
+    } else if(transform1=="/" && elementnum2!="None" && transform2=="*" && elementnum3!="None" && elementden1!="None" && transform3=="-" && elementden2!="None" && transform4=="+" && elementden3!="None"){
+        (spectra.line.table[elementnum1] / spectra.line.table[elementnum2] * spectra.line.table[elementnum3])/(spectra.line.table[elementden1] - spectra.line.table[elementden2] + spectra.line.table[elementden3])
+        ######Division Third Variable
+    } else if(transform1=="+" && elementnum2!="None" && transform2=="/" && elementnum3!="None" && elementden1!="None" && transform3=="-" && elementden2!="None" && transform4=="+" && elementden3!="None"){
+        (spectra.line.table[elementnum1] + spectra.line.table[elementnum2] / spectra.line.table[elementnum3])/(spectra.line.table[elementden1] - spectra.line.table[elementden2] + spectra.line.table[elementden3])
+    } else if(transform1=="-" && elementnum2!="None" && transform2=="/" && elementnum3!="None" && elementden1!="None" && transform3=="-" && elementden2!="None" && transform4=="+" && elementden3!="None"){
+        (spectra.line.table[elementnum1] - spectra.line.table[elementnum2] / spectra.line.table[elementnum3])/(spectra.line.table[elementden1] - spectra.line.table[elementden2] + spectra.line.table[elementden3])
+    } else if(transform1=="*" && elementnum2!="None" && transform2=="/" && elementnum3!="None" && elementden1!="None" && transform3=="-" && elementden2!="None" && transform4=="+" && elementden3!="None"){
+        (spectra.line.table[elementnum1] * spectra.line.table[elementnum2] / spectra.line.table[elementnum3])/(spectra.line.table[elementden1] - spectra.line.table[elementden2] + spectra.line.table[elementden3])
+    } else if(transform1=="/" && elementnum2!="None" && transform2=="/" && elementnum3!="None" && elementden1!="None" && transform3=="-" && elementden2!="None" && transform4=="+" && elementden3!="None"){
+        (spectra.line.table[elementnum1] / spectra.line.table[elementnum2] / spectra.line.table[elementnum3])/(spectra.line.table[elementden1] - spectra.line.table[elementden2] + spectra.line.table[elementden3])
+        ####################################
+        #####Multiplication Two Denominators######
+        ####################################
+    } else if (transform1=="None" && elementden1!="None" && transform3=="*" && elementden2!="None" && transform4=="+" && elementden3!="None"){
+        spectra.line.table[elementnum1]/(spectra.line.table[elementden1] * spectra.line.table[elementden2] + spectra.line.table[elementden3])
+    } else if(transform1=="+" && elementnum2!="None" && elementden1!="None" && transform3=="*" && elementden2!="None" && transform4=="+" && elementden3!="None"){
+        (spectra.line.table[elementnum1] + spectra.line.table[elementden2] + spectra.line.table[elementden3])/(spectra.line.table[elementden1] * spectra.line.table[elementden2] + spectra.line.table[elementden3])
+    } else if(transform1=="-" && elementnum2!="None" && elementden1!="None" && transform3=="*" && elementden2!="None" && transform4=="+" && elementden3!="None"){
+        (spectra.line.table[elementnum1] - spectra.line.table[elementden2] + spectra.line.table[elementden3])/(spectra.line.table[elementden1] * spectra.line.table[elementden2] + spectra.line.table[elementden3])
+    } else if(transform1=="*" && elementnum2!="None" && elementden1!="None" && transform3=="*" && elementden2!="None" && transform4=="+" && elementden3!="None"){
+        (spectra.line.table[elementnum1] * spectra.line.table[elementden2] + spectra.line.table[elementden3])/(spectra.line.table[elementden1] * spectra.line.table[elementden2] + spectra.line.table[elementden3])
+    } else if(transform1=="/" && elementnum2!="None" && elementden1!="None" && transform3=="*" && elementden2!="None" && transform4=="+" && elementden3!="None"){
+        (spectra.line.table[elementnum1] / spectra.line.table[elementden2] + spectra.line.table[elementden3])/(spectra.line.table[elementden1] * spectra.line.table[elementden2] + spectra.line.table[elementden3])
+        ######Addition Third Variable
+    } else if(transform1=="+" && elementnum2!="None" && transform2=="+" && elementnum3!="None" && elementden1!="None" && transform3=="*" && elementden2!="None" && transform4=="+" && elementden3!="None"){
+        (spectra.line.table[elementnum1] + spectra.line.table[elementnum2] + spectra.line.table[elementnum3])/(spectra.line.table[elementden1] * spectra.line.table[elementden2] + spectra.line.table[elementden3])
+    } else if(transform1=="-" && elementnum2!="None" && transform2=="+" && elementnum3!="None" && elementden1!="None" && transform3=="*" && elementden2!="None" && transform4=="+" && elementden3!="None"){
+        (spectra.line.table[elementnum1] - spectra.line.table[elementnum2] + spectra.line.table[elementnum3])/(spectra.line.table[elementden1] * spectra.line.table[elementden2] + spectra.line.table[elementden3])
+    } else if(transform1=="*" && elementnum2!="None" && transform2=="+" && elementnum3!="None" && elementden1!="None" && transform3=="*" && elementden2!="None" && transform4=="+" && elementden3!="None"){
+        (spectra.line.table[elementnum1] * spectra.line.table[elementnum2] + spectra.line.table[elementnum3])/(spectra.line.table[elementden1] * spectra.line.table[elementden2] + spectra.line.table[elementden3])
+    } else if(transform1=="/" && elementnum2!="None" && transform2=="+" && elementnum3!="None" && elementden1!="None" && transform3=="*" && elementden2!="None" && transform4=="+" && elementden3!="None"){
+        (spectra.line.table[elementnum1] / spectra.line.table[elementnum2] + spectra.line.table[elementnum3])/(spectra.line.table[elementden1] * spectra.line.table[elementden2] + spectra.line.table[elementden3])
+        ######Subtraction Third Variable
+    } else if(transform1=="+" && elementnum2!="None" && transform2=="-" && elementnum3!="None" && elementden1!="None" && transform3=="*" && elementden2!="None" && transform4=="+" && elementden3!="None"){
+        (spectra.line.table[elementnum1] + spectra.line.table[elementnum2] - spectra.line.table[elementnum3])/(spectra.line.table[elementden1] * spectra.line.table[elementden2] + spectra.line.table[elementden3])
+    } else if(transform1=="-" && elementnum2!="None" && transform2=="-" && elementnum3!="None" && elementden1!="None" && transform3=="*" && elementden2!="None" && transform4=="+" && elementden3!="None"){
+        (spectra.line.table[elementnum1] - spectra.line.table[elementnum2] - spectra.line.table[elementnum3])/(spectra.line.table[elementden1] * spectra.line.table[elementden2] + spectra.line.table[elementden3])
+    } else if(transform1=="*" && elementnum2!="None" && transform2=="-" && elementnum3!="None" && elementden1!="None" && transform3=="*" && elementden2!="None" && transform4=="+" && elementden3!="None"){
+        (spectra.line.table[elementnum1] * spectra.line.table[elementnum2] - spectra.line.table[elementnum3])/(spectra.line.table[elementden1] * spectra.line.table[elementden2] + spectra.line.table[elementden3])
+    } else if(transform1=="/" && elementnum2!="None" && transform2=="-" && elementnum3!="None" && elementden1!="None" && transform3=="*" && elementden2!="None" && transform4=="+" && elementden3!="None"){
+        (spectra.line.table[elementnum1] / spectra.line.table[elementnum2] - spectra.line.table[elementnum3])/(spectra.line.table[elementden1] * spectra.line.table[elementden2] + spectra.line.table[elementden3])
+        ######Multiplication Third Variable
+    } else if(transform1=="+" && elementnum2!="None" && transform2=="*" && elementnum3!="None" && elementden1!="None" && transform3=="*" && elementden2!="None" && transform4=="+" && elementden3!="None"){
+        (spectra.line.table[elementnum1] + spectra.line.table[elementnum2] * spectra.line.table[elementnum3])/(spectra.line.table[elementden1] * spectra.line.table[elementden2] + spectra.line.table[elementden3])
+    } else if(transform1=="-" && elementnum2!="None" && transform2=="*" && elementnum3!="None" && elementden1!="None" && transform3=="*" && elementden2!="None" && transform4=="+" && elementden3!="None"){
+        (spectra.line.table[elementnum1] - spectra.line.table[elementnum2] * spectra.line.table[elementnum3])/(spectra.line.table[elementden1] * spectra.line.table[elementden2] + spectra.line.table[elementden3])
+    } else if(transform1=="*" && elementnum2!="None" && transform2=="*" && elementnum3!="None" && elementden1!="None" && transform3=="*" && elementden2!="None" && transform4=="+" && elementden3!="None"){
+        (spectra.line.table[elementnum1] * spectra.line.table[elementnum2] * spectra.line.table[elementnum3])/(spectra.line.table[elementden1] * spectra.line.table[elementden2] + spectra.line.table[elementden3])
+    } else if(transform1=="/" && elementnum2!="None" && transform2=="*" && elementnum3!="None" && elementden1!="None" && transform3=="*" && elementden2!="None" && transform4=="+" && elementden3!="None"){
+        (spectra.line.table[elementnum1] / spectra.line.table[elementnum2] * spectra.line.table[elementnum3])/(spectra.line.table[elementden1] * spectra.line.table[elementden2] + spectra.line.table[elementden3])
+        ######Division Third Variable
+    } else if(transform1=="+" && elementnum2!="None" && transform2=="/" && elementnum3!="None" && elementden1!="None" && transform3=="*" && elementden2!="None" && transform4=="+" && elementden3!="None"){
+        (spectra.line.table[elementnum1] + spectra.line.table[elementnum2] / spectra.line.table[elementnum3])/(spectra.line.table[elementden1] * spectra.line.table[elementden2] + spectra.line.table[elementden3])
+    } else if(transform1=="-" && elementnum2!="None" && transform2=="/" && elementnum3!="None" && elementden1!="None" && transform3=="*" && elementden2!="None" && transform4=="+" && elementden3!="None"){
+        (spectra.line.table[elementnum1] - spectra.line.table[elementnum2] / spectra.line.table[elementnum3])/(spectra.line.table[elementden1] * spectra.line.table[elementden2] + spectra.line.table[elementden3])
+    } else if(transform1=="*" && elementnum2!="None" && transform2=="/" && elementnum3!="None" && elementden1!="None" && transform3=="*" && elementden2!="None" && transform4=="+" && elementden3!="None"){
+        (spectra.line.table[elementnum1] * spectra.line.table[elementnum2] / spectra.line.table[elementnum3])/(spectra.line.table[elementden1] * spectra.line.table[elementden2] + spectra.line.table[elementden3])
+    } else if(transform1=="/" && elementnum2!="None" && transform2=="/" && elementnum3!="None" && elementden1!="None" && transform3=="*" && elementden2!="None" && transform4=="+" && elementden3!="None"){
+        (spectra.line.table[elementnum1] / spectra.line.table[elementnum2] / spectra.line.table[elementnum3])/(spectra.line.table[elementden1] * spectra.line.table[elementden2] + spectra.line.table[elementden3])
+        ####################################
+        #####Division Two Denominators######
+        ####################################
+    } else if (transform1=="None" && elementden1!="None" && transform3=="/" && elementden2!="None" && transform4=="+" && elementden3!="None"){
+        spectra.line.table[elementnum1]/(spectra.line.table[elementden1] / spectra.line.table[elementden2] + spectra.line.table[elementden3])
+    } else if(transform1=="+" && elementnum2!="None" && elementden1!="None" && transform3=="/" && elementden2!="None" && transform4=="+" && elementden3!="None"){
+        (spectra.line.table[elementnum1] + spectra.line.table[elementden2] + spectra.line.table[elementden3])/(spectra.line.table[elementden1] / spectra.line.table[elementden2] + spectra.line.table[elementden3])
+    } else if(transform1=="-" && elementnum2!="None" && elementden1!="None" && transform3=="/" && elementden2!="None" && transform4=="+" && elementden3!="None"){
+        (spectra.line.table[elementnum1] - spectra.line.table[elementden2] + spectra.line.table[elementden3])/(spectra.line.table[elementden1] / spectra.line.table[elementden2] + spectra.line.table[elementden3])
+    } else if(transform1=="*" && elementnum2!="None" && elementden1!="None" && transform3=="/" && elementden2!="None" && transform4=="+" && elementden3!="None"){
+        (spectra.line.table[elementnum1] * spectra.line.table[elementden2] + spectra.line.table[elementden3])/(spectra.line.table[elementden1] / spectra.line.table[elementden2] + spectra.line.table[elementden3])
+    } else if(transform1=="/" && elementnum2!="None" && elementden1!="None" && transform3=="/" && elementden2!="None" && transform4=="+" && elementden3!="None"){
+        (spectra.line.table[elementnum1] / spectra.line.table[elementden2] + spectra.line.table[elementden3])/(spectra.line.table[elementden1] / spectra.line.table[elementden2] + spectra.line.table[elementden3])
+        ######Addition Third Variable
+    } else if(transform1=="+" && elementnum2!="None" && transform2=="+" && elementnum3!="None" && elementden1!="None" && transform3=="/" && elementden2!="None" && transform4=="+" && elementden3!="None"){
+        (spectra.line.table[elementnum1] + spectra.line.table[elementnum2] + spectra.line.table[elementnum3])/(spectra.line.table[elementden1] / spectra.line.table[elementden2] + spectra.line.table[elementden3])
+    } else if(transform1=="-" && elementnum2!="None" && transform2=="+" && elementnum3!="None" && elementden1!="None" && transform3=="/" && elementden2!="None" && transform4=="+" && elementden3!="None"){
+        (spectra.line.table[elementnum1] - spectra.line.table[elementnum2] + spectra.line.table[elementnum3])/(spectra.line.table[elementden1] / spectra.line.table[elementden2] + spectra.line.table[elementden3])
+    } else if(transform1=="*" && elementnum2!="None" && transform2=="+" && elementnum3!="None" && elementden1!="None" && transform3=="/" && elementden2!="None" && transform4=="+" && elementden3!="None"){
+        (spectra.line.table[elementnum1] * spectra.line.table[elementnum2] + spectra.line.table[elementnum3])/(spectra.line.table[elementden1] / spectra.line.table[elementden2] + spectra.line.table[elementden3])
+    } else if(transform1=="/" && elementnum2!="None" && transform2=="+" && elementnum3!="None" && elementden1!="None" && transform3=="/" && elementden2!="None" && transform4=="+" && elementden3!="None"){
+        (spectra.line.table[elementnum1] / spectra.line.table[elementnum2] + spectra.line.table[elementnum3])/(spectra.line.table[elementden1] / spectra.line.table[elementden2] + spectra.line.table[elementden3])
+        ######Subtraction Third Variable
+    } else if(transform1=="+" && elementnum2!="None" && transform2=="-" && elementnum3!="None" && elementden1!="None" && transform3=="/" && elementden2!="None" && transform4=="+" && elementden3!="None"){
+        (spectra.line.table[elementnum1] + spectra.line.table[elementnum2] - spectra.line.table[elementnum3])/(spectra.line.table[elementden1] / spectra.line.table[elementden2] + spectra.line.table[elementden3])
+    } else if(transform1=="-" && elementnum2!="None" && transform2=="-" && elementnum3!="None" && elementden1!="None" && transform3=="/" && elementden2!="None" && transform4=="+" && elementden3!="None"){
+        (spectra.line.table[elementnum1] - spectra.line.table[elementnum2] - spectra.line.table[elementnum3])/(spectra.line.table[elementden1] / spectra.line.table[elementden2] + spectra.line.table[elementden3])
+    } else if(transform1=="*" && elementnum2!="None" && transform2=="-" && elementnum3!="None" && elementden1!="None" && transform3=="/" && elementden2!="None" && transform4=="+" && elementden3!="None"){
+        (spectra.line.table[elementnum1] * spectra.line.table[elementnum2] - spectra.line.table[elementnum3])/(spectra.line.table[elementden1] / spectra.line.table[elementden2] + spectra.line.table[elementden3])
+    } else if(transform1=="/" && elementnum2!="None" && transform2=="-" && elementnum3!="None" && elementden1!="None" && transform3=="/" && elementden2!="None" && transform4=="+" && elementden3!="None"){
+        (spectra.line.table[elementnum1] / spectra.line.table[elementnum2] - spectra.line.table[elementnum3])/(spectra.line.table[elementden1] / spectra.line.table[elementden2] + spectra.line.table[elementden3])
+        ######Multiplication Third Variable
+    } else if(transform1=="+" && elementnum2!="None" && transform2=="*" && elementnum3!="None" && elementden1!="None" && transform3=="/" && elementden2!="None" && transform4=="+" && elementden3!="None"){
+        (spectra.line.table[elementnum1] + spectra.line.table[elementnum2] * spectra.line.table[elementnum3])/(spectra.line.table[elementden1] / spectra.line.table[elementden2] + spectra.line.table[elementden3])
+    } else if(transform1=="-" && elementnum2!="None" && transform2=="*" && elementnum3!="None" && elementden1!="None" && transform3=="/" && elementden2!="None" && transform4=="+" && elementden3!="None"){
+        (spectra.line.table[elementnum1] - spectra.line.table[elementnum2] * spectra.line.table[elementnum3])/(spectra.line.table[elementden1] / spectra.line.table[elementden2] + spectra.line.table[elementden3])
+    } else if(transform1=="*" && elementnum2!="None" && transform2=="*" && elementnum3!="None" && elementden1!="None" && transform3=="/" && elementden2!="None" && transform4=="+" && elementden3!="None"){
+        (spectra.line.table[elementnum1] * spectra.line.table[elementnum2] * spectra.line.table[elementnum3])/(spectra.line.table[elementden1] / spectra.line.table[elementden2] + spectra.line.table[elementden3])
+    } else if(transform1=="/" && elementnum2!="None" && transform2=="*" && elementnum3!="None" && elementden1!="None" && transform3=="/" && elementden2!="None" && transform4=="+" && elementden3!="None"){
+        (spectra.line.table[elementnum1] / spectra.line.table[elementnum2] * spectra.line.table[elementnum3])/(spectra.line.table[elementden1] / spectra.line.table[elementden2] + spectra.line.table[elementden3])
+        ######Division Third Variable
+    } else if(transform1=="+" && elementnum2!="None" && transform2=="/" && elementnum3!="None" && elementden1!="None" && transform3=="/" && elementden2!="None" && transform4=="+" && elementden3!="None"){
+        (spectra.line.table[elementnum1] + spectra.line.table[elementnum2] / spectra.line.table[elementnum3])/(spectra.line.table[elementden1] / spectra.line.table[elementden2] + spectra.line.table[elementden3])
+    } else if(transform1=="-" && elementnum2!="None" && transform2=="/" && elementnum3!="None" && elementden1!="None" && transform3=="/" && elementden2!="None" && transform4=="+" && elementden3!="None"){
+        (spectra.line.table[elementnum1] - spectra.line.table[elementnum2] / spectra.line.table[elementnum3])/(spectra.line.table[elementden1] / spectra.line.table[elementden2] + spectra.line.table[elementden3])
+    } else if(transform1=="*" && elementnum2!="None" && transform2=="/" && elementnum3!="None" && elementden1!="None" && transform3=="/" && elementden2!="None" && transform4=="+" && elementden3!="None"){
+        (spectra.line.table[elementnum1] * spectra.line.table[elementnum2] / spectra.line.table[elementnum3])/(spectra.line.table[elementden1] / spectra.line.table[elementden2] + spectra.line.table[elementden3])
+    } else if(transform1=="/" && elementnum2!="None" && transform2=="/" && elementnum3!="None" && elementden1!="None" && transform3=="/" && elementden2!="None" && transform4=="+" && elementden3!="None"){
+        (spectra.line.table[elementnum1] / spectra.line.table[elementnum2] / spectra.line.table[elementnum3])/(spectra.line.table[elementden1] / spectra.line.table[elementden2] + spectra.line.table[elementden3])
+        #######################################
+        #######################################
+        ########################################
+        ####Subtraction Third Denominator#########
+        #######################################
+        #######################################
+        ####################################
+        #####Addition Two Denominators######
+        ####################################
+    } else if (transform1=="None" && elementden1!="None" && transform3=="+" && elementden2!="None" && transform4=="-" && elementden3!="None"){
+        spectra.line.table[elementnum1]/(spectra.line.table[elementden1] + spectra.line.table[elementden2] - spectra.line.table[elementden3])
+    } else if(transform1=="+" && elementnum2!="None" && elementden1!="None" && transform3=="+" && elementden2!="None" && transform4=="-" && elementden3!="None"){
+        (spectra.line.table[elementnum1] + spectra.line.table[elementden2] - spectra.line.table[elementden3])/(spectra.line.table[elementden1] + spectra.line.table[elementden2] - spectra.line.table[elementden3])
+    } else if(transform1=="-" && elementnum2!="None" && elementden1!="None" && transform3=="+" && elementden2!="None" && transform4=="-" && elementden3!="None"){
+        (spectra.line.table[elementnum1] - spectra.line.table[elementden2] - spectra.line.table[elementden3])/(spectra.line.table[elementden1] + spectra.line.table[elementden2] - spectra.line.table[elementden3])
+    } else if(transform1=="*" && elementnum2!="None" && elementden1!="None" && transform3=="+" && elementden2!="None" && transform4=="-" && elementden3!="None"){
+        (spectra.line.table[elementnum1] * spectra.line.table[elementden2] - spectra.line.table[elementden3])/(spectra.line.table[elementden1] + spectra.line.table[elementden2] - spectra.line.table[elementden3])
+    } else if(transform1=="/" && elementnum2!="None" && elementden1!="None" && transform3=="+" && elementden2!="None" && transform4=="-" && elementden3!="None"){
+        (spectra.line.table[elementnum1] / spectra.line.table[elementden2] - spectra.line.table[elementden3])/(spectra.line.table[elementden1] + spectra.line.table[elementden2] - spectra.line.table[elementden3])
+        ######Addition Third Variable
+    } else if(transform1=="+" && elementnum2!="None" && transform2=="+" && elementnum3!="None" && elementden1!="None" && transform3=="+" && elementden2!="None" && transform4=="-" && elementden3!="None"){
+        (spectra.line.table[elementnum1] + spectra.line.table[elementnum2] + spectra.line.table[elementnum3])/(spectra.line.table[elementden1] + spectra.line.table[elementden2] - spectra.line.table[elementden3])
+    } else if(transform1=="-" && elementnum2!="None" && transform2=="+" && elementnum3!="None" && elementden1!="None" && transform3=="+" && elementden2!="None" && transform4=="-" && elementden3!="None"){
+        (spectra.line.table[elementnum1] - spectra.line.table[elementnum2] + spectra.line.table[elementnum3])/(spectra.line.table[elementden1] + spectra.line.table[elementden2] - spectra.line.table[elementden3])
+    } else if(transform1=="*" && elementnum2!="None" && transform2=="+" && elementnum3!="None" && elementden1!="None" && transform3=="+" && elementden2!="None" && transform4=="-" && elementden3!="None"){
+        (spectra.line.table[elementnum1] * spectra.line.table[elementnum2] + spectra.line.table[elementnum3])/(spectra.line.table[elementden1] + spectra.line.table[elementden2] - spectra.line.table[elementden3])
+    } else if(transform1=="/" && elementnum2!="None" && transform2=="+" && elementnum3!="None" && elementden1!="None" && transform3=="+" && elementden2!="None" && transform4=="-" && elementden3!="None"){
+        (spectra.line.table[elementnum1] / spectra.line.table[elementnum2] + spectra.line.table[elementnum3])/(spectra.line.table[elementden1] + spectra.line.table[elementden2] - spectra.line.table[elementden3])
+        ######Subtraction Third Variable
+    } else if(transform1=="+" && elementnum2!="None" && transform2=="-" && elementnum3!="None" && elementden1!="None" && transform3=="+" && elementden2!="None" && transform4=="-" && elementden3!="None"){
+        (spectra.line.table[elementnum1] + spectra.line.table[elementnum2] - spectra.line.table[elementnum3])/(spectra.line.table[elementden1] + spectra.line.table[elementden2] - spectra.line.table[elementden3])
+    } else if(transform1=="-" && elementnum2!="None" && transform2=="-" && elementnum3!="None" && elementden1!="None" && transform3=="+" && elementden2!="None" && transform4=="-" && elementden3!="None"){
+        (spectra.line.table[elementnum1] - spectra.line.table[elementnum2] - spectra.line.table[elementnum3])/(spectra.line.table[elementden1] + spectra.line.table[elementden2] - spectra.line.table[elementden3])
+    } else if(transform1=="*" && elementnum2!="None" && transform2=="-" && elementnum3!="None" && elementden1!="None" && transform3=="+" && elementden2!="None" && transform4=="-" && elementden3!="None"){
+        (spectra.line.table[elementnum1] * spectra.line.table[elementnum2] - spectra.line.table[elementnum3])/(spectra.line.table[elementden1] + spectra.line.table[elementden2] - spectra.line.table[elementden3])
+    } else if(transform1=="/" && elementnum2!="None" && transform2=="-" && elementnum3!="None" && elementden1!="None" && transform3=="+" && elementden2!="None" && transform4=="-" && elementden3!="None"){
+        (spectra.line.table[elementnum1] / spectra.line.table[elementnum2] - spectra.line.table[elementnum3])/(spectra.line.table[elementden1] + spectra.line.table[elementden2] - spectra.line.table[elementden3])
+        ######Multiplication Third Variable
+    } else if(transform1=="+" && elementnum2!="None" && transform2=="*" && elementnum3!="None" && elementden1!="None" && transform3=="+" && elementden2!="None" && transform4=="-" && elementden3!="None"){
+        (spectra.line.table[elementnum1] + spectra.line.table[elementnum2] * spectra.line.table[elementnum3])/(spectra.line.table[elementden1] + spectra.line.table[elementden2] - spectra.line.table[elementden3])
+    } else if(transform1=="-" && elementnum2!="None" && transform2=="*" && elementnum3!="None" && elementden1!="None" && transform3=="+" && elementden2!="None" && transform4=="-" && elementden3!="None"){
+        (spectra.line.table[elementnum1] - spectra.line.table[elementnum2] * spectra.line.table[elementnum3])/(spectra.line.table[elementden1] + spectra.line.table[elementden2] - spectra.line.table[elementden3])
+    } else if(transform1=="*" && elementnum2!="None" && transform2=="*" && elementnum3!="None" && elementden1!="None" && transform3=="+" && elementden2!="None" && transform4=="-" && elementden3!="None"){
+        (spectra.line.table[elementnum1] * spectra.line.table[elementnum2] * spectra.line.table[elementnum3])/(spectra.line.table[elementden1] + spectra.line.table[elementden2] - spectra.line.table[elementden3])
+    } else if(transform1=="/" && elementnum2!="None" && transform2=="*" && elementnum3!="None" && elementden1!="None" && transform3=="+" && elementden2!="None" && transform4=="-" && elementden3!="None"){
+        (spectra.line.table[elementnum1] / spectra.line.table[elementnum2] * spectra.line.table[elementnum3])/(spectra.line.table[elementden1] + spectra.line.table[elementden2] - spectra.line.table[elementden3])
+        ######Division Third Variable
+    } else if(transform1=="+" && elementnum2!="None" && transform2=="/" && elementnum3!="None" && elementden1!="None" && transform3=="+" && elementden2!="None" && transform4=="-" && elementden3!="None"){
+        (spectra.line.table[elementnum1] + spectra.line.table[elementnum2] / spectra.line.table[elementnum3])/(spectra.line.table[elementden1] + spectra.line.table[elementden2] - spectra.line.table[elementden3])
+    } else if(transform1=="-" && elementnum2!="None" && transform2=="/" && elementnum3!="None" && elementden1!="None" && transform3=="+" && elementden2!="None" && transform4=="-" && elementden3!="None"){
+        (spectra.line.table[elementnum1] - spectra.line.table[elementnum2] / spectra.line.table[elementnum3])/(spectra.line.table[elementden1] + spectra.line.table[elementden2] - spectra.line.table[elementden3])
+    } else if(transform1=="*" && elementnum2!="None" && transform2=="/" && elementnum3!="None" && elementden1!="None" && transform3=="+" && elementden2!="None" && transform4=="-" && elementden3!="None"){
+        (spectra.line.table[elementnum1] * spectra.line.table[elementnum2] / spectra.line.table[elementnum3])/(spectra.line.table[elementden1] + spectra.line.table[elementden2] - spectra.line.table[elementden3])
+    } else if(transform1=="/" && elementnum2!="None" && transform2=="/" && elementnum3!="None" && elementden1!="None" && transform3=="+" && elementden2!="None" && transform4=="-" && elementden3!="None"){
+        (spectra.line.table[elementnum1] / spectra.line.table[elementnum2] / spectra.line.table[elementnum3])/(spectra.line.table[elementden1] + spectra.line.table[elementden2] - spectra.line.table[elementden3])
+        ####################################
+        #####Subtraction Two Denominators######
+        ####################################
+    } else if (transform1=="None" && elementden1!="None" && transform3=="-" && elementden2!="None" && transform4=="-" && elementden3!="None"){
+        spectra.line.table[elementnum1]/(spectra.line.table[elementden1] - spectra.line.table[elementden2] - spectra.line.table[elementden3])
+    } else if(transform1=="+" && elementnum2!="None" && elementden1!="None" && transform3=="-" && elementden2!="None" && transform4=="-" && elementden3!="None"){
+        (spectra.line.table[elementnum1] + spectra.line.table[elementden2] - spectra.line.table[elementden3])/(spectra.line.table[elementden1] - spectra.line.table[elementden2] - spectra.line.table[elementden3])
+    } else if(transform1=="-" && elementnum2!="None" && elementden1!="None" && transform3=="-" && elementden2!="None" && transform4=="-" && elementden3!="None"){
+        (spectra.line.table[elementnum1] - spectra.line.table[elementden2] - spectra.line.table[elementden3])/(spectra.line.table[elementden1] - spectra.line.table[elementden2] - spectra.line.table[elementden3])
+    } else if(transform1=="*" && elementnum2!="None" && elementden1!="None" && transform3=="-" && elementden2!="None" && transform4=="-" && elementden3!="None"){
+        (spectra.line.table[elementnum1] * spectra.line.table[elementden2] - spectra.line.table[elementden3])/(spectra.line.table[elementden1] - spectra.line.table[elementden2] - spectra.line.table[elementden3])
+    } else if(transform1=="/" && elementnum2!="None" && elementden1!="None" && transform3=="-" && elementden2!="None" && transform4=="-" && elementden3!="None"){
+        (spectra.line.table[elementnum1] / spectra.line.table[elementden2] - spectra.line.table[elementden3])/(spectra.line.table[elementden1] - spectra.line.table[elementden2] - spectra.line.table[elementden3])
+        ######Addition Third Variable
+    } else if(transform1=="+" && elementnum2!="None" && transform2=="+" && elementnum3!="None" && elementden1!="None" && transform3=="-" && elementden2!="None" && transform4=="-" && elementden3!="None"){
+        (spectra.line.table[elementnum1] + spectra.line.table[elementnum2] + spectra.line.table[elementnum3])/(spectra.line.table[elementden1] - spectra.line.table[elementden2] - spectra.line.table[elementden3])
+    } else if(transform1=="-" && elementnum2!="None" && transform2=="+" && elementnum3!="None" && elementden1!="None" && transform3=="-" && elementden2!="None" && transform4=="-" && elementden3!="None"){
+        (spectra.line.table[elementnum1] - spectra.line.table[elementnum2] + spectra.line.table[elementnum3])/(spectra.line.table[elementden1] - spectra.line.table[elementden2] - spectra.line.table[elementden3])
+    } else if(transform1=="*" && elementnum2!="None" && transform2=="+" && elementnum3!="None" && elementden1!="None" && transform3=="-" && elementden2!="None" && transform4=="-" && elementden3!="None"){
+        (spectra.line.table[elementnum1] * spectra.line.table[elementnum2] + spectra.line.table[elementnum3])/(spectra.line.table[elementden1] - spectra.line.table[elementden2] - spectra.line.table[elementden3])
+    } else if(transform1=="/" && elementnum2!="None" && transform2=="+" && elementnum3!="None" && elementden1!="None" && transform3=="-" && elementden2!="None" && transform4=="-" && elementden3!="None"){
+        (spectra.line.table[elementnum1] / spectra.line.table[elementnum2] + spectra.line.table[elementnum3])/(spectra.line.table[elementden1] - spectra.line.table[elementden2] - spectra.line.table[elementden3])
+        ######Subtraction Third Variable
+    } else if(transform1=="+" && elementnum2!="None" && transform2=="-" && elementnum3!="None" && elementden1!="None" && transform3=="-" && elementden2!="None" && transform4=="-" && elementden3!="None"){
+        (spectra.line.table[elementnum1] + spectra.line.table[elementnum2] - spectra.line.table[elementnum3])/(spectra.line.table[elementden1] - spectra.line.table[elementden2] - spectra.line.table[elementden3])
+    } else if(transform1=="-" && elementnum2!="None" && transform2=="-" && elementnum3!="None" && elementden1!="None" && transform3=="-" && elementden2!="None" && transform4=="-" && elementden3!="None"){
+        (spectra.line.table[elementnum1] - spectra.line.table[elementnum2] - spectra.line.table[elementnum3])/(spectra.line.table[elementden1] - spectra.line.table[elementden2] - spectra.line.table[elementden3])
+    } else if(transform1=="*" && elementnum2!="None" && transform2=="-" && elementnum3!="None" && elementden1!="None" && transform3=="-" && elementden2!="None" && transform4=="-" && elementden3!="None"){
+        (spectra.line.table[elementnum1] * spectra.line.table[elementnum2] - spectra.line.table[elementnum3])/(spectra.line.table[elementden1] - spectra.line.table[elementden2] - spectra.line.table[elementden3])
+    } else if(transform1=="/" && elementnum2!="None" && transform2=="-" && elementnum3!="None" && elementden1!="None" && transform3=="-" && elementden2!="None" && transform4=="-" && elementden3!="None"){
+        (spectra.line.table[elementnum1] / spectra.line.table[elementnum2] - spectra.line.table[elementnum3])/(spectra.line.table[elementden1] - spectra.line.table[elementden2] - spectra.line.table[elementden3])
+        ######Multiplication Third Variable
+    } else if(transform1=="+" && elementnum2!="None" && transform2=="*" && elementnum3!="None" && elementden1!="None" && transform3=="-" && elementden2!="None" && transform4=="-" && elementden3!="None"){
+        (spectra.line.table[elementnum1] + spectra.line.table[elementnum2] * spectra.line.table[elementnum3])/(spectra.line.table[elementden1] - spectra.line.table[elementden2] - spectra.line.table[elementden3])
+    } else if(transform1=="-" && elementnum2!="None" && transform2=="*" && elementnum3!="None" && elementden1!="None" && transform3=="-" && elementden2!="None" && transform4=="-" && elementden3!="None"){
+        (spectra.line.table[elementnum1] - spectra.line.table[elementnum2] * spectra.line.table[elementnum3])/(spectra.line.table[elementden1] - spectra.line.table[elementden2] - spectra.line.table[elementden3])
+    } else if(transform1=="*" && elementnum2!="None" && transform2=="*" && elementnum3!="None" && elementden1!="None" && transform3=="-" && elementden2!="None" && transform4=="-" && elementden3!="None"){
+        (spectra.line.table[elementnum1] * spectra.line.table[elementnum2] * spectra.line.table[elementnum3])/(spectra.line.table[elementden1] - spectra.line.table[elementden2] - spectra.line.table[elementden3])
+    } else if(transform1=="/" && elementnum2!="None" && transform2=="*" && elementnum3!="None" && elementden1!="None" && transform3=="-" && elementden2!="None" && transform4=="-" && elementden3!="None"){
+        (spectra.line.table[elementnum1] / spectra.line.table[elementnum2] * spectra.line.table[elementnum3])/(spectra.line.table[elementden1] - spectra.line.table[elementden2] - spectra.line.table[elementden3])
+        ######Division Third Variable
+    } else if(transform1=="+" && elementnum2!="None" && transform2=="/" && elementnum3!="None" && elementden1!="None" && transform3=="-" && elementden2!="None" && transform4=="-" && elementden3!="None"){
+        (spectra.line.table[elementnum1] + spectra.line.table[elementnum2] / spectra.line.table[elementnum3])/(spectra.line.table[elementden1] - spectra.line.table[elementden2] - spectra.line.table[elementden3])
+    } else if(transform1=="-" && elementnum2!="None" && transform2=="/" && elementnum3!="None" && elementden1!="None" && transform3=="-" && elementden2!="None" && transform4=="-" && elementden3!="None"){
+        (spectra.line.table[elementnum1] - spectra.line.table[elementnum2] / spectra.line.table[elementnum3])/(spectra.line.table[elementden1] - spectra.line.table[elementden2] - spectra.line.table[elementden3])
+    } else if(transform1=="*" && elementnum2!="None" && transform2=="/" && elementnum3!="None" && elementden1!="None" && transform3=="-" && elementden2!="None" && transform4=="-" && elementden3!="None"){
+        (spectra.line.table[elementnum1] * spectra.line.table[elementnum2] / spectra.line.table[elementnum3])/(spectra.line.table[elementden1] - spectra.line.table[elementden2] - spectra.line.table[elementden3])
+    } else if(transform1=="/" && elementnum2!="None" && transform2=="/" && elementnum3!="None" && elementden1!="None" && transform3=="-" && elementden2!="None" && transform4=="-" && elementden3!="None"){
+        (spectra.line.table[elementnum1] / spectra.line.table[elementnum2] / spectra.line.table[elementnum3])/(spectra.line.table[elementden1] - spectra.line.table[elementden2] - spectra.line.table[elementden3])
+        ####################################
+        #####Multiplication Two Denominators######
+        ####################################
+    } else if (transform1=="None" && elementden1!="None" && transform3=="*" && elementden2!="None" && transform4=="-" && elementden3!="None"){
+        spectra.line.table[elementnum1]/(spectra.line.table[elementden1] * spectra.line.table[elementden2] - spectra.line.table[elementden3])
+    } else if(transform1=="+" && elementnum2!="None" && elementden1!="None" && transform3=="*" && elementden2!="None" && transform4=="-" && elementden3!="None"){
+        (spectra.line.table[elementnum1] + spectra.line.table[elementden2] - spectra.line.table[elementden3])/(spectra.line.table[elementden1] * spectra.line.table[elementden2] - spectra.line.table[elementden3])
+    } else if(transform1=="-" && elementnum2!="None" && elementden1!="None" && transform3=="*" && elementden2!="None" && transform4=="-" && elementden3!="None"){
+        (spectra.line.table[elementnum1] - spectra.line.table[elementden2] - spectra.line.table[elementden3])/(spectra.line.table[elementden1] * spectra.line.table[elementden2] - spectra.line.table[elementden3])
+    } else if(transform1=="*" && elementnum2!="None" && elementden1!="None" && transform3=="*" && elementden2!="None" && transform4=="-" && elementden3!="None"){
+        (spectra.line.table[elementnum1] * spectra.line.table[elementden2] - spectra.line.table[elementden3])/(spectra.line.table[elementden1] * spectra.line.table[elementden2] - spectra.line.table[elementden3])
+    } else if(transform1=="/" && elementnum2!="None" && elementden1!="None" && transform3=="*" && elementden2!="None" && transform4=="-" && elementden3!="None"){
+        (spectra.line.table[elementnum1] / spectra.line.table[elementden2] - spectra.line.table[elementden3])/(spectra.line.table[elementden1] * spectra.line.table[elementden2] - spectra.line.table[elementden3])
+        ######Addition Third Variable
+    } else if(transform1=="+" && elementnum2!="None" && transform2=="+" && elementnum3!="None" && elementden1!="None" && transform3=="*" && elementden2!="None" && transform4=="-" && elementden3!="None"){
+        (spectra.line.table[elementnum1] + spectra.line.table[elementnum2] + spectra.line.table[elementnum3])/(spectra.line.table[elementden1] * spectra.line.table[elementden2] - spectra.line.table[elementden3])
+    } else if(transform1=="-" && elementnum2!="None" && transform2=="+" && elementnum3!="None" && elementden1!="None" && transform3=="*" && elementden2!="None" && transform4=="-" && elementden3!="None"){
+        (spectra.line.table[elementnum1] - spectra.line.table[elementnum2] + spectra.line.table[elementnum3])/(spectra.line.table[elementden1] * spectra.line.table[elementden2] - spectra.line.table[elementden3])
+    } else if(transform1=="*" && elementnum2!="None" && transform2=="+" && elementnum3!="None" && elementden1!="None" && transform3=="*" && elementden2!="None" && transform4=="-" && elementden3!="None"){
+        (spectra.line.table[elementnum1] * spectra.line.table[elementnum2] + spectra.line.table[elementnum3])/(spectra.line.table[elementden1] * spectra.line.table[elementden2] - spectra.line.table[elementden3])
+    } else if(transform1=="/" && elementnum2!="None" && transform2=="+" && elementnum3!="None" && elementden1!="None" && transform3=="*" && elementden2!="None" && transform4=="-" && elementden3!="None"){
+        (spectra.line.table[elementnum1] / spectra.line.table[elementnum2] + spectra.line.table[elementnum3])/(spectra.line.table[elementden1] * spectra.line.table[elementden2] - spectra.line.table[elementden3])
+        ######Subtraction Third Variable
+    } else if(transform1=="+" && elementnum2!="None" && transform2=="-" && elementnum3!="None" && elementden1!="None" && transform3=="*" && elementden2!="None" && transform4=="-" && elementden3!="None"){
+        (spectra.line.table[elementnum1] + spectra.line.table[elementnum2] - spectra.line.table[elementnum3])/(spectra.line.table[elementden1] * spectra.line.table[elementden2] - spectra.line.table[elementden3])
+    } else if(transform1=="-" && elementnum2!="None" && transform2=="-" && elementnum3!="None" && elementden1!="None" && transform3=="*" && elementden2!="None" && transform4=="-" && elementden3!="None"){
+        (spectra.line.table[elementnum1] - spectra.line.table[elementnum2] - spectra.line.table[elementnum3])/(spectra.line.table[elementden1] * spectra.line.table[elementden2] - spectra.line.table[elementden3])
+    } else if(transform1=="*" && elementnum2!="None" && transform2=="-" && elementnum3!="None" && elementden1!="None" && transform3=="*" && elementden2!="None" && transform4=="-" && elementden3!="None"){
+        (spectra.line.table[elementnum1] * spectra.line.table[elementnum2] - spectra.line.table[elementnum3])/(spectra.line.table[elementden1] * spectra.line.table[elementden2] - spectra.line.table[elementden3])
+    } else if(transform1=="/" && elementnum2!="None" && transform2=="-" && elementnum3!="None" && elementden1!="None" && transform3=="*" && elementden2!="None" && transform4=="-" && elementden3!="None"){
+        (spectra.line.table[elementnum1] / spectra.line.table[elementnum2] - spectra.line.table[elementnum3])/(spectra.line.table[elementden1] * spectra.line.table[elementden2] - spectra.line.table[elementden3])
+        ######Multiplication Third Variable
+    } else if(transform1=="+" && elementnum2!="None" && transform2=="*" && elementnum3!="None" && elementden1!="None" && transform3=="*" && elementden2!="None" && transform4=="-" && elementden3!="None"){
+        (spectra.line.table[elementnum1] + spectra.line.table[elementnum2] * spectra.line.table[elementnum3])/(spectra.line.table[elementden1] * spectra.line.table[elementden2] - spectra.line.table[elementden3])
+    } else if(transform1=="-" && elementnum2!="None" && transform2=="*" && elementnum3!="None" && elementden1!="None" && transform3=="*" && elementden2!="None" && transform4=="-" && elementden3!="None"){
+        (spectra.line.table[elementnum1] - spectra.line.table[elementnum2] * spectra.line.table[elementnum3])/(spectra.line.table[elementden1] * spectra.line.table[elementden2] - spectra.line.table[elementden3])
+    } else if(transform1=="*" && elementnum2!="None" && transform2=="*" && elementnum3!="None" && elementden1!="None" && transform3=="*" && elementden2!="None" && transform4=="-" && elementden3!="None"){
+        (spectra.line.table[elementnum1] * spectra.line.table[elementnum2] * spectra.line.table[elementnum3])/(spectra.line.table[elementden1] * spectra.line.table[elementden2] - spectra.line.table[elementden3])
+    } else if(transform1=="/" && elementnum2!="None" && transform2=="*" && elementnum3!="None" && elementden1!="None" && transform3=="*" && elementden2!="None" && transform4=="-" && elementden3!="None"){
+        (spectra.line.table[elementnum1] / spectra.line.table[elementnum2] * spectra.line.table[elementnum3])/(spectra.line.table[elementden1] * spectra.line.table[elementden2] - spectra.line.table[elementden3])
+        ######Division Third Variable
+    } else if(transform1=="+" && elementnum2!="None" && transform2=="/" && elementnum3!="None" && elementden1!="None" && transform3=="*" && elementden2!="None" && transform4=="-" && elementden3!="None"){
+        (spectra.line.table[elementnum1] + spectra.line.table[elementnum2] / spectra.line.table[elementnum3])/(spectra.line.table[elementden1] * spectra.line.table[elementden2] - spectra.line.table[elementden3])
+    } else if(transform1=="-" && elementnum2!="None" && transform2=="/" && elementnum3!="None" && elementden1!="None" && transform3=="*" && elementden2!="None" && transform4=="-" && elementden3!="None"){
+        (spectra.line.table[elementnum1] - spectra.line.table[elementnum2] / spectra.line.table[elementnum3])/(spectra.line.table[elementden1] * spectra.line.table[elementden2] - spectra.line.table[elementden3])
+    } else if(transform1=="*" && elementnum2!="None" && transform2=="/" && elementnum3!="None" && elementden1!="None" && transform3=="*" && elementden2!="None" && transform4=="-" && elementden3!="None"){
+        (spectra.line.table[elementnum1] * spectra.line.table[elementnum2] / spectra.line.table[elementnum3])/(spectra.line.table[elementden1] * spectra.line.table[elementden2] - spectra.line.table[elementden3])
+    } else if(transform1=="/" && elementnum2!="None" && transform2=="/" && elementnum3!="None" && elementden1!="None" && transform3=="*" && elementden2!="None" && transform4=="-" && elementden3!="None"){
+        (spectra.line.table[elementnum1] / spectra.line.table[elementnum2] / spectra.line.table[elementnum3])/(spectra.line.table[elementden1] * spectra.line.table[elementden2] - spectra.line.table[elementden3])
+        ####################################
+        #####Division Two Denominators######
+        ####################################
+    } else if (transform1=="None" && elementden1!="None" && transform3=="/" && elementden2!="None" && transform4=="-" && elementden3!="None"){
+        spectra.line.table[elementnum1]/(spectra.line.table[elementden1] / spectra.line.table[elementden2] - spectra.line.table[elementden3])
+    } else if(transform1=="+" && elementnum2!="None" && elementden1!="None" && transform3=="/" && elementden2!="None" && transform4=="-" && elementden3!="None"){
+        (spectra.line.table[elementnum1] + spectra.line.table[elementden2] - spectra.line.table[elementden3])/(spectra.line.table[elementden1] / spectra.line.table[elementden2] - spectra.line.table[elementden3])
+    } else if(transform1=="-" && elementnum2!="None" && elementden1!="None" && transform3=="/" && elementden2!="None" && transform4=="-" && elementden3!="None"){
+        (spectra.line.table[elementnum1] - spectra.line.table[elementden2] - spectra.line.table[elementden3])/(spectra.line.table[elementden1] / spectra.line.table[elementden2] - spectra.line.table[elementden3])
+    } else if(transform1=="*" && elementnum2!="None" && elementden1!="None" && transform3=="/" && elementden2!="None" && transform4=="-" && elementden3!="None"){
+        (spectra.line.table[elementnum1] * spectra.line.table[elementden2] - spectra.line.table[elementden3])/(spectra.line.table[elementden1] / spectra.line.table[elementden2] - spectra.line.table[elementden3])
+    } else if(transform1=="/" && elementnum2!="None" && elementden1!="None" && transform3=="/" && elementden2!="None" && transform4=="-" && elementden3!="None"){
+        (spectra.line.table[elementnum1] / spectra.line.table[elementden2] - spectra.line.table[elementden3])/(spectra.line.table[elementden1] / spectra.line.table[elementden2] - spectra.line.table[elementden3])
+        ######Addition Third Variable
+    } else if(transform1=="+" && elementnum2!="None" && transform2=="+" && elementnum3!="None" && elementden1!="None" && transform3=="/" && elementden2!="None" && transform4=="-" && elementden3!="None"){
+        (spectra.line.table[elementnum1] + spectra.line.table[elementnum2] + spectra.line.table[elementnum3])/(spectra.line.table[elementden1] / spectra.line.table[elementden2] - spectra.line.table[elementden3])
+    } else if(transform1=="-" && elementnum2!="None" && transform2=="+" && elementnum3!="None" && elementden1!="None" && transform3=="/" && elementden2!="None" && transform4=="-" && elementden3!="None"){
+        (spectra.line.table[elementnum1] - spectra.line.table[elementnum2] + spectra.line.table[elementnum3])/(spectra.line.table[elementden1] / spectra.line.table[elementden2] - spectra.line.table[elementden3])
+    } else if(transform1=="*" && elementnum2!="None" && transform2=="+" && elementnum3!="None" && elementden1!="None" && transform3=="/" && elementden2!="None" && transform4=="-" && elementden3!="None"){
+        (spectra.line.table[elementnum1] * spectra.line.table[elementnum2] + spectra.line.table[elementnum3])/(spectra.line.table[elementden1] / spectra.line.table[elementden2] - spectra.line.table[elementden3])
+    } else if(transform1=="/" && elementnum2!="None" && transform2=="+" && elementnum3!="None" && elementden1!="None" && transform3=="/" && elementden2!="None" && transform4=="-" && elementden3!="None"){
+        (spectra.line.table[elementnum1] / spectra.line.table[elementnum2] + spectra.line.table[elementnum3])/(spectra.line.table[elementden1] / spectra.line.table[elementden2] - spectra.line.table[elementden3])
+        ######Subtraction Third Variable
+    } else if(transform1=="+" && elementnum2!="None" && transform2=="-" && elementnum3!="None" && elementden1!="None" && transform3=="/" && elementden2!="None" && transform4=="-" && elementden3!="None"){
+        (spectra.line.table[elementnum1] + spectra.line.table[elementnum2] - spectra.line.table[elementnum3])/(spectra.line.table[elementden1] / spectra.line.table[elementden2] - spectra.line.table[elementden3])
+    } else if(transform1=="-" && elementnum2!="None" && transform2=="-" && elementnum3!="None" && elementden1!="None" && transform3=="/" && elementden2!="None" && transform4=="-" && elementden3!="None"){
+        (spectra.line.table[elementnum1] - spectra.line.table[elementnum2] - spectra.line.table[elementnum3])/(spectra.line.table[elementden1] / spectra.line.table[elementden2] - spectra.line.table[elementden3])
+    } else if(transform1=="*" && elementnum2!="None" && transform2=="-" && elementnum3!="None" && elementden1!="None" && transform3=="/" && elementden2!="None" && transform4=="-" && elementden3!="None"){
+        (spectra.line.table[elementnum1] * spectra.line.table[elementnum2] - spectra.line.table[elementnum3])/(spectra.line.table[elementden1] / spectra.line.table[elementden2] - spectra.line.table[elementden3])
+    } else if(transform1=="/" && elementnum2!="None" && transform2=="-" && elementnum3!="None" && elementden1!="None" && transform3=="/" && elementden2!="None" && transform4=="-" && elementden3!="None"){
+        (spectra.line.table[elementnum1] / spectra.line.table[elementnum2] - spectra.line.table[elementnum3])/(spectra.line.table[elementden1] / spectra.line.table[elementden2] - spectra.line.table[elementden3])
+        ######Multiplication Third Variable
+    } else if(transform1=="+" && elementnum2!="None" && transform2=="*" && elementnum3!="None" && elementden1!="None" && transform3=="/" && elementden2!="None" && transform4=="-" && elementden3!="None"){
+        (spectra.line.table[elementnum1] + spectra.line.table[elementnum2] * spectra.line.table[elementnum3])/(spectra.line.table[elementden1] / spectra.line.table[elementden2] - spectra.line.table[elementden3])
+    } else if(transform1=="-" && elementnum2!="None" && transform2=="*" && elementnum3!="None" && elementden1!="None" && transform3=="/" && elementden2!="None" && transform4=="-" && elementden3!="None"){
+        (spectra.line.table[elementnum1] - spectra.line.table[elementnum2] * spectra.line.table[elementnum3])/(spectra.line.table[elementden1] / spectra.line.table[elementden2] - spectra.line.table[elementden3])
+    } else if(transform1=="*" && elementnum2!="None" && transform2=="*" && elementnum3!="None" && elementden1!="None" && transform3=="/" && elementden2!="None" && transform4=="-" && elementden3!="None"){
+        (spectra.line.table[elementnum1] * spectra.line.table[elementnum2] * spectra.line.table[elementnum3])/(spectra.line.table[elementden1] / spectra.line.table[elementden2] - spectra.line.table[elementden3])
+    } else if(transform1=="/" && elementnum2!="None" && transform2=="*" && elementnum3!="None" && elementden1!="None" && transform3=="/" && elementden2!="None" && transform4=="-" && elementden3!="None"){
+        (spectra.line.table[elementnum1] / spectra.line.table[elementnum2] * spectra.line.table[elementnum3])/(spectra.line.table[elementden1] / spectra.line.table[elementden2] - spectra.line.table[elementden3])
+        ######Division Third Variable
+    } else if(transform1=="+" && elementnum2!="None" && transform2=="/" && elementnum3!="None" && elementden1!="None" && transform3=="/" && elementden2!="None" && transform4=="-" && elementden3!="None"){
+        (spectra.line.table[elementnum1] + spectra.line.table[elementnum2] / spectra.line.table[elementnum3])/(spectra.line.table[elementden1] / spectra.line.table[elementden2] - spectra.line.table[elementden3])
+    } else if(transform1=="-" && elementnum2!="None" && transform2=="/" && elementnum3!="None" && elementden1!="None" && transform3=="/" && elementden2!="None" && transform4=="-" && elementden3!="None"){
+        (spectra.line.table[elementnum1] - spectra.line.table[elementnum2] / spectra.line.table[elementnum3])/(spectra.line.table[elementden1] / spectra.line.table[elementden2] - spectra.line.table[elementden3])
+    } else if(transform1=="*" && elementnum2!="None" && transform2=="/" && elementnum3!="None" && elementden1!="None" && transform3=="/" && elementden2!="None" && transform4=="-" && elementden3!="None"){
+        (spectra.line.table[elementnum1] * spectra.line.table[elementnum2] / spectra.line.table[elementnum3])/(spectra.line.table[elementden1] / spectra.line.table[elementden2] - spectra.line.table[elementden3])
+    } else if(transform1=="/" && elementnum2!="None" && transform2=="/" && elementnum3!="None" && elementden1!="None" && transform3=="/" && elementden2!="None" && transform4=="-" && elementden3!="None"){
+        (spectra.line.table[elementnum1] / spectra.line.table[elementnum2] / spectra.line.table[elementnum3])/(spectra.line.table[elementden1] / spectra.line.table[elementden2] - spectra.line.table[elementden3])
+        #######################################
+        #######################################
+        ########################################
+        ####Multiple Third Denominator#########
+        #######################################
+        #######################################
+        ####################################
+        #####Addition Two Denominators######
+        ####################################
+    } else if (transform1=="None" && elementden1!="None" && transform3=="+" && elementden2!="None" && transform4=="*" && elementden3!="None"){
+        spectra.line.table[elementnum1]/(spectra.line.table[elementden1] + spectra.line.table[elementden2] * spectra.line.table[elementden3])
+    } else if(transform1=="+" && elementnum2!="None" && elementden1!="None" && transform3=="+" && elementden2!="None" && transform4=="*" && elementden3!="None"){
+        (spectra.line.table[elementnum1] + spectra.line.table[elementden2] * spectra.line.table[elementden3])/(spectra.line.table[elementden1] + spectra.line.table[elementden2] * spectra.line.table[elementden3])
+    } else if(transform1=="-" && elementnum2!="None" && elementden1!="None" && transform3=="+" && elementden2!="None" && transform4=="*" && elementden3!="None"){
+        (spectra.line.table[elementnum1] - spectra.line.table[elementden2] * spectra.line.table[elementden3])/(spectra.line.table[elementden1] + spectra.line.table[elementden2] * spectra.line.table[elementden3])
+    } else if(transform1=="*" && elementnum2!="None" && elementden1!="None" && transform3=="+" && elementden2!="None" && transform4=="*" && elementden3!="None"){
+        (spectra.line.table[elementnum1] * spectra.line.table[elementden2] * spectra.line.table[elementden3])/(spectra.line.table[elementden1] + spectra.line.table[elementden2] * spectra.line.table[elementden3])
+    } else if(transform1=="/" && elementnum2!="None" && elementden1!="None" && transform3=="+" && elementden2!="None" && transform4=="*" && elementden3!="None"){
+        (spectra.line.table[elementnum1] / spectra.line.table[elementden2] * spectra.line.table[elementden3])/(spectra.line.table[elementden1] + spectra.line.table[elementden2] * spectra.line.table[elementden3])
+        ######Addition Third Variable
+    } else if(transform1=="+" && elementnum2!="None" && transform2=="+" && elementnum3!="None" && elementden1!="None" && transform3=="+" && elementden2!="None" && transform4=="*" && elementden3!="None"){
+        (spectra.line.table[elementnum1] + spectra.line.table[elementnum2] + spectra.line.table[elementnum3])/(spectra.line.table[elementden1] + spectra.line.table[elementden2] * spectra.line.table[elementden3])
+    } else if(transform1=="-" && elementnum2!="None" && transform2=="+" && elementnum3!="None" && elementden1!="None" && transform3=="+" && elementden2!="None" && transform4=="*" && elementden3!="None"){
+        (spectra.line.table[elementnum1] - spectra.line.table[elementnum2] + spectra.line.table[elementnum3])/(spectra.line.table[elementden1] + spectra.line.table[elementden2] * spectra.line.table[elementden3])
+    } else if(transform1=="*" && elementnum2!="None" && transform2=="+" && elementnum3!="None" && elementden1!="None" && transform3=="+" && elementden2!="None" && transform4=="*" && elementden3!="None"){
+        (spectra.line.table[elementnum1] * spectra.line.table[elementnum2] + spectra.line.table[elementnum3])/(spectra.line.table[elementden1] + spectra.line.table[elementden2] * spectra.line.table[elementden3])
+    } else if(transform1=="/" && elementnum2!="None" && transform2=="+" && elementnum3!="None" && elementden1!="None" && transform3=="+" && elementden2!="None" && transform4=="*" && elementden3!="None"){
+        (spectra.line.table[elementnum1] / spectra.line.table[elementnum2] + spectra.line.table[elementnum3])/(spectra.line.table[elementden1] + spectra.line.table[elementden2] * spectra.line.table[elementden3])
+        ######Subtraction Third Variable
+    } else if(transform1=="+" && elementnum2!="None" && transform2=="-" && elementnum3!="None" && elementden1!="None" && transform3=="+" && elementden2!="None" && transform4=="*" && elementden3!="None"){
+        (spectra.line.table[elementnum1] + spectra.line.table[elementnum2] - spectra.line.table[elementnum3])/(spectra.line.table[elementden1] + spectra.line.table[elementden2] * spectra.line.table[elementden3])
+    } else if(transform1=="-" && elementnum2!="None" && transform2=="-" && elementnum3!="None" && elementden1!="None" && transform3=="+" && elementden2!="None" && transform4=="*" && elementden3!="None"){
+        (spectra.line.table[elementnum1] - spectra.line.table[elementnum2] - spectra.line.table[elementnum3])/(spectra.line.table[elementden1] + spectra.line.table[elementden2] * spectra.line.table[elementden3])
+    } else if(transform1=="*" && elementnum2!="None" && transform2=="-" && elementnum3!="None" && elementden1!="None" && transform3=="+" && elementden2!="None" && transform4=="*" && elementden3!="None"){
+        (spectra.line.table[elementnum1] * spectra.line.table[elementnum2] - spectra.line.table[elementnum3])/(spectra.line.table[elementden1] + spectra.line.table[elementden2] * spectra.line.table[elementden3])
+    } else if(transform1=="/" && elementnum2!="None" && transform2=="-" && elementnum3!="None" && elementden1!="None" && transform3=="+" && elementden2!="None" && transform4=="*" && elementden3!="None"){
+        (spectra.line.table[elementnum1] / spectra.line.table[elementnum2] - spectra.line.table[elementnum3])/(spectra.line.table[elementden1] + spectra.line.table[elementden2] * spectra.line.table[elementden3])
+        ######Multiplication Third Variable
+    } else if(transform1=="+" && elementnum2!="None" && transform2=="*" && elementnum3!="None" && elementden1!="None" && transform3=="+" && elementden2!="None" && transform4=="*" && elementden3!="None"){
+        (spectra.line.table[elementnum1] + spectra.line.table[elementnum2] * spectra.line.table[elementnum3])/(spectra.line.table[elementden1] + spectra.line.table[elementden2] * spectra.line.table[elementden3])
+    } else if(transform1=="-" && elementnum2!="None" && transform2=="*" && elementnum3!="None" && elementden1!="None" && transform3=="+" && elementden2!="None" && transform4=="*" && elementden3!="None"){
+        (spectra.line.table[elementnum1] - spectra.line.table[elementnum2] * spectra.line.table[elementnum3])/(spectra.line.table[elementden1] + spectra.line.table[elementden2] * spectra.line.table[elementden3])
+    } else if(transform1=="*" && elementnum2!="None" && transform2=="*" && elementnum3!="None" && elementden1!="None" && transform3=="+" && elementden2!="None" && transform4=="*" && elementden3!="None"){
+        (spectra.line.table[elementnum1] * spectra.line.table[elementnum2] * spectra.line.table[elementnum3])/(spectra.line.table[elementden1] + spectra.line.table[elementden2] * spectra.line.table[elementden3])
+    } else if(transform1=="/" && elementnum2!="None" && transform2=="*" && elementnum3!="None" && elementden1!="None" && transform3=="+" && elementden2!="None" && transform4=="*" && elementden3!="None"){
+        (spectra.line.table[elementnum1] / spectra.line.table[elementnum2] * spectra.line.table[elementnum3])/(spectra.line.table[elementden1] + spectra.line.table[elementden2] * spectra.line.table[elementden3])
+        ######Division Third Variable
+    } else if(transform1=="+" && elementnum2!="None" && transform2=="/" && elementnum3!="None" && elementden1!="None" && transform3=="+" && elementden2!="None" && transform4=="*" && elementden3!="None"){
+        (spectra.line.table[elementnum1] + spectra.line.table[elementnum2] / spectra.line.table[elementnum3])/(spectra.line.table[elementden1] + spectra.line.table[elementden2] * spectra.line.table[elementden3])
+    } else if(transform1=="-" && elementnum2!="None" && transform2=="/" && elementnum3!="None" && elementden1!="None" && transform3=="+" && elementden2!="None" && transform4=="*" && elementden3!="None"){
+        (spectra.line.table[elementnum1] - spectra.line.table[elementnum2] / spectra.line.table[elementnum3])/(spectra.line.table[elementden1] + spectra.line.table[elementden2] * spectra.line.table[elementden3])
+    } else if(transform1=="*" && elementnum2!="None" && transform2=="/" && elementnum3!="None" && elementden1!="None" && transform3=="+" && elementden2!="None" && transform4=="*" && elementden3!="None"){
+        (spectra.line.table[elementnum1] * spectra.line.table[elementnum2] / spectra.line.table[elementnum3])/(spectra.line.table[elementden1] + spectra.line.table[elementden2] * spectra.line.table[elementden3])
+    } else if(transform1=="/" && elementnum2!="None" && transform2=="/" && elementnum3!="None" && elementden1!="None" && transform3=="+" && elementden2!="None" && transform4=="*" && elementden3!="None"){
+        (spectra.line.table[elementnum1] / spectra.line.table[elementnum2] / spectra.line.table[elementnum3])/(spectra.line.table[elementden1] + spectra.line.table[elementden2] * spectra.line.table[elementden3])
+        ####################################
+        #####Subtraction Two Denominators######
+        ####################################
+    } else if (transform1=="None" && elementden1!="None" && transform3=="-" && elementden2!="None" && transform4=="*" && elementden3!="None"){
+        spectra.line.table[elementnum1]/(spectra.line.table[elementden1] - spectra.line.table[elementden2] * spectra.line.table[elementden3])
+    } else if(transform1=="+" && elementnum2!="None" && elementden1!="None" && transform3=="-" && elementden2!="None" && transform4=="*" && elementden3!="None"){
+        (spectra.line.table[elementnum1] + spectra.line.table[elementden2] * spectra.line.table[elementden3])/(spectra.line.table[elementden1] - spectra.line.table[elementden2] * spectra.line.table[elementden3])
+    } else if(transform1=="-" && elementnum2!="None" && elementden1!="None" && transform3=="-" && elementden2!="None" && transform4=="*" && elementden3!="None"){
+        (spectra.line.table[elementnum1] - spectra.line.table[elementden2] * spectra.line.table[elementden3])/(spectra.line.table[elementden1] - spectra.line.table[elementden2] * spectra.line.table[elementden3])
+    } else if(transform1=="*" && elementnum2!="None" && elementden1!="None" && transform3=="-" && elementden2!="None" && transform4=="*" && elementden3!="None"){
+        (spectra.line.table[elementnum1] * spectra.line.table[elementden2] * spectra.line.table[elementden3])/(spectra.line.table[elementden1] - spectra.line.table[elementden2] * spectra.line.table[elementden3])
+    } else if(transform1=="/" && elementnum2!="None" && elementden1!="None" && transform3=="-" && elementden2!="None" && transform4=="*" && elementden3!="None"){
+        (spectra.line.table[elementnum1] / spectra.line.table[elementden2] * spectra.line.table[elementden3])/(spectra.line.table[elementden1] - spectra.line.table[elementden2] * spectra.line.table[elementden3])
+        ######Addition Third Variable
+    } else if(transform1=="+" && elementnum2!="None" && transform2=="+" && elementnum3!="None" && elementden1!="None" && transform3=="-" && elementden2!="None" && transform4=="*" && elementden3!="None"){
+        (spectra.line.table[elementnum1] + spectra.line.table[elementnum2] + spectra.line.table[elementnum3])/(spectra.line.table[elementden1] - spectra.line.table[elementden2] * spectra.line.table[elementden3])
+    } else if(transform1=="-" && elementnum2!="None" && transform2=="+" && elementnum3!="None" && elementden1!="None" && transform3=="-" && elementden2!="None" && transform4=="*" && elementden3!="None"){
+        (spectra.line.table[elementnum1] - spectra.line.table[elementnum2] + spectra.line.table[elementnum3])/(spectra.line.table[elementden1] - spectra.line.table[elementden2] * spectra.line.table[elementden3])
+    } else if(transform1=="*" && elementnum2!="None" && transform2=="+" && elementnum3!="None" && elementden1!="None" && transform3=="-" && elementden2!="None" && transform4=="*" && elementden3!="None"){
+        (spectra.line.table[elementnum1] * spectra.line.table[elementnum2] + spectra.line.table[elementnum3])/(spectra.line.table[elementden1] - spectra.line.table[elementden2] * spectra.line.table[elementden3])
+    } else if(transform1=="/" && elementnum2!="None" && transform2=="+" && elementnum3!="None" && elementden1!="None" && transform3=="-" && elementden2!="None" && transform4=="*" && elementden3!="None"){
+        (spectra.line.table[elementnum1] / spectra.line.table[elementnum2] + spectra.line.table[elementnum3])/(spectra.line.table[elementden1] - spectra.line.table[elementden2] * spectra.line.table[elementden3])
+        ######Subtraction Third Variable
+    } else if(transform1=="+" && elementnum2!="None" && transform2=="-" && elementnum3!="None" && elementden1!="None" && transform3=="-" && elementden2!="None" && transform4=="*" && elementden3!="None"){
+        (spectra.line.table[elementnum1] + spectra.line.table[elementnum2] - spectra.line.table[elementnum3])/(spectra.line.table[elementden1] - spectra.line.table[elementden2] * spectra.line.table[elementden3])
+    } else if(transform1=="-" && elementnum2!="None" && transform2=="-" && elementnum3!="None" && elementden1!="None" && transform3=="-" && elementden2!="None" && transform4=="*" && elementden3!="None"){
+        (spectra.line.table[elementnum1] - spectra.line.table[elementnum2] - spectra.line.table[elementnum3])/(spectra.line.table[elementden1] - spectra.line.table[elementden2] * spectra.line.table[elementden3])
+    } else if(transform1=="*" && elementnum2!="None" && transform2=="-" && elementnum3!="None" && elementden1!="None" && transform3=="-" && elementden2!="None" && transform4=="*" && elementden3!="None"){
+        (spectra.line.table[elementnum1] * spectra.line.table[elementnum2] - spectra.line.table[elementnum3])/(spectra.line.table[elementden1] - spectra.line.table[elementden2] * spectra.line.table[elementden3])
+    } else if(transform1=="/" && elementnum2!="None" && transform2=="-" && elementnum3!="None" && elementden1!="None" && transform3=="-" && elementden2!="None" && transform4=="*" && elementden3!="None"){
+        (spectra.line.table[elementnum1] / spectra.line.table[elementnum2] - spectra.line.table[elementnum3])/(spectra.line.table[elementden1] - spectra.line.table[elementden2] * spectra.line.table[elementden3])
+        ######Multiplication Third Variable
+    } else if(transform1=="+" && elementnum2!="None" && transform2=="*" && elementnum3!="None" && elementden1!="None" && transform3=="-" && elementden2!="None" && transform4=="*" && elementden3!="None"){
+        (spectra.line.table[elementnum1] + spectra.line.table[elementnum2] * spectra.line.table[elementnum3])/(spectra.line.table[elementden1] - spectra.line.table[elementden2] * spectra.line.table[elementden3])
+    } else if(transform1=="-" && elementnum2!="None" && transform2=="*" && elementnum3!="None" && elementden1!="None" && transform3=="-" && elementden2!="None" && transform4=="*" && elementden3!="None"){
+        (spectra.line.table[elementnum1] - spectra.line.table[elementnum2] * spectra.line.table[elementnum3])/(spectra.line.table[elementden1] - spectra.line.table[elementden2] * spectra.line.table[elementden3])
+    } else if(transform1=="*" && elementnum2!="None" && transform2=="*" && elementnum3!="None" && elementden1!="None" && transform3=="-" && elementden2!="None" && transform4=="*" && elementden3!="None"){
+        (spectra.line.table[elementnum1] * spectra.line.table[elementnum2] * spectra.line.table[elementnum3])/(spectra.line.table[elementden1] - spectra.line.table[elementden2] * spectra.line.table[elementden3])
+    } else if(transform1=="/" && elementnum2!="None" && transform2=="*" && elementnum3!="None" && elementden1!="None" && transform3=="-" && elementden2!="None" && transform4=="*" && elementden3!="None"){
+        (spectra.line.table[elementnum1] / spectra.line.table[elementnum2] * spectra.line.table[elementnum3])/(spectra.line.table[elementden1] - spectra.line.table[elementden2] * spectra.line.table[elementden3])
+        ######Division Third Variable
+    } else if(transform1=="+" && elementnum2!="None" && transform2=="/" && elementnum3!="None" && elementden1!="None" && transform3=="-" && elementden2!="None" && transform4=="*" && elementden3!="None"){
+        (spectra.line.table[elementnum1] + spectra.line.table[elementnum2] / spectra.line.table[elementnum3])/(spectra.line.table[elementden1] - spectra.line.table[elementden2] * spectra.line.table[elementden3])
+    } else if(transform1=="-" && elementnum2!="None" && transform2=="/" && elementnum3!="None" && elementden1!="None" && transform3=="-" && elementden2!="None" && transform4=="*" && elementden3!="None"){
+        (spectra.line.table[elementnum1] - spectra.line.table[elementnum2] / spectra.line.table[elementnum3])/(spectra.line.table[elementden1] - spectra.line.table[elementden2] * spectra.line.table[elementden3])
+    } else if(transform1=="*" && elementnum2!="None" && transform2=="/" && elementnum3!="None" && elementden1!="None" && transform3=="-" && elementden2!="None" && transform4=="*" && elementden3!="None"){
+        (spectra.line.table[elementnum1] * spectra.line.table[elementnum2] / spectra.line.table[elementnum3])/(spectra.line.table[elementden1] - spectra.line.table[elementden2] * spectra.line.table[elementden3])
+    } else if(transform1=="/" && elementnum2!="None" && transform2=="/" && elementnum3!="None" && elementden1!="None" && transform3=="-" && elementden2!="None" && transform4=="*" && elementden3!="None"){
+        (spectra.line.table[elementnum1] / spectra.line.table[elementnum2] / spectra.line.table[elementnum3])/(spectra.line.table[elementden1] - spectra.line.table[elementden2] * spectra.line.table[elementden3])
+        ####################################
+        #####Multiplication Two Denominators######
+        ####################################
+    } else if (transform1=="None" && elementden1!="None" && transform3=="*" && elementden2!="None" && transform4=="*" && elementden3!="None"){
+        spectra.line.table[elementnum1]/(spectra.line.table[elementden1] * spectra.line.table[elementden2] * spectra.line.table[elementden3])
+    } else if(transform1=="+" && elementnum2!="None" && elementden1!="None" && transform3=="*" && elementden2!="None" && transform4=="*" && elementden3!="None"){
+        (spectra.line.table[elementnum1] + spectra.line.table[elementden2] * spectra.line.table[elementden3])/(spectra.line.table[elementden1] * spectra.line.table[elementden2] * spectra.line.table[elementden3])
+    } else if(transform1=="-" && elementnum2!="None" && elementden1!="None" && transform3=="*" && elementden2!="None" && transform4=="*" && elementden3!="None"){
+        (spectra.line.table[elementnum1] - spectra.line.table[elementden2] * spectra.line.table[elementden3])/(spectra.line.table[elementden1] * spectra.line.table[elementden2] * spectra.line.table[elementden3])
+    } else if(transform1=="*" && elementnum2!="None" && elementden1!="None" && transform3=="*" && elementden2!="None" && transform4=="*" && elementden3!="None"){
+        (spectra.line.table[elementnum1] * spectra.line.table[elementden2] * spectra.line.table[elementden3])/(spectra.line.table[elementden1] * spectra.line.table[elementden2] * spectra.line.table[elementden3])
+    } else if(transform1=="/" && elementnum2!="None" && elementden1!="None" && transform3=="*" && elementden2!="None" && transform4=="*" && elementden3!="None"){
+        (spectra.line.table[elementnum1] / spectra.line.table[elementden2] * spectra.line.table[elementden3])/(spectra.line.table[elementden1] * spectra.line.table[elementden2] * spectra.line.table[elementden3])
+        ######Addition Third Variable
+    } else if(transform1=="+" && elementnum2!="None" && transform2=="+" && elementnum3!="None" && elementden1!="None" && transform3=="*" && elementden2!="None" && transform4=="*" && elementden3!="None"){
+        (spectra.line.table[elementnum1] + spectra.line.table[elementnum2] + spectra.line.table[elementnum3])/(spectra.line.table[elementden1] * spectra.line.table[elementden2] * spectra.line.table[elementden3])
+    } else if(transform1=="-" && elementnum2!="None" && transform2=="+" && elementnum3!="None" && elementden1!="None" && transform3=="*" && elementden2!="None" && transform4=="*" && elementden3!="None"){
+        (spectra.line.table[elementnum1] - spectra.line.table[elementnum2] + spectra.line.table[elementnum3])/(spectra.line.table[elementden1] * spectra.line.table[elementden2] * spectra.line.table[elementden3])
+    } else if(transform1=="*" && elementnum2!="None" && transform2=="+" && elementnum3!="None" && elementden1!="None" && transform3=="*" && elementden2!="None" && transform4=="*" && elementden3!="None"){
+        (spectra.line.table[elementnum1] * spectra.line.table[elementnum2] + spectra.line.table[elementnum3])/(spectra.line.table[elementden1] * spectra.line.table[elementden2] * spectra.line.table[elementden3])
+    } else if(transform1=="/" && elementnum2!="None" && transform2=="+" && elementnum3!="None" && elementden1!="None" && transform3=="*" && elementden2!="None" && transform4=="*" && elementden3!="None"){
+        (spectra.line.table[elementnum1] / spectra.line.table[elementnum2] + spectra.line.table[elementnum3])/(spectra.line.table[elementden1] * spectra.line.table[elementden2] * spectra.line.table[elementden3])
+        ######Subtraction Third Variable
+    } else if(transform1=="+" && elementnum2!="None" && transform2=="-" && elementnum3!="None" && elementden1!="None" && transform3=="*" && elementden2!="None" && transform4=="*" && elementden3!="None"){
+        (spectra.line.table[elementnum1] + spectra.line.table[elementnum2] - spectra.line.table[elementnum3])/(spectra.line.table[elementden1] * spectra.line.table[elementden2] * spectra.line.table[elementden3])
+    } else if(transform1=="-" && elementnum2!="None" && transform2=="-" && elementnum3!="None" && elementden1!="None" && transform3=="*" && elementden2!="None" && transform4=="*" && elementden3!="None"){
+        (spectra.line.table[elementnum1] - spectra.line.table[elementnum2] - spectra.line.table[elementnum3])/(spectra.line.table[elementden1] * spectra.line.table[elementden2] * spectra.line.table[elementden3])
+    } else if(transform1=="*" && elementnum2!="None" && transform2=="-" && elementnum3!="None" && elementden1!="None" && transform3=="*" && elementden2!="None" && transform4=="*" && elementden3!="None"){
+        (spectra.line.table[elementnum1] * spectra.line.table[elementnum2] - spectra.line.table[elementnum3])/(spectra.line.table[elementden1] * spectra.line.table[elementden2] * spectra.line.table[elementden3])
+    } else if(transform1=="/" && elementnum2!="None" && transform2=="-" && elementnum3!="None" && elementden1!="None" && transform3=="*" && elementden2!="None" && transform4=="*" && elementden3!="None"){
+        (spectra.line.table[elementnum1] / spectra.line.table[elementnum2] - spectra.line.table[elementnum3])/(spectra.line.table[elementden1] * spectra.line.table[elementden2] * spectra.line.table[elementden3])
+        ######Multiplication Third Variable
+    } else if(transform1=="+" && elementnum2!="None" && transform2=="*" && elementnum3!="None" && elementden1!="None" && transform3=="*" && elementden2!="None" && transform4=="*" && elementden3!="None"){
+        (spectra.line.table[elementnum1] + spectra.line.table[elementnum2] * spectra.line.table[elementnum3])/(spectra.line.table[elementden1] * spectra.line.table[elementden2] * spectra.line.table[elementden3])
+    } else if(transform1=="-" && elementnum2!="None" && transform2=="*" && elementnum3!="None" && elementden1!="None" && transform3=="*" && elementden2!="None" && transform4=="*" && elementden3!="None"){
+        (spectra.line.table[elementnum1] - spectra.line.table[elementnum2] * spectra.line.table[elementnum3])/(spectra.line.table[elementden1] * spectra.line.table[elementden2] * spectra.line.table[elementden3])
+    } else if(transform1=="*" && elementnum2!="None" && transform2=="*" && elementnum3!="None" && elementden1!="None" && transform3=="*" && elementden2!="None" && transform4=="*" && elementden3!="None"){
+        (spectra.line.table[elementnum1] * spectra.line.table[elementnum2] * spectra.line.table[elementnum3])/(spectra.line.table[elementden1] * spectra.line.table[elementden2] * spectra.line.table[elementden3])
+    } else if(transform1=="/" && elementnum2!="None" && transform2=="*" && elementnum3!="None" && elementden1!="None" && transform3=="*" && elementden2!="None" && transform4=="*" && elementden3!="None"){
+        (spectra.line.table[elementnum1] / spectra.line.table[elementnum2] * spectra.line.table[elementnum3])/(spectra.line.table[elementden1] * spectra.line.table[elementden2] * spectra.line.table[elementden3])
+        ######Division Third Variable
+    } else if(transform1=="+" && elementnum2!="None" && transform2=="/" && elementnum3!="None" && elementden1!="None" && transform3=="*" && elementden2!="None" && transform4=="*" && elementden3!="None"){
+        (spectra.line.table[elementnum1] + spectra.line.table[elementnum2] / spectra.line.table[elementnum3])/(spectra.line.table[elementden1] * spectra.line.table[elementden2] * spectra.line.table[elementden3])
+    } else if(transform1=="-" && elementnum2!="None" && transform2=="/" && elementnum3!="None" && elementden1!="None" && transform3=="*" && elementden2!="None" && transform4=="*" && elementden3!="None"){
+        (spectra.line.table[elementnum1] - spectra.line.table[elementnum2] / spectra.line.table[elementnum3])/(spectra.line.table[elementden1] * spectra.line.table[elementden2] * spectra.line.table[elementden3])
+    } else if(transform1=="*" && elementnum2!="None" && transform2=="/" && elementnum3!="None" && elementden1!="None" && transform3=="*" && elementden2!="None" && transform4=="*" && elementden3!="None"){
+        (spectra.line.table[elementnum1] * spectra.line.table[elementnum2] / spectra.line.table[elementnum3])/(spectra.line.table[elementden1] * spectra.line.table[elementden2] * spectra.line.table[elementden3])
+    } else if(transform1=="/" && elementnum2!="None" && transform2=="/" && elementnum3!="None" && elementden1!="None" && transform3=="*" && elementden2!="None" && transform4=="*" && elementden3!="None"){
+        (spectra.line.table[elementnum1] / spectra.line.table[elementnum2] / spectra.line.table[elementnum3])/(spectra.line.table[elementden1] * spectra.line.table[elementden2] * spectra.line.table[elementden3])
+        ####################################
+        #####Division Two Denominators######
+        ####################################
+    } else if (transform1=="None" && elementden1!="None" && transform3=="/" && elementden2!="None" && transform4=="*" && elementden3!="None"){
+        spectra.line.table[elementnum1]/(spectra.line.table[elementden1] / spectra.line.table[elementden2] * spectra.line.table[elementden3])
+    } else if(transform1=="+" && elementnum2!="None" && elementden1!="None" && transform3=="/" && elementden2!="None" && transform4=="*" && elementden3!="None"){
+        (spectra.line.table[elementnum1] + spectra.line.table[elementden2] * spectra.line.table[elementden3])/(spectra.line.table[elementden1] / spectra.line.table[elementden2] * spectra.line.table[elementden3])
+    } else if(transform1=="-" && elementnum2!="None" && elementden1!="None" && transform3=="/" && elementden2!="None" && transform4=="*" && elementden3!="None"){
+        (spectra.line.table[elementnum1] - spectra.line.table[elementden2] * spectra.line.table[elementden3])/(spectra.line.table[elementden1] / spectra.line.table[elementden2] * spectra.line.table[elementden3])
+    } else if(transform1=="*" && elementnum2!="None" && elementden1!="None" && transform3=="/" && elementden2!="None" && transform4=="*" && elementden3!="None"){
+        (spectra.line.table[elementnum1] * spectra.line.table[elementden2] * spectra.line.table[elementden3])/(spectra.line.table[elementden1] / spectra.line.table[elementden2] * spectra.line.table[elementden3])
+    } else if(transform1=="/" && elementnum2!="None" && elementden1!="None" && transform3=="/" && elementden2!="None" && transform4=="*" && elementden3!="None"){
+        (spectra.line.table[elementnum1] / spectra.line.table[elementden2] * spectra.line.table[elementden3])/(spectra.line.table[elementden1] / spectra.line.table[elementden2] * spectra.line.table[elementden3])
+        ######Addition Third Variable
+    } else if(transform1=="+" && elementnum2!="None" && transform2=="+" && elementnum3!="None" && elementden1!="None" && transform3=="/" && elementden2!="None" && transform4=="*" && elementden3!="None"){
+        (spectra.line.table[elementnum1] + spectra.line.table[elementnum2] + spectra.line.table[elementnum3])/(spectra.line.table[elementden1] / spectra.line.table[elementden2] * spectra.line.table[elementden3])
+    } else if(transform1=="-" && elementnum2!="None" && transform2=="+" && elementnum3!="None" && elementden1!="None" && transform3=="/" && elementden2!="None" && transform4=="*" && elementden3!="None"){
+        (spectra.line.table[elementnum1] - spectra.line.table[elementnum2] + spectra.line.table[elementnum3])/(spectra.line.table[elementden1] / spectra.line.table[elementden2] * spectra.line.table[elementden3])
+    } else if(transform1=="*" && elementnum2!="None" && transform2=="+" && elementnum3!="None" && elementden1!="None" && transform3=="/" && elementden2!="None" && transform4=="*" && elementden3!="None"){
+        (spectra.line.table[elementnum1] * spectra.line.table[elementnum2] + spectra.line.table[elementnum3])/(spectra.line.table[elementden1] / spectra.line.table[elementden2] * spectra.line.table[elementden3])
+    } else if(transform1=="/" && elementnum2!="None" && transform2=="+" && elementnum3!="None" && elementden1!="None" && transform3=="/" && elementden2!="None" && transform4=="*" && elementden3!="None"){
+        (spectra.line.table[elementnum1] / spectra.line.table[elementnum2] + spectra.line.table[elementnum3])/(spectra.line.table[elementden1] / spectra.line.table[elementden2] * spectra.line.table[elementden3])
+        ######Subtraction Third Variable
+    } else if(transform1=="+" && elementnum2!="None" && transform2=="-" && elementnum3!="None" && elementden1!="None" && transform3=="/" && elementden2!="None" && transform4=="*" && elementden3!="None"){
+        (spectra.line.table[elementnum1] + spectra.line.table[elementnum2] - spectra.line.table[elementnum3])/(spectra.line.table[elementden1] / spectra.line.table[elementden2] * spectra.line.table[elementden3])
+    } else if(transform1=="-" && elementnum2!="None" && transform2=="-" && elementnum3!="None" && elementden1!="None" && transform3=="/" && elementden2!="None" && transform4=="*" && elementden3!="None"){
+        (spectra.line.table[elementnum1] - spectra.line.table[elementnum2] - spectra.line.table[elementnum3])/(spectra.line.table[elementden1] / spectra.line.table[elementden2] * spectra.line.table[elementden3])
+    } else if(transform1=="*" && elementnum2!="None" && transform2=="-" && elementnum3!="None" && elementden1!="None" && transform3=="/" && elementden2!="None" && transform4=="*" && elementden3!="None"){
+        (spectra.line.table[elementnum1] * spectra.line.table[elementnum2] - spectra.line.table[elementnum3])/(spectra.line.table[elementden1] / spectra.line.table[elementden2] * spectra.line.table[elementden3])
+    } else if(transform1=="/" && elementnum2!="None" && transform2=="-" && elementnum3!="None" && elementden1!="None" && transform3=="/" && elementden2!="None" && transform4=="*" && elementden3!="None"){
+        (spectra.line.table[elementnum1] / spectra.line.table[elementnum2] - spectra.line.table[elementnum3])/(spectra.line.table[elementden1] / spectra.line.table[elementden2] * spectra.line.table[elementden3])
+        ######Multiplication Third Variable
+    } else if(transform1=="+" && elementnum2!="None" && transform2=="*" && elementnum3!="None" && elementden1!="None" && transform3=="/" && elementden2!="None" && transform4=="*" && elementden3!="None"){
+        (spectra.line.table[elementnum1] + spectra.line.table[elementnum2] * spectra.line.table[elementnum3])/(spectra.line.table[elementden1] / spectra.line.table[elementden2] * spectra.line.table[elementden3])
+    } else if(transform1=="-" && elementnum2!="None" && transform2=="*" && elementnum3!="None" && elementden1!="None" && transform3=="/" && elementden2!="None" && transform4=="*" && elementden3!="None"){
+        (spectra.line.table[elementnum1] - spectra.line.table[elementnum2] * spectra.line.table[elementnum3])/(spectra.line.table[elementden1] / spectra.line.table[elementden2] * spectra.line.table[elementden3])
+    } else if(transform1=="*" && elementnum2!="None" && transform2=="*" && elementnum3!="None" && elementden1!="None" && transform3=="/" && elementden2!="None" && transform4=="*" && elementden3!="None"){
+        (spectra.line.table[elementnum1] * spectra.line.table[elementnum2] * spectra.line.table[elementnum3])/(spectra.line.table[elementden1] / spectra.line.table[elementden2] * spectra.line.table[elementden3])
+    } else if(transform1=="/" && elementnum2!="None" && transform2=="*" && elementnum3!="None" && elementden1!="None" && transform3=="/" && elementden2!="None" && transform4=="*" && elementden3!="None"){
+        (spectra.line.table[elementnum1] / spectra.line.table[elementnum2] * spectra.line.table[elementnum3])/(spectra.line.table[elementden1] / spectra.line.table[elementden2] * spectra.line.table[elementden3])
+        ######Division Third Variable
+    } else if(transform1=="+" && elementnum2!="None" && transform2=="/" && elementnum3!="None" && elementden1!="None" && transform3=="/" && elementden2!="None" && transform4=="*" && elementden3!="None"){
+        (spectra.line.table[elementnum1] + spectra.line.table[elementnum2] / spectra.line.table[elementnum3])/(spectra.line.table[elementden1] / spectra.line.table[elementden2] * spectra.line.table[elementden3])
+    } else if(transform1=="-" && elementnum2!="None" && transform2=="/" && elementnum3!="None" && elementden1!="None" && transform3=="/" && elementden2!="None" && transform4=="*" && elementden3!="None"){
+        (spectra.line.table[elementnum1] - spectra.line.table[elementnum2] / spectra.line.table[elementnum3])/(spectra.line.table[elementden1] / spectra.line.table[elementden2] * spectra.line.table[elementden3])
+    } else if(transform1=="*" && elementnum2!="None" && transform2=="/" && elementnum3!="None" && elementden1!="None" && transform3=="/" && elementden2!="None" && transform4=="*" && elementden3!="None"){
+        (spectra.line.table[elementnum1] * spectra.line.table[elementnum2] / spectra.line.table[elementnum3])/(spectra.line.table[elementden1] / spectra.line.table[elementden2] * spectra.line.table[elementden3])
+    } else if(transform1=="/" && elementnum2!="None" && transform2=="/" && elementnum3!="None" && elementden1!="None" && transform3=="/" && elementden2!="None" && transform4=="*" && elementden3!="None"){
+        (spectra.line.table[elementnum1] / spectra.line.table[elementnum2] / spectra.line.table[elementnum3])/(spectra.line.table[elementden1] / spectra.line.table[elementden2] * spectra.line.table[elementden3])
+        #######################################
+        #######################################
+        ########################################
+        ####Divide Third Denominator#########
+        #######################################
+        #######################################
+        ####################################
+        #####Addition Two Denominators######
+        ####################################
+    } else if (transform1=="None" && elementden1!="None" && transform3=="+" && elementden2!="None" && transform4=="/" && elementden3!="None"){
+        spectra.line.table[elementnum1]/(spectra.line.table[elementden1] + spectra.line.table[elementden2] / spectra.line.table[elementden3])
+    } else if(transform1=="+" && elementnum2!="None" && elementden1!="None" && transform3=="+" && elementden2!="None" && transform4=="/" && elementden3!="None"){
+        (spectra.line.table[elementnum1] + spectra.line.table[elementden2] / spectra.line.table[elementden3])/(spectra.line.table[elementden1] + spectra.line.table[elementden2] / spectra.line.table[elementden3])
+    } else if(transform1=="-" && elementnum2!="None" && elementden1!="None" && transform3=="+" && elementden2!="None" && transform4=="/" && elementden3!="None"){
+        (spectra.line.table[elementnum1] - spectra.line.table[elementden2] / spectra.line.table[elementden3])/(spectra.line.table[elementden1] + spectra.line.table[elementden2] / spectra.line.table[elementden3])
+    } else if(transform1=="*" && elementnum2!="None" && elementden1!="None" && transform3=="+" && elementden2!="None" && transform4=="/" && elementden3!="None"){
+        (spectra.line.table[elementnum1] * spectra.line.table[elementden2] / spectra.line.table[elementden3])/(spectra.line.table[elementden1] + spectra.line.table[elementden2] / spectra.line.table[elementden3])
+    } else if(transform1=="/" && elementnum2!="None" && elementden1!="None" && transform3=="+" && elementden2!="None" && transform4=="/" && elementden3!="None"){
+        (spectra.line.table[elementnum1] / spectra.line.table[elementden2] / spectra.line.table[elementden3])/(spectra.line.table[elementden1] + spectra.line.table[elementden2] / spectra.line.table[elementden3])
+        ######Addition Third Variable
+    } else if(transform1=="+" && elementnum2!="None" && transform2=="+" && elementnum3!="None" && elementden1!="None" && transform3=="+" && elementden2!="None" && transform4=="/" && elementden3!="None"){
+        (spectra.line.table[elementnum1] + spectra.line.table[elementnum2] + spectra.line.table[elementnum3])/(spectra.line.table[elementden1] + spectra.line.table[elementden2] / spectra.line.table[elementden3])
+    } else if(transform1=="-" && elementnum2!="None" && transform2=="+" && elementnum3!="None" && elementden1!="None" && transform3=="+" && elementden2!="None" && transform4=="/" && elementden3!="None"){
+        (spectra.line.table[elementnum1] - spectra.line.table[elementnum2] + spectra.line.table[elementnum3])/(spectra.line.table[elementden1] + spectra.line.table[elementden2] / spectra.line.table[elementden3])
+    } else if(transform1=="*" && elementnum2!="None" && transform2=="+" && elementnum3!="None" && elementden1!="None" && transform3=="+" && elementden2!="None" && transform4=="/" && elementden3!="None"){
+        (spectra.line.table[elementnum1] * spectra.line.table[elementnum2] + spectra.line.table[elementnum3])/(spectra.line.table[elementden1] + spectra.line.table[elementden2] / spectra.line.table[elementden3])
+    } else if(transform1=="/" && elementnum2!="None" && transform2=="+" && elementnum3!="None" && elementden1!="None" && transform3=="+" && elementden2!="None" && transform4=="/" && elementden3!="None"){
+        (spectra.line.table[elementnum1] / spectra.line.table[elementnum2] + spectra.line.table[elementnum3])/(spectra.line.table[elementden1] + spectra.line.table[elementden2] / spectra.line.table[elementden3])
+        ######Subtraction Third Variable
+    } else if(transform1=="+" && elementnum2!="None" && transform2=="-" && elementnum3!="None" && elementden1!="None" && transform3=="+" && elementden2!="None" && transform4=="/" && elementden3!="None"){
+        (spectra.line.table[elementnum1] + spectra.line.table[elementnum2] - spectra.line.table[elementnum3])/(spectra.line.table[elementden1] + spectra.line.table[elementden2] / spectra.line.table[elementden3])
+    } else if(transform1=="-" && elementnum2!="None" && transform2=="-" && elementnum3!="None" && elementden1!="None" && transform3=="+" && elementden2!="None" && transform4=="/" && elementden3!="None"){
+        (spectra.line.table[elementnum1] - spectra.line.table[elementnum2] - spectra.line.table[elementnum3])/(spectra.line.table[elementden1] + spectra.line.table[elementden2] / spectra.line.table[elementden3])
+    } else if(transform1=="*" && elementnum2!="None" && transform2=="-" && elementnum3!="None" && elementden1!="None" && transform3=="+" && elementden2!="None" && transform4=="/" && elementden3!="None"){
+        (spectra.line.table[elementnum1] * spectra.line.table[elementnum2] - spectra.line.table[elementnum3])/(spectra.line.table[elementden1] + spectra.line.table[elementden2] / spectra.line.table[elementden3])
+    } else if(transform1=="/" && elementnum2!="None" && transform2=="-" && elementnum3!="None" && elementden1!="None" && transform3=="+" && elementden2!="None" && transform4=="/" && elementden3!="None"){
+        (spectra.line.table[elementnum1] / spectra.line.table[elementnum2] - spectra.line.table[elementnum3])/(spectra.line.table[elementden1] + spectra.line.table[elementden2] / spectra.line.table[elementden3])
+        ######Multiplication Third Variable
+    } else if(transform1=="+" && elementnum2!="None" && transform2=="*" && elementnum3!="None" && elementden1!="None" && transform3=="+" && elementden2!="None" && transform4=="/" && elementden3!="None"){
+        (spectra.line.table[elementnum1] + spectra.line.table[elementnum2] * spectra.line.table[elementnum3])/(spectra.line.table[elementden1] + spectra.line.table[elementden2] / spectra.line.table[elementden3])
+    } else if(transform1=="-" && elementnum2!="None" && transform2=="*" && elementnum3!="None" && elementden1!="None" && transform3=="+" && elementden2!="None" && transform4=="/" && elementden3!="None"){
+        (spectra.line.table[elementnum1] - spectra.line.table[elementnum2] * spectra.line.table[elementnum3])/(spectra.line.table[elementden1] + spectra.line.table[elementden2] / spectra.line.table[elementden3])
+    } else if(transform1=="*" && elementnum2!="None" && transform2=="*" && elementnum3!="None" && elementden1!="None" && transform3=="+" && elementden2!="None" && transform4=="/" && elementden3!="None"){
+        (spectra.line.table[elementnum1] * spectra.line.table[elementnum2] * spectra.line.table[elementnum3])/(spectra.line.table[elementden1] + spectra.line.table[elementden2] / spectra.line.table[elementden3])
+    } else if(transform1=="/" && elementnum2!="None" && transform2=="*" && elementnum3!="None" && elementden1!="None" && transform3=="+" && elementden2!="None" && transform4=="/" && elementden3!="None"){
+        (spectra.line.table[elementnum1] / spectra.line.table[elementnum2] * spectra.line.table[elementnum3])/(spectra.line.table[elementden1] + spectra.line.table[elementden2] / spectra.line.table[elementden3])
+        ######Division Third Variable
+    } else if(transform1=="+" && elementnum2!="None" && transform2=="/" && elementnum3!="None" && elementden1!="None" && transform3=="+" && elementden2!="None" && transform4=="/" && elementden3!="None"){
+        (spectra.line.table[elementnum1] + spectra.line.table[elementnum2] / spectra.line.table[elementnum3])/(spectra.line.table[elementden1] + spectra.line.table[elementden2] / spectra.line.table[elementden3])
+    } else if(transform1=="-" && elementnum2!="None" && transform2=="/" && elementnum3!="None" && elementden1!="None" && transform3=="+" && elementden2!="None" && transform4=="/" && elementden3!="None"){
+        (spectra.line.table[elementnum1] - spectra.line.table[elementnum2] / spectra.line.table[elementnum3])/(spectra.line.table[elementden1] + spectra.line.table[elementden2] / spectra.line.table[elementden3])
+    } else if(transform1=="*" && elementnum2!="None" && transform2=="/" && elementnum3!="None" && elementden1!="None" && transform3=="+" && elementden2!="None" && transform4=="/" && elementden3!="None"){
+        (spectra.line.table[elementnum1] * spectra.line.table[elementnum2] / spectra.line.table[elementnum3])/(spectra.line.table[elementden1] + spectra.line.table[elementden2] / spectra.line.table[elementden3])
+    } else if(transform1=="/" && elementnum2!="None" && transform2=="/" && elementnum3!="None" && elementden1!="None" && transform3=="+" && elementden2!="None" && transform4=="/" && elementden3!="None"){
+        (spectra.line.table[elementnum1] / spectra.line.table[elementnum2] / spectra.line.table[elementnum3])/(spectra.line.table[elementden1] + spectra.line.table[elementden2] / spectra.line.table[elementden3])
+        ####################################
+        #####Subtraction Two Denominators######
+        ####################################
+    } else if (transform1=="None" && elementden1!="None" && transform3=="-" && elementden2!="None" && transform4=="/" && elementden3!="None"){
+        spectra.line.table[elementnum1]/(spectra.line.table[elementden1] - spectra.line.table[elementden2] / spectra.line.table[elementden3])
+    } else if(transform1=="+" && elementnum2!="None" && elementden1!="None" && transform3=="-" && elementden2!="None" && transform4=="/" && elementden3!="None"){
+        (spectra.line.table[elementnum1] + spectra.line.table[elementden2] / spectra.line.table[elementden3])/(spectra.line.table[elementden1] - spectra.line.table[elementden2] / spectra.line.table[elementden3])
+    } else if(transform1=="-" && elementnum2!="None" && elementden1!="None" && transform3=="-" && elementden2!="None" && transform4=="/" && elementden3!="None"){
+        (spectra.line.table[elementnum1] - spectra.line.table[elementden2] / spectra.line.table[elementden3])/(spectra.line.table[elementden1] - spectra.line.table[elementden2] / spectra.line.table[elementden3])
+    } else if(transform1=="*" && elementnum2!="None" && elementden1!="None" && transform3=="-" && elementden2!="None" && transform4=="/" && elementden3!="None"){
+        (spectra.line.table[elementnum1] * spectra.line.table[elementden2] / spectra.line.table[elementden3])/(spectra.line.table[elementden1] - spectra.line.table[elementden2] / spectra.line.table[elementden3])
+    } else if(transform1=="/" && elementnum2!="None" && elementden1!="None" && transform3=="-" && elementden2!="None" && transform4=="/" && elementden3!="None"){
+        (spectra.line.table[elementnum1] / spectra.line.table[elementden2] / spectra.line.table[elementden3])/(spectra.line.table[elementden1] - spectra.line.table[elementden2] / spectra.line.table[elementden3])
+        ######Addition Third Variable
+    } else if(transform1=="+" && elementnum2!="None" && transform2=="+" && elementnum3!="None" && elementden1!="None" && transform3=="-" && elementden2!="None" && transform4=="/" && elementden3!="None"){
+        (spectra.line.table[elementnum1] + spectra.line.table[elementnum2] + spectra.line.table[elementnum3])/(spectra.line.table[elementden1] - spectra.line.table[elementden2] / spectra.line.table[elementden3])
+    } else if(transform1=="-" && elementnum2!="None" && transform2=="+" && elementnum3!="None" && elementden1!="None" && transform3=="-" && elementden2!="None" && transform4=="/" && elementden3!="None"){
+        (spectra.line.table[elementnum1] - spectra.line.table[elementnum2] + spectra.line.table[elementnum3])/(spectra.line.table[elementden1] - spectra.line.table[elementden2] / spectra.line.table[elementden3])
+    } else if(transform1=="*" && elementnum2!="None" && transform2=="+" && elementnum3!="None" && elementden1!="None" && transform3=="-" && elementden2!="None" && transform4=="/" && elementden3!="None"){
+        (spectra.line.table[elementnum1] * spectra.line.table[elementnum2] + spectra.line.table[elementnum3])/(spectra.line.table[elementden1] - spectra.line.table[elementden2] / spectra.line.table[elementden3])
+    } else if(transform1=="/" && elementnum2!="None" && transform2=="+" && elementnum3!="None" && elementden1!="None" && transform3=="-" && elementden2!="None" && transform4=="/" && elementden3!="None"){
+        (spectra.line.table[elementnum1] / spectra.line.table[elementnum2] + spectra.line.table[elementnum3])/(spectra.line.table[elementden1] - spectra.line.table[elementden2] / spectra.line.table[elementden3])
+        ######Subtraction Third Variable
+    } else if(transform1=="+" && elementnum2!="None" && transform2=="-" && elementnum3!="None" && elementden1!="None" && transform3=="-" && elementden2!="None" && transform4=="/" && elementden3!="None"){
+        (spectra.line.table[elementnum1] + spectra.line.table[elementnum2] - spectra.line.table[elementnum3])/(spectra.line.table[elementden1] - spectra.line.table[elementden2] / spectra.line.table[elementden3])
+    } else if(transform1=="-" && elementnum2!="None" && transform2=="-" && elementnum3!="None" && elementden1!="None" && transform3=="-" && elementden2!="None" && transform4=="/" && elementden3!="None"){
+        (spectra.line.table[elementnum1] - spectra.line.table[elementnum2] - spectra.line.table[elementnum3])/(spectra.line.table[elementden1] - spectra.line.table[elementden2] / spectra.line.table[elementden3])
+    } else if(transform1=="*" && elementnum2!="None" && transform2=="-" && elementnum3!="None" && elementden1!="None" && transform3=="-" && elementden2!="None" && transform4=="/" && elementden3!="None"){
+        (spectra.line.table[elementnum1] * spectra.line.table[elementnum2] - spectra.line.table[elementnum3])/(spectra.line.table[elementden1] - spectra.line.table[elementden2] / spectra.line.table[elementden3])
+    } else if(transform1=="/" && elementnum2!="None" && transform2=="-" && elementnum3!="None" && elementden1!="None" && transform3=="-" && elementden2!="None" && transform4=="/" && elementden3!="None"){
+        (spectra.line.table[elementnum1] / spectra.line.table[elementnum2] - spectra.line.table[elementnum3])/(spectra.line.table[elementden1] - spectra.line.table[elementden2] / spectra.line.table[elementden3])
+        ######Multiplication Third Variable
+    } else if(transform1=="+" && elementnum2!="None" && transform2=="*" && elementnum3!="None" && elementden1!="None" && transform3=="-" && elementden2!="None" && transform4=="/" && elementden3!="None"){
+        (spectra.line.table[elementnum1] + spectra.line.table[elementnum2] * spectra.line.table[elementnum3])/(spectra.line.table[elementden1] - spectra.line.table[elementden2] / spectra.line.table[elementden3])
+    } else if(transform1=="-" && elementnum2!="None" && transform2=="*" && elementnum3!="None" && elementden1!="None" && transform3=="-" && elementden2!="None" && transform4=="/" && elementden3!="None"){
+        (spectra.line.table[elementnum1] - spectra.line.table[elementnum2] * spectra.line.table[elementnum3])/(spectra.line.table[elementden1] - spectra.line.table[elementden2] / spectra.line.table[elementden3])
+    } else if(transform1=="*" && elementnum2!="None" && transform2=="*" && elementnum3!="None" && elementden1!="None" && transform3=="-" && elementden2!="None" && transform4=="/" && elementden3!="None"){
+        (spectra.line.table[elementnum1] * spectra.line.table[elementnum2] * spectra.line.table[elementnum3])/(spectra.line.table[elementden1] - spectra.line.table[elementden2] / spectra.line.table[elementden3])
+    } else if(transform1=="/" && elementnum2!="None" && transform2=="*" && elementnum3!="None" && elementden1!="None" && transform3=="-" && elementden2!="None" && transform4=="/" && elementden3!="None"){
+        (spectra.line.table[elementnum1] / spectra.line.table[elementnum2] * spectra.line.table[elementnum3])/(spectra.line.table[elementden1] - spectra.line.table[elementden2] / spectra.line.table[elementden3])
+        ######Division Third Variable
+    } else if(transform1=="+" && elementnum2!="None" && transform2=="/" && elementnum3!="None" && elementden1!="None" && transform3=="-" && elementden2!="None" && transform4=="/" && elementden3!="None"){
+        (spectra.line.table[elementnum1] + spectra.line.table[elementnum2] / spectra.line.table[elementnum3])/(spectra.line.table[elementden1] - spectra.line.table[elementden2] / spectra.line.table[elementden3])
+    } else if(transform1=="-" && elementnum2!="None" && transform2=="/" && elementnum3!="None" && elementden1!="None" && transform3=="-" && elementden2!="None" && transform4=="/" && elementden3!="None"){
+        (spectra.line.table[elementnum1] - spectra.line.table[elementnum2] / spectra.line.table[elementnum3])/(spectra.line.table[elementden1] - spectra.line.table[elementden2] / spectra.line.table[elementden3])
+    } else if(transform1=="*" && elementnum2!="None" && transform2=="/" && elementnum3!="None" && elementden1!="None" && transform3=="-" && elementden2!="None" && transform4=="/" && elementden3!="None"){
+        (spectra.line.table[elementnum1] * spectra.line.table[elementnum2] / spectra.line.table[elementnum3])/(spectra.line.table[elementden1] - spectra.line.table[elementden2] / spectra.line.table[elementden3])
+    } else if(transform1=="/" && elementnum2!="None" && transform2=="/" && elementnum3!="None" && elementden1!="None" && transform3=="-" && elementden2!="None" && transform4=="/" && elementden3!="None"){
+        (spectra.line.table[elementnum1] / spectra.line.table[elementnum2] / spectra.line.table[elementnum3])/(spectra.line.table[elementden1] - spectra.line.table[elementden2] / spectra.line.table[elementden3])
+        ####################################
+        #####Multiplication Two Denominators######
+        ####################################
+    } else if (transform1=="None" && elementden1!="None" && transform3=="*" && elementden2!="None" && transform4=="/" && elementden3!="None"){
+        spectra.line.table[elementnum1]/(spectra.line.table[elementden1] * spectra.line.table[elementden2] / spectra.line.table[elementden3])
+    } else if(transform1=="+" && elementnum2!="None" && elementden1!="None" && transform3=="*" && elementden2!="None" && transform4=="/" && elementden3!="None"){
+        (spectra.line.table[elementnum1] + spectra.line.table[elementden2] / spectra.line.table[elementden3])/(spectra.line.table[elementden1] * spectra.line.table[elementden2] / spectra.line.table[elementden3])
+    } else if(transform1=="-" && elementnum2!="None" && elementden1!="None" && transform3=="*" && elementden2!="None" && transform4=="/" && elementden3!="None"){
+        (spectra.line.table[elementnum1] - spectra.line.table[elementden2] / spectra.line.table[elementden3])/(spectra.line.table[elementden1] * spectra.line.table[elementden2] / spectra.line.table[elementden3])
+    } else if(transform1=="*" && elementnum2!="None" && elementden1!="None" && transform3=="*" && elementden2!="None" && transform4=="/" && elementden3!="None"){
+        (spectra.line.table[elementnum1] * spectra.line.table[elementden2] / spectra.line.table[elementden3])/(spectra.line.table[elementden1] * spectra.line.table[elementden2] / spectra.line.table[elementden3])
+    } else if(transform1=="/" && elementnum2!="None" && elementden1!="None" && transform3=="*" && elementden2!="None" && transform4=="/" && elementden3!="None"){
+        (spectra.line.table[elementnum1] / spectra.line.table[elementden2] / spectra.line.table[elementden3])/(spectra.line.table[elementden1] * spectra.line.table[elementden2] / spectra.line.table[elementden3])
+        ######Addition Third Variable
+    } else if(transform1=="+" && elementnum2!="None" && transform2=="+" && elementnum3!="None" && elementden1!="None" && transform3=="*" && elementden2!="None" && transform4=="/" && elementden3!="None"){
+        (spectra.line.table[elementnum1] + spectra.line.table[elementnum2] + spectra.line.table[elementnum3])/(spectra.line.table[elementden1] * spectra.line.table[elementden2] / spectra.line.table[elementden3])
+    } else if(transform1=="-" && elementnum2!="None" && transform2=="+" && elementnum3!="None" && elementden1!="None" && transform3=="*" && elementden2!="None" && transform4=="/" && elementden3!="None"){
+        (spectra.line.table[elementnum1] - spectra.line.table[elementnum2] + spectra.line.table[elementnum3])/(spectra.line.table[elementden1] * spectra.line.table[elementden2] / spectra.line.table[elementden3])
+    } else if(transform1=="*" && elementnum2!="None" && transform2=="+" && elementnum3!="None" && elementden1!="None" && transform3=="*" && elementden2!="None" && transform4=="/" && elementden3!="None"){
+        (spectra.line.table[elementnum1] * spectra.line.table[elementnum2] + spectra.line.table[elementnum3])/(spectra.line.table[elementden1] * spectra.line.table[elementden2] / spectra.line.table[elementden3])
+    } else if(transform1=="/" && elementnum2!="None" && transform2=="+" && elementnum3!="None" && elementden1!="None" && transform3=="*" && elementden2!="None" && transform4=="/" && elementden3!="None"){
+        (spectra.line.table[elementnum1] / spectra.line.table[elementnum2] + spectra.line.table[elementnum3])/(spectra.line.table[elementden1] * spectra.line.table[elementden2] / spectra.line.table[elementden3])
+        ######Subtraction Third Variable
+    } else if(transform1=="+" && elementnum2!="None" && transform2=="-" && elementnum3!="None" && elementden1!="None" && transform3=="*" && elementden2!="None" && transform4=="/" && elementden3!="None"){
+        (spectra.line.table[elementnum1] + spectra.line.table[elementnum2] - spectra.line.table[elementnum3])/(spectra.line.table[elementden1] * spectra.line.table[elementden2] / spectra.line.table[elementden3])
+    } else if(transform1=="-" && elementnum2!="None" && transform2=="-" && elementnum3!="None" && elementden1!="None" && transform3=="*" && elementden2!="None" && transform4=="/" && elementden3!="None"){
+        (spectra.line.table[elementnum1] - spectra.line.table[elementnum2] - spectra.line.table[elementnum3])/(spectra.line.table[elementden1] * spectra.line.table[elementden2] / spectra.line.table[elementden3])
+    } else if(transform1=="*" && elementnum2!="None" && transform2=="-" && elementnum3!="None" && elementden1!="None" && transform3=="*" && elementden2!="None" && transform4=="/" && elementden3!="None"){
+        (spectra.line.table[elementnum1] * spectra.line.table[elementnum2] - spectra.line.table[elementnum3])/(spectra.line.table[elementden1] * spectra.line.table[elementden2] / spectra.line.table[elementden3])
+    } else if(transform1=="/" && elementnum2!="None" && transform2=="-" && elementnum3!="None" && elementden1!="None" && transform3=="*" && elementden2!="None" && transform4=="/" && elementden3!="None"){
+        (spectra.line.table[elementnum1] / spectra.line.table[elementnum2] - spectra.line.table[elementnum3])/(spectra.line.table[elementden1] * spectra.line.table[elementden2] / spectra.line.table[elementden3])
+        ######Multiplication Third Variable
+    } else if(transform1=="+" && elementnum2!="None" && transform2=="*" && elementnum3!="None" && elementden1!="None" && transform3=="*" && elementden2!="None" && transform4=="/" && elementden3!="None"){
+        (spectra.line.table[elementnum1] + spectra.line.table[elementnum2] * spectra.line.table[elementnum3])/(spectra.line.table[elementden1] * spectra.line.table[elementden2] / spectra.line.table[elementden3])
+    } else if(transform1=="-" && elementnum2!="None" && transform2=="*" && elementnum3!="None" && elementden1!="None" && transform3=="*" && elementden2!="None" && transform4=="/" && elementden3!="None"){
+        (spectra.line.table[elementnum1] - spectra.line.table[elementnum2] * spectra.line.table[elementnum3])/(spectra.line.table[elementden1] * spectra.line.table[elementden2] / spectra.line.table[elementden3])
+    } else if(transform1=="*" && elementnum2!="None" && transform2=="*" && elementnum3!="None" && elementden1!="None" && transform3=="*" && elementden2!="None" && transform4=="/" && elementden3!="None"){
+        (spectra.line.table[elementnum1] * spectra.line.table[elementnum2] * spectra.line.table[elementnum3])/(spectra.line.table[elementden1] * spectra.line.table[elementden2] / spectra.line.table[elementden3])
+    } else if(transform1=="/" && elementnum2!="None" && transform2=="*" && elementnum3!="None" && elementden1!="None" && transform3=="*" && elementden2!="None" && transform4=="/" && elementden3!="None"){
+        (spectra.line.table[elementnum1] / spectra.line.table[elementnum2] * spectra.line.table[elementnum3])/(spectra.line.table[elementden1] * spectra.line.table[elementden2] / spectra.line.table[elementden3])
+        ######Division Third Variable
+    } else if(transform1=="+" && elementnum2!="None" && transform2=="/" && elementnum3!="None" && elementden1!="None" && transform3=="*" && elementden2!="None" && transform4=="/" && elementden3!="None"){
+        (spectra.line.table[elementnum1] + spectra.line.table[elementnum2] / spectra.line.table[elementnum3])/(spectra.line.table[elementden1] * spectra.line.table[elementden2] / spectra.line.table[elementden3])
+    } else if(transform1=="-" && elementnum2!="None" && transform2=="/" && elementnum3!="None" && elementden1!="None" && transform3=="*" && elementden2!="None" && transform4=="/" && elementden3!="None"){
+        (spectra.line.table[elementnum1] - spectra.line.table[elementnum2] / spectra.line.table[elementnum3])/(spectra.line.table[elementden1] * spectra.line.table[elementden2] / spectra.line.table[elementden3])
+    } else if(transform1=="*" && elementnum2!="None" && transform2=="/" && elementnum3!="None" && elementden1!="None" && transform3=="*" && elementden2!="None" && transform4=="/" && elementden3!="None"){
+        (spectra.line.table[elementnum1] * spectra.line.table[elementnum2] / spectra.line.table[elementnum3])/(spectra.line.table[elementden1] * spectra.line.table[elementden2] / spectra.line.table[elementden3])
+    } else if(transform1=="/" && elementnum2!="None" && transform2=="/" && elementnum3!="None" && elementden1!="None" && transform3=="*" && elementden2!="None" && transform4=="/" && elementden3!="None"){
+        (spectra.line.table[elementnum1] / spectra.line.table[elementnum2] / spectra.line.table[elementnum3])/(spectra.line.table[elementden1] * spectra.line.table[elementden2] / spectra.line.table[elementden3])
+        ####################################
+        #####Division Two Denominators######
+        ####################################
+    } else if (transform1=="None" && elementden1!="None" && transform3=="/" && elementden2!="None" && transform4=="/" && elementden3!="None"){
+        spectra.line.table[elementnum1]/(spectra.line.table[elementden1] / spectra.line.table[elementden2] / spectra.line.table[elementden3])
+    } else if(transform1=="+" && elementnum2!="None" && elementden1!="None" && transform3=="/" && elementden2!="None" && transform4=="/" && elementden3!="None"){
+        (spectra.line.table[elementnum1] + spectra.line.table[elementden2] / spectra.line.table[elementden3])/(spectra.line.table[elementden1] / spectra.line.table[elementden2] / spectra.line.table[elementden3])
+    } else if(transform1=="-" && elementnum2!="None" && elementden1!="None" && transform3=="/" && elementden2!="None" && transform4=="/" && elementden3!="None"){
+        (spectra.line.table[elementnum1] - spectra.line.table[elementden2] / spectra.line.table[elementden3])/(spectra.line.table[elementden1] / spectra.line.table[elementden2] / spectra.line.table[elementden3])
+    } else if(transform1=="*" && elementnum2!="None" && elementden1!="None" && transform3=="/" && elementden2!="None" && transform4=="/" && elementden3!="None"){
+        (spectra.line.table[elementnum1] * spectra.line.table[elementden2] / spectra.line.table[elementden3])/(spectra.line.table[elementden1] / spectra.line.table[elementden2] / spectra.line.table[elementden3])
+    } else if(transform1=="/" && elementnum2!="None" && elementden1!="None" && transform3=="/" && elementden2!="None" && transform4=="/" && elementden3!="None"){
+        (spectra.line.table[elementnum1] / spectra.line.table[elementden2] / spectra.line.table[elementden3])/(spectra.line.table[elementden1] / spectra.line.table[elementden2] / spectra.line.table[elementden3])
+        ######Addition Third Variable
+    } else if(transform1=="+" && elementnum2!="None" && transform2=="+" && elementnum3!="None" && elementden1!="None" && transform3=="/" && elementden2!="None" && transform4=="/" && elementden3!="None"){
+        (spectra.line.table[elementnum1] + spectra.line.table[elementnum2] + spectra.line.table[elementnum3])/(spectra.line.table[elementden1] / spectra.line.table[elementden2] / spectra.line.table[elementden3])
+    } else if(transform1=="-" && elementnum2!="None" && transform2=="+" && elementnum3!="None" && elementden1!="None" && transform3=="/" && elementden2!="None" && transform4=="/" && elementden3!="None"){
+        (spectra.line.table[elementnum1] - spectra.line.table[elementnum2] + spectra.line.table[elementnum3])/(spectra.line.table[elementden1] / spectra.line.table[elementden2] / spectra.line.table[elementden3])
+    } else if(transform1=="*" && elementnum2!="None" && transform2=="+" && elementnum3!="None" && elementden1!="None" && transform3=="/" && elementden2!="None" && transform4=="/" && elementden3!="None"){
+        (spectra.line.table[elementnum1] * spectra.line.table[elementnum2] + spectra.line.table[elementnum3])/(spectra.line.table[elementden1] / spectra.line.table[elementden2] / spectra.line.table[elementden3])
+    } else if(transform1=="/" && elementnum2!="None" && transform2=="+" && elementnum3!="None" && elementden1!="None" && transform3=="/" && elementden2!="None" && transform4=="/" && elementden3!="None"){
+        (spectra.line.table[elementnum1] / spectra.line.table[elementnum2] + spectra.line.table[elementnum3])/(spectra.line.table[elementden1] / spectra.line.table[elementden2] / spectra.line.table[elementden3])
+        ######Subtraction Third Variable
+    } else if(transform1=="+" && elementnum2!="None" && transform2=="-" && elementnum3!="None" && elementden1!="None" && transform3=="/" && elementden2!="None" && transform4=="/" && elementden3!="None"){
+        (spectra.line.table[elementnum1] + spectra.line.table[elementnum2] - spectra.line.table[elementnum3])/(spectra.line.table[elementden1] / spectra.line.table[elementden2] / spectra.line.table[elementden3])
+    } else if(transform1=="-" && elementnum2!="None" && transform2=="-" && elementnum3!="None" && elementden1!="None" && transform3=="/" && elementden2!="None" && transform4=="/" && elementden3!="None"){
+        (spectra.line.table[elementnum1] - spectra.line.table[elementnum2] - spectra.line.table[elementnum3])/(spectra.line.table[elementden1] / spectra.line.table[elementden2] / spectra.line.table[elementden3])
+    } else if(transform1=="*" && elementnum2!="None" && transform2=="-" && elementnum3!="None" && elementden1!="None" && transform3=="/" && elementden2!="None" && transform4=="/" && elementden3!="None"){
+        (spectra.line.table[elementnum1] * spectra.line.table[elementnum2] - spectra.line.table[elementnum3])/(spectra.line.table[elementden1] / spectra.line.table[elementden2] / spectra.line.table[elementden3])
+    } else if(transform1=="/" && elementnum2!="None" && transform2=="-" && elementnum3!="None" && elementden1!="None" && transform3=="/" && elementden2!="None" && transform4=="/" && elementden3!="None"){
+        (spectra.line.table[elementnum1] / spectra.line.table[elementnum2] - spectra.line.table[elementnum3])/(spectra.line.table[elementden1] / spectra.line.table[elementden2] / spectra.line.table[elementden3])
+        ######Multiplication Third Variable
+    } else if(transform1=="+" && elementnum2!="None" && transform2=="*" && elementnum3!="None" && elementden1!="None" && transform3=="/" && elementden2!="None" && transform4=="/" && elementden3!="None"){
+        (spectra.line.table[elementnum1] + spectra.line.table[elementnum2] * spectra.line.table[elementnum3])/(spectra.line.table[elementden1] / spectra.line.table[elementden2] / spectra.line.table[elementden3])
+    } else if(transform1=="-" && elementnum2!="None" && transform2=="*" && elementnum3!="None" && elementden1!="None" && transform3=="/" && elementden2!="None" && transform4=="/" && elementden3!="None"){
+        (spectra.line.table[elementnum1] - spectra.line.table[elementnum2] * spectra.line.table[elementnum3])/(spectra.line.table[elementden1] / spectra.line.table[elementden2] / spectra.line.table[elementden3])
+    } else if(transform1=="*" && elementnum2!="None" && transform2=="*" && elementnum3!="None" && elementden1!="None" && transform3=="/" && elementden2!="None" && transform4=="/" && elementden3!="None"){
+        (spectra.line.table[elementnum1] * spectra.line.table[elementnum2] * spectra.line.table[elementnum3])/(spectra.line.table[elementden1] / spectra.line.table[elementden2] / spectra.line.table[elementden3])
+    } else if(transform1=="/" && elementnum2!="None" && transform2=="*" && elementnum3!="None" && elementden1!="None" && transform3=="/" && elementden2!="None" && transform4=="/" && elementden3!="None"){
+        (spectra.line.table[elementnum1] / spectra.line.table[elementnum2] * spectra.line.table[elementnum3])/(spectra.line.table[elementden1] / spectra.line.table[elementden2] / spectra.line.table[elementden3])
+        ######Division Third Variable
+    } else if(transform1=="+" && elementnum2!="None" && transform2=="/" && elementnum3!="None" && elementden1!="None" && transform3=="/" && elementden2!="None" && transform4=="/" && elementden3!="None"){
+        (spectra.line.table[elementnum1] + spectra.line.table[elementnum2] / spectra.line.table[elementnum3])/(spectra.line.table[elementden1] / spectra.line.table[elementden2] / spectra.line.table[elementden3])
+    } else if(transform1=="-" && elementnum2!="None" && transform2=="/" && elementnum3!="None" && elementden1!="None" && transform3=="/" && elementden2!="None" && transform4=="/" && elementden3!="None"){
+        (spectra.line.table[elementnum1] - spectra.line.table[elementnum2] / spectra.line.table[elementnum3])/(spectra.line.table[elementden1] / spectra.line.table[elementden2] / spectra.line.table[elementden3])
+    } else if(transform1=="*" && elementnum2!="None" && transform2=="/" && elementnum3!="None" && elementden1!="None" && transform3=="/" && elementden2!="None" && transform4=="/" && elementden3!="None"){
+        (spectra.line.table[elementnum1] * spectra.line.table[elementnum2] / spectra.line.table[elementnum3])/(spectra.line.table[elementden1] / spectra.line.table[elementden2] / spectra.line.table[elementden3])
+    } else if(transform1=="/" && elementnum2!="None" && transform2=="/" && elementnum3!="None" && elementden1!="None" && transform3=="/" && elementden2!="None" && transform4=="/" && elementden3!="None"){
+        (spectra.line.table[elementnum1] / spectra.line.table[elementnum2] / spectra.line.table[elementnum3])/(spectra.line.table[elementden1] / spectra.line.table[elementden2] / spectra.line.table[elementden3])
+    }
 }
