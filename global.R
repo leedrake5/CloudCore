@@ -33,6 +33,19 @@ library(shiny)
 library(DT)
 library(rPDZ)
 
+my.max <- function(x) ifelse( !all(is.na(x)), max(x, na.rm=T), NA)
+my.min <- function(x) ifelse( !all(is.na(x)), min(x, na.rm=T), NA)
+
+ensocount <- read.csv("climate/ensocount.csv")
+ensocount$Age <- ensocount$cal.date*-1
+epica <- read.csv("climate/epica.csv")
+#epica$Age <- epica$Age*-1
+gisp2 <- read.csv("climate/gisp2.csv")
+nao <- read.csv("climate/nao.csv")
+#nao$Age <- nao$Age.calyrBP.*-1
+vostok <- read.csv("climate/vostok.csv")
+#vostok$Age <- vostok$Ice.age..GT4.*-1
+
 plot_dim2 <- function(dim = c(NA, NA), scale = 1, units = c("in", "cm", "mm"),
 limitsize = TRUE) {
     

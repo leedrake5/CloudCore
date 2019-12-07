@@ -373,6 +373,7 @@ actionButton('timeseriesact2', "2"),
 actionButton('timeseriesact3', "3"),
 actionButton('timeseriesact4', "4"),
 actionButton('timeseriesact5', "5"),
+actionButton('timeseriesact6', "Climate"),
 
 
 
@@ -503,6 +504,29 @@ uiOutput("hover_info3e")
 ),
 tags$hr(),
 downloadButton('downloadPlot3e', "Plot")
+),
+
+tabPanel("Climate Plot",
+div(
+style = "position:relative",
+plotOutput('timeseriesplot6',
+hover = hoverOpts("plot_hover3f", delay = 100, delayType = "debounce"),
+dblclick = "plot_3f_dblclick",
+brush = brushOpts(id = "plot_3f_brush", resetOnNew = TRUE),
+height = 450),
+uiOutput("hover_info3f")
+),
+div(
+style = "position:relative",
+plotOutput('climateplot6',
+hover = hoverOpts("climateplot_hover3f", delay = 100, delayType = "debounce"),
+dblclick = "climateplot_3f_dblclick",
+brush = brushOpts(id = "climateplot_3f_brush", resetOnNew = TRUE),
+height = 450),
+uiOutput("climatehover_info3f")
+),
+selectInput("climatecompare", "Climate Proxy Record", choices=c("GISP2", "EPICA", "Vostok", "NAO", "ENSO"), selected="GISP2")
+
 )
 
 
