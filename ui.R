@@ -526,7 +526,7 @@ height = 450),
 uiOutput("climatehover_info3f")
 ),
 tags$hr(),
-selectInput("climatecompare", "Climate Proxy Record", choices=c("GISP2", "EPICA", "Vostok", "NAO", "ENSO"), selected="GISP2"),
+selectInput("climatecompare", "Climate Proxy Record", choices=c("GISP2", "EPICA", "Vostok", "NAO", "ENSO", "El Junco"), selected="GISP2"),
 downloadButton('downloadPlot3f', "Plot")
 
 )

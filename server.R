@@ -1571,7 +1571,7 @@ shinyServer(function(input, output, session) {
                 } else if(input$usecalfile==FALSE && input$filetype=="Artax Excel"){
                     colnames(spectra.line.table)
                 } else if(input$usecalfile==FALSE && input$filetype=="Spreadsheet"){
-                    c("Ca.K.alpha", "Fe.K.alpha", "Ti.K.alpha")
+                    lineOptions()
                 } else if(input$usecalfile==TRUE && input$filetype=="Spectra"){
                     quantified
                 } else if(input$usecalfile==TRUE && input$filetype=="Net"){
@@ -6319,7 +6319,9 @@ shinyServer(function(input, output, session) {
                     data.frame(Age=as.numeric(as.vector(nao$Age.calyrBP.)), Selected=as.numeric(as.vector(nao$NAO)), stringsAsFactors=FALSE)
                 } else if(input$climatecompare=="ENSO"){
                     data.frame(Age=as.numeric(as.vector(ensocount$Age)), Selected=as.numeric(as.vector(ensocount$enso.count)), stringsAsFactors=FALSE)
-                }
+                } else if(input$climatecompare=="El Junco"){
+                    data.frame(Age=as.numeric(as.vector(eljunco$Age..cal.yrs.BP.)), Selected=as.numeric(as.vector(eljunco$Sand.Silt)), stringsAsFactors=FALSE)
+                               }
                 
                 #climate.data$Age <- climate.data$Age
                 
@@ -6920,6 +6922,8 @@ shinyServer(function(input, output, session) {
                     "NAO"
                 } else if(input$climatecompare=="ENSO"){
                     "ENSO"
+                } else if(input$climatecompare=="El Junco"){
+                    "ElJunco"
                 }
                 
             })

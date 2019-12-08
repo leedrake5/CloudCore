@@ -45,6 +45,7 @@ nao <- read.csv("climate/nao.csv")
 #nao$Age <- nao$Age.calyrBP.*-1
 vostok <- read.csv("climate/vostok.csv")
 #vostok$Age <- vostok$Ice.age..GT4.*-1
+eljunco <- read.csv("climate/eljunco.csv")
 
 plot_dim2 <- function(dim = c(NA, NA), scale = 1, units = c("in", "cm", "mm"),
 limitsize = TRUE) {
