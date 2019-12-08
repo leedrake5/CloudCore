@@ -6244,8 +6244,9 @@ shinyServer(function(input, output, session) {
                 }
             })
             
+                
             
-            ranges3f <- reactiveValues(x = NULL, y = NULL)
+            ranges3f <- reactiveValues(x = tryCatch(c(my.min(ageData()$Age), my.max(ageData()$Age)), error=function(e) NULL), y = NULL)
             
             observeEvent(input$plot_3f_dblclick, {
                 brush <- input$plot_3f_brush
@@ -6254,7 +6255,7 @@ shinyServer(function(input, output, session) {
                     ranges3f$y <- c(brush$ymin, brush$ymax)
                     
                 } else {
-                    ranges3f$x <- NULL
+                    ranges3f$x <- c(my.min(ageData()$Age), my.max(ageData()$Age))
                     ranges3f$y <- NULL
                 }
             })
@@ -6827,9 +6828,6 @@ shinyServer(function(input, output, session) {
 
             
             output$climateplot6 <- renderPlot({
-                
-                
-                
                 plotInputClimate()
             })
             
@@ -6899,7 +6897,7 @@ shinyServer(function(input, output, session) {
                 brush <- input$climateplot_3f_brush
                 if (!is.null(brush)) {
                     ranges3f$x <- c(brush$xmin, brush$xmax)
-                    cliamteranges3f$y <- c(brush$ymin, brush$ymax)
+                    climateranges3f$y <- c(brush$ymin, brush$ymax)
                     
                 } else {
                     ranges3f$x <- NULL
@@ -6912,21 +6910,40 @@ shinyServer(function(input, output, session) {
                 
                 
                 
-                trendy <- if(input$climatecompare=="GISP2"){
-                    "GISP2 Temperature (°C)"
+                if(input$climatecompare=="GISP2"){
+                    "GISP2"
                 } else if(input$climatecompare=="EPICA"){
-                    "EPICA Temperature Anomaly (°C)"
+                    "EPICA"
                 } else if(input$climatecompare=="Vostok"){
-                    "Vostok Temperature Anomaly (°C)"
+                    "Vostok"
                 } else if(input$climatecompare=="NAO"){
-                    "North Atlantic Oscillation Index"
+                    "NAO"
                 } else if(input$climatecompare=="ENSO"){
-                    "ENSO Events Per Century"
+                    "ENSO"
                 }
                 
-                trendy.label <- paste(c(input$projectname, "_", trendy), collapse='')
-                trendy.label
             })
+            
+            climateMergePlot <- reactive({
+                
+                #gridExtra::grid.arrange(plotInput3f(), plotInputClimate(), nrow=2)
+                grid.draw(rbind(ggplotGrob(plotInput3f()), ggplotGrob(plotInputClimate()), size="first"))
+                
+            })
+            
+            trendClimateMerge <- reactive({
+                
+                paste0(climatetrendPlotf(), "_", trendPlotf())
+                
+            })
+            
+            output$downloadPlot3f <- downloadHandler(
+            filename = function() { paste(trendClimateMerge(), '.tiff', sep='') },
+            content = function(file) {
+                ggsave(file,climateMergePlot(), device="tiff", compression="lzw",  dpi=300, width=12, height=10)
+            }
+            )
+            
             
             
             

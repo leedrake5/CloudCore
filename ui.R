@@ -525,7 +525,9 @@ brush = brushOpts(id = "climateplot_3f_brush", resetOnNew = TRUE),
 height = 450),
 uiOutput("climatehover_info3f")
 ),
-selectInput("climatecompare", "Climate Proxy Record", choices=c("GISP2", "EPICA", "Vostok", "NAO", "ENSO"), selected="GISP2")
+tags$hr(),
+selectInput("climatecompare", "Climate Proxy Record", choices=c("GISP2", "EPICA", "Vostok", "NAO", "ENSO"), selected="GISP2"),
+downloadButton('downloadPlot3f', "Plot")
 
 )
 
