@@ -6436,7 +6436,10 @@ shinyServer(function(input, output, session) {
             
             plotInputClimate <- reactive({
                 
+                core.data <- hoverHold3f()
                 
+                climate.labels <- unique(core.data$Climate)
+                lake.labels <- unique(core.data$Lake)
                 
                 x.axis <- if (input$xaxistype=="Depth") {
                     paste("Depth (", input$lengthunit, ")", sep="", collapse="")
@@ -6454,7 +6457,7 @@ shinyServer(function(input, output, session) {
                 
                 
                 spectra.timeseries.table <- climateData()
-                
+                                
                 
                 
                 trendy <- if(input$climatecompare=="GISP2"){
@@ -6467,6 +6470,8 @@ shinyServer(function(input, output, session) {
                     "North Atlantic Oscillation Index"
                 } else if(input$climatecompare=="ENSO"){
                     "ENSO Events Per Century"
+                } else if(input$climatecompare=="El Junco"){
+                    "El Junco Silt/Sand %"
                 }
                 
                 
@@ -6548,7 +6553,8 @@ shinyServer(function(input, output, session) {
                 
                 climate.time.series.line <- qplot(Interval, DEMA(Selected, input$smoothing), geom="line", data = spectra.timeseries.table, colour = as.factor(Climate)) +
                 coord_cartesian(xlim = ranges3f$x, ylim = climateranges3f$y, expand = TRUE) +
-                scale_colour_discrete("Climatic Period") +
+                scale_colour_manual("Climatic Period",
+                    breaks=climate.labels, values=gg_color_hue(length(climate.labels))) +
                 theme_light() +
                 theme(axis.text.x = element_text(size=15)) +
                 theme(axis.text.y = element_text(size=15)) +
@@ -6564,6 +6570,8 @@ shinyServer(function(input, output, session) {
                 coord_cartesian(xlim = ranges3f$x, ylim = climateranges3f$y, expand = TRUE) +
                 scale_colour_discrete("Lake Level") +
                 theme_light() +
+                scale_colour_manual("Lake Stage",
+                breaks=lake.labels,values=gg_color_hue(length(lake.labels))) +
                 theme(axis.text.x = element_text(size=15)) +
                 theme(axis.text.y = element_text(size=15)) +
                 theme(axis.title.x = element_text(size=15)) +
@@ -6705,6 +6713,8 @@ shinyServer(function(input, output, session) {
                 coord_cartesian(xlim = ranges3f$x, ylim = climateranges3f$y, expand = TRUE) +
                 scale_colour_discrete("Climatic Period") +
                 theme_light() +
+                scale_colour_manual("Climatic Period",
+                    breaks=climate.labels, values=gg_color_hue(length(climate.labels))) +
                 theme(axis.text.x = element_text(size=15)) +
                 theme(axis.text.y = element_text(size=15)) +
                 theme(axis.title.x = element_text(size=15)) +
@@ -6720,6 +6730,8 @@ shinyServer(function(input, output, session) {
                 coord_cartesian(xlim = ranges3f$x, ylim = climateranges3f$y, expand = TRUE) +
                 scale_colour_discrete("Lake Level") +
                 theme_light() +
+                scale_colour_manual("Lake Stage",
+                    breaks=lake.labels, values=gg_color_hue(length(lake.labels))) +
                 theme(axis.text.x = element_text(size=15)) +
                 theme(axis.text.y = element_text(size=15)) +
                 theme(axis.title.x = element_text(size=15)) +

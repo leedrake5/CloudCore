@@ -33,6 +33,12 @@ library(shiny)
 library(DT)
 library(rPDZ)
 
+gg_color_hue <- function(n) {
+  hues = seq(15, 375, length = n + 1)
+  hcl(h = hues, l = 65, c = 100)[1:n]
+}
+
+
 my.max <- function(x) ifelse( !all(is.na(x)), max(x, na.rm=T), NA)
 my.min <- function(x) ifelse( !all(is.na(x)), min(x, na.rm=T), NA)
 
