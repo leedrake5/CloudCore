@@ -6307,21 +6307,73 @@ shinyServer(function(input, output, session) {
                 
             })
             
+            climateLoad <- reactive({
+               
+                
+                if(input$climatecompare=="GISP2"){
+                    gisp2
+                } else if(input$climatecompare=="GISP2 Ion"){
+                    gisp2ion
+                } else if(input$climatecompare=="EPICA"){
+                    epica
+                } else if(input$climatecompare=="Vostok"){
+                   vostok
+                } else if(input$climatecompare=="NAO"){
+                   nao
+                } else if(input$climatecompare=="ENSO"){
+                   ensocount
+                } else if(input$climatecompare=="El Junco"){
+                   eljunco
+                } else if(input$climatecompare=="Bond"){
+                    bond
+                } else if(input$climatecompare=="PDO"){
+                    elsinore
+                }
+            
+            })
+            
+            climateLoadChoices <- reactive({
+                colnames(climateLoad())[!colnames(climateLoad()) %in% "Age"]
+            })
+            
+            climateLoadPref <- reactive({
+                
+                if(input$climatecompare=="GISP2"){
+                    "Temp"
+                } else if(input$climatecompare=="GISP2 Ion"){
+                    "SO4_ppb"
+                } else if(input$climatecompare=="EPICA"){
+                    "TempAnomaly"
+                } else if(input$climatecompare=="Vostok"){
+                   "TempAnomaly"
+                } else if(input$climatecompare=="NAO"){
+                   "NAO"
+                } else if(input$climatecompare=="ENSO"){
+                   "ENSO"
+                } else if(input$climatecompare=="El Junco"){
+                   "Silt_Sand"
+                } else if(input$climatecompare=="Bond"){
+                    "HSG"
+                } else if(input$climatecompare=="PDO"){
+                    "Sand"
+                }
+                
+            })
+            
+            output$climatesubselect <- renderUI({
+                
+                selectInput("climatesubrecord", "Proxy Record", choices=climateLoadChoices(), selected=climateLoadPref())
+                
+            })
+            
     climateData <- reactive({
                 
-            climate.data <- if(input$climatecompare=="GISP2"){
-                data.frame(Age=as.numeric(as.vector(gisp2$Age)), Selected=as.numeric(as.vector(gisp2$Temperature..C.)), stringsAsFactors=FALSE)
-                } else if(input$climatecompare=="EPICA"){
-                    data.frame(Age=as.numeric(as.vector(epica$Age)), Selected=as.numeric(as.vector(epica$Temp)), stringsAsFactors=FALSE)
-                } else if(input$climatecompare=="Vostok"){
-                    data.frame(Age=as.numeric(as.vector(vostok$Ice.age..GT4.)), Selected=as.numeric(as.vector(vostok$deltaTS)), stringsAsFactors=FALSE)
-                } else if(input$climatecompare=="NAO"){
-                    data.frame(Age=as.numeric(as.vector(nao$Age.calyrBP.)), Selected=as.numeric(as.vector(nao$NAO)), stringsAsFactors=FALSE)
-                } else if(input$climatecompare=="ENSO"){
-                    data.frame(Age=as.numeric(as.vector(ensocount$Age)), Selected=as.numeric(as.vector(ensocount$enso.count)), stringsAsFactors=FALSE)
-                } else if(input$climatecompare=="El Junco"){
-                    data.frame(Age=as.numeric(as.vector(eljunco$Age..cal.yrs.BP.)), Selected=as.numeric(as.vector(eljunco$Sand.Silt)), stringsAsFactors=FALSE)
-                               }
+            climate.load <- climateLoad()
+            climate.load <- climate.load[complete.cases(climate.load),]
+            climate.data <- data.frame(
+            Age=as.numeric(as.vector(climate.load$Age)),
+            Selected=as.numeric(as.vector(climate.load[,input$climatesubrecord])),
+                stringsAsFactors=FALSE)
                 
                 #climate.data$Age <- climate.data$Age
                 
@@ -6462,6 +6514,8 @@ shinyServer(function(input, output, session) {
                 
                 trendy <- if(input$climatecompare=="GISP2"){
                     "GISP2 Temperature (°C)"
+                } else if(input$climatecompare=="GISP2 Ion"){
+                    paste0("GISP2 ", input$climatesubrecord)
                 } else if(input$climatecompare=="EPICA"){
                     "EPICA Temperature Anomaly (°C)"
                 } else if(input$climatecompare=="Vostok"){
@@ -6472,7 +6526,12 @@ shinyServer(function(input, output, session) {
                     "ENSO Events Per Century"
                 } else if(input$climatecompare=="El Junco"){
                     "El Junco Silt/Sand %"
+                } else if(input$climatecompare=="Bond"){
+                    paste0("Bond ", input$climatesubrecord)
+                } else if(input$climatecompare=="PDO"){
+                    paste0("Pacific Decadal Oscillation ", input$climatesubrecord)
                 }
+            
                 
                 
                 black.time.series <- qplot(Interval, DEMA(Selected, input$smoothing), geom="line", data = spectra.timeseries.table) +
@@ -6926,6 +6985,8 @@ shinyServer(function(input, output, session) {
                 
                 if(input$climatecompare=="GISP2"){
                     "GISP2"
+                } else if(input$climatecompare=="GISP2 Ion"){
+                    "GISP2Ion"
                 } else if(input$climatecompare=="EPICA"){
                     "EPICA"
                 } else if(input$climatecompare=="Vostok"){
@@ -6936,6 +6997,10 @@ shinyServer(function(input, output, session) {
                     "ENSO"
                 } else if(input$climatecompare=="El Junco"){
                     "ElJunco"
+                } else if(input$climatecompare=="Bond"){
+                    "Bond"
+                } else if(input$climatecompare=="PDO"){
+                    "PDO"
                 }
                 
             })
