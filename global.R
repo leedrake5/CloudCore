@@ -18,7 +18,7 @@ if("rPDZ" %in% installed.packages()[,"Package"]==FALSE && get_os()=="windows"){
     install.packages("http://www.xrf.guru/packages/rPDZ_1.0.tar.gz", repos=NULL)
 }
 
-library(rPDZ)
+tryCatch(library(rPDZ), error=function(e) NULL)
 
 testb <- 5
 

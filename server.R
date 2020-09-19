@@ -2246,6 +2246,10 @@ shinyServer(function(input, output, session) {
                 spectra.line.table.age.unconstrained$Age <- ages$Age
                 
                 
+                
+                
+                
+                
                 lateholocene <- subset(spectra.line.table.age.unconstrained$Age, spectra.line.table.age.unconstrained$Age <= 5000 & spectra.line.table.age.unconstrained$Age > -1000)
                 
                 altithermal <- subset(spectra.line.table.age.unconstrained$Age, spectra.line.table.age.unconstrained$Age <= 9000 & spectra.line.table.age.unconstrained$Age > 5000)
@@ -2339,6 +2343,14 @@ shinyServer(function(input, output, session) {
                 } else if(input$constrainage==FALSE) {
                     spectra.line.table.age.unconstrained
                 }
+                
+                #spectra.line.table.age <- spectra.line.table.age[order(-spectra.line.table.age$Age),]
+                
+                accumulation.pre <- Hodder.v(spectra.line.table.age$Age)
+                accumulation.pre[accumulation.pre==0] <- NA
+                
+                spectra.line.table.age$Accumulation <- as.numeric(mean(Hodder.v(spectra.line.table.age$Depth))/accumulation.pre)
+                spectra.line.table.age <- spectra.line.table.age[complete.cases(spectra.line.table.age),]
                 
                 #spectra.line.table.age$Age <- spectra.line.table.age$Age
                 
@@ -2837,33 +2849,50 @@ shinyServer(function(input, output, session) {
                 spectra.timeseries.table <- data.frame(spectra.line.table[,c(input$xaxistype)], (spectra.line.table[,c(elementhold$elementtrenda)]/spectra.line.table.norm[,c(elementhold$elementnorma)]*input$ymultiply), spectra.line.table$Cluster, spectra.line.table$Qualitative, spectra.line.table$Depth, spectra.line.table$Age, spectra.line.table$Climate, spectra.line.table$Lake)
                 colnames(spectra.timeseries.table) <- c("Interval", "Selected", "Cluster", "Qualitative", "Depth", "Age", "Climate", "Lake")
                 
-                element.trend.name <- if(elementhold$elementtrenda %in% elementLines){
-                    gsub("[.]", "", substr(elementhold$elementtrenda, 1, 2))
-                } else {
-                    elementhold$elementtrenda
+                elementtrend <- elementhold$elementtrenda
+                elementnorm <- elementhold$elementnorma
+                
+                
+                element.trend.name <- if(elementnorm=="None"){
+                    if(elementtrend %in% elementLines){
+                        paste0(gsub("[.]", "", substr(elementtrend, 1, 2)), " Counts per Second")
+                    } else {
+                        if(elementtrend=="Accumulation"){
+                            paste0("Accumulation (", input$lengthunit, " per year)")
+                        } else {
+                            elementtrend
+                        }
+                    }
+                } else if(elementnorm!="None"){
+                    if(elementtrend %in% elementLines){
+                        gsub("[.]", "", substr(elementtrend, 1, 2))
+                    } else {
+                        elementtrend
+                    }
                 }
                 
-                element.norm.name <- if(elementhold$elementnorma %in% elementLines){
-                    gsub("[.]", "", substr(elementhold$elementnorma, 1, 2))
+                element.norm.name <- if(elementnorm %in% elementLines){
+                    gsub("[.]", "", substr(elementnorm, 1, 2))
                 } else {
-                    elementhold$elementnorma
+                    elementnorm
                 }
                 
-                trendy <-  if(elementhold$elementnorma=="None" && input$filetype=="Spectra" && input$usecalfile==FALSE && input$usecustumyaxis==FALSE) {
-                    paste(element.trend.name, " Counts per Second", sep="")
-                } else if(elementhold$elementnorma=="None" && input$filetype=="Spectra" && input$usecalfile==TRUE && input$usecustumyaxis==FALSE) {
+                
+                trendy <-  if(elementnorm=="None" && input$filetype=="Spectra" && input$usecalfile==FALSE && input$usecustumyaxis==FALSE) {
+                    paste(element.trend.name, sep="")
+                } else if(elementnorm=="None" && input$filetype=="Spectra" && input$usecalfile==TRUE && input$usecustumyaxis==FALSE) {
                     paste(element.trend.name, " ", calFileContentsFirst()[[2]], sep="")
-                } else if(elementhold$elementnorma=="None" && input$filetype=="Spreadsheet" && input$usecalfile==FALSE && input$usecustumyaxis==FALSE) {
-                    paste(element.trend.name, " Counts per Second", sep="")
-                } else if(elementhold$elementnorma=="None" && input$filetype=="Net" && input$usecalfile==FALSE && input$usecustumyaxis==FALSE) {
-                    paste(element.trend.name, " Net Counts", sep="")
-                } else if(elementhold$elementnorma=="None" && input$filetype=="Net" && input$usecalfile==TRUE && input$usecustumyaxis==FALSE) {
+                } else if(elementnorm=="None" && input$filetype=="Spreadsheet" && input$usecalfile==FALSE && input$usecustumyaxis==FALSE) {
+                    paste(element.trend.name, sep="")
+                } else if(elementnorm=="None" && input$filetype=="Net" && input$usecalfile==FALSE && input$usecustumyaxis==FALSE) {
+                    paste(element.trend.name, sep="")
+                } else if(elementnorm=="None" && input$filetype=="Net" && input$usecalfile==TRUE && input$usecustumyaxis==FALSE) {
                     paste(element.trend.name, " ", calFileContentsFirst()[[2]], sep="")
-                } else if(elementhold$elementnorma=="None" && input$filetype=="Artax Excel" && input$usecalfile==FALSE && input$usecustumyaxis==FALSE) {
-                    paste(element.trend.name, " Net Counts", sep="")
-                } else if(elementhold$elementnorma=="None" && input$filetype=="Artax Excel" && input$usecalfile==TRUE && input$usecustumyaxis==FALSE) {
+                } else if(elementnorm=="None" && input$filetype=="Artax Excel" && input$usecalfile==FALSE && input$usecustumyaxis==FALSE) {
+                    paste(element.trend.name, sep="")
+                } else if(elementnorm=="None" && input$filetype=="Artax Excel" && input$usecalfile==TRUE && input$usecustumyaxis==FALSE) {
                     paste(element.trend.name, " ", calFileContentsFirst()[[2]], sep="")
-                } else if(elementhold$elementnorma!="None" && input$usecustumyaxis==FALSE){
+                } else if(elementnorm!="None" && input$usecustumyaxis==FALSE){
                     paste(element.trend.name, "/", element.norm.name, sep="")
                 } else if(input$usecustumyaxis==TRUE) {
                     paste(input$customyaxis)
@@ -3435,44 +3464,67 @@ shinyServer(function(input, output, session) {
                 spectra.timeseries.table <- data.frame(spectra.line.table[,c(input$xaxistype)], (spectra.line.table[,c(elementhold$elementtrendb)]/spectra.line.table.norm[,c(elementhold$elementnormb)]*input$ymultiply), spectra.line.table$Cluster, spectra.line.table$Qualitative, spectra.line.table$Depth, spectra.line.table$Age, spectra.line.table$Climate, spectra.line.table$Lake)
                 colnames(spectra.timeseries.table) <- c("Interval", "Selected", "Cluster", "Qualitative", "Depth", "Age", "Climate", "Lake")
                 
+                elementtrend <- elementhold$elementtrendb
+                elementnorm <- elementhold$elementnormb
                 
-                element.trend.name <- if(elementhold$elementtrendb %in% elementLines){
-                    gsub("[.]", "", substr(elementhold$elementtrendb, 1, 2))
-                } else {
-                    elementhold$elementtrendb
+                
+                element.trend.name <- if(elementnorm=="None"){
+                    if(elementtrend %in% elementLines){
+                        paste0(gsub("[.]", "", substr(elementtrend, 1, 2)), " Counts per Second")
+                    } else {
+                        if(elementtrend=="Accumulation"){
+                            paste0("Accumulation (", input$lengthunit, " per year)")
+                        } else {
+                            elementtrend
+                        }
+                    }
+                } else if(elementnorm!="None"){
+                    if(elementtrend %in% elementLines){
+                        gsub("[.]", "", substr(elementtrend, 1, 2))
+                    } else {
+                        elementtrend
+                    }
                 }
                 
-                element.norm.name <- if(elementhold$elementnormb %in% elementLines){
-                    gsub("[.]", "", substr(elementhold$elementnormb, 1, 2))
+                element.norm.name <- if(elementnorm %in% elementLines){
+                    gsub("[.]", "", substr(elementnorm, 1, 2))
                 } else {
-                    elementhold$elementnormb
+                    elementnorm
                 }
                 
-                trendy <-  if(elementhold$elementnormb=="None" && input$filetype=="Spectra" && input$usecalfile==FALSE && input$usecustumyaxis==FALSE) {
-                    paste(element.trend.name, " Counts per Second", sep="")
-                } else if(elementhold$elementnormb=="None" && input$filetype=="Spectra" && input$usecalfile==TRUE && input$usecustumyaxis==FALSE) {
+                
+                trendy <-  if(elementnorm=="None" && input$filetype=="Spectra" && input$usecalfile==FALSE && input$usecustumyaxis==FALSE) {
+                    paste(element.trend.name, sep="")
+                } else if(elementnorm=="None" && input$filetype=="Spectra" && input$usecalfile==TRUE && input$usecustumyaxis==FALSE) {
                     paste(element.trend.name, " ", calFileContentsFirst()[[2]], sep="")
-                } else if(elementhold$elementnormb=="None" && input$filetype=="Spreadsheet" && input$usecalfile==FALSE && input$usecustumyaxis==FALSE) {
-                    paste(element.trend.name, " Counts per Second", sep="")
-                } else if(elementhold$elementnormb=="None" && input$filetype=="Net" && input$usecalfile==FALSE && input$usecustumyaxis==FALSE) {
-                    paste(element.trend.name, " Net Counts", collapse="")
-                } else if(elementhold$elementnormb=="None" && input$filetype=="Net" && input$usecalfile==TRUE && input$usecustumyaxis==FALSE) {
+                } else if(elementnorm=="None" && input$filetype=="Spreadsheet" && input$usecalfile==FALSE && input$usecustumyaxis==FALSE) {
+                    paste(element.trend.name, sep="")
+                } else if(elementnorm=="None" && input$filetype=="Net" && input$usecalfile==FALSE && input$usecustumyaxis==FALSE) {
+                    paste(element.trend.name, sep="")
+                } else if(elementnorm=="None" && input$filetype=="Net" && input$usecalfile==TRUE && input$usecustumyaxis==FALSE) {
                     paste(element.trend.name, " ", calFileContentsFirst()[[2]], sep="")
-                } else if(elementhold$elementnormb=="None" && input$filetype=="Artax Excel" && input$usecalfile==FALSE && input$usecustumyaxis==FALSE) {
-                    paste(element.trend.name, " Net Counts", sep="")
-                } else if(elementhold$elementnormb=="None" && input$filetype=="Artax Excel" && input$usecalfile==TRUE && input$usecustumyaxis==FALSE) {
+                } else if(elementnorm=="None" && input$filetype=="Artax Excel" && input$usecalfile==FALSE && input$usecustumyaxis==FALSE) {
+                    paste(element.trend.name, sep="")
+                } else if(elementnorm=="None" && input$filetype=="Artax Excel" && input$usecalfile==TRUE && input$usecustumyaxis==FALSE) {
                     paste(element.trend.name, " ", calFileContentsFirst()[[2]], sep="")
-                } else if(elementhold$elementnormb!="None" && input$usecustumyaxis==FALSE){
+                } else if(elementnorm!="None" && input$usecustumyaxis==FALSE){
                     paste(element.trend.name, "/", element.norm.name, sep="")
                 } else if(input$usecustumyaxis==TRUE) {
                     paste(input$customyaxis)
                 }
                 
                 
-                
-                
-                
-                
+                scaleFUN <- if(input$xdigits==0){
+                    function(x) sprintf("%.0f", x)
+                } else if(input$xdigits==1){
+                    function(x) sprintf("%.1f", x)
+                } else if(input$xdigits==2){
+                    function(x) sprintf("%.2f", x)
+                } else if(input$xdigits==3){
+                    function(x) sprintf("%.3f", x)
+                } else if(input$xdigits==4){
+                    function(x) sprintf("%.4f", x)
+                }
                 
                 
                 
@@ -4016,38 +4068,67 @@ shinyServer(function(input, output, session) {
                 colnames(spectra.timeseries.table) <- c("Interval", "Selected", "Cluster", "Qualitative", "Depth", "Age", "Climate", "Lake")
                 
                 
-                element.trend.name <- if(elementhold$elementtrendc %in% elementLines){
-                    gsub("[.]", "", substr(elementhold$elementtrendc, 1, 2))
-                } else {
-                    elementhold$elementtrendc
+                elementtrend <- elementhold$elementtrendc
+                elementnorm <- elementhold$elementnormc
+                
+                
+                element.trend.name <- if(elementnorm=="None"){
+                    if(elementtrend %in% elementLines){
+                        paste0(gsub("[.]", "", substr(elementtrend, 1, 2)), " Counts per Second")
+                    } else {
+                        if(elementtrend=="Accumulation"){
+                            paste0("Accumulation (", input$lengthunit, " per year)")
+                        } else {
+                            elementtrend
+                        }
+                    }
+                } else if(elementnorm!="None"){
+                    if(elementtrend %in% elementLines){
+                        gsub("[.]", "", substr(elementtrend, 1, 2))
+                    } else {
+                        elementtrend
+                    }
                 }
                 
-                element.norm.name <- if(elementhold$elementnormc %in% elementLines){
-                    gsub("[.]", "", substr(elementhold$elementnormc, 1, 2))
+                element.norm.name <- if(elementnorm %in% elementLines){
+                    gsub("[.]", "", substr(elementnorm, 1, 2))
                 } else {
-                    elementhold$elementnormc
+                    elementnorm
                 }
                 
-                trendy <-  if(elementhold$elementnormc=="None" && input$filetype=="Spectra" && input$usecalfile==FALSE && input$usecustumyaxis==FALSE) {
-                    paste(element.trend.name, " Counts per Second", sep="")
-                } else if(elementhold$elementnormc=="None" && input$filetype=="Spectra" && input$usecalfile==TRUE && input$usecustumyaxis==FALSE) {
+                
+                trendy <-  if(elementnorm=="None" && input$filetype=="Spectra" && input$usecalfile==FALSE && input$usecustumyaxis==FALSE) {
+                    paste(element.trend.name, sep="")
+                } else if(elementnorm=="None" && input$filetype=="Spectra" && input$usecalfile==TRUE && input$usecustumyaxis==FALSE) {
                     paste(element.trend.name, " ", calFileContentsFirst()[[2]], sep="")
-                } else if(elementhold$elementnormc=="None" && input$filetype=="Spreadsheet" && input$usecalfile==FALSE && input$usecustumyaxis==FALSE) {
-                    paste(element.trend.name, " Counts per Second", sep="")
-                } else if(elementhold$elementnormc=="None" && input$filetype=="Net" && input$usecalfile==FALSE && input$usecustumyaxis==FALSE) {
-                    paste(element.trend.name, " Net Counts", sep="")
-                } else if(elementhold$elementnormc=="None" && input$filetype=="Net" && input$usecalfile==TRUE && input$usecustumyaxis==FALSE) {
+                } else if(elementnorm=="None" && input$filetype=="Spreadsheet" && input$usecalfile==FALSE && input$usecustumyaxis==FALSE) {
+                    paste(element.trend.name, sep="")
+                } else if(elementnorm=="None" && input$filetype=="Net" && input$usecalfile==FALSE && input$usecustumyaxis==FALSE) {
+                    paste(element.trend.name, sep="")
+                } else if(elementnorm=="None" && input$filetype=="Net" && input$usecalfile==TRUE && input$usecustumyaxis==FALSE) {
                     paste(element.trend.name, " ", calFileContentsFirst()[[2]], sep="")
-                } else if(elementhold$elementnormc=="None" && input$filetype=="Artax Excel" && input$usecalfile==FALSE && input$usecustumyaxis==FALSE) {
-                    paste(element.trend.name, " Net Counts", sep="")
-                } else if(elementhold$elementnormc=="None" && input$filetype=="Artax Excel" && input$usecalfile==TRUE && input$usecustumyaxis==FALSE) {
+                } else if(elementnorm=="None" && input$filetype=="Artax Excel" && input$usecalfile==FALSE && input$usecustumyaxis==FALSE) {
+                    paste(element.trend.name, sep="")
+                } else if(elementnorm=="None" && input$filetype=="Artax Excel" && input$usecalfile==TRUE && input$usecustumyaxis==FALSE) {
                     paste(element.trend.name, " ", calFileContentsFirst()[[2]], sep="")
-                } else if(elementhold$elementnormc!="None" && input$usecustumyaxis==FALSE){
+                } else if(elementnorm!="None" && input$usecustumyaxis==FALSE){
                     paste(element.trend.name, "/", element.norm.name, sep="")
                 } else if(input$usecustumyaxis==TRUE) {
                     paste(input$customyaxis)
                 }
                 
+                
+                scaleFUN <- if(input$xdigits==0){
+                    function(x) sprintf("%.0f", x)
+                } else if(input$xdigits==1){
+                    function(x) sprintf("%.1f", x)
+                } else if(input$xdigits==2){
+                    function(x) sprintf("%.2f", x)
+                } else if(input$xdigits==3){
+                    function(x) sprintf("%.3f", x)
+                } else if(input$xdigits==4){
+                    function(x) sprintf("%.4f", x)
+                }
                 
                 
                 
@@ -4594,36 +4675,66 @@ shinyServer(function(input, output, session) {
                 colnames(spectra.timeseries.table) <- c("Interval", "Selected", "Cluster", "Qualitative", "Depth", "Age", "Climate", "Lake")
                 
                 
-                element.trend.name <- if(elementhold$elementtrendd %in% elementLines){
-                    gsub("[.]", "", substr(elementhold$elementtrendd, 1, 2))
-                } else {
-                    input$elementtrend
+                elementtrend <- elementhold$elementtrendd
+                elementnorm <- elementhold$elementnormd
+                
+                
+                element.trend.name <- if(elementnorm=="None"){
+                    if(elementtrend %in% elementLines){
+                        paste0(gsub("[.]", "", substr(elementtrend, 1, 2)), " Counts per Second")
+                    } else {
+                        if(elementtrend=="Accumulation"){
+                            paste0("Accumulation (", input$lengthunit, " per year)")
+                        } else {
+                            elementtrend
+                        }
+                    }
+                } else if(elementnorm!="None"){
+                    if(elementtrend %in% elementLines){
+                        gsub("[.]", "", substr(elementtrend, 1, 2))
+                    } else {
+                        elementtrend
+                    }
                 }
                 
-                element.norm.name <- if(elementhold$elementnormd %in% elementLines){
-                    gsub("[.]", "", substr(elementhold$elementnormd, 1, 2))
+                element.norm.name <- if(elementnorm %in% elementLines){
+                    gsub("[.]", "", substr(elementnorm, 1, 2))
                 } else {
-                    elementhold$elementnormd
+                    elementnorm
                 }
                 
-                trendy <-  if(elementhold$elementnormd=="None" && input$filetype=="Spectra" && input$usecalfile==FALSE && input$usecustumyaxis==FALSE) {
-                    paste(element.trend.name, " Counts per Second", sep="")
-                } else if(elementhold$elementnormd=="None" && input$filetype=="Spectra" && input$usecalfile==TRUE && input$usecustumyaxis==FALSE) {
+                
+                trendy <-  if(elementnorm=="None" && input$filetype=="Spectra" && input$usecalfile==FALSE && input$usecustumyaxis==FALSE) {
+                    paste(element.trend.name, sep="")
+                } else if(elementnorm=="None" && input$filetype=="Spectra" && input$usecalfile==TRUE && input$usecustumyaxis==FALSE) {
                     paste(element.trend.name, " ", calFileContentsFirst()[[2]], sep="")
-                } else if(elementhold$elementnormd=="None" && input$filetype=="Spreadsheet" && input$usecalfile==FALSE && input$usecustumyaxis==FALSE) {
-                    paste(element.trend.name, " Counts per Second", sep="")
-                } else if(elementhold$elementnormd=="None" && input$filetype=="Net" && input$usecalfile==FALSE && input$usecustumyaxis==FALSE) {
-                    paste(element.trend.name, " Net Counts", sep="")
-                } else if(elementhold$elementnormdm=="None" && input$filetype=="Net" && input$usecalfile==TRUE && input$usecustumyaxis==FALSE) {
+                } else if(elementnorm=="None" && input$filetype=="Spreadsheet" && input$usecalfile==FALSE && input$usecustumyaxis==FALSE) {
+                    paste(element.trend.name, sep="")
+                } else if(elementnorm=="None" && input$filetype=="Net" && input$usecalfile==FALSE && input$usecustumyaxis==FALSE) {
+                    paste(element.trend.name, sep="")
+                } else if(elementnorm=="None" && input$filetype=="Net" && input$usecalfile==TRUE && input$usecustumyaxis==FALSE) {
                     paste(element.trend.name, " ", calFileContentsFirst()[[2]], sep="")
-                } else if(elementhold$elementnormd=="None" && input$filetype=="Artax Excel" && input$usecalfile==FALSE && input$usecustumyaxis==FALSE) {
-                    paste(element.trend.name, " Net Counts", sep="")
-                } else if(elementhold$elementnormd=="None" && input$filetype=="Artax Excel" && input$usecalfile==TRUE && input$usecustumyaxis==FALSE) {
+                } else if(elementnorm=="None" && input$filetype=="Artax Excel" && input$usecalfile==FALSE && input$usecustumyaxis==FALSE) {
+                    paste(element.trend.name, sep="")
+                } else if(elementnorm=="None" && input$filetype=="Artax Excel" && input$usecalfile==TRUE && input$usecustumyaxis==FALSE) {
                     paste(element.trend.name, " ", calFileContentsFirst()[[2]], sep="")
-                } else if(elementhold$elementnormd!="None" && input$usecustumyaxis==FALSE){
+                } else if(elementnorm!="None" && input$usecustumyaxis==FALSE){
                     paste(element.trend.name, "/", element.norm.name, sep="")
                 } else if(input$usecustumyaxis==TRUE) {
                     paste(input$customyaxis)
+                }
+                
+                
+                scaleFUN <- if(input$xdigits==0){
+                    function(x) sprintf("%.0f", x)
+                } else if(input$xdigits==1){
+                    function(x) sprintf("%.1f", x)
+                } else if(input$xdigits==2){
+                    function(x) sprintf("%.2f", x)
+                } else if(input$xdigits==3){
+                    function(x) sprintf("%.3f", x)
+                } else if(input$xdigits==4){
+                    function(x) sprintf("%.4f", x)
                 }
                 
                 
@@ -5183,36 +5294,60 @@ shinyServer(function(input, output, session) {
                 colnames(spectra.timeseries.table) <- c("Interval", "Selected", "Cluster", "Qualitative", "Depth", "Age", "Climate", "Lake")
                 
                 
-                element.trend.name <- if(elementhold$elementtrende %in% elementLines){
-                    gsub("[.]", "", substr(elementhold$elementtrende, 1, 2))
-                } else {
-                    elementhold$elementtrende
+                elementtrend <- elementhold$elementtrende
+                elementnorm <- elementhold$elementnorme
+                
+                
+                element.trend.name <- if(elementnorm=="None"){
+                    if(elementtrend %in% elementLines){
+                        paste0(gsub("[.]", "", substr(elementtrend, 1, 2)), " Counts per Second")
+                    } else {
+                        if(elementtrend=="Accumulation"){
+                            paste0("Accumulation (", input$lengthunit, " per year)")
+                        } else {
+                            elementtrend
+                        }
+                    }
+                } else if(elementnorm!="None"){
+                    if(elementtrend %in% elementLines){
+                        gsub("[.]", "", substr(elementtrend, 1, 2))
+                    } else {
+                        elementtrend
+                    }
                 }
                 
-                element.norm.name <- if(elementhold$elementnorme %in% elementLines){
-                    gsub("[.]", "", substr(elementhold$elementnorme, 1, 2))
-                } else {
-                    elementhold$elementnorme
-                }
                 
-                trendy <-  if(elementhold$elementnorme=="None" && input$filetype=="Spectra" && input$usecalfile==FALSE && input$usecustumyaxis==FALSE) {
-                    paste(element.trend.name, " Counts per Second", sep="")
-                } else if(elementhold$elementnorme=="None" && input$filetype=="Spectra" && input$usecalfile==TRUE && input$usecustumyaxis==FALSE) {
+                trendy <-  if(elementnorm=="None" && input$filetype=="Spectra" && input$usecalfile==FALSE && input$usecustumyaxis==FALSE) {
+                    paste(element.trend.name, sep="")
+                } else if(elementnorm=="None" && input$filetype=="Spectra" && input$usecalfile==TRUE && input$usecustumyaxis==FALSE) {
                     paste(element.trend.name, " ", calFileContentsFirst()[[2]], sep="")
-                } else if(elementhold$elementnorme=="None" && input$filetype=="Spreadsheet" && input$usecalfile==FALSE && input$usecustumyaxis==FALSE) {
-                    paste(element.trend.name, " Counts per Second", sep="")
-                } else if(elementhold$elementnorme=="None" && input$filetype=="Net" && input$usecalfile==FALSE && input$usecustumyaxis==FALSE) {
-                    paste(element.trend.name, " Net Counts", sep="")
-                } else if(elementhold$elementnorme=="None" && input$filetype=="Net" && input$usecalfile==TRUE && input$usecustumyaxis==FALSE) {
+                } else if(elementnorm=="None" && input$filetype=="Spreadsheet" && input$usecalfile==FALSE && input$usecustumyaxis==FALSE) {
+                    paste(element.trend.name, sep="")
+                } else if(elementnorm=="None" && input$filetype=="Net" && input$usecalfile==FALSE && input$usecustumyaxis==FALSE) {
+                    paste(element.trend.name, sep="")
+                } else if(elementnorm=="None" && input$filetype=="Net" && input$usecalfile==TRUE && input$usecustumyaxis==FALSE) {
                     paste(element.trend.name, " ", calFileContentsFirst()[[2]], sep="")
-                } else if(elementhold$elementnorme=="None" && input$filetype=="Artax Excel" && input$usecalfile==FALSE && input$usecustumyaxis==FALSE) {
-                    paste(element.trend.name, " Net Counts", sep="")
-                } else if(elementhold$elementnorme=="None" && input$filetype=="Artax Excel" && input$usecalfile==TRUE && input$usecustumyaxis==FALSE) {
+                } else if(elementnorm=="None" && input$filetype=="Artax Excel" && input$usecalfile==FALSE && input$usecustumyaxis==FALSE) {
+                    paste(element.trend.name, sep="")
+                } else if(elementnorm=="None" && input$filetype=="Artax Excel" && input$usecalfile==TRUE && input$usecustumyaxis==FALSE) {
                     paste(element.trend.name, " ", calFileContentsFirst()[[2]], sep="")
-                } else if(elementhold$elementnorme!="None" && input$usecustumyaxis==FALSE){
+                } else if(elementnorm!="None" && input$usecustumyaxis==FALSE){
                     paste(element.trend.name, "/", element.norm.name, sep="")
                 } else if(input$usecustumyaxis==TRUE) {
                     paste(input$customyaxis)
+                }
+                
+                
+                scaleFUN <- if(input$xdigits==0){
+                    function(x) sprintf("%.0f", x)
+                } else if(input$xdigits==1){
+                    function(x) sprintf("%.1f", x)
+                } else if(input$xdigits==2){
+                    function(x) sprintf("%.2f", x)
+                } else if(input$xdigits==3){
+                    function(x) sprintf("%.3f", x)
+                } else if(input$xdigits==4){
+                    function(x) sprintf("%.4f", x)
                 }
                 
                 
@@ -5761,36 +5896,77 @@ shinyServer(function(input, output, session) {
                 colnames(spectra.timeseries.table) <- c("Interval", "Selected", "Cluster", "Qualitative", "Depth", "Age", "Climate", "Lake")
                 
                 
-                element.trend.name <- if(elementhold$elementtrendf %in% elementLines){
-                    gsub("[.]", "", substr(elementhold$elementtrendf, 1, 2))
-                } else {
-                    elementhold$elementtrendf
+                elementtrend <- elementhold$elementtrendf
+                elementnorm <- elementhold$elementnormf
+                
+                
+                element.trend.name <- if(elementnorm=="None"){
+                    if(elementtrend %in% elementLines){
+                        paste0(gsub("[.]", "", substr(elementtrend, 1, 2)), " Counts per Second")
+                    } else {
+                        if(elementtrend=="Accumulation"){
+                            paste0("Accumulation (", input$lengthunit, " per year)")
+                        } else {
+                            elementtrend
+                        }
+                    }
+                } else if(elementnorm!="None"){
+                    if(elementtrend %in% elementLines){
+                        gsub("[.]", "", substr(elementtrend, 1, 2))
+                    } else {
+                        elementtrend
+                    }
                 }
                 
-                element.norm.name <- if(elementhold$elementnormf %in% elementLines){
-                    gsub("[.]", "", substr(elementhold$elementnormf, 1, 2))
+                
+                if(elementtrend %in% elementLines){
+                    paste0(gsub("[.]", "", substr(elementtrend, 1, 2)), " Counts per Second")
                 } else {
-                    elementhold$elementnormf
+                    if(elementtrend=="Accumulation"){
+                        paste0("Accumulation (", input$lengthunit, " per year)")
+                    } else {
+                        elementtrend
+                    }
                 }
                 
-                trendy <-  if(elementhold$elementnormf=="None" && input$filetype=="Spectra" && input$usecalfile==FALSE && input$usecustumyaxis==FALSE) {
-                    paste(element.trend.name, " Counts per Second", sep="")
-                } else if(elementhold$elementnormf=="None" && input$filetype=="Spectra" && input$usecalfile==TRUE && input$usecustumyaxis==FALSE) {
+                element.norm.name <- if(elementnorm %in% elementLines){
+                    gsub("[.]", "", substr(elementnorm, 1, 2))
+                } else {
+                    elementnorm
+                }
+                
+                
+                trendy <-  if(elementnorm=="None" && input$filetype=="Spectra" && input$usecalfile==FALSE && input$usecustumyaxis==FALSE) {
+                    paste(element.trend.name, sep="")
+                } else if(elementnorm=="None" && input$filetype=="Spectra" && input$usecalfile==TRUE && input$usecustumyaxis==FALSE) {
                     paste(element.trend.name, " ", calFileContentsFirst()[[2]], sep="")
-                } else if(elementhold$elementnormf=="None" && input$filetype=="Spreadsheet" && input$usecalfile==FALSE && input$usecustumyaxis==FALSE) {
-                    paste(element.trend.name, " Counts per Second", sep="")
-                } else if(elementhold$elementnormf=="None" && input$filetype=="Net" && input$usecalfile==FALSE && input$usecustumyaxis==FALSE) {
-                    paste(element.trend.name, " Net Counts", sep="")
-                } else if(elementhold$elementnormf=="None" && input$filetype=="Net" && input$usecalfile==TRUE && input$usecustumyaxis==FALSE) {
+                } else if(elementnorm=="None" && input$filetype=="Spreadsheet" && input$usecalfile==FALSE && input$usecustumyaxis==FALSE) {
+                    paste(element.trend.name, sep="")
+                } else if(elementnorm=="None" && input$filetype=="Net" && input$usecalfile==FALSE && input$usecustumyaxis==FALSE) {
+                    paste(element.trend.name, sep="")
+                } else if(elementnorm=="None" && input$filetype=="Net" && input$usecalfile==TRUE && input$usecustumyaxis==FALSE) {
                     paste(element.trend.name, " ", calFileContentsFirst()[[2]], sep="")
-                } else if(elementhold$elementnormf=="None" && input$filetype=="Artax Excel" && input$usecalfile==FALSE && input$usecustumyaxis==FALSE) {
-                    paste(element.trend.name, " Net Counts", sep="")
-                } else if(elementhold$elementnormf=="None" && input$filetype=="Artax Excel" && input$usecalfile==TRUE && input$usecustumyaxis==FALSE) {
+                } else if(elementnorm=="None" && input$filetype=="Artax Excel" && input$usecalfile==FALSE && input$usecustumyaxis==FALSE) {
+                    paste(element.trend.name, sep="")
+                } else if(elementnorm=="None" && input$filetype=="Artax Excel" && input$usecalfile==TRUE && input$usecustumyaxis==FALSE) {
                     paste(element.trend.name, " ", calFileContentsFirst()[[2]], sep="")
-                } else if(elementhold$elementnormf!="None" && input$usecustumyaxis==FALSE){
+                } else if(elementnorm!="None" && input$usecustumyaxis==FALSE){
                     paste(element.trend.name, "/", element.norm.name, sep="")
                 } else if(input$usecustumyaxis==TRUE) {
                     paste(input$customyaxis)
+                }
+                
+                
+                scaleFUN <- if(input$xdigits==0){
+                    function(x) sprintf("%.0f", x)
+                } else if(input$xdigits==1){
+                    function(x) sprintf("%.1f", x)
+                } else if(input$xdigits==2){
+                    function(x) sprintf("%.2f", x)
+                } else if(input$xdigits==3){
+                    function(x) sprintf("%.3f", x)
+                } else if(input$xdigits==4){
+                    function(x) sprintf("%.4f", x)
                 }
                 
                 
