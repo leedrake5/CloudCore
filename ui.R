@@ -35,6 +35,8 @@ accept=c('.csv', '.zip', '.pdz', '.xlsx')),
 fileInput('file2', 'Trace Element Spectra', multiple=TRUE,
 accept=c('.csv', '.zip', '.pdz', '.xlsx')),
 
+checkboxInput('deconvolution', "Deconvolution", value=FALSE),
+
 #checkboxInput('useall', "Match Light and Trace scans", value=TRUE),
 
 selectInput("filetype", label=NULL, c("Spectra", "PDZ", "Net", "Artax Excel", "Spreadsheet"), selected="Spreadsheet"),

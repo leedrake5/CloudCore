@@ -1,4 +1,4 @@
-source("CloudCal-API.R", chdir=TRUE)
+source("~/GitHub/CloudCal/global.R", chdir=TRUE)
 
 list.of.bioconductor <- c("graph", "RBGL", "Rgraphviz")
 new.bioconductor <- list.of.bioconductor[!(list.of.bioconductor %in% installed.packages()[,"Package"])]

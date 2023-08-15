@@ -133,16 +133,22 @@ shinyServer(function(input, output, session) {
         
     })
     
-    
-    fullSpectra <- reactive({
+    fullSpectraRead <- reactive({
         
-        
-        
-        spectra.frame <- if(input$filetype=="Spectra"){
+        if(input$filetype=="Spectra"){
             rawSpectra()
         } else if(input$filetype=="PDZ"){
             readPDZ()
         }
+        
+    })
+    
+    
+    fullSpectraPre <- reactive({
+        
+        
+        
+        spectra.frame <- fullSpectraRead()
         
         spectra.table <- if(is.null(input$file2)==TRUE){
             spectra.line.fn(spectra.frame)
@@ -155,19 +161,50 @@ shinyServer(function(input, output, session) {
         spectra.table
     })
     
-    fullSpectraSecond <- reactive({
+    fullSpectra <- reactive({
         
-        spectra.frame <- if(input$filetype=="Spectra"){
+        spectra <- fullSpectraRead()
+        spectra <- spectra[complete.cases(spectra),]
+        
+        if(input$deconvolution==TRUE){
+            tryCatch(spectra_gls_deconvolute(spectra, cores=as.numeric(my.cores))$Areas, error=function(e) spectra_gls_deconvolute(spectra, cores=1)$Areas)
+        } else if(input$deconvolution==FALSE){
+            fullSpectraPre()
+        }
+    })
+    
+    fullSpectraSecondRead <- reactive({
+        
+        if(input$filetype=="Spectra"){
             rawSpectraSecond()
         } else if(input$filetype=="PDZ"){
             readPDZSecond()
         }
+        
+    })
+    
+    fullSpectraSecondPre <- reactive({
+        
+        spectra.frame <- fullSpectraSecondRead()
         
         spectra.table <- spectra.trace.fn(spectra.frame)
         
         
         
         spectra.table
+    })
+    
+    fullSpectraSecond <- reactive({
+        
+        spectra <- fullSpectraSecondPre()
+        spectra <- spectra[complete.cases(spectra),]
+        
+        
+        if(input$deconvolution==TRUE){
+            tryCatch(spectra_gls_deconvolute(spectra, cores=as.numeric(my.cores))$Areas, error=function(e) spectra_gls_deconvolute(spectra, cores=1)$Areas)
+        } else if(input$deconvolution==FALSE){
+            fullSpectraSecondPre()
+        }
     })
     
     
@@ -235,7 +272,7 @@ shinyServer(function(input, output, session) {
     rawSpectra <- reactive({
         
         spectra.frame <- if(input$filetype=="Spectra"){
-            rawSpectra()
+            rawSpectraPre()
         } else if(input$filetype=="PDZ"){
             readPDZ()
         }
@@ -246,7 +283,7 @@ shinyServer(function(input, output, session) {
     rawSpectraSecond <- reactive({
         
         spectra.frame <- if(input$filetype=="Spectra"){
-            rawSpectraSecond()
+            rawSpectraSecondPre()
         } else if(input$filetype=="PDZ"){
             readPDZSecond()
         }
@@ -1538,8 +1575,10 @@ shinyServer(function(input, output, session) {
                     quantified <- colnames(quant.frame)
                 }
                 
-                standard <- if(input$usecalfile==FALSE && input$filetype=="Spectra"){
+                standard <- if(input$usecalfile==FALSE && input$filetype=="Spectra" && input$deconvolution==FALSE){
                     spectralLines
+                } else if(input$usecalfile==FALSE && input$filetype=="Spectra" && input$deconvolution==TRUE){
+                    colnames(spectra.line.table)
                 } else if(input$usecalfile==FALSE && input$filetype=="Net"){
                     colnames(spectra.line.table)
                 } else if(input$usecalfile==FALSE && input$filetype=="Artax Excel"){
@@ -1564,8 +1603,10 @@ shinyServer(function(input, output, session) {
                 if(input$usecalfile==TRUE){quantified <- colnames(tableInputValQuant()[ ,!(colnames(tableInputValQuant()) =="Depth")])
                 }
                 
-                standard <- if(input$usecalfile==FALSE && input$filetype=="Spectra"){
+                standard <- if(input$usecalfile==FALSE && input$filetype=="Spectra" && input$deconvolution==FALSE){
                     c("Ca.K.alpha", "Ti.K.alpha", "Fe.K.alpha", "Cu.K.alpha", "Zn.K.alpha")
+                }  else if(input$usecalfile==FALSE && input$filetype=="Spectra" && input$deconvolution==TRUE){
+                    c("Ca", "Ti", "Fe", "Cu", "Zn")
                 } else if(input$usecalfile==FALSE && input$filetype=="Net"){
                     colnames(spectra.line.table)
                 } else if(input$usecalfile==FALSE && input$filetype=="Artax Excel"){
@@ -1751,7 +1792,7 @@ shinyServer(function(input, output, session) {
                 age.frame <- if(is.null(input$agemodelfile)){
                 data.frame(Depth=agePredictBchron()$Depth, Age=agePredictBchron()$Age, Sd=agePredictBchron()$Sd, MinSd2=agePredictBchron()$MinSd2, MinSd1=agePredictBchron()$MinSd1, MaxSd1=agePredictBchron()$MaxSd1, MaxSd2=agePredictBchron()$MaxSd2)
                 } else if(!is.null(input$agemodelfile)){
-                    data.frame(Depth=readBacon()$depth*10, Age=readBacon()$median, Mean=readBacon()$mean,Min=readBacon()$min, Max=readBacon()$max)
+                    data.frame(Depth=readBacon()$depth, Age=readBacon()$median, Mean=readBacon()$mean,Min=readBacon()$min, Max=readBacon()$max)
                 }
                 
                 age.frame
@@ -2241,9 +2282,10 @@ shinyServer(function(input, output, session) {
                 #     ages <- ages[ages$depth %in% data$Depth, ]
                 #}
                
-                
-                spectra.line.table.age.unconstrained <- data
-                spectra.line.table.age.unconstrained$Age <- ages$Age
+               
+               spectra.line.table.age.unconstrained <- merge(ages, data, by="Depth")
+                #spectra.line.table.age.unconstrained <- data
+                #spectra.line.table.age.unconstrained$Age <- ages$Age
                 
                 
                 
