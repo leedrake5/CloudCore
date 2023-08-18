@@ -42,6 +42,7 @@ my.min <- function(x) ifelse( !all(is.na(x)), min(x, na.rm=T), NA)
 
 ensocount <- read.csv("climate/ensocount.csv")
 epica <- read.csv("climate/epica.csv")
+epica_dust <- read.csv("climate/edc2012dust.csv")
 gisp2 <- read.csv("climate/gisp2.csv")
 gisp2ion <- read.csv("climate/gisp2ion.csv")
 nao <- read.csv("climate/nao.csv")
@@ -49,6 +50,7 @@ vostok <- read.csv("climate/vostok.csv")
 eljunco <- read.csv("climate/eljunco.csv")
 bond <- read.csv("climate/bond.csv")
 elsinore <- read.csv("climate/elsinore.csv")
+bonneville <- read.csv("climate/bonneville.csv")
 
 plot_dim2 <- function(dim = c(NA, NA), scale = 1, units = c("in", "cm", "mm"),
 limitsize = TRUE) {
@@ -4968,6 +4970,11 @@ xrf_parse <- function(range.table, data){
     
     Reduce(function(...) merge(..., all=T), selected.list)
 }
+
+getExtension <- function(file){
+    ex <- strsplit(basename(file), split="\\.")[[1]]
+    return(ex[-1])
+} 
 
 
 dataTransformer <- function(spectra.line.table, elementnum1, elementnum2, elementnum3, elementden1, elementden2, elementden3, transform1, transform2, transform3, transform4){

@@ -39,7 +39,7 @@ checkboxInput('deconvolution', "Deconvolution", value=FALSE),
 
 #checkboxInput('useall', "Match Light and Trace scans", value=TRUE),
 
-selectInput("filetype", label=NULL, c("Spectra", "PDZ", "Net", "Artax Excel", "Spreadsheet"), selected="Spreadsheet"),
+selectInput("filetype", label=NULL, c("Spectra", "PDZ", "Net", "Artax Excel", "Spreadsheet"), selected="Spectra"),
 
 numericInput("aggregationfactor", label="Aggregation", value=5, min=1, max=100),
 
@@ -528,7 +528,7 @@ height = 450),
 uiOutput("climatehover_info3f")
 ),
 tags$hr(),
-selectInput("climatecompare", "Climate Proxy Record", choices=c("GISP2", "GISP2 Ion", "EPICA", "Vostok", "NAO", "ENSO", "El Junco", "Bond", "PDO"), selected="GISP2"),
+selectInput("climatecompare", "Climate Proxy Record", choices=c("GISP2", "GISP2 Ion", "EPICA", "EPICA Dust", "Vostok", "NAO", "ENSO", "El Junco", "Bond", "PDO", "Bonneville"), selected="GISP2"),
 uiOutput("climatesubselect"),
 downloadButton('downloadPlot3f', "Plot")
 

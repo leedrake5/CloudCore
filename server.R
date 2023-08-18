@@ -394,11 +394,18 @@ shinyServer(function(input, output, session) {
         
         #if (is.null(inFile)) {return(NULL)}
         
-        
-        
-        proto.fish <- loadWorkbook(file=inFile$datapath)
-        just.fish <- readWorkbook(proto.fish, sheet=2)
-        colnames(just.fish)[1] <- "Spectrum"
+        if(getExtension(ineFile)==".csv"){
+            just.fish <- read.csv(inFile)
+        } else if(getExtension(ineFile)==".xls"){
+            proto.fish <- loadWorkbook(file=inFile$datapath)
+            just.fish <- readWorkbook(proto.fish, sheet=2)
+            colnames(just.fish)[1] <- "Spectrum"
+        } else if(getExtension(ineFile)==".xlsx"){
+            proto.fish <- loadWorkbook(file=inFile$datapath)
+            just.fish <- readWorkbook(proto.fish, sheet=2)
+            colnames(just.fish)[1] <- "Spectrum"
+        }
+
         
         
         just.fish
@@ -415,9 +422,17 @@ shinyServer(function(input, output, session) {
         
         
         
-        proto.fish <- loadWorkbook(file=inFile$datapath)
-        just.fish <- readWorkbook(proto.fish, sheet=2)
-        colnames(just.fish)[1] <- "Spectrum"
+        if(getExtension(ineFile)==".csv"){
+            just.fish <- read.csv(inFile)
+        } else if(getExtension(ineFile)==".xls"){
+            proto.fish <- loadWorkbook(file=inFile$datapath)
+            just.fish <- readWorkbook(proto.fish, sheet=2)
+            colnames(just.fish)[1] <- "Spectrum"
+        } else if(getExtension(ineFile)==".xlsx"){
+            proto.fish <- loadWorkbook(file=inFile$datapath)
+            just.fish <- readWorkbook(proto.fish, sheet=2)
+            colnames(just.fish)[1] <- "Spectrum"
+        }
         
         
         just.fish
@@ -431,13 +446,29 @@ shinyServer(function(input, output, session) {
         inFile <- input$file1
         if (is.null(inFile)) return(NULL)
         
-        proto.fish <- loadWorkbook(file=inFile$datapath)
-        just.fish <- readWorkbook(proto.fish, sheet=1)
-        just.fish[,1] <- as.character(just.fish[,1])
-        quant.fish <- as.data.frame(just.fish[, sapply(just.fish, is.numeric)])
-        qual.fish <- as.data.frame(just.fish[, !sapply(just.fish, is.numeric)])
         
-        as.data.frame(data.frame(Spectrum=qual.fish[,1], quant.fish))
+        if(getExtension(inFile$datapath)=="csv"){
+            just.fish <- read.csv(inFile$datapath)
+        } else if(getExtension(inFile$datapath)=="xls"){
+            proto.fish <- loadWorkbook(file=inFile$datapath)
+            just.fish <- readWorkbook(proto.fish, sheet=1)
+            just.fish[,1] <- as.character(just.fish[,1])
+            quant.fish <- as.data.frame(just.fish[, sapply(just.fish, is.numeric)])
+            qual.fish <- as.data.frame(just.fish[, !sapply(just.fish, is.numeric)])
+            
+            just.fish <- as.data.frame(data.frame(Spectrum=qual.fish[,1], quant.fish))
+        } else if(getExtension(inFile$datapath)=="xlsx"){
+            proto.fish <- loadWorkbook(file=inFile$datapath)
+            just.fish <- readWorkbook(proto.fish, sheet=1)
+            just.fish[,1] <- as.character(just.fish[,1])
+            quant.fish <- as.data.frame(just.fish[, sapply(just.fish, is.numeric)])
+            qual.fish <- as.data.frame(just.fish[, !sapply(just.fish, is.numeric)])
+            
+            just.fish <- as.data.frame(data.frame(Spectrum=qual.fish[,1], quant.fish))
+        }
+        
+        just.fish
+
         
     })
     
@@ -445,13 +476,27 @@ shinyServer(function(input, output, session) {
         inFile <- input$file2
         if (is.null(inFile)) return(NULL)
         
-        proto.fish <- loadWorkbook(file=inFile$datapath)
-        just.fish <- readWorkbook(proto.fish, sheet=1)
-        just.fish[,1] <- as.character(just.fish[,1])
-        quant.fish <- as.data.frame(just.fish[, sapply(just.fish, is.numeric)])
-        qual.fish <- as.data.frame(just.fish[, !sapply(just.fish, is.numeric)])
+        if(getExtension(inFile$datapath)=="csv"){
+            just.fish <- read.csv(inFile$datapath)
+        } else if(getExtension(inFile$datapath)=="xls"){
+            proto.fish <- loadWorkbook(file=inFile$datapath)
+            just.fish <- readWorkbook(proto.fish, sheet=1)
+            just.fish[,1] <- as.character(just.fish[,1])
+            quant.fish <- as.data.frame(just.fish[, sapply(just.fish, is.numeric)])
+            qual.fish <- as.data.frame(just.fish[, !sapply(just.fish, is.numeric)])
+            
+            just.fish <- as.data.frame(data.frame(Spectrum=qual.fish[,1], quant.fish))
+        } else if(getExtension(inFile$datapath)=="xlsx"){
+            proto.fish <- loadWorkbook(file=inFile$datapath)
+            just.fish <- readWorkbook(proto.fish, sheet=1)
+            just.fish[,1] <- as.character(just.fish[,1])
+            quant.fish <- as.data.frame(just.fish[, sapply(just.fish, is.numeric)])
+            qual.fish <- as.data.frame(just.fish[, !sapply(just.fish, is.numeric)])
+            
+            just.fish <- as.data.frame(data.frame(Spectrum=qual.fish[,1], quant.fish))
+        }
         
-        as.data.frame(data.frame(Spectrum=qual.fish[,1], quant.fish))
+        just.fish
         
     })
     
@@ -6534,6 +6579,8 @@ shinyServer(function(input, output, session) {
                     gisp2ion
                 } else if(input$climatecompare=="EPICA"){
                     epica
+                }  else if(input$climatecompare=="EPICA Dust"){
+                    epica_dust
                 } else if(input$climatecompare=="Vostok"){
                    vostok
                 } else if(input$climatecompare=="NAO"){
@@ -6546,6 +6593,8 @@ shinyServer(function(input, output, session) {
                     bond
                 } else if(input$climatecompare=="PDO"){
                     elsinore
+                } else if(input$climatecompare=="Bonneville"){
+                    bonneville
                 }
             
             })
@@ -6562,6 +6611,8 @@ shinyServer(function(input, output, session) {
                     "SO4_ppb"
                 } else if(input$climatecompare=="EPICA"){
                     "TempAnomaly"
+                } else if(input$climatecompare=="EPICA Dust"){
+                    "Dust"
                 } else if(input$climatecompare=="Vostok"){
                    "TempAnomaly"
                 } else if(input$climatecompare=="NAO"){
@@ -6574,6 +6625,8 @@ shinyServer(function(input, output, session) {
                     "HSG"
                 } else if(input$climatecompare=="PDO"){
                     "Sand"
+                } else if(input$climatecompare=="Bonneville"){
+                    "LakeLevel"
                 }
                 
             })
@@ -6748,6 +6801,8 @@ shinyServer(function(input, output, session) {
                     paste0("Bond ", input$climatesubrecord)
                 } else if(input$climatecompare=="PDO"){
                     paste0("Pacific Decadal Oscillation ", input$climatesubrecord)
+                } else if(input$climatecompare=="Bonneville"){
+                    paste0("Lake Level ", input$climatesubrecord)
                 }
             
                 
