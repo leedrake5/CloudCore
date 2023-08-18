@@ -39,7 +39,7 @@ checkboxInput('deconvolution', "Deconvolution", value=FALSE),
 
 #checkboxInput('useall', "Match Light and Trace scans", value=TRUE),
 
-selectInput("filetype", label=NULL, c("Spectra", "PDZ", "Net", "Artax Excel", "Spreadsheet"), selected="Spectra"),
+selectInput("filetype", label=NULL, c("Spectra", "PDZ", "Net", "Artax Excel", "Spreadsheet"), selected="Spreadsheet"),
 
 numericInput("aggregationfactor", label="Aggregation", value=5, min=1, max=100),
 

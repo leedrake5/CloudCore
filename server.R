@@ -1180,7 +1180,12 @@ shinyServer(function(input, output, session) {
                 light.table$LightDepth <- myDataFirst()[,2]*0
                 light.table <- light.table[2:3]
             } else if(input$filetype=="Spreadsheet"){
-                light.table <- data.frame(Spectrum=myDataFirst()[,1], LightDepth=as.numeric(as.vector(myDataFirst()[,1])))
+                if("Spectrum" %in% colnames(myDataFirst())){
+                    light.table <- data.frame(Spectrum=myDataFirst()[,"Spectrum"], LightDepth=round(as.numeric(as.vector(myDataFirst()[,"Depth"])), 2))
+                } else {
+                    light.table <- data.frame(Spectrum=myDataFirst()[,1], LightDepth=round(as.numeric(as.vector(myDataFirst()[,"Depth"])), 2))
+                }
+                
             }
             
             light.table
@@ -1229,7 +1234,11 @@ shinyServer(function(input, output, session) {
                 trace.table <- data.frame(0, 0)
                 colnames(trace.table) <- c("TraceSpectrum", "TraceDepth")
             } else if(is.null(input$file2)==FALSE && input$filetype=="Spreadsheet"){
-            trace.table <- data.frame(Spectrum=myDataSecond()[,1], TraceDepth=as.numeric(as.vector(myDataSecond()[,1])))
+                if("Spectrum" %in% colnames(myDataSecond())){
+                    trace.table <- data.frame(Spectrum=myDataSecond()[,"Spectrum"], TraceDepth=round(as.numeric(as.vector(myDataSecond()[,"Depth"])), 2))
+                } else {
+                    trace.table <- data.frame(Spectrum=myDataSecond()[,1], TraceDepth=round(as.numeric(as.vector(myDataSecond()[,"Depth"])), 2))
+                }
         }
             
             trace.table
@@ -1264,8 +1273,10 @@ shinyServer(function(input, output, session) {
         
         lightFrame <- reactive({
             
-            light.frame <- data.frame(myDataFirst(), valuesLight[["DPL"]]$LightDepth)
-            colnames(light.frame) <- c(names(myDataFirst()), "Depth")
+            og_data <- myDataFirst()[,!colnames(myDataFirst()) %in% c("Depth", "OrigSpectrum", "Spectrum", "X")]
+            
+            light.frame <- data.frame(og_data, valuesLight[["DPL"]]$LightDepth)
+            colnames(light.frame) <- c(names(og_data), "Depth")
             light.frame <- light.frame[ ,!(colnames(light.frame) == "Spectrum")]
             if(is.null(input$file2)==FALSE){
                 light.frame <- light.frame[,colnames(light.frame) %in% c("Depth", preference.light)]
@@ -1275,9 +1286,10 @@ shinyServer(function(input, output, session) {
         })
         
         traceFrame <- reactive({
+            og_data <- myDataSecond()[,!colnames(myDataFirst()) %in% c("Depth", "OrigSpectrum", "Spectrum", "X")]
             
-            trace.frame <- data.frame(myDataSecond(), valuesTrace[["DPT"]]$TraceDepth)
-            colnames(trace.frame) <- c(names(myDataSecond()), "Depth")
+            trace.frame <- data.frame(og_data, valuesTrace[["DPT"]]$TraceDepth)
+            colnames(trace.frame) <- c(names(og_data), "Depth")
             trace.frame <- trace.frame[ ,!(colnames(trace.frame) == "Spectrum")]
             trace.frame <- trace.frame[,colnames(trace.frame) %in% c("Depth", preference.trace)]
             as.data.frame(trace.frame)
