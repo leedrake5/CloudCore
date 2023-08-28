@@ -449,6 +449,9 @@ shinyServer(function(input, output, session) {
         
         if(getExtension(inFile$datapath)=="csv"){
             just.fish <- read.csv(inFile$datapath)
+            if(!"Spectrum" %in% names(just.fish)){
+                just.fish <- data.frame(Spectrum = seq(1, nrow(just.fish), 1), just.fish)
+            }
         } else if(getExtension(inFile$datapath)=="xls"){
             proto.fish <- loadWorkbook(file=inFile$datapath)
             just.fish <- readWorkbook(proto.fish, sheet=1)
@@ -478,6 +481,9 @@ shinyServer(function(input, output, session) {
         
         if(getExtension(inFile$datapath)=="csv"){
             just.fish <- read.csv(inFile$datapath)
+            if(!"Spectrum" %in% names(just.fish)){
+                just.fish <- data.frame(Spectrum = seq(1, nrow(just.fish), 1), just.fish)
+            }
         } else if(getExtension(inFile$datapath)=="xls"){
             proto.fish <- loadWorkbook(file=inFile$datapath)
             just.fish <- readWorkbook(proto.fish, sheet=1)
