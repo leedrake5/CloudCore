@@ -195,6 +195,7 @@ sidebarPanel(
 actionButton('hotableprocess2', "Enter Dates"),
 actionButton('hotableprocess3', "Run Age Model"),
 downloadButton('ageresults', "Age Results Table"),
+numericInput('depthoffset', "Depth Offset", value=0),
 
 tags$hr(),
 checkboxInput("ageon", label="Age Model On", FALSE),
@@ -528,7 +529,7 @@ height = 450),
 uiOutput("climatehover_info3f")
 ),
 tags$hr(),
-selectInput("climatecompare", "Climate Proxy Record", choices=c("GISP2", "GISP2 Ion", "EPICA", "EPICA Dust", "Vostok", "NAO", "ENSO", "El Junco", "Bond", "PDO", "Bonneville"), selected="GISP2"),
+selectInput("climatecompare", "Climate Proxy Record", choices=c("GISP2", "GISP2 Ion", "EPICA", "EPICA Dust", "Vostok", "NAO", "ENSO", "El Junco", "Bond", "PDO", "Bonneville" , "Energy Imbalance"), selected="GISP2"),
 uiOutput("climatesubselect"),
 downloadButton('downloadPlot3f', "Plot")
 

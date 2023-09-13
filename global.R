@@ -51,6 +51,9 @@ eljunco <- read.csv("climate/eljunco.csv")
 bond <- read.csv("climate/bond.csv")
 elsinore <- read.csv("climate/elsinore.csv")
 bonneville <- read.csv("climate/bonneville.csv")
+eei <- read.csv("climate/eei.csv")
+load("climate/wNAm1_0_0.RData")
+
 
 plot_dim2 <- function(dim = c(NA, NA), scale = 1, units = c("in", "cm", "mm"),
 limitsize = TRUE) {

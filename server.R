@@ -1285,7 +1285,7 @@ shinyServer(function(input, output, session) {
             colnames(light.frame) <- c(names(og_data), "Depth")
             light.frame <- light.frame[ ,!(colnames(light.frame) == "Spectrum")]
             if(is.null(input$file2)==FALSE){
-                light.frame <- light.frame[,colnames(light.frame) %in% c("Depth", preference.light)]
+                light.frame <- light.frame[,colnames(light.frame) %in% c("Depth", "Age", preference.light)]
             }
             as.data.frame(light.frame)
             
@@ -1297,7 +1297,7 @@ shinyServer(function(input, output, session) {
             trace.frame <- data.frame(og_data, valuesTrace[["DPT"]]$TraceDepth)
             colnames(trace.frame) <- c(names(og_data), "Depth")
             trace.frame <- trace.frame[ ,!(colnames(trace.frame) == "Spectrum")]
-            trace.frame <- trace.frame[,colnames(trace.frame) %in% c("Depth", preference.trace)]
+            trace.frame <- trace.frame[,colnames(trace.frame) %in% c("Depth", "Age", preference.trace)]
             as.data.frame(trace.frame)
             
         })
@@ -2336,7 +2336,7 @@ shinyServer(function(input, output, session) {
                 c14min <- min(c14ages$Depth)
                 c14max <- max(c14ages$Depth)
                 
-                ages <- ageTable()
+                tryCatch(ages <- ageTable(), error=function(e) NULL)
                 
                 
                 data <- dataProcessed()
@@ -2346,7 +2346,11 @@ shinyServer(function(input, output, session) {
                 #}
                
                
-               spectra.line.table.age.unconstrained <- merge(ages, data, by="Depth")
+               if(!"Age" %in% names(data)){
+                   spectra.line.table.age.unconstrained <- merge(ages, data, by="Depth")
+                } else {
+                    spectra.line.table.age.unconstrained <- data
+                }
                 #spectra.line.table.age.unconstrained <- data
                 #spectra.line.table.age.unconstrained$Age <- ages$Age
                 
@@ -6613,6 +6617,8 @@ shinyServer(function(input, output, session) {
                     elsinore
                 } else if(input$climatecompare=="Bonneville"){
                     bonneville
+                } else if(input$climatecompare=="Energy Imbalance"){
+                    eei
                 }
             
             })
@@ -6645,6 +6651,8 @@ shinyServer(function(input, output, session) {
                     "Sand"
                 } else if(input$climatecompare=="Bonneville"){
                     "LakeLevel"
+                } else if(input$climatecompare=="Energy Imbalance"){
+                    "EEI"
                 }
                 
             })
@@ -6821,6 +6829,8 @@ shinyServer(function(input, output, session) {
                     paste0("Pacific Decadal Oscillation ", input$climatesubrecord)
                 } else if(input$climatecompare=="Bonneville"){
                     paste0("Lake Level ", input$climatesubrecord)
+                } else if(input$climatecompare=="Energy Imbalance"){
+                    expression(paste("EEI (Wm"^-2*")"))
                 }
             
                 
@@ -6837,7 +6847,7 @@ shinyServer(function(input, output, session) {
                 theme(legend.title=element_text(size=15)) +
                 theme(legend.text=element_text(size=15)) +
                 scale_x_continuous(paste(x.axis)) +
-                scale_y_continuous(paste(trendy))
+                scale_y_continuous(trendy)
                 
                 smooth.time.series <- qplot(spectra.timeseries.table$Interval, DEMA(spectra.timeseries.table$Selected, input$smoothing), geom="point") +
                 coord_cartesian(xlim = ranges3f$x, ylim = climateranges3f$y, expand = TRUE) +
@@ -6851,7 +6861,7 @@ shinyServer(function(input, output, session) {
                 theme(legend.title=element_text(size=15)) +
                 theme(legend.text=element_text(size=15)) +
                 scale_x_continuous(paste(x.axis)) +
-                scale_y_continuous(paste(trendy))
+                scale_y_continuous(trendy)
                 
                 
                 ramp.time.series <- qplot(Interval, DEMA(Selected, input$smoothing),  geom="line", data = spectra.timeseries.table) +
@@ -6867,7 +6877,7 @@ shinyServer(function(input, output, session) {
                 theme(legend.title=element_text(size=15)) +
                 theme(legend.text=element_text(size=15)) +
                 scale_x_continuous(paste(x.axis)) +
-                scale_y_continuous(paste(trendy))
+                scale_y_continuous(trendy)
                 
                 
                 area.time.series <- ggplot(spectra.timeseries.table, aes(Interval)) +
@@ -6882,7 +6892,7 @@ shinyServer(function(input, output, session) {
                 theme(legend.title=element_text(size=15)) +
                 theme(legend.text=element_text(size=15)) +
                 scale_x_continuous(paste(x.axis)) +
-                scale_y_continuous(paste(trendy))
+                scale_y_continuous(trendy)
                 
                 
                 
@@ -6899,7 +6909,7 @@ shinyServer(function(input, output, session) {
                 theme(legend.title=element_text(size=15)) +
                 theme(legend.text=element_text(size=15)) +
                 scale_x_continuous(paste(x.axis)) +
-                scale_y_continuous(paste(trendy))
+                scale_y_continuous(trendy)
                 
                 climate.time.series.line <- qplot(Interval, DEMA(Selected, input$smoothing), geom="line", data = spectra.timeseries.table, colour = as.factor(Climate)) +
                 coord_cartesian(xlim = ranges3f$x, ylim = climateranges3f$y, expand = TRUE) +
@@ -6914,7 +6924,7 @@ shinyServer(function(input, output, session) {
                 theme(legend.title=element_text(size=15)) +
                 theme(legend.text=element_text(size=15)) +
                 scale_x_continuous(paste(x.axis)) +
-                scale_y_continuous(paste(trendy))
+                scale_y_continuous(trendy)
                 
                 lake.time.series.line <- qplot(Interval, DEMA(Selected, input$smoothing), geom="line", data = spectra.timeseries.table, colour = as.factor(Lake)) +
                 coord_cartesian(xlim = ranges3f$x, ylim = climateranges3f$y, expand = TRUE) +
@@ -6930,7 +6940,7 @@ shinyServer(function(input, output, session) {
                 theme(legend.title=element_text(size=15)) +
                 theme(legend.text=element_text(size=15)) +
                 scale_x_continuous(paste(x.axis)) +
-                scale_y_continuous(paste(trendy))
+                scale_y_continuous(trendy)
                 
                 
                 qualitative.time.series.line <- qplot(Interval, DEMA(Selected, input$smoothing), geom="line", data = spectra.timeseries.table, colour = as.factor(Qualitative)) +
@@ -6945,7 +6955,7 @@ shinyServer(function(input, output, session) {
                 theme(legend.title=element_text(size=15)) +
                 theme(legend.text=element_text(size=15)) +
                 scale_x_continuous(paste(x.axis)) +
-                scale_y_continuous(paste(trendy))
+                scale_y_continuous(trendy)
                 
                 qualitative.time.series.point <- qplot(Interval, DEMA(Selected, input$smoothing),  geom="line", data = spectra.timeseries.table) +
                 coord_cartesian(xlim = ranges3f$x, ylim = climateranges3f$y, expand = TRUE) +
@@ -6960,7 +6970,7 @@ shinyServer(function(input, output, session) {
                 theme(legend.title=element_text(size=15)) +
                 theme(legend.text=element_text(size=15)) +
                 scale_x_continuous(paste(x.axis)) +
-                scale_y_continuous(paste(trendy))
+                scale_y_continuous(trendy)
                 
                 
                 #depth.time.series <- qplot(Interval, DEMA(Selected, input$smoothing),  geom="line", data = spectra.timeseries.table) +
@@ -6995,7 +7005,7 @@ shinyServer(function(input, output, session) {
                 theme(legend.title=element_text(size=15)) +
                 theme(legend.text=element_text(size=15)) +
                 scale_x_reverse(paste(x.axis)) +
-                scale_y_continuous(paste(trendy))
+                scale_y_continuous(trendy)
                 
                 smooth.time.series.reverse <- qplot(spectra.timeseries.table$Interval, DEMA(spectra.timeseries.table$Selected, input$smoothing), geom="point") +
                 coord_cartesian(xlim = ranges3f$x, ylim = climateranges3f$y, expand = TRUE) +
@@ -7009,7 +7019,7 @@ shinyServer(function(input, output, session) {
                 theme(legend.title=element_text(size=15)) +
                 theme(legend.text=element_text(size=15)) +
                 scale_x_reverse(paste(x.axis)) +
-                scale_y_continuous(paste(trendy))
+                scale_y_continuous(trendy)
                 
                 
                 ramp.time.series.reverse <- qplot(Interval, DEMA(Selected, input$smoothing), geom="line", data = spectra.timeseries.table) +
@@ -7025,7 +7035,7 @@ shinyServer(function(input, output, session) {
                 theme(legend.title=element_text(size=15)) +
                 theme(legend.text=element_text(size=15)) +
                 scale_x_reverse(paste(x.axis)) +
-                scale_y_continuous(paste(trendy))
+                scale_y_continuous(trendy)
                 
                 
                 area.time.series.reverse <- ggplot(spectra.timeseries.table, aes(Interval)) +
@@ -7040,7 +7050,7 @@ shinyServer(function(input, output, session) {
                 theme(legend.title=element_text(size=15)) +
                 theme(legend.text=element_text(size=15)) +
                 scale_x_reverse(paste(x.axis)) +
-                scale_y_continuous(paste(trendy))
+                scale_y_continuous(trendy)
                 
                 
                 
@@ -7057,7 +7067,7 @@ shinyServer(function(input, output, session) {
                 theme(legend.title=element_text(size=15)) +
                 theme(legend.text=element_text(size=15)) +
                 scale_x_reverse(paste(x.axis)) +
-                scale_y_continuous(paste(trendy))
+                scale_y_continuous(trendy)
                 
                 climate.time.series.line.reverse <- qplot(Interval, DEMA(Selected, input$smoothing), geom="line", data = spectra.timeseries.table, colour = as.factor(Climate)) +
                 coord_cartesian(xlim = ranges3f$x, ylim = climateranges3f$y, expand = TRUE) +
@@ -7073,7 +7083,7 @@ shinyServer(function(input, output, session) {
                 theme(legend.title=element_text(size=15)) +
                 theme(legend.text=element_text(size=15)) +
                 scale_x_reverse(paste(x.axis)) +
-                scale_y_continuous(paste(trendy))
+                scale_y_continuous(trendy)
                 
                 
                 lake.time.series.line.reverse <- qplot(Interval, DEMA(Selected, input$smoothing), geom="line", data = spectra.timeseries.table, colour = as.factor(Lake)) +
@@ -7090,7 +7100,7 @@ shinyServer(function(input, output, session) {
                 theme(legend.title=element_text(size=15)) +
                 theme(legend.text=element_text(size=15)) +
                 scale_x_reverse(paste(x.axis)) +
-                scale_y_continuous(paste(trendy))
+                scale_y_continuous(trendy)
                 
                 
                 qualitative.time.series.line.reverse <- qplot(Interval, DEMA(Selected, input$smoothing), geom="line", data = spectra.timeseries.table, colour = as.factor(Qualitative)) +
@@ -7105,7 +7115,7 @@ shinyServer(function(input, output, session) {
                 theme(legend.title=element_text(size=15)) +
                 theme(legend.text=element_text(size=15)) +
                 scale_x_reverse(paste(x.axis)) +
-                scale_y_continuous(paste(trendy))
+                scale_y_continuous(trendy)
                 
                 qualitative.time.series.point.reverse <- qplot(Interval, DEMA(Selected, input$smoothing),  geom="line", data = spectra.timeseries.table) +
                 coord_cartesian(xlim = ranges3f$x, ylim = climateranges3f$y, expand = TRUE) +
@@ -7120,7 +7130,7 @@ shinyServer(function(input, output, session) {
                 theme(legend.title=element_text(size=15)) +
                 theme(legend.text=element_text(size=15)) +
                 scale_x_reverse(paste(x.axis)) +
-                scale_y_continuous(paste(trendy))
+                scale_y_continuous(trendy)
                 
                 
                 #depth.time.series.reverse <- qplot(Interval, DEMA(Selected, input$smoothing),  geom="line", data = spectra.timeseries.table) +
