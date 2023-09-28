@@ -167,10 +167,15 @@ shinyServer(function(input, output, session) {
         spectra <- spectra[complete.cases(spectra),]
         
         if(input$deconvolution==TRUE){
-            tryCatch(spectra_gls_deconvolute(spectra, cores=as.numeric(my.cores))$Areas, error=function(e) spectra_gls_deconvolute(spectra, cores=1)$Areas)
+            spectra_frame <-  tryCatch(spectra_gls_deconvolute(spectra, cores=as.numeric(my.cores))$Areas, error=function(e) spectra_gls_deconvolute(spectra, cores=1)$Areas)
+            tryCatch(spectra_frame$Compton <- fullSpectraPre()$Compton, error=function(e) NULL)
+            tryCatch(spectra_frame$Rayleigh <- fullSpectraPre()$Rayleigh, error=function(e) NULL)
+
         } else if(input$deconvolution==FALSE){
-            fullSpectraPre()
+            spectra_frame <- fullSpectraPre()
         }
+        
+        spectra_frame
     })
     
     fullSpectraSecondRead <- reactive({
@@ -201,10 +206,14 @@ shinyServer(function(input, output, session) {
         
         
         if(input$deconvolution==TRUE){
-            tryCatch(spectra_gls_deconvolute(spectra, cores=as.numeric(my.cores))$Areas, error=function(e) spectra_gls_deconvolute(spectra, cores=1)$Areas)
+            spectra_frame <- tryCatch(spectra_gls_deconvolute(spectra, cores=as.numeric(my.cores))$Areas, error=function(e) spectra_gls_deconvolute(spectra, cores=1)$Areas)
+            tryCatch(spectra_frame$Compton <- fullSpectraPre()$Compton, error=function(e) NULL)
+            tryCatch(spectra_frame$Rayleigh <- fullSpectraPre()$Rayleigh, error=function(e) NULL)
         } else if(input$deconvolution==FALSE){
-            fullSpectraSecondPre()
+            spectra_frame <- fullSpectraSecondPre()
         }
+        
+        spectra_frame
     })
     
     
