@@ -6628,6 +6628,8 @@ shinyServer(function(input, output, session) {
                     bonneville
                 } else if(input$climatecompare=="Energy Imbalance"){
                     eei
+                } else if(input$climatecompare=="BL04-4"){
+                    bl04_4
                 }
             
             })
@@ -6662,6 +6664,8 @@ shinyServer(function(input, output, session) {
                     "LakeLevel"
                 } else if(input$climatecompare=="Energy Imbalance"){
                     "EEI"
+                } else if(input$climatecompare=="BL04-4"){
+                    "TIC"
                 }
                 
             })
@@ -6840,6 +6844,8 @@ shinyServer(function(input, output, session) {
                     paste0("Lake Level ", input$climatesubrecord)
                 } else if(input$climatecompare=="Energy Imbalance"){
                     expression(paste("EEI (Wm"^-2*")"))
+                } else if(input$climatecompare=="Energy Imbalance"){
+                    input$climatecompare
                 }
             
                 
