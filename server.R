@@ -2274,8 +2274,8 @@ shinyServer(function(input, output, session) {
                 top_pct <- (hover$domain$top - hover$y) / (hover$domain$top - hover$domain$bottom)
                 
                 # calculate distance from left and bottom side of the picture in pixels
-                left_px <- hover$range$left + left_pct * (hover$range$right - hover$range$left)
-                top_px <- hover$range$top + top_pct * (hover$range$bottom - hover$range$top)
+                left_px <- hover$coords_css$x
+            top_px <- hover$coords_css$y
                 
                 
                 # create style property fot tooltip
@@ -2743,8 +2743,8 @@ shinyServer(function(input, output, session) {
                 top_pct <- (hover$domain$top - hover$y) / (hover$domain$top - hover$domain$bottom)
                 
                 # calculate distance from left and bottom side of the picture in pixels
-                left_px <- hover$range$left + left_pct * (hover$range$right - hover$range$left)
-                top_px <- hover$range$top + top_pct * (hover$range$bottom - hover$range$top)
+                left_px <- hover$coords_css$x
+            top_px <- hover$coords_css$y
                 
                 
                 # create style property fot tooltip
@@ -3452,8 +3452,8 @@ shinyServer(function(input, output, session) {
                 top_pct <- (hover$domain$top - hover$y) / (hover$domain$top - hover$domain$bottom)
                 
                 # calculate distance from left and bottom side of the picture in pixels
-                left_px <- hover$range$left + left_pct * (hover$range$right - hover$range$left)
-                top_px <- hover$range$top + top_pct * (hover$range$bottom - hover$range$top)
+                left_px <- hover$coords_css$x
+            top_px <- hover$coords_css$y
                 
                 
                 # create style property fot tooltip
@@ -4057,8 +4057,8 @@ shinyServer(function(input, output, session) {
                 top_pct <- (hover$domain$top - hover$y) / (hover$domain$top - hover$domain$bottom)
                 
                 # calculate distance from left and bottom side of the picture in pixels
-                left_px <- hover$range$left + left_pct * (hover$range$right - hover$range$left)
-                top_px <- hover$range$top + top_pct * (hover$range$bottom - hover$range$top)
+                left_px <- hover$coords_css$x
+            top_px <- hover$coords_css$y
                 
                 
                 # create style property fot tooltip
@@ -4665,8 +4665,8 @@ shinyServer(function(input, output, session) {
                 top_pct <- (hover$domain$top - hover$y) / (hover$domain$top - hover$domain$bottom)
                 
                 # calculate distance from left and bottom side of the picture in pixels
-                left_px <- hover$range$left + left_pct * (hover$range$right - hover$range$left)
-                top_px <- hover$range$top + top_pct * (hover$range$bottom - hover$range$top)
+                left_px <- hover$coords_css$x
+            top_px <- hover$coords_css$y
                 
                 
                 # create style property fot tooltip
@@ -5279,8 +5279,8 @@ shinyServer(function(input, output, session) {
                 top_pct <- (hover$domain$top - hover$y) / (hover$domain$top - hover$domain$bottom)
                 
                 # calculate distance from left and bottom side of the picture in pixels
-                left_px <- hover$range$left + left_pct * (hover$range$right - hover$range$left)
-                top_px <- hover$range$top + top_pct * (hover$range$bottom - hover$range$top)
+                left_px <- hover$coords_css$x
+            top_px <- hover$coords_css$y
                 
                 
                 # create style property fot tooltip
@@ -5890,8 +5890,8 @@ shinyServer(function(input, output, session) {
                 top_pct <- (hover$domain$top - hover$y) / (hover$domain$top - hover$domain$bottom)
                 
                 # calculate distance from left and bottom side of the picture in pixels
-                left_px <- hover$range$left + left_pct * (hover$range$right - hover$range$left)
-                top_px <- hover$range$top + top_pct * (hover$range$bottom - hover$range$top)
+                left_px <- hover$coords_css$x
+            top_px <- hover$coords_css$y
                 
                 
                 # create style property fot tooltip
@@ -6509,8 +6509,8 @@ shinyServer(function(input, output, session) {
                 top_pct <- (hover$domain$top - hover$y) / (hover$domain$top - hover$domain$bottom)
                 
                 # calculate distance from left and bottom side of the picture in pixels
-                left_px <- hover$range$left + left_pct * (hover$range$right - hover$range$left)
-                top_px <- hover$range$top + top_pct * (hover$range$bottom - hover$range$top)
+                left_px <- hover$coords_css$x
+            top_px <- hover$coords_css$y
                 
                 
                 # create style property fot tooltip
@@ -7250,8 +7250,8 @@ shinyServer(function(input, output, session) {
                 top_pct <- (hover$domain$top - hover$y) / (hover$domain$top - hover$domain$bottom)
                 
                 # calculate distance from left and bottom side of the picture in pixels
-                left_px <- hover$range$left + left_pct * (hover$range$right - hover$range$left)
-                top_px <- hover$range$top + top_pct * (hover$range$bottom - hover$range$top)
+                left_px <- hover$coords_css$x
+            top_px <- hover$coords_css$y
                 
                 
                 # create style property fot tooltip
@@ -7750,8 +7750,8 @@ shinyServer(function(input, output, session) {
                 top_pct <- (hover$domain$top - hover$y) / (hover$domain$top - hover$domain$bottom)
                 
                 # calculate distance from left and bottom side of the picture in pixels
-                left_px <- hover$range$left + left_pct * (hover$range$right - hover$range$left)
-                top_px <- hover$range$top + top_pct * (hover$range$bottom - hover$range$top)
+                left_px <- hover$coords_css$x
+            top_px <- hover$coords_css$y
                 
                 
                 
@@ -9014,8 +9014,8 @@ shinyServer(function(input, output, session) {
                 top_pct <- (hover$domain$top - hover$y) / (hover$domain$top - hover$domain$bottom)
                 
                 # calculate distance from left and bottom side of the picture in pixels
-                left_px <- hover$range$left + left_pct * (hover$range$right - hover$range$left)
-                top_px <- hover$range$top + top_pct * (hover$range$bottom - hover$range$top)
+                left_px <- hover$coords_css$x
+            top_px <- hover$coords_css$y
                 
                 
                 # create style property fot tooltip
@@ -9524,8 +9524,8 @@ shinyServer(function(input, output, session) {
                 top_pct <- (hover$domain$top - hover$y) / (hover$domain$top - hover$domain$bottom)
                 
                 # calculate distance from left and bottom side of the picture in pixels
-                left_px <- hover$range$left + left_pct * (hover$range$right - hover$range$left)
-                top_px <- hover$range$top + top_pct * (hover$range$bottom - hover$range$top)
+                left_px <- hover$coords_css$x
+            top_px <- hover$coords_css$y
                 
                 
                 # create style property fot tooltip
@@ -10040,8 +10040,8 @@ shinyServer(function(input, output, session) {
                 top_pct <- (hover$domain$top - hover$y) / (hover$domain$top - hover$domain$bottom)
                 
                 # calculate distance from left and bottom side of the picture in pixels
-                left_px <- hover$range$left + left_pct * (hover$range$right - hover$range$left)
-                top_px <- hover$range$top + top_pct * (hover$range$bottom - hover$range$top)
+                left_px <- hover$coords_css$x
+            top_px <- hover$coords_css$y
                 
                 
                 # create style property fot tooltip
@@ -10551,8 +10551,8 @@ shinyServer(function(input, output, session) {
                 top_pct <- (hover$domain$top - hover$y) / (hover$domain$top - hover$domain$bottom)
                 
                 # calculate distance from left and bottom side of the picture in pixels
-                left_px <- hover$range$left + left_pct * (hover$range$right - hover$range$left)
-                top_px <- hover$range$top + top_pct * (hover$range$bottom - hover$range$top)
+                left_px <- hover$coords_css$x
+            top_px <- hover$coords_css$y
                 
                 
                 # create style property fot tooltip
@@ -11067,8 +11067,8 @@ shinyServer(function(input, output, session) {
                 top_pct <- (hover$domain$top - hover$y) / (hover$domain$top - hover$domain$bottom)
                 
                 # calculate distance from left and bottom side of the picture in pixels
-                left_px <- hover$range$left + left_pct * (hover$range$right - hover$range$left)
-                top_px <- hover$range$top + top_pct * (hover$range$bottom - hover$range$top)
+                left_px <- hover$coords_css$x
+            top_px <- hover$coords_css$y
                 
                 
                 # create style property fot tooltip
