@@ -6630,6 +6630,8 @@ shinyServer(function(input, output, session) {
                     eei
                 } else if(input$climatecompare=="BL04-4"){
                     bl04_4
+                } else if(input$climatecompare=="Heinrich Events"){
+                    heinrich
                 }
             
             })
@@ -6666,6 +6668,8 @@ shinyServer(function(input, output, session) {
                     "EEI"
                 } else if(input$climatecompare=="BL04-4"){
                     "TIC"
+                } else if(input$climatecompare=="Heinrich Events"){
+                    "N..pachyderma.s"
                 }
                 
             })
@@ -6846,6 +6850,20 @@ shinyServer(function(input, output, session) {
                     expression(paste("EEI (Wm"^-2*")"))
                 } else if(input$climatecompare=="Energy Imbalance"){
                     input$climatecompare
+                }  else if(input$climatecompare=="Heinrich Events"){
+                    if(input$climatesubrecord=="Depth"){
+                        paste0(gsub(".", " ", input$climatesubrecord), " (m)")
+                    } else if(input$climatesubrecord=="G..bulloides.δ18O"){
+                        paste0(gsub(".", " ", input$climatesubrecord), " (‰ PDB)")
+                    } else if(input$climatesubrecord=="G..bulloides.δ13C"){
+                        paste0(gsub(".", " ", input$climatesubrecord), " (‰ PDB)")
+                    } else if(input$climatesubrecord=="Terr.mine"){
+                        paste0(gsub(".", " ", input$climatesubrecord), " (#/g)")
+                    } else if(input$climatesubrecord=="SST.sum"){
+                        paste0(gsub(".", " ", input$climatesubrecord), " (°C)")
+                    } else {
+                        paste0(gsub(".", " ", input$climatesubrecord), " (%)")
+                    }
                 }
             
                 

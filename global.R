@@ -53,6 +53,7 @@ elsinore <- read.csv("climate/elsinore.csv")
 bonneville <- read.csv("climate/bonneville.csv")
 eei <- read.csv("climate/eei.csv")
 bl04_4 <- read.csv("climate/bl04-4.csv")
+heinrich <- read.csv("climate/heinrich.csv")
 load("climate/wNAm1_0_0.RData")
 
 

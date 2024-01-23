@@ -529,7 +529,7 @@ height = 450),
 uiOutput("climatehover_info3f")
 ),
 tags$hr(),
-selectInput("climatecompare", "Climate Proxy Record", choices=c("GISP2", "GISP2 Ion", "EPICA", "EPICA Dust", "Vostok", "NAO", "ENSO", "El Junco", "Bond", "PDO", "Bonneville" , "Energy Imbalance", "BL04-4"), selected="GISP2"),
+selectInput("climatecompare", "Climate Proxy Record", choices=c("GISP2", "GISP2 Ion", "EPICA", "EPICA Dust", "Vostok", "NAO", "ENSO", "El Junco", "Bond", "PDO", "Bonneville" , "Energy Imbalance", "BL04-4", "Heinrich Events"), selected="GISP2"),
 uiOutput("climatesubselect"),
 downloadButton('downloadPlot3f', "Plot")
 
