@@ -8629,7 +8629,7 @@ shinyServer(function(input, output, session) {
                  
                 
                 
-                black.time.series <- qplot(Interval, DEMA(Selected, input$smoothingeq), input$xaxistypeeq, geom="line", data = spectra.timeseries.table) +
+                black.time.series <- qplot(Interval, DEMA(Selected, input$smoothingeq), geom="line", data = spectra.timeseries.table) +
                 coord_cartesian(xlim = ranges6a$x, ylim = ranges6a$y, expand = TRUE) +
                 geom_line(colour = "black", lwd=input$linesizeeq) +
                 theme_light() +
@@ -8789,7 +8789,7 @@ shinyServer(function(input, output, session) {
                 #####X Axis Reverse
                 
                 
-                black.time.series.reverse <- qplot(Interval, DEMA(Selected, input$smoothingeq), input$xaxistypeeq, geom="line", data = spectra.timeseries.table) +
+                black.time.series.reverse <- qplot(Interval, DEMA(Selected, input$smoothingeq), geom="line", data = spectra.timeseries.table) +
                 coord_cartesian(xlim = ranges6a$x, ylim = ranges6a$y, expand = TRUE) +
                 geom_line(colour = "black", lwd=input$linesizeeq) +
                 theme_light() +
@@ -9145,7 +9145,7 @@ shinyServer(function(input, output, session) {
                 
                 
                 
-                black.time.series <- qplot(Interval, DEMA(Selected, input$smoothingeq), input$xaxistypeeq, geom="line", data = spectra.timeseries.table) +
+                black.time.series <- qplot(Interval, DEMA(Selected, input$smoothingeq), geom="line", data = spectra.timeseries.table) +
                 coord_cartesian(xlim = ranges6b$x, ylim = ranges6b$y, expand = TRUE) +
                 geom_line(colour = "black", lwd=input$linesizeeq) +
                 theme_light() +
@@ -9301,7 +9301,7 @@ shinyServer(function(input, output, session) {
                 #####X Axis Reverse
                 
                 
-                black.time.series.reverse <- qplot(Interval, DEMA(Selected, input$smoothingeq), input$xaxistypeeq, geom="line", data = spectra.timeseries.table) +
+                black.time.series.reverse <- qplot(Interval, DEMA(Selected, input$smoothingeq), geom="line", data = spectra.timeseries.table) +
                 coord_cartesian(xlim = ranges6b$x, ylim = ranges6b$y, expand = TRUE) +
                 geom_line(colour = "black", lwd=input$linesizeeq) +
                 theme_light() +
@@ -9658,7 +9658,7 @@ shinyServer(function(input, output, session) {
                 
                 
                 
-                black.time.series <- qplot(Interval, DEMA(Selected, input$smoothingeq), input$xaxistypeeq, geom="line", data = spectra.timeseries.table) +
+                black.time.series <- qplot(Interval, DEMA(Selected, input$smoothingeq), geom="line", data = spectra.timeseries.table) +
                 coord_cartesian(xlim = ranges6c$x, ylim = ranges6c$y, expand = TRUE) +
                 geom_line(colour = "black", lwd=input$linesizeeq) +
                 theme_light() +
@@ -9815,7 +9815,7 @@ shinyServer(function(input, output, session) {
                 #####X Axis Reverse
                 
                 
-                black.time.series.reverse <- qplot(Interval, DEMA(Selected, input$smoothingeq), input$xaxistypeeq, geom="line", data = spectra.timeseries.table) +
+                black.time.series.reverse <- qplot(Interval, DEMA(Selected, input$smoothingeq), geom="line", data = spectra.timeseries.table) +
                 coord_cartesian(xlim = ranges6c$x, ylim = ranges6c$y, expand = TRUE) +
                 geom_line(colour = "black", lwd=input$linesizeeq) +
                 theme_light() +
@@ -10171,7 +10171,7 @@ shinyServer(function(input, output, session) {
                 
                 
                 
-                black.time.series <- qplot(Interval, DEMA(Selected, input$smoothingeq), input$xaxistypeeq, geom="line", data = spectra.timeseries.table) +
+                black.time.series <- qplot(Interval, DEMA(Selected, input$smoothingeq), geom="line", data = spectra.timeseries.table) +
                 coord_cartesian(xlim = ranges6d$x, ylim = ranges6d$y, expand = TRUE) +
                 geom_line(colour = "black", lwd=input$linesizeeq) +
                 theme_light() +
@@ -10327,7 +10327,7 @@ shinyServer(function(input, output, session) {
                 #####X Axis Reverse
                 
                 
-                black.time.series.reverse <- qplot(Interval, DEMA(Selected, input$smoothingeq), input$xaxistypeeq, geom="line", data = spectra.timeseries.table) +
+                black.time.series.reverse <- qplot(Interval, DEMA(Selected, input$smoothingeq), geom="line", data = spectra.timeseries.table) +
                 coord_cartesian(xlim = ranges6d$x, ylim = ranges6d$y, expand = TRUE) +
                 geom_line(colour = "black", lwd=input$linesizeeq) +
                 theme_light() +
@@ -10684,7 +10684,7 @@ shinyServer(function(input, output, session) {
                 
                 
                 
-                black.time.series <- qplot(Interval, DEMA(Selected, input$smoothingeq), input$xaxistypeeq, geom="line", data = spectra.timeseries.table) +
+                black.time.series <- qplot(Interval, DEMA(Selected, input$smoothingeq), geom="line", data = spectra.timeseries.table) +
                 coord_cartesian(xlim = ranges6e$x, ylim = ranges6e$y, expand = TRUE) +
                 geom_line(colour = "black", lwd=input$linesizeeq) +
                 theme_light() +
@@ -10841,7 +10841,7 @@ shinyServer(function(input, output, session) {
                 #####X Axis Reverse
                 
                 
-                black.time.series.reverse <- qplot(Interval, DEMA(Selected, input$smoothingeq), input$xaxistypeeq, geom="line", data = spectra.timeseries.table) +
+                black.time.series.reverse <- qplot(Interval, DEMA(Selected, input$smoothingeq), geom="line", data = spectra.timeseries.table) +
                 coord_cartesian(xlim = ranges6e$x, ylim = ranges6e$y, expand = TRUE) +
                 geom_line(colour = "black", lwd=input$linesizeeq) +
                 theme_light() +
